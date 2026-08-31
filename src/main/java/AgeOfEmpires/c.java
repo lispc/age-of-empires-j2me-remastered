@@ -581,9 +581,14 @@ implements CommandListener {
                     this.mouseA(2, x2, y2);
                     break;
                 }
-                case "key":
-                    this.void_a(Integer.parseInt(p[1]));
+                case "key": {
+                    int kc = Integer.parseInt(p[1]);
+                    this.void_a(kc);
+                    // 注入即松开（延迟队列）：否则 ab 永久保持，o()/e() 的按住重复
+                    // 会让方向键每帧漂移一格，FIRE 也会被当成持续按住。
+                    var_com_ulysseo_mad_b_a.queueSyntheticKeyRelease(kc);
                     break;
+                }
                 case "state": {
                     System.out.println("[devMouse] cursor=(" + this.aa + "," + this.aV + ") Q="
                         + this.Q + " aE=" + this.aE + " Y=" + this.Y + " sel=" + this.var_int_b);
@@ -652,6 +657,8 @@ implements CommandListener {
     public int mouseHiX = -1;
     public int mouseHiY = -1;
     private int mouseEdgeTick;
+    private boolean mouseRclickPending;
+    private int mouseRclickGrace;
 
     @Override
     public void mouseA(int kind, int mx, int my) {
@@ -708,7 +715,17 @@ implements CommandListener {
                 break;
             }
             case 3: {
-                this.mouseCommand();
+                if (this.aA != 6) {
+                    break;      // 全图视图里右键无意义，也别把指令挂起到回主视图后
+                }
+                // 右键不直接用 mouseLastTile（那是上一帧悬停的拾取结果）：快速甩动后
+                // 立刻右键、或程序化注入没有悬停轨迹时，它会指向旧格子或 -1。
+                // 刷新拾取点并把指令挂起到 mouseTick 里新拾取生效后再发。
+                this.mousePickX = mx;
+                this.mousePickY = my;
+                this.mousePickPending = true;
+                this.mouseRclickPending = true;
+                this.mouseRclickGrace = 3;
                 break;
             }
             case 4: {
@@ -758,6 +775,17 @@ implements CommandListener {
                         }
                     }
                 }
+            }
+        }
+        // 右键待定指令：等本次拾取生效（≤3 帧宽限）；落点在虚空/地图外则丢弃
+        // （不清选中、不移动——用旧格子发移动比什么都不做更糟）。
+        if (this.mouseRclickPending) {
+            if (this.mousePickTile >= 0 && !this.mousePickPending) {
+                this.mouseRclickPending = false;
+                this.mouseCommand();
+            } else if (--this.mouseRclickGrace < 0) {
+                this.mouseRclickPending = false;
+                this.mousePickPending = false;
             }
         }
         // 边缘滚动：鼠标贴窗口边缘时按方向键同款步进平移（半速），桌面 RTS 惯例
