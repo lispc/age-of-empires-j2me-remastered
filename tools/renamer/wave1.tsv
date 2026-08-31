@@ -1,0 +1,100 @@
+# Wave1 改名映射 —— 全部为"完全搞懂"的符号（证据见 GAME_NOTES / docs/SYMBOLS.md）
+# 格式：kind<TAB>owner<TAB>oldName<TAB>params<TAB>newName
+# F=字段  M=方法；params 为参数简单名列表（消歧重载），() 表示无参
+# ---- 框架抽象（com.ulysseo.mad.a 声明，c 覆写；mad.b 转发调用）----
+M	com.ulysseo.mad.a	void_a	(int)	onKeyPress
+M	AgeOfEmpires.c	void_a	(int)	onKeyPress
+M	com.ulysseo.mad.a	void_e	(int)	onKeyRelease
+M	AgeOfEmpires.c	void_e	(int)	onKeyRelease
+M	com.ulysseo.mad.a	k	()	onShown
+M	AgeOfEmpires.c	k	()	onShown
+M	com.ulysseo.mad.a	q	()	onHidden
+M	AgeOfEmpires.c	q	()	onHidden
+M	com.ulysseo.mad.a	p	(Graphics)	onPaint
+M	AgeOfEmpires.c	p	(Graphics)	onPaint
+# ---- 状态机 ----
+F	AgeOfEmpires.c	aA	-	screenState
+F	AgeOfEmpires.c	am	-	pendingScreenState
+F	AgeOfEmpires.c	aN	-	overlayPrevState
+F	AgeOfEmpires.c	ar	-	tickCount
+F	AgeOfEmpires.c	af	-	mapThumbStampRow
+F	AgeOfEmpires.c	aO	-	screenW
+F	AgeOfEmpires.c	var_int_j	-	screenH
+F	AgeOfEmpires.c	F	-	clipLeft
+F	AgeOfEmpires.c	B	-	clipRight
+F	AgeOfEmpires.c	O	-	clipTop
+F	AgeOfEmpires.c	P	-	clipBottom
+F	AgeOfEmpires.c	ac	-	gameMode
+F	AgeOfEmpires.c	aC	-	missionIndex
+F	AgeOfEmpires.c	aF	-	missionResId
+# ---- 按键输入（三通道 + 键位表 + 重复计数）----
+F	AgeOfEmpires.c	ax	-	keyActionPulse
+F	AgeOfEmpires.c	ab	-	keyActionHeld
+F	AgeOfEmpires.c	ae	-	keyActionEvent
+F	AgeOfEmpires.c	ak	-	keymapCount
+F	AgeOfEmpires.c	var_byte_arr_k	-	keymap
+F	AgeOfEmpires.c	s	-	keyRepeatFrames
+F	AgeOfEmpires.c	L	-	keyRepeatLast
+# ---- 光标与相机 ----
+F	AgeOfEmpires.c	Q	-	cursorTileIdx
+F	AgeOfEmpires.c	aa	-	cursorTileX
+F	AgeOfEmpires.c	aV	-	cursorTileY
+F	AgeOfEmpires.c	y	-	cameraPxX
+F	AgeOfEmpires.c	N	-	cameraPxY
+F	AgeOfEmpires.c	aU	-	mapViewSavedCamX
+F	AgeOfEmpires.c	A	-	mapViewSavedCamY
+F	AgeOfEmpires.c	at	-	mapViewSavedCursorX
+F	AgeOfEmpires.c	n	-	mapViewSavedCursorY
+F	AgeOfEmpires.c	aI	-	viewTileCols
+F	AgeOfEmpires.c	aP	-	cursorScreenPxX
+F	AgeOfEmpires.c	aS	-	cursorScreenPxY
+# ---- 选中状态 ----
+F	AgeOfEmpires.c	aE	-	selectionMark
+F	AgeOfEmpires.c	Y	-	selectionPlayer
+F	AgeOfEmpires.c	var_int_h	-	selectedType
+F	AgeOfEmpires.c	aJ	-	selectedSlot
+F	AgeOfEmpires.c	var_int_b	-	selectionMode
+# ---- 菜单 / 对话框模板树引擎 ----
+F	AgeOfEmpires.c	var_byte_arr_i	-	menuTree
+F	AgeOfEmpires.c	aR	-	menuNode
+F	AgeOfEmpires.c	ao	-	menuNodeCount
+F	AgeOfEmpires.c	Z	-	menuHighlight
+F	AgeOfEmpires.c	H	-	menuScreenId
+F	AgeOfEmpires.c	v	-	pendingPanelSwitch
+# ---- 世界数据 ----
+F	AgeOfEmpires.c	var_short_arr_a	-	mapTiles
+F	AgeOfEmpires.c	var_short_arr_arr_a	-	playerUnitSlots
+F	AgeOfEmpires.c	var_int_arr_arr_a	-	playerUnitHeaders
+F	AgeOfEmpires.c	var_byte_arr_f	-	nfoData
+F	AgeOfEmpires.c	var_int_arr_d	-	nfoHighScores
+# ---- 任务内主视图逻辑 ----
+M	AgeOfEmpires.c	o	()	tickCursor
+M	AgeOfEmpires.c	x	()	confirmAtCursor
+M	AgeOfEmpires.c	f	()	updateCamera
+M	AgeOfEmpires.c	d	(int,int,int)	orderMove
+M	AgeOfEmpires.c	h	(int,int)	selectUnits
+M	AgeOfEmpires.c	H	()	clearSelection
+M	AgeOfEmpires.c	f	(int,int,int)	selectUnderCursor
+# ---- 渲染分发与各画面 ----
+M	AgeOfEmpires.c	n	(Graphics)	dispatchRender
+M	AgeOfEmpires.c	j	(Graphics)	renderWorld
+M	AgeOfEmpires.c	e	(Graphics)	renderMapView
+M	AgeOfEmpires.c	g	(Graphics)	renderDialog
+M	AgeOfEmpires.c	h	(Graphics)	renderLoadingScreen
+M	AgeOfEmpires.c	f	(Graphics)	renderMenu
+M	AgeOfEmpires.c	a	(Graphics,int,int,int,int)	drawTileSprite
+# ---- 菜单脚本引擎 ----
+M	AgeOfEmpires.c	k	(int,int)	runMenuScript
+M	AgeOfEmpires.c	l	()	loadMenuScreen
+M	AgeOfEmpires.c	boolean_d	(int)	activateMenuScreen
+M	AgeOfEmpires.c	boolean_g	(int)	requestStateSwitch
+M	AgeOfEmpires.c	E	()	beginStateTransition
+# ---- 任务装载 ----
+M	AgeOfEmpires.c	boolean_c	(int)	beginMissionLoad
+M	AgeOfEmpires.c	void_f	(int)	spawnMission
+M	AgeOfEmpires.c	g	(int,int,int)	startMissionBriefing
+# ---- .nfo 读写 ----
+M	AgeOfEmpires.c	m	()	loadNfo
+M	AgeOfEmpires.c	I	()	saveNfo
+M	AgeOfEmpires.c	int_a	(int,int)	nfoReadInt
+M	AgeOfEmpires.c	h	(int,int,int)	nfoWriteInt

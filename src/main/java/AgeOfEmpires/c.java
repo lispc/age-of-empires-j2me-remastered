@@ -785,6 +785,21 @@ implements CommandListener {
                     var_com_ulysseo_mad_b_a.queueSyntheticKeyRelease(kc);
                     break;
                 }
+                case "tapk": {
+                    // 带验证重试的按键：注入单发键有"帧末 ax=0 vs 激活判断"竞态，
+                    // 可能被无痕吞掉——按 aA 是否到达期望值决定重注（最多 tries 次）。
+                    int kc = Integer.parseInt(p[1]);
+                    int expect = Integer.parseInt(p[2]);
+                    int tries = p.length > 3 ? Integer.parseInt(p[3]) : 5;
+                    for (int i = 0; i < tries && this.aA != expect; ++i) {
+                        this.void_a(kc);
+                        var_com_ulysseo_mad_b_a.queueSyntheticKeyRelease(kc);
+                        Thread.sleep(1000);
+                    }
+                    System.out.println("[devMouse] tapk " + kc + " expect aA=" + expect
+                        + ": " + (this.aA == expect ? "ok" : "timeout") + " (aA=" + this.aA + ")");
+                    break;
+                }
                 case "state": {
                     System.out.println("[devMouse] aA=" + this.aA + "/" + this.am
                         + " cursor=(" + this.aa + "," + this.aV + ") cam=(" + this.y + "," + this.N + ")"

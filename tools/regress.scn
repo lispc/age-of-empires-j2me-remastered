@@ -1,0 +1,24 @@
+# regress 固定场景（FIFO 指令，# 注释，sleep 毫秒）
+# 原则：所有可能切屏的按键用 tapk（带验证重试），其余走鼠标（天然确定性）
+# 覆盖：选中 / 右键移动 / 框选 / 全图开关 / 光标直达
+sleep 2000
+until 6 10
+click 116 140
+sleep 1000
+rclick 150 180
+sleep 6000
+until 6 5
+drag 60 120 150 210
+sleep 1000
+tapk 48 1
+until 1 5
+tapk 48 6
+until 6 5
+click 116 140
+sleep 800
+rclick 75 190
+sleep 6000
+until 6 5
+click 120 200
+sleep 1500
+until 6 5
