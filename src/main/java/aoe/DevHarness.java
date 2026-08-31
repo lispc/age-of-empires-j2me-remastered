@@ -21,8 +21,19 @@ public final class DevHarness {
         midlet.startApp();
         AgeOfEmpires.c game = midlet.game();
         long deadline = System.currentTimeMillis() + 60000;
-        while (game.aA != 6 && System.currentTimeMillis() < deadline) {
-            Thread.sleep(200);
+        boolean inMission = false;
+        int stable = 0;
+        while (System.currentTimeMillis() < deadline) {
+            if (game.aA == 6) {
+                inMission = true;
+            }
+            if (inMission && game.aA == 2) {
+                game.void_a(-6);        // 推任务内的教程对话框（F1 = 左软键）
+                stable = 0;
+            } else if (inMission && game.aA == 6 && ++stable >= 8) {
+                break;                  // 主视图稳定 ~2.4s：对话框已推完
+            }
+            Thread.sleep(300);
         }
         int extra = args.length > 1 ? Integer.parseInt(args[1]) : 3;
         Thread.sleep(extra * 1000L);

@@ -369,27 +369,25 @@ implements CommandListener {
         Thread t = new Thread(() -> {
             try {
                 devWaitStable();
-                devPress(-5);                       // 主菜单：Play → Game Mode
-                devWaitAo(5, 1);                    // 等菜单项数变化（主菜单 5 项 → 1 项）
+                devPress(-5);                       // 主菜单：Play
                 if (campaign || random) {
                     devPress(-4);                   // 循环器右切（Tutorial→Campaign→Random）
-                    Thread.sleep(800);
-                    if (random) {
-                        devPress(-4);
-                        Thread.sleep(800);
-                    }
                 }
-                devPress(-5);                       // 进选关（默认 Mission 1）
-                Thread.sleep(1000);
-                for (int i = 1; i < mission; ++i) {
-                    devPress(-4);
-                    Thread.sleep(500);
-                }
-                devPress(-5);                       // 进入任务（加载 + 简报）
+                // Game Mode → （选关等中间屏）→ 任务装载：菜单链长度随模式/版本
+                // 有差异（有的屏高亮项脚本是空操作），连按 FIRE 直到离开菜单态。
                 long deadline = System.currentTimeMillis() + 30000;
+                while (this.aA == 4 && System.currentTimeMillis() < deadline) {
+                    if (mission > 1 && devHiScriptOp() == 3) {
+                        for (int i = 1; i < mission; ++i) {
+                            devPress(-4);           // 选关循环器右切（仅限 op=3 的选关项）
+                        }
+                    }
+                    devPress(-5);
+                }
+                deadline = System.currentTimeMillis() + 30000;
                 while (this.aA != 6 && System.currentTimeMillis() < deadline) {
                     if (this.aA == 2) {
-                        this.void_a(-6);            // F1 推简报/教程对话框
+                        this.void_a(-6);            // F1 推简报/教程对话框（周期重注=自带重试）
                     }
                     Thread.sleep(600);
                 }
@@ -402,20 +400,89 @@ implements CommandListener {
         t.start();
     }
 
-    /** 等菜单项数变为目标值（主菜单 5 项、子菜单 1 项），最长 5s。 */
-    private void devWaitAo(int target, int fallback) throws InterruptedException {
+    /** 菜单指针快照：aA / ao / Z / aR + （高亮项是循环器时）循环器位置字节。
+     *  几乎任何菜单移动、换屏、循环切换都会改变其中之一，用作注入"被消费"的观测信号。 */
+    private long devSig() {
+        long sig = ((long) this.aA & 0xFF) << 48
+            | ((long) this.ao & 0xFFFF) << 32
+            | ((long) this.Z & 0xFFFF) << 16
+            | ((long) this.aR & 0xFFFF);
+        try {
+            if (this.var_byte_arr_i != null && this.Z >= 0 && this.Z < this.ao) {
+                int node = this.int_c(this.Z);
+                if (node + 11 < this.var_byte_arr_i.length
+                        && (this.var_byte_arr_i[node + 8] & 0xF) == 2) {
+                    sig |= (1L << 63)
+                        | ((long) (this.var_byte_arr_i[node + 11] & 0xFF & 0x7F) << 56);
+                }
+            }
+        } catch (IndexOutOfBoundsException e) {
+            // 模板正好被游戏线程换掉：退化为不含循环器字节的快照
+        }
+        return sig;
+    }
+
+    /** 等菜单指针静止（devSig 连续 ~3 帧不变）：按键前保证打在稳定画面上，
+     *  确认后保证换屏过渡完成，下一步快照不落在过渡中。 */
+    private void devWaitSigStable() throws InterruptedException {
+        long frame = Long.getLong("aoe.tickms", 80L);
+        long last = devSig();
+        long lastChange = System.currentTimeMillis();
         long deadline = System.currentTimeMillis() + 5000;
         while (System.currentTimeMillis() < deadline) {
-            if (this.ao == target || this.ao == fallback) {
+            Thread.sleep(frame);
+            long now = devSig();
+            if (now != last) {
+                last = now;
+                lastChange = System.currentTimeMillis();
+            } else if (System.currentTimeMillis() - lastChange >= 3 * frame) {
                 return;
             }
-            Thread.sleep(100);
         }
     }
 
-    /** 等画面状态稳定（aA 连续 ~1.2s 不变），最长 6s——规避状态切换中按键被吞。 */
-    private void devPress(int key) {
-        this.void_a(key);
+    /** 高亮项的脚本操作码；高亮项不是菜单项或模板正在换时返回 -1。 */
+    private int devHiScriptOp() {
+        try {
+            if (this.var_byte_arr_i == null || this.Z < 0 || this.Z >= this.ao) {
+                return -1;
+            }
+            int node = this.int_c(this.Z);
+            if ((node + 12 < this.var_byte_arr_i.length)
+                    && (this.var_byte_arr_i[node + 8] & 0xF) == 2) {
+                return this.var_byte_arr_i[this.int_k(node)] & 0xFF;
+            }
+        } catch (IndexOutOfBoundsException e) {
+            // 模板被游戏线程换掉：按"读不到"处理
+        }
+        return -1;
+    }
+
+    /** 注入按键并等菜单指针变化确认生效；未生效按帧重注——每帧末 ax=0 与激活判断
+     *  存在竞态窗口，单次注入可能被无痕吞掉（只按一次的旧实现因此时灵时不灵）。
+     *  前后各等一次指针静止，防止重注/下一步打在换屏过渡里造成连跳。 */
+    private void devPress(int key) throws InterruptedException {
+        long frame = Long.getLong("aoe.tickms", 80L);
+        devWaitSigStable();
+        long before = devSig();
+        long deadline = System.currentTimeMillis() + 8000;
+        while (true) {
+            this.void_a(key);
+            // 面板切换是延迟生效的（v=H 由状态机在后续帧消费），确认窗口必须盖过它，
+            // 否则把"生效中"误判为"被吞"而重注，造成一次按键两次消费、流程跳屏。
+            long until = System.currentTimeMillis() + 12 * frame;
+            while (System.currentTimeMillis() < until && devSig() == before) {
+                Thread.sleep(20);
+            }
+            if (devSig() != before) {
+                devWaitSigStable();
+                return;
+            }
+            if (System.currentTimeMillis() > deadline) {
+                System.out.println("[dev] press " + key + " unconfirmed (sig=" + before + ")");
+                return;
+            }
+        }
     }
 
     /** 等画面状态稳定（aA 连续 ~1.2s 不变），最长 6s——规避状态切换中按键被吞。 */
@@ -1586,6 +1653,10 @@ implements CommandListener {
     public final void k(int n, int n2) {
         int n3 = n;
         n3 = this.int_k(n3);
+        if (System.getProperty("aoe.debug") != null) {
+            System.out.println("[k] node=" + n + " mode=" + n2 + " type=" + this.var_byte_arr_i[n + 8]
+                + " op=" + this.var_byte_arr_i[n3]);
+        }
         if (this.var_byte_arr_i[n + 8] == 2 && n2 > 0) {
             n3 = this.int_i(n3);
         }

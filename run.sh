@@ -15,4 +15,8 @@ fi
 export JAVA_HOME="$JDK"
 export PATH="$JDK/bin:$PATH"
 
+# 优先用仓库内的 wrapper（只需 JDK）；没有 wrapper 时退回系统 gradle
+if [ -x ./gradlew ]; then
+    exec ./gradlew run "$@"
+fi
 exec gradle run "$@"
