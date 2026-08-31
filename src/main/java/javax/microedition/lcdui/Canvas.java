@@ -155,6 +155,10 @@ public abstract class Canvas extends Displayable {
     protected void mouseA(int kind, int x, int y) {
     }
 
+    /** 桌面专属命令键（1=F5 快存，2=F9 快读）；游戏子类覆写。不占 J2ME 键码。 */
+    protected void desktopCommand(int id) {
+    }
+
     /** 桌面鼠标增强：合成按键的延迟松开（复用 pendingKeyReleases 防吞点按机制）。 */
     public void queueSyntheticKeyRelease(int keyCode) {
         synchronized (pendingKeyReleases) {
@@ -342,6 +346,15 @@ public abstract class Canvas extends Displayable {
 
         @Override
         public void keyPressed(KeyEvent e) {
+            // 桌面专属命令键不进 J2ME 键码管道（F5/F9 = 快存/快读）
+            if (e.getKeyCode() == KeyEvent.VK_F5) {
+                canvas.desktopCommand(1);
+                return;
+            }
+            if (e.getKeyCode() == KeyEvent.VK_F9) {
+                canvas.desktopCommand(2);
+                return;
+            }
             int code = mapKeyCode(e);
             if (code != 0) {
                 // 同一键的新按下使还未投递的松开失效（快速连点场景）

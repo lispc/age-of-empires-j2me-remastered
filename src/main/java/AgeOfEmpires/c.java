@@ -362,42 +362,110 @@ implements CommandListener {
     /** 跳过菜单直进指定关卡：守护线程走真实菜单流（注入按键，等稳定再下一步）。
      *  依赖 volatile 的 ax/ab 保证注入可见性。 */
     public void devStartMission(String spec) {
-        String[] parts = spec.split(":");
-        final int mission = Math.max(1, Integer.parseInt(parts[1]));
-        final boolean campaign = parts[0].startsWith("c");
-        final boolean random = parts[0].startsWith("r");
         Thread t = new Thread(() -> {
             try {
-                devWaitStable();
-                devPress(-5);                       // 主菜单：Play
-                if (campaign || random) {
-                    devPress(-4);                   // 循环器右切（Tutorial→Campaign→Random）
-                }
-                // Game Mode → （选关等中间屏）→ 任务装载：菜单链长度随模式/版本
-                // 有差异（有的屏高亮项脚本是空操作），连按 FIRE 直到离开菜单态。
-                long deadline = System.currentTimeMillis() + 30000;
-                while (this.aA == 4 && System.currentTimeMillis() < deadline) {
-                    if (mission > 1 && devHiScriptOp() == 3) {
-                        for (int i = 1; i < mission; ++i) {
-                            devPress(-4);           // 选关循环器右切（仅限 op=3 的选关项）
-                        }
-                    }
-                    devPress(-5);
-                }
-                deadline = System.currentTimeMillis() + 30000;
-                while (this.aA != 6 && System.currentTimeMillis() < deadline) {
-                    if (this.aA == 2) {
-                        this.void_a(-6);            // F1 推简报/教程对话框（周期重注=自带重试）
-                    }
-                    Thread.sleep(600);
-                }
-                System.out.println("[dev] in mission, aA=" + this.aA);
+                devNavToMission(spec);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
         }, "dev-navigate");
         t.setDaemon(true);
         t.start();
+    }
+
+    /** dev 快照直启：-Daoe.devBoot=<存档路径>。读档 → 按快照记录的 nav spec 走
+     *  菜单导航装载同一任务 → 主视图稳定后覆写快照状态。测试不再每次从主菜单
+     *  爬 10-50 秒。窗口会话（无 nav spec）的存档不支持直启，请用 F9。 */
+    public void devBootFromSave(String path) {
+        Thread t = new Thread(() -> {
+            try {
+                byte[] data;
+                try {
+                    data = java.nio.file.Files.readAllBytes(java.nio.file.Path.of(path));
+                } catch (Exception e) {
+                    System.out.println("[devBoot] cannot read " + path + ": " + e);
+                    return;
+                }
+                String spec;
+                try {
+                    spec = aoe.SaveState.navSpec(data);
+                } catch (Exception e) {
+                    System.out.println("[devBoot] bad save " + path + ": " + e);
+                    return;
+                }
+                if (spec == null) {
+                    System.out.println("[devBoot] " + path
+                        + " has no nav spec (window-mode save); boot-restore unsupported");
+                    return;
+                }
+                System.out.println("[devBoot] " + path + " -> nav " + spec);
+                devNavToMission(spec);
+                long deadline = System.currentTimeMillis() + 45000;
+                int stable = 0;
+                while (System.currentTimeMillis() < deadline) {
+                    Thread.sleep(200);
+                    if (this.aA == 6) {
+                        if (++stable >= 15) {
+                            break;
+                        }
+                    } else {
+                        stable = 0;
+                    }
+                }
+                if (this.aA != 6 || !this.devLoadFrom(path)) {
+                    System.out.println("[devBoot] failed, aA=" + this.aA);
+                    return;
+                }
+                long until = System.currentTimeMillis() + 3000;
+                while (this.devPendingRestore != null && System.currentTimeMillis() < until) {
+                    Thread.sleep(50);
+                }
+                System.out.println("[devBoot] done, aA=" + this.aA);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }, "dev-boot");
+        t.setDaemon(true);
+        t.start();
+    }
+
+    /** 菜单导航到指定任务并推掉装载简报（同步，须在 dev 线程调用）。
+     *  成功后记录 spec 到 devLastNavSpec：快照存档带上它，boot 直启时原样重放，
+     *  不用解读 ac 的运行时语义（持久化 .nfo 会让模式循环器位置跨会话漂移）。 */
+    private void devNavToMission(String spec) throws InterruptedException {
+        this.devLastNavSpec = spec;
+        String[] parts = spec.split(":");
+        final int mission = Math.max(1, Integer.parseInt(parts[1]));
+        final boolean campaign = parts[0].startsWith("c");
+        final boolean random = parts[0].startsWith("r");
+        try {
+            devWaitStable();
+            devPress(-5);                       // 主菜单：Play
+            if (campaign || random) {
+                devPress(-4);                   // 循环器右切（Tutorial→Campaign→Random）
+            }
+            // Game Mode → （选关等中间屏）→ 任务装载：菜单链长度随模式/版本
+            // 有差异（有的屏高亮项脚本是空操作），连按 FIRE 直到离开菜单态。
+            long deadline = System.currentTimeMillis() + 30000;
+            while (this.aA == 4 && System.currentTimeMillis() < deadline) {
+                if (mission > 1 && devHiScriptOp() == 3) {
+                    for (int i = 1; i < mission; ++i) {
+                        devPress(-4);           // 选关循环器右切（仅限 op=3 的选关项）
+                    }
+                }
+                devPress(-5);
+            }
+            deadline = System.currentTimeMillis() + 30000;
+            while (this.aA != 6 && System.currentTimeMillis() < deadline) {
+                if (this.aA == 2) {
+                    this.void_a(-6);            // F1 推简报/教程对话框（周期重注=自带重试）
+                }
+                Thread.sleep(600);
+            }
+            System.out.println("[dev] in mission, aA=" + this.aA);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     /** 菜单指针快照：aA / ao / Z / aR + （高亮项是循环器时）循环器位置字节。
@@ -503,6 +571,130 @@ implements CommandListener {
         }
     }
 
+    // ===== dev 效率工具：autoDismiss / HUD / 快照存档（F5/F9、FIFO、自动 checkpoint）=====
+    private static final boolean DEV_AUTO_DISMISS = System.getProperty("aoe.autoDismiss") != null;
+    static final boolean DEV_HUD = System.getProperty("aoe.devHud") != null;
+    private static final boolean DEV_AUTO_CHECKPOINT =
+        !"-".equals(System.getProperty("aoe.autoCheckpoint", "1"));
+    /** 对话框自动推进：任务里进过一次主视图后，aA==2 的弹窗每 4 帧补一个左软键。 */
+    private boolean devMissionSeen;
+    private int devDismissFrames;
+    /** 任务内连续帧计数：到 25（≈2s）做一次开局自动 checkpoint。 */
+    private int devStableFrames;
+    private volatile String devPendingSavePath;
+    private volatile byte[] devPendingRestore;
+    /** 本次会话进入当前任务用的 nav spec（"-Daoe.dev" 语义）；窗口会话为 null。 */
+    public String devLastNavSpec;
+    private String devToast;
+    private long devToastUntil;
+
+    static String devSaveDir() {
+        return System.getProperty("aoe.saveDir",
+            System.getProperty("user.home") + "/Library/Application Support/AoeJ2ME/saves");
+    }
+
+    private void devToast(String s) {
+        this.devToast = s;
+        this.devToastUntil = System.currentTimeMillis() + 2000;
+    }
+
+    /** 快存。实际写盘在 EDT 帧首（p()），避免与 tick/渲染竞态产生撕裂快照。 */
+    public boolean devSaveTo(String path) {
+        if (this.aA != 6) {
+            System.out.println("[save] refused, aA=" + this.aA);
+            this.devToast("Cannot save now");
+            return false;
+        }
+        this.devPendingSavePath = path;
+        return true;
+    }
+
+    /** 快读。同任务才允许直接覆写；boot 恢复走 devBoot（先导航后覆写）。 */
+    public boolean devLoadFrom(String path) {
+        try {
+            byte[] data = java.nio.file.Files.readAllBytes(java.nio.file.Path.of(path));
+            int[] id = aoe.SaveState.identity(data);
+            if (this.aA == 6 && (id[0] != this.ac || id[1] != this.aF || id[2] != this.nfoMissionId())) {
+                System.out.println("[load] mission mismatch: save ac=" + id[0] + " aF=" + id[1]
+                    + " nfo=" + id[2] + " / now ac=" + this.ac + " aF=" + this.aF + " nfo=" + this.nfoMissionId());
+                this.devToast("Save is for another mission");
+                return false;
+            }
+            this.devPendingRestore = data;
+            return true;
+        } catch (Exception e) {
+            System.out.println("[load] " + path + ": " + e);
+            this.devToast("Load failed");
+            return false;
+        }
+    }
+
+    /** 当前任务身份三元组（教程任务号在 .nfo 字节 31/32）。 */
+    private int nfoMissionId() {
+        return this.var_byte_arr_f != null && this.var_byte_arr_f.length > 32
+            ? ((this.var_byte_arr_f[31] & 0xFF) << 8 | this.var_byte_arr_f[32] & 0xFF) : 0;
+    }
+
+    /** 桌面命令键（Canvas.keyPressed 转发）：1=F5 快存，2=F9 快读。 */
+    @Override
+    public void desktopCommand(int id) {
+        if (id == 1) {
+            this.devSaveTo(devSaveDir() + "/quick.aoesave");
+        } else if (id == 2) {
+            this.devLoadFrom(devSaveDir() + "/quick.aoesave");
+        }
+    }
+
+    /** 每帧帧首（EDT）：存档请求串行化 + autoDismiss + 自动 checkpoint。 */
+    private void devFrameHousekeeping() {
+        if (this.aA == 6) {
+            this.devMissionSeen = true;
+        } else if (this.aA == 4) {
+            this.devMissionSeen = false;
+        }
+        if (DEV_AUTO_DISMISS && this.devMissionSeen && this.aA == 2
+                && ++this.devDismissFrames >= 4) {
+            this.devDismissFrames = 0;
+            this.void_a(-6);
+        }
+        if (this.aA != 6) {
+            this.devStableFrames = 0;
+        } else if (this.devStableFrames < 25) {
+            if (++this.devStableFrames == 25 && DEV_AUTO_CHECKPOINT) {
+                this.devSaveTo(devSaveDir() + "/auto.aoesave");
+            }
+        }
+        if (this.devPendingSavePath != null) {
+            String path = this.devPendingSavePath;
+            this.devPendingSavePath = null;
+            try {
+                byte[] data = aoe.SaveState.capture(this);
+                java.nio.file.Path p = java.nio.file.Path.of(path);
+                if (p.getParent() != null) {
+                    java.nio.file.Files.createDirectories(p.getParent());
+                }
+                java.nio.file.Files.write(p, data);
+                System.out.println("[save] wrote " + path + " (" + data.length + "B)");
+                this.devToast("Saved");
+            } catch (Exception e) {
+                System.out.println("[save] " + path + ": " + e);
+                this.devToast("Save failed");
+            }
+        }
+        if (this.devPendingRestore != null) {
+            byte[] data = this.devPendingRestore;
+            this.devPendingRestore = null;
+            try {
+                aoe.SaveState.apply(this, data);
+                System.out.println("[load] applied (" + data.length + "B)");
+                this.devToast("Loaded");
+            } catch (Exception e) {
+                System.out.println("[load] apply: " + e);
+                this.devToast("Load failed");
+            }
+        }
+    }
+
     // ===== dev 鼠标驱动（-Daoe.devMouse=<fifo 路径>）=====
     /** 从 FIFO 逐行读指令直接喂 mouseA/void_a（逻辑坐标 240x320）。宿主终端缺
      *  辅助功能/屏幕录制授权、无法注入真实 CGEvent 时，用它在游戏层驱动和验证
@@ -511,6 +703,7 @@ implements CommandListener {
      *        drag x1 y1 x2 y2 | key <J2ME键码> | dump <png路径> | exit
      *  用法：mkfifo /tmp/aoe-mouse 后启动游戏，echo "move 120 160" > /tmp/aoe-mouse */
     public void devStartMouseFifo(String path) {
+        this.devFifoPath = path;
         Thread t = new Thread(() -> {
             java.io.File fifo = new java.io.File(path);
             if (!fifo.exists()) {
@@ -544,6 +737,9 @@ implements CommandListener {
         t.setDaemon(true);
         t.start();
     }
+
+    private String devFifoPath;
+    private boolean devInScript;
 
     /** 执行一条 FIFO 指令；返回 false 表示 exit。 */
     private boolean devMouseCmd(String line) {
@@ -590,9 +786,47 @@ implements CommandListener {
                     break;
                 }
                 case "state": {
-                    System.out.println("[devMouse] cursor=(" + this.aa + "," + this.aV + ") Q="
-                        + this.Q + " aE=" + this.aE + " Y=" + this.Y + " sel=" + this.var_int_b);
+                    System.out.println("[devMouse] aA=" + this.aA + "/" + this.am
+                        + " cursor=(" + this.aa + "," + this.aV + ") cam=(" + this.y + "," + this.N + ")"
+                        + " Q=" + this.Q + " aE=" + this.aE + " Y=" + this.Y + " sel=" + this.var_int_b);
+                    StringBuilder json = new StringBuilder(512);
+                    json.append("{\"aA\":").append(this.aA).append(",\"am\":").append(this.am)
+                        .append(",\"ar\":").append(this.ar)
+                        .append(",\"cursor\":[").append(this.aa).append(',').append(this.aV).append(']')
+                        .append(",\"cam\":[").append(this.y).append(',').append(this.N).append(']')
+                        .append(",\"sel\":").append(this.var_int_b).append(",\"aE\":").append(this.aE);
+                    if (this.var_short_arr_a != null) {
+                        int explored = 0;
+                        for (int i = 0; i < this.var_short_arr_a.length; ++i) {
+                            if ((this.var_short_arr_a[i] & 0x8000) == 0) {
+                                ++explored;
+                            }
+                        }
+                        json.append(",\"explored\":").append(explored)
+                            .append(",\"tiles\":").append(this.var_short_arr_a.length);
+                    }
+                    json.append(",\"units\":[");
                     int cnt = this.var_int_arr_arr_a[0][2];
+                    for (int i = 0; i < cnt && i < 16; ++i) {
+                        int off = i * 8;
+                        if (i > 0) {
+                            json.append(',');
+                        }
+                        json.append("{\"tile\":[").append(this.var_short_arr_arr_a[0][off] >>> 8)
+                            .append(',').append(this.var_short_arr_arr_a[0][off] & 0xFF)
+                            .append("],\"type\":").append(this.var_short_arr_arr_a[0][off + 3] & 0xFF)
+                            .append(",\"sel\":").append((this.var_short_arr_arr_a[0][off + 4] & 0x8000) != 0)
+                            .append('}');
+                    }
+                    json.append("]}\n");
+                    if (this.devFifoPath != null) {
+                        try {
+                            java.nio.file.Files.write(java.nio.file.Path.of(this.devFifoPath + ".json"),
+                                json.toString().getBytes("UTF-8"));
+                        } catch (Exception e) {
+                            System.out.println("[devMouse] json: " + e);
+                        }
+                    }
                     for (int i = 0; i < cnt && i < 16; ++i) {
                         int off = i * 8;
                         System.out.println("[devMouse] unit " + i
@@ -603,6 +837,76 @@ implements CommandListener {
                     }
                     break;
                 }
+                case "until": {
+                    // 阻塞等 aA 到目标值（把"发命令→sleep→grep 日志"循环挪进游戏进程）
+                    int target = Integer.parseInt(p[1]);
+                    long timeout = p.length > 2 ? Long.parseLong(p[2]) * 1000L : 30000L;
+                    long start = System.currentTimeMillis();
+                    while (this.aA != target && System.currentTimeMillis() - start < timeout) {
+                        Thread.sleep(100);
+                    }
+                    System.out.println("[devMouse] until aA=" + target + ": "
+                        + (this.aA == target ? "ok" : "timeout") + " after "
+                        + (System.currentTimeMillis() - start) + "ms");
+                    break;
+                }
+                case "probe": {
+                    // 只拾取不动镜头：屏幕→格子标定用
+                    long seqBefore = this.mousePickSeq;
+                    this.mousePickX = Integer.parseInt(p[1]);
+                    this.mousePickY = Integer.parseInt(p[2]);
+                    this.mousePickPending = true;
+                    long start = System.currentTimeMillis();
+                    while (this.mousePickSeq == seqBefore && System.currentTimeMillis() - start < 800) {
+                        Thread.sleep(30);
+                    }
+                    System.out.println("[probe] " + this.mousePickX + "," + this.mousePickY
+                        + " -> tile=" + (this.mousePickSeq == seqBefore ? -2 : this.mousePickTile));
+                    break;
+                }
+                case "script": {
+                    // 批量执行指令文件：每行一条，#注释，"sleep 毫秒" 等待
+                    if (this.devInScript) {
+                        System.out.println("[devMouse] nested script ignored");
+                        break;
+                    }
+                    this.devInScript = true;
+                    try (java.io.BufferedReader sr = new java.io.BufferedReader(
+                            new java.io.InputStreamReader(new java.io.FileInputStream(p[1]), "UTF-8"))) {
+                        String sl;
+                        while ((sl = sr.readLine()) != null) {
+                            sl = sl.trim();
+                            if (sl.isEmpty() || sl.startsWith("#")) {
+                                continue;
+                            }
+                            if (sl.startsWith("sleep ")) {
+                                Thread.sleep(Integer.parseInt(sl.substring(6).trim()));
+                                continue;
+                            }
+                            System.out.println("[devMouse] script> " + sl);
+                            if (!devMouseCmd(sl)) {
+                                this.devInScript = false;
+                                return false;
+                            }
+                        }
+                    } finally {
+                        this.devInScript = false;
+                    }
+                    break;
+                }
+                case "fields":
+                    try (java.io.PrintWriter w = new java.io.PrintWriter(p[1], "UTF-8")) {
+                        aoe.DevFields.dump(this, AgeOfEmpires.b.class, w);
+                    }
+                    System.out.println("[devMouse] fields dumped to " + p[1]);
+                    break;
+                case "save":
+                    this.devSaveTo(p.length > 1 ? p[1] : devSaveDir() + "/quick.aoesave");
+                    break;
+                case "load":
+                    this.devLoadFrom(p.length > 1 ? p[1] : devSaveDir() + "/quick.aoesave");
+                    Thread.sleep(300);      // 等帧首 EDT 应用
+                    break;
                 case "dump":
                     var_com_ulysseo_mad_b_a.dumpFramebuffer(p[1]);
                     System.out.println("[devMouse] dumped " + p[1]);
@@ -946,8 +1250,38 @@ implements CommandListener {
 
     /** 主循环体：框架每 80ms 调 paint → 这里（paint-driven），先推进游戏逻辑再渲染，
      *  ar 计帧。屏幕切换按 aA 分发（见 GAME_NOTES.md 的状态机速查）。 */
+    /** dev HUD（-Daoe.devHud=1）：画面顶部两行状态，dump 截图自描述。 */
+    private void devDrawHud(Graphics graphics) {
+        graphics.setColor(0);
+        graphics.fillRect(0, 27, this.aO, 26);
+        graphics.setColor(0xFFFFFF);
+        String line1 = "aA=" + this.aA + "/" + this.am + " ar=" + this.ar;
+        if (this.var_byte_arr_i != null) {
+            line1 += " node=" + this.aR + " Z=" + this.Z + "/" + this.ao + " H=" + this.H;
+        }
+        String pick = this.mouseLastTile < 0 ? "-"
+            : (this.mouseLastTile & 63) + "," + (this.mouseLastTile >> 6);
+        String line2 = "cur=" + this.aa + "," + this.aV + " cam=" + this.y + "," + this.N
+            + " pick=" + pick + " sel=" + this.var_int_b + "/" + (this.aE & 0xFFFF);
+        graphics.drawString(line1, 2, 28, 20);
+        graphics.drawString(line2, 2, 40, 20);
+    }
+
+    /** 存/读档结果提示（居中，2s）。 */
+    private void devDrawToast(Graphics graphics) {
+        if (this.devToast == null || System.currentTimeMillis() >= this.devToastUntil) {
+            return;
+        }
+        graphics.setClip(0, 0, this.aO, this.var_int_j);
+        graphics.setColor(0);
+        graphics.fillRect(50, 46, 140, 16);
+        graphics.setColor(0xFFFFFF);
+        graphics.drawString(this.devToast, 120, 49, 17);    // TOP|HCENTER
+    }
+
     public final void p(Graphics graphics) {
         ++this.ar;
+        this.devFrameHousekeeping();
         if (this.var_boolean_j) {
             if (Runtime.getRuntime().freeMemory() < 50000L) {
                 return;
@@ -1016,6 +1350,10 @@ implements CommandListener {
             if (this.boolean_a()) {
                 this.n(graphics);
                 graphics.setClip(0, 0, this.aO, this.var_int_j);
+                if (DEV_HUD) {
+                    this.devDrawHud(graphics);
+                }
+                this.devDrawToast(graphics);
                 if (this.var_boolean_f) {
                     this.a(graphics, 21, 4, this.var_int_j - 6, 14, 0, 7, 6, 0, 0);
                 }

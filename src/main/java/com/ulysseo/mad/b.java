@@ -76,6 +76,11 @@ extends GameCanvas {
         this.var_com_ulysseo_mad_a_a.mouseA(n, n2, n3);
     }
 
+    @Override
+    public void desktopCommand(int n) {
+        this.var_com_ulysseo_mad_a_a.desktopCommand(n);
+    }
+
     protected final void pointerPressed(int n, int n2) {
     }
 

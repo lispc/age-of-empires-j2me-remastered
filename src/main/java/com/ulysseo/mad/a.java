@@ -43,5 +43,9 @@ public abstract class a {
      *  (x,y) 为 240x320 逻辑像素。J2ME 本无鼠标，默认无操作。 */
     public void mouseA(int kind, int x, int y) {
     }
+
+    /** 桌面专属命令键（1=F5 快存，2=F9 快读），不占 J2ME 键码。默认无操作。 */
+    public void desktopCommand(int id) {
+    }
 }
 

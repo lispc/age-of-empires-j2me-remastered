@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+"""aoectl — 帝国时代 II (J2ME 桌面移植) 的 dev 控制器。
+
+包装游戏的 FIFO 指令通道（游戏需以 -Daoe.devMouse=<fifo> 启动）。
+状态查询读 <fifo>.json（state 命令同步写入）。
+
+用法:
+  aoectl state                 打印游戏状态（JSON）
+  aoectl wait-mission [超时秒]  等待进入任务主视图 (aA=6)
+  aoectl until <aA> [超时秒]    等待画面状态到指定值
+  aoectl tap X Y               鼠标单击（逻辑坐标 240x320）
+  aoectl rclick X Y            鼠标右键（选中单位时=移动令）
+  aoectl move X Y | press | release | drag X1 Y1 X2 Y2
+  aoectl key <J2ME键码>        例: 48='0' 全图视图, -2=下, -5=FIRE
+  aoectl probe X Y             屏幕→格子拾取标定
+  aoectl dump [输出.png]        导出当前帧缓冲（默认 /tmp/aoe-dump.png）
+  aoectl save [路径] | load [路径]   快照存/读档（默认 quick.aoesave）
+  aoectl script <文件>          批量执行指令（支持 sleep 毫秒 / # 注释）
+  aoectl fields <输出.txt>      反射字段全量 dump（存档 diff 验证用）
+  aoectl exit                   退出游戏
+环境变量:
+  AOE_FIFO   FIFO 路径（默认 /tmp/aoe-mouse）
+"""
+import json
+import os
+import sys
+import time
+
+FIFO = os.environ.get("AOE_FIFO", "/tmp/aoe-mouse")
+STATUS = FIFO + ".json"
+
+
+def send(cmd: str) -> None:
+    with open(FIFO, "w") as f:      # 阻塞直到游戏端读走
+        f.write(cmd + "\n")
+
+
+def refresh_status(timeout=8.0):
+    try:
+        os.remove(STATUS)
+    except OSError:
+        pass
+    send("state")
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if os.path.exists(STATUS):
+            for _ in range(20):     # 等写入完成（内容以 } 收尾）
+                with open(STATUS) as f:
+                    data = f.read()
+                if data.rstrip().endswith("}"):
+                    return json.loads(data)
+                time.sleep(0.02)
+        time.sleep(0.05)
+    raise TimeoutError(f"no status at {STATUS} — 游戏在跑吗？-Daoe.devMouse={FIFO} 了吗？")
+
+
+def main() -> int:
+    if len(sys.argv) < 2:
+        print(__doc__)
+        return 2
+    cmd, args = sys.argv[1], sys.argv[2:]
+    if cmd == "state":
+        print(json.dumps(refresh_status(), ensure_ascii=False, indent=1))
+    elif cmd == "wait-mission":
+        timeout = args[0] if args else "60"
+        send(f"until 6 {timeout}")
+        st = refresh_status()
+        print("in-mission" if st["aA"] == 6 else f"aA={st['aA']} (timeout?)")
+    elif cmd == "until":
+        send("until " + " ".join(args))
+    elif cmd == "dump":
+        path = args[0] if args else "/tmp/aoe-dump.png"
+        send(f"dump {path}")
+        time.sleep(0.5)
+        print(path if os.path.exists(path) else "dump failed", file=sys.stderr)
+    elif cmd == "fields":
+        send(f"fields {args[0]}")
+        time.sleep(1.0)
+    elif cmd in ("save", "load", "script", "key", "move", "press", "release",
+                 "click", "rclick", "tap", "drag", "probe", "exit"):
+        if cmd == "tap":
+            cmd = "click"
+        send(" ".join([cmd] + args))
+        if cmd in ("save", "load", "probe"):
+            time.sleep(0.8)     # 给帧首 EDT / 拾取留一帧
+    else:
+        print(f"未知命令: {cmd}", file=sys.stderr)
+        return 2
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
