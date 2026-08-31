@@ -31,6 +31,8 @@ QEZC/X 别名）、鼠标支持（悬停高亮/单击选中/拖动框选/右键�
 
 ## 代码地图
 
+- `USER-GUIDE.md` — **面向玩家的使用手册**（键鼠操作/小地图/存读档），纯用户视角，
+  开发者内容不要写进这里。
 - `GAME_NOTES.md` — **游戏机制知识地图**（主循环/按键模型/状态机/菜单模板树/
   移动寻路/存档布局/data.res 资源索引）。读 `c.java` 前先看。
 - `src/main/java/AgeOfEmpires/` — 游戏本体（CFR 反编译 + 人工修正清单见 README）。
@@ -39,9 +41,19 @@ QEZC/X 别名）、鼠标支持（悬停高亮/单击选中/拖动框选/右键�
 - `src/main/java/javax/microedition/` — 手写 Swing 适配层（lcdui/rms/media/midlet）。
 - `src/main/java/aoe/` — `Main`（启动器）+ `DevHarness`（headless 测试驱动）。
 - `decompiled/` — CFR 原始输出，仅参考；**以 src/ 为准**。
-- `tools/` — 调试辅助（shot.sh / winid.swift / cfr.jar）。
+- `tools/` — 调试辅助（shot.sh / winid.swift / cfr.jar / **aoectl**——FIFO 控制器
+  CLI，见"dev 鼠标驱动"节）。
 
 ## 当前进行中的工作（接手请先读）
+
+### 本轮小结（2026-08-31 下午）
+
+1. **dev 效率工具**落地：autoDismiss / devHud / FIFO 状态 JSON+until/probe/script/
+   fields / aoectl / DevFields diff——"调试会话先开 autoDismiss、机制测试用
+   random:1（无教程脚本）、快照直启代替菜单爬行"是新工作流。
+2. **快照存档 v1** 落地并验收（F5/F9 + 自动 checkpoint + devBoot 直启）。
+3. **常驻小地图**方案已评审定稿，用户拍板暂缓——见"常驻小地图"节。
+4. 玩家手册 `USER-GUIDE.md` 新建（键鼠/小地图迷雾/存读档）。
 
 ### WIP-1 悬停 UX 改造 —— ✅ 2026-08-31 全项验证通过
 
@@ -77,12 +89,53 @@ QEZC/X 别名）、鼠标支持（悬停高亮/单击选中/拖动框选/右键�
 （**逻辑坐标 240x320**，别超界——x≥226/y≥306 会触发边缘滚动）：
 `move x y` / `press` / `release` / `click` / `rclick` / `drag x1 y1 x2 y2` /
 `key <J2ME键码>`（单发：注入即挂延迟释放）/ `dump <png>`（同步导帧，最方便的视觉
-验证）/ `state`（打印光标格、aE/Y 和每单位占位格+选中位）/ `exit`。配套调试打印：
+验证）/ `state`（完整状态：aA/am/光标/相机/选中/迷雾格数/单位表，并同步写
+`<fifo>.json` 供工具读回）/ `until <aA> [秒]`（进程内阻塞等状态到位）/
+`probe x y`（只拾取不下令，屏幕→格子标定）/ `script <文件>`（批量执行，支持
+`sleep 毫秒` 与 #注释）/ `fields <txt>`（反射字段全量 dump，存档 diff 验证）/
+`save <路径>` / `load <路径>` / `exit`。配套调试打印：
 `[mouseA]`/`[pick]`/`[band]`/`[rcmd]`/`[k]`。
 
 注意：`click`/`rclick` 会各自刷新拾取点并等下一帧拾取生效后执行（rclick 挂起 ≤3 帧，
 落点在虚空/地图外则丢弃）；早期版本 rclick 直接用上一帧悬停的 lastTile，冷注入会
 指向 -1 或旧格（2026-08-31 修复）。
+
+**tools/aoectl**：上述指令的 CLI 包装（`AOE_FIFO` 环境变量选通道）。
+`aoectl state|wait-mission|tap|rclick|key|probe|dump|save|load|script|fields|exit`。
+典型流程一条命令搞定：`aoectl wait-mission && aoectl tap 116 140 && aoectl dump`。
+
+### dev 效率工具（2026-08-31 二轮新增）
+
+- `-Daoe.autoDismiss=1`：任务内教程对话框自动推进（进过一次主视图后，aA==2 的
+  弹窗每 4 帧补一个左软键）。**调试会话默认开**——对话框吞输入曾是最大干扰源。
+- `-Daoe.devHud=1`：画面顶部两行状态叠加（aA/am/ar/菜单指针/光标/相机/pick/选中），
+  dump 出的截图自描述；另有存/读档 toast 提示（居中 2s）。
+- `-Daoe.autoCheckpoint`（默认开）：进关 ~2s 后自动写 `auto.aoesave`。
+- `aoe.DevFields`：反射 dump 全部 AgeOfEmpires.* 字段（数组=长度+CRC，小数组带
+  全元素）。**存档完整性验收法**：存→立刻读→前后两次 fields dump diff——
+  剩余差异应只有帧计数/动画计数/toast/音频对象等良性噪声（2026-08-31 验收通过）。
+
+### 快照存档 v1（aoe.SaveState，2026-08-31 落地）
+
+- **方案**：定向二进制快照 + "同任务重载+覆写"，不做世界重建。捕获清单：
+  任务身份（ac/aC/aF + .nfo 任务号——教程的 aF 恒 0，必须带 nfo[31,32] 才能区分
+  教程各关）、设置镜像 var_byte_arr_f、解锁进度 aj/aG、脚本树 var_byte_arr_i +
+  引擎指针（aR/ao/Z/H/v/ap）+ 任务数据镜像 var_byte_arr_a（脚本解释器会就地写
+  执行标记）、地图格 var_short_arr_a、每玩家单位/建筑四个槽位数组、资源/计数
+  int 数组、相机/光标/选中、dev 导航 spec（头部，供直启重放）。
+- **应用点**：读档请求在 EDT 帧首（p() 的 devFrameHousekeeping）串行化消费，
+  避免与 tick/渲染竞态产生撕裂快照；apply 后 `af=0`+`k()` 强制全量重画。
+- **入口**：F5/F9（Canvas.desktopCommand 链：Swing→mad.b→mad.a→c，快捷存读
+  quick.aoesave）；FIFO save/load；自动 checkpoint；`-Daoe.devBoot=<存档>` 直启
+  （按快照里的 nav spec 重放菜单导航，稳定后覆写——实测 14s 含导航，状态与存档
+  会话完全一致）。
+- **守卫**：读档校验任务身份三元组（ac/aF/nfo号），不匹配拒绝并提示。
+- **已知边界（phase 2 候选）**：① 窗口会话（无 nav spec）的档暂不支持 boot 直启
+  ——直接触发 aA=11 装载器需要把 aF/装载链语义考古清楚；② 任务内菜单 UI 的
+  多存档槽未做（菜单树是 RAM 数据可打补丁，但字符串表/布局要动 l()）。
+- **坑**：RecordStore 持久化在 `~/.aoe-desktop`，模式循环器位置跨会话漂移——
+  快照里记 nav spec 重放，**不要**试图从 ac 推导模式（运行时语义与反编译注释
+  对不上，实测教程会话 ac=16、随机地图 ac=32）。
 
 ### 小地图 / 全图视图（2026-08-31 查证，用户问过"蓝屏"）
 
@@ -93,13 +146,29 @@ Enter/Space/X/F1/Esc）退出；方向键/WASD/数字斜向键在全图上平移
 白框=当前视口，点=单位/建筑。教程开局几乎全黑，探索后逐格变绿。预热保护 `af>=10`
 （c.java:2297）内按键不响应属正常。
 
+### 常驻小地图 —— 方案已评审（2026-08-31），暂不实施
+
+用户需求：小地图常驻任务画面（原版只有 `0` 键全屏切换视图，方案保留不动）。
+已定方案：
+- **渲染**：新建 240×120 可变图，配色复用 `b(Graphics,x,y)` 的语义（未探索黑/
+  地形色/单位点），缩放 blit 到画面角落。地形层缓存 + 节流（~0.5s 或探索变化时
+  重画，4096 格全量重画较贵）；视口框与单位点每帧叠加。
+- **规格**：右下角 ~96×48 逻辑像素，半透明深色底 + 1px 边框；`-Daoe.minimap=0`
+  可关；`M` 键开关（桌面别名，不占原版键位）。
+- **点击跳相机**：逆投影公式（由 `b()` 正投影反解）：screen_x=2(tx−ty)+120、
+  screen_y=tx+ty ⇒ tx=((x−120)/2+y)/2、ty=(y−(x−120)/2)/2。
+- 顺带绕开原版坑：全图视图缩略图只在首次进入时盖章（`af` 计数不复位），之后
+  探索推进不更新；常驻版定期重画天然没有此问题。
+- 挂载点：`a(Graphics)` 末尾（框选/悬停高亮之后）。
+
 ### 调试打印清单（全部 `-Daoe.debug=1` 门控，验证完可清）
 
 `[mouseA]/[pick]/[mtick]/[corner1]/[corner2]/[band]`（鼠标链路，c.java/Canvas.java）、
 `[rcmd]`（右键命令分支与 aE/Y 状态）、`[fMenu]/[menuGate]/[fHead]`（菜单渲染与
 激活门，f(Graphics)）、`[k]`（菜单项激活：节点/类型/脚本操作码，菜单流调试利器）、
 `[void_a]`（键映射）、`[trace]`（boolean_c/g/boolean_g 状态转换）、`[dev]`（自动
-导航）、`[devMouse]`（FIFO 驱动）。另有 `mad/e.java` 的 25 帧状态打印（ar/am/aA/aH）。
+导航）、`[devMouse]`（FIFO 驱动）、`[save]/[load]`（快照存读）、`[probe]`（拾取
+标定）、`[devBoot]`（快照直启）。另有 `mad/e.java` 的 25 帧状态打印（ar/am/aA/aH）。
 
 ## 整体目标状态
 
@@ -114,10 +183,12 @@ Enter/Space/X/F1/Esc）退出；方向键/WASD/数字斜向键在全图上平移
 - 双击选同类：`h(0, 类型)` 原语现成（教程"全选村民"就是它），接鼠标双击即可。
 - Ctrl+数字编组：需要新增编组存储（存选中单位槽位表），召回 = 重放 0x8000 置位。
 - MIDI 换 SoundFont 音源 + 音量设置（`javax.sound.midi` 原生支持加载 soundfont）。
+- ~~战局快照~~ → **已完成**（快照存档 v1，见上）；剩余 phase 2：窗口档 boot 直启
+  （直接触发 aA=11 装载链）+ 任务内菜单多槽位 UI。
+- **常驻小地图**（方案已定，见上节——用户 2026-08-31 拍板"方案记录、暂缓实施"）。
 
 **第二梯队（中等成本）**
 - 素材超分：`Image.ASSET_SCALE` 管线现成，离线超分后同尺寸替换即生效。
-- 战局快照：序列化 c 的关键字段（单位表/资源/地图占位）——中等工作量。
 - 鼠标 UX 进一步打磨（滚轮缩放？原版无缩放，谨慎）。
 
 **第三梯队（大工程，想清楚再做）**
