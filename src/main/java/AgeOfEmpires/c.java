@@ -30,19 +30,19 @@ public final class c
 extends com.ulysseo.mad.a
 implements CommandListener {
     public AoeMidlet var_AoeMidlet_a;
-    public int aO;
-    public int var_int_j;
+    public int screenW;
+    public int screenH;
     public int ad;
     public int J;
-    public int aI;
+    public int viewTileCols;
     public int aB;
     public int aL;
     public int var_int_f;
-    public int af;
+    public int mapThumbStampRow;
     public int u;
     public boolean var_boolean_f = false;
     public boolean var_boolean_b = false;
-    public int[] var_int_arr_d;
+    public int[] nfoHighScores;
     public String[] var_java_lang_String_arr_b;
     public String var_java_lang_String_b;
     public byte var_byte_a = 0;
@@ -55,20 +55,20 @@ implements CommandListener {
     public short var_short_c;
     public int[][] var_int_arr_arr_b;
     public short[][] var_short_arr_arr_b;
-    public short[] var_short_arr_a;
-    public int[][] var_int_arr_arr_a;
+    public short[] mapTiles;
+    public int[][] playerUnitHeaders;
     // —— 状态机（速查见 GAME_NOTES.md，完整语义未完全考证，改动前对照 p() 的分发）——
-    // aA: 顶层画面状态，p() 按它分发渲染；E() 在 aA 变化时构建新画面。
-    // am: 配套的"当前画面"值（boolean_g(n) 直接设置），am==aA 表示画面稳定。
-    public int aA;
-    public int am;
+    // screenState: 顶层画面状态，p() 按它分发渲染；E() 在 screenState 变化时构建新画面。
+    // am: 配套的"当前画面"值（boolean_g(n) 直接设置），am==screenState 表示画面稳定。
+    public int screenState;
+    public int pendingScreenState;
     public int aH;
     public boolean var_boolean_k;
     public int R;
     // ac: 游戏模式（由菜单脚本动作 65/71/73 设置）：0=教程，16=随机地图，32=战役。
     // aC: 当前选中的任务序号（0 起；战役 0..6，随机地图 0..2）。
-    public int ac;
-    public int aC;
+    public int gameMode;
+    public int missionIndex;
     public int z;
     public int I;
     public int[] var_int_arr_e;
@@ -80,34 +80,34 @@ implements CommandListener {
     public int aj;
     public int aG;
     // ar: tick 计数（每帧 +1，80ms 一帧；调试日志里的 ar 就是它）。
-    public int ar;
+    public int tickCount;
     public boolean var_boolean_h;
     public boolean var_boolean_j;
     public byte[] var_byte_arr_c;
-    public int y;
-    public int N;
+    public int cameraPxX;
+    public int cameraPxY;
     public int az;
     public int al;
-    public int Q;
+    public int cursorTileIdx;
     public int t;
-    public int aa;
-    public int aV;
+    public int cursorTileX;
+    public int cursorTileY;
     public int aK;
     public String[] var_java_lang_String_arr_a;
     public int as;
     public int V;
-    public int aN;
+    public int overlayPrevState;
     public int aW;
     public int aT;
     public int av;
     public int var_int_e;
     public int D;
-    public int var_int_b;
+    public int selectionMode;
     public int p;
-    public int aE;
-    public int var_int_h;
-    public int aJ;
-    public int Y;
+    public int selectionMark;
+    public int selectedType;
+    public int selectedSlot;
+    public int selectionPlayer;
     public int var_int_i;
     public int aQ;
     public Graphics var_javax_microedition_lcdui_Graphics_a;
@@ -115,22 +115,22 @@ implements CommandListener {
     public byte[] var_byte_arr_b;
     public byte[] var_byte_arr_h;
     public boolean var_boolean_e = false;
-    // .nfo 存档原始字节（314B，m() 读写 RecordStore，int_a(...)/h(...) 存取）：
-    // [0..27) = 7 个 4 字节大端战役高分（var_int_arr_d）；[28] = aG<<4|aj；
+    // .nfo 存档原始字节（314B，m() 读写 RecordStore，nfoReadInt(...)/h(...) 存取）：
+    // [0..27) = 7 个 4 字节大端战役高分（nfoHighScores）；[28] = aG<<4|aj；
     // [29] = 音效开关；[30] = 另一开关（AgeOfEmpires.b.c，含义未考证）。
-    public byte[] var_byte_arr_f;
+    public byte[] nfoData;
     // —— 按键输入状态（键位表 void_b(129) 从 data.res #129 加载）——
-    // var_byte_arr_k: 键码→动作码映射表，ak = 表长/2。void_a（按下）查表置
+    // keymap: 键码→动作码映射表，ak = 表长/2。onKeyPress（按下）查表置
     // ae（瞬时值）和 ab=ax（持续值）；游戏逻辑以 "ab != 0" 为"有键按住"
     // （如 o() 开头 if (ab == 0) return），自身从不清 ab，依赖松开事件
     // void_e 全清。桌面适配层把松开延迟到 paint 之后投递，见 void_e 注释。
-    public int ak;
-    public byte[] var_byte_arr_k;
-    public int ae;
+    public int keymapCount;
+    public byte[] keymap;
+    public int keyActionEvent;
     // volatile：按键状态由 EDT/dev 线程写、游戏 tick 线程读，ARM 弱内存模型下
     // 无同步的跨线程写入可能长期不可见（dev 自动导航曾因此失灵）。
-    public volatile int ax;
-    public volatile int ab;
+    public volatile int keyActionPulse;
+    public volatile int keyActionHeld;
     public String var_java_lang_String_d;
     public int ag;
     public String var_java_lang_String_a;
@@ -139,10 +139,10 @@ implements CommandListener {
     public int x;
     public boolean var_boolean_a;
     public boolean var_boolean_g;
-    public int F;
-    public int B;
-    public int O;
-    public int P;
+    public int clipLeft;
+    public int clipRight;
+    public int clipTop;
+    public int clipBottom;
     public boolean var_boolean_l;
     public int W;
     public int X;
@@ -159,26 +159,26 @@ implements CommandListener {
     public int S;
     public int au;
     public int U;
-    public int aP;
-    public int aS;
+    public int cursorScreenPxX;
+    public int cursorScreenPxY;
     public static int r = 12;
     public static int var_int_k;
     d var_AgeOfEmpires_d_a;
-    public int aF;
+    public int missionResId;
     // 菜单/对话框模板字节：a(n, true) 加载 data.res 对话框资源（131=选关）。
     // 树状节点结构，int_c/int_e/int_k/int_i 遍历；节点参数在 +9 起
     // （循环器控件：+9+1 = 选项总数，+9+2 = 当前选中项）。item 激活时执行
     // 一段脚本，动作码见 1225 行附近的 switch（65=教程/71=随机地图/
     // 73=战役/67,72=设置开关…）。
-    public byte[] var_byte_arr_i;
+    public byte[] menuTree;
     // H: 子状态/对话框选择器，boolean_d 按 H 加载对应菜单并打补丁：
     // 11=随机地图选关，12=战役选关，1=回主菜单。
-    public int H;
-    public int v;
+    public int menuScreenId;
+    public int pendingPanelSwitch;
     public int ap;
-    public int aR;
-    public int ao;
-    public int Z;
+    public int menuNode;
+    public int menuNodeCount;
+    public int menuHighlight;
     public int var_int_a;
     public int K;
     public boolean var_boolean_i = true;
@@ -194,17 +194,17 @@ implements CommandListener {
     public int aw;
     public Image[] var_javax_microedition_lcdui_Image_arr_a;
     // 自动重复：ab==L 视为"按住未换键"，s 每 tick +1，s>=5 后动作持续生效。
-    public int s;
-    public int L;
-    public int aU;
-    public int A;
-    public int at;
-    public int n;
+    public int keyRepeatFrames;
+    public int keyRepeatLast;
+    public int mapViewSavedCamX;
+    public int mapViewSavedCamY;
+    public int mapViewSavedCursorX;
+    public int mapViewSavedCursorY;
     public int m = 100000;
     public int o;
     public boolean var_boolean_c;
     public byte[] var_byte_arr_g;
-    public short[][] var_short_arr_arr_a;
+    public short[][] playerUnitSlots;
     public byte[] var_byte_arr_j = new byte[]{11, 2, 10, 1, 12, 2, -1, 11, 3, 12, 5, 6, 1, 7, 1, 5, 1, 10, 1, -1, 11, 5, 12, 5, 8, 1, 7, 1, 10, 1, 2, 1, -1, 11, 5, 8, 1, 12, 5, 7, 1, 3, 1, 2, 1, 10, 1, 10, 1, -2};
 
     c(AoeMidlet ageOfEmpires) {
@@ -221,24 +221,24 @@ implements CommandListener {
         }
     }
 
-    public final synchronized void k() {
-        if (this.ar < 20 || !AoeMidlet.var_boolean_a) {
+    public final synchronized void onShown() {
+        if (this.tickCount < 20 || !AoeMidlet.var_boolean_a) {
             return;
         }
-        this.af = 0;
+        this.mapThumbStampRow = 0;
         this.var_boolean_l = true;
         AgeOfEmpires.b.var_boolean_a = true;
     }
 
-    public final synchronized void q() {
-        if (this.ar < 20 || !AoeMidlet.var_boolean_a) {
+    public final synchronized void onHidden() {
+        if (this.tickCount < 20 || !AoeMidlet.var_boolean_a) {
             return;
         }
         AgeOfEmpires.b.c();
         AgeOfEmpires.b.var_boolean_a = true;
         this.s();
         this.var_boolean_j = true;
-        this.ab = 0;
+        this.keyActionHeld = 0;
     }
 
     public final void h() {
@@ -247,37 +247,37 @@ implements CommandListener {
 
     public final int int_b() {
         AgeOfEmpires.b.void_a();
-        this.ae = 0;
+        this.keyActionEvent = 0;
         this.void_b(129);
-        this.var_byte_arr_f = null;
-        this.var_byte_arr_f = new byte[314];
-        this.m();
+        this.nfoData = null;
+        this.nfoData = new byte[314];
+        this.loadNfo();
         this.e();
-        this.var_int_arr_arr_a = new int[2][91];
-        this.var_short_arr_arr_a = new short[2][208];
+        this.playerUnitHeaders = new int[2][91];
+        this.playerUnitSlots = new short[2][208];
         this.var_int_arr_arr_b = new int[2][88];
         this.var_short_arr_arr_b = new short[2][20];
-        this.var_short_arr_a = new short[4096];
+        this.mapTiles = new short[4096];
         this.var_javax_microedition_lcdui_Font_a = Font.getDefaultFont();
         this.ah = 19;
         this.ay = -2;
         this.var_int_f = 19;
         this.m(var_com_ulysseo_mad_b_a.getWidth(), var_com_ulysseo_mad_b_a.getHeight());
-        this.var_byte_arr_i = com.ulysseo.mad.c.byte_arr_a(117);
-        this.am = 4;
-        this.H = 2;
-        this.ar = 0;
-        this.var_int_arr_d = new int[7];
+        this.menuTree = com.ulysseo.mad.c.byte_arr_a(117);
+        this.pendingScreenState = 4;
+        this.menuScreenId = 2;
+        this.tickCount = 0;
+        this.nfoHighScores = new int[7];
         this.var_int_arr_e = new int[7];
         this.var_int_arr_a = new int[4];
-        this.m();
-        int n = this.int_a(28, 1);
+        this.loadNfo();
+        int n = this.nfoReadInt(28, 1);
         this.aG = n >> 4;
         this.aj = n & 0xF;
-        this.var_boolean_d = this.var_byte_arr_f[29] == 0;
-        AgeOfEmpires.b.c = this.var_byte_arr_f[30] == 0;
+        this.var_boolean_d = this.nfoData[29] == 0;
+        AgeOfEmpires.b.c = this.nfoData[30] == 0;
         for (int i = 0; i < 7; ++i) {
-            this.var_int_arr_d[i] = this.int_a(0 + (i << 2), 4);
+            this.nfoHighScores[i] = this.nfoReadInt(0 + (i << 2), 4);
         }
         this.R = 0;
         return -1;
@@ -305,8 +305,8 @@ implements CommandListener {
     }
 
     public final void v() {
-        if (this.ar - this.u >= 50) {
-            this.u = this.ar;
+        if (this.tickCount - this.u >= 50) {
+            this.u = this.tickCount;
             this.m = 510;
         }
         this.ag = 20;
@@ -333,29 +333,29 @@ implements CommandListener {
         this.a(n + 3 + 131, false);
     }
 
-    public final void void_a(int n) {
+    public final void onKeyPress(int n) {
         if (n > 127) {
             n = -(n - 128);
         }
         int n2 = n;
-        this.ae = 0;
-        for (int i = 0; i < this.ak; ++i) {
-            if (n2 != this.var_byte_arr_k[i << 1]) continue;
-            this.ae = this.var_byte_arr_k[(i << 1) + 1];
+        this.keyActionEvent = 0;
+        for (int i = 0; i < this.keymapCount; ++i) {
+            if (n2 != this.keymap[i << 1]) continue;
+            this.keyActionEvent = this.keymap[(i << 1) + 1];
             break;
         }
         if (System.getProperty("aoe.debug") != null) {
-            System.out.println("[void_a] key=" + n + " ae=" + this.ae + " ak=" + this.ak);
+            System.out.println("[void_a] key=" + n + " ae=" + this.keyActionEvent + " ak=" + this.keymapCount);
         }
-        this.ax = this.ab = this.ae;
+        this.keyActionPulse = this.keyActionHeld = this.keyActionEvent;
     }
-    public final void void_e(int n) {
+    public final void onKeyRelease(int n) {
         // 原版语义：松开即全清。桌面适配层（Canvas）会把松开事件延迟到 paint
         // 之后才投递到这里，保证按下至少被游戏完整消费一帧，快速点按不会被吞。
-        this.ae = 0;
-        this.L = 0;
-        this.ab = 0;
-        this.ax = 0;
+        this.keyActionEvent = 0;
+        this.keyRepeatLast = 0;
+        this.keyActionHeld = 0;
+        this.keyActionPulse = 0;
     }
 
     // ===== dev 模式（-Daoe.dev=tutorial:1|campaign:2|random:1，可配 -Daoe.headless=1/-Daoe.tickms=N）=====
@@ -404,7 +404,7 @@ implements CommandListener {
                 int stable = 0;
                 while (System.currentTimeMillis() < deadline) {
                     Thread.sleep(200);
-                    if (this.aA == 6) {
+                    if (this.screenState == 6) {
                         if (++stable >= 15) {
                             break;
                         }
@@ -412,15 +412,15 @@ implements CommandListener {
                         stable = 0;
                     }
                 }
-                if (this.aA != 6 || !this.devLoadFrom(path)) {
-                    System.out.println("[devBoot] failed, aA=" + this.aA);
+                if (this.screenState != 6 || !this.devLoadFrom(path)) {
+                    System.out.println("[devBoot] failed, aA=" + this.screenState);
                     return;
                 }
                 long until = System.currentTimeMillis() + 3000;
                 while (this.devPendingRestore != null && System.currentTimeMillis() < until) {
                     Thread.sleep(50);
                 }
-                System.out.println("[devBoot] done, aA=" + this.aA);
+                System.out.println("[devBoot] done, aA=" + this.screenState);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
@@ -447,7 +447,7 @@ implements CommandListener {
             // Game Mode → （选关等中间屏）→ 任务装载：菜单链长度随模式/版本
             // 有差异（有的屏高亮项脚本是空操作），连按 FIRE 直到离开菜单态。
             long deadline = System.currentTimeMillis() + 30000;
-            while (this.aA == 4 && System.currentTimeMillis() < deadline) {
+            while (this.screenState == 4 && System.currentTimeMillis() < deadline) {
                 if (mission > 1 && devHiScriptOp() == 3) {
                     for (int i = 1; i < mission; ++i) {
                         devPress(-4);           // 选关循环器右切（仅限 op=3 的选关项）
@@ -456,32 +456,32 @@ implements CommandListener {
                 devPress(-5);
             }
             deadline = System.currentTimeMillis() + 30000;
-            while (this.aA != 6 && System.currentTimeMillis() < deadline) {
-                if (this.aA == 2) {
-                    this.void_a(-6);            // F1 推简报/教程对话框（周期重注=自带重试）
+            while (this.screenState != 6 && System.currentTimeMillis() < deadline) {
+                if (this.screenState == 2) {
+                    this.onKeyPress(-6);            // F1 推简报/教程对话框（周期重注=自带重试）
                 }
                 Thread.sleep(600);
             }
-            System.out.println("[dev] in mission, aA=" + this.aA);
+            System.out.println("[dev] in mission, aA=" + this.screenState);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
     }
 
-    /** 菜单指针快照：aA / ao / Z / aR + （高亮项是循环器时）循环器位置字节。
+    /** 菜单指针快照：screenState / ao / Z / aR + （高亮项是循环器时）循环器位置字节。
      *  几乎任何菜单移动、换屏、循环切换都会改变其中之一，用作注入"被消费"的观测信号。 */
     private long devSig() {
-        long sig = ((long) this.aA & 0xFF) << 48
-            | ((long) this.ao & 0xFFFF) << 32
-            | ((long) this.Z & 0xFFFF) << 16
-            | ((long) this.aR & 0xFFFF);
+        long sig = ((long) this.screenState & 0xFF) << 48
+            | ((long) this.menuNodeCount & 0xFFFF) << 32
+            | ((long) this.menuHighlight & 0xFFFF) << 16
+            | ((long) this.menuNode & 0xFFFF);
         try {
-            if (this.var_byte_arr_i != null && this.Z >= 0 && this.Z < this.ao) {
-                int node = this.int_c(this.Z);
-                if (node + 11 < this.var_byte_arr_i.length
-                        && (this.var_byte_arr_i[node + 8] & 0xF) == 2) {
+            if (this.menuTree != null && this.menuHighlight >= 0 && this.menuHighlight < this.menuNodeCount) {
+                int node = this.int_c(this.menuHighlight);
+                if (node + 11 < this.menuTree.length
+                        && (this.menuTree[node + 8] & 0xF) == 2) {
                     sig |= (1L << 63)
-                        | ((long) (this.var_byte_arr_i[node + 11] & 0xFF & 0x7F) << 56);
+                        | ((long) (this.menuTree[node + 11] & 0xFF & 0x7F) << 56);
                 }
             }
         } catch (IndexOutOfBoundsException e) {
@@ -512,13 +512,13 @@ implements CommandListener {
     /** 高亮项的脚本操作码；高亮项不是菜单项或模板正在换时返回 -1。 */
     private int devHiScriptOp() {
         try {
-            if (this.var_byte_arr_i == null || this.Z < 0 || this.Z >= this.ao) {
+            if (this.menuTree == null || this.menuHighlight < 0 || this.menuHighlight >= this.menuNodeCount) {
                 return -1;
             }
-            int node = this.int_c(this.Z);
-            if ((node + 12 < this.var_byte_arr_i.length)
-                    && (this.var_byte_arr_i[node + 8] & 0xF) == 2) {
-                return this.var_byte_arr_i[this.int_k(node)] & 0xFF;
+            int node = this.int_c(this.menuHighlight);
+            if ((node + 12 < this.menuTree.length)
+                    && (this.menuTree[node + 8] & 0xF) == 2) {
+                return this.menuTree[this.int_k(node)] & 0xFF;
             }
         } catch (IndexOutOfBoundsException e) {
             // 模板被游戏线程换掉：按"读不到"处理
@@ -535,7 +535,7 @@ implements CommandListener {
         long before = devSig();
         long deadline = System.currentTimeMillis() + 8000;
         while (true) {
-            this.void_a(key);
+            this.onKeyPress(key);
             // 面板切换是延迟生效的（v=H 由状态机在后续帧消费），确认窗口必须盖过它，
             // 否则把"生效中"误判为"被吞"而重注，造成一次按键两次消费、流程跳屏。
             long until = System.currentTimeMillis() + 12 * frame;
@@ -553,19 +553,19 @@ implements CommandListener {
         }
     }
 
-    /** 等画面状态稳定（aA 连续 ~1.2s 不变），最长 6s——规避状态切换中按键被吞。 */
+    /** 等画面状态稳定（screenState 连续 ~1.2s 不变），最长 6s——规避状态切换中按键被吞。 */
     private void devWaitStable() throws InterruptedException {
         int last = -999;
         int same = 0;
         long deadline = System.currentTimeMillis() + 6000;
         while (System.currentTimeMillis() < deadline) {
             Thread.sleep(200);
-            if (this.aA == last) {
+            if (this.screenState == last) {
                 if (++same >= 6) {
                     return;
                 }
             } else {
-                last = this.aA;
+                last = this.screenState;
                 same = 0;
             }
         }
@@ -576,7 +576,7 @@ implements CommandListener {
     static final boolean DEV_HUD = System.getProperty("aoe.devHud") != null;
     private static final boolean DEV_AUTO_CHECKPOINT =
         !"-".equals(System.getProperty("aoe.autoCheckpoint", "1"));
-    /** 对话框自动推进：任务里进过一次主视图后，aA==2 的弹窗每 4 帧补一个左软键。 */
+    /** 对话框自动推进：任务里进过一次主视图后，screenState==2 的弹窗每 4 帧补一个左软键。 */
     private boolean devMissionSeen;
     private int devDismissFrames;
     /** 任务内连续帧计数：到 25（≈2s）做一次开局自动 checkpoint。 */
@@ -600,8 +600,8 @@ implements CommandListener {
 
     /** 快存。实际写盘在 EDT 帧首（p()），避免与 tick/渲染竞态产生撕裂快照。 */
     public boolean devSaveTo(String path) {
-        if (this.aA != 6) {
-            System.out.println("[save] refused, aA=" + this.aA);
+        if (this.screenState != 6) {
+            System.out.println("[save] refused, aA=" + this.screenState);
             this.devToast("Cannot save now");
             return false;
         }
@@ -614,9 +614,9 @@ implements CommandListener {
         try {
             byte[] data = java.nio.file.Files.readAllBytes(java.nio.file.Path.of(path));
             int[] id = aoe.SaveState.identity(data);
-            if (this.aA == 6 && (id[0] != this.ac || id[1] != this.aF || id[2] != this.nfoMissionId())) {
+            if (this.screenState == 6 && (id[0] != this.gameMode || id[1] != this.missionResId || id[2] != this.nfoMissionId())) {
                 System.out.println("[load] mission mismatch: save ac=" + id[0] + " aF=" + id[1]
-                    + " nfo=" + id[2] + " / now ac=" + this.ac + " aF=" + this.aF + " nfo=" + this.nfoMissionId());
+                    + " nfo=" + id[2] + " / now ac=" + this.gameMode + " aF=" + this.missionResId + " nfo=" + this.nfoMissionId());
                 this.devToast("Save is for another mission");
                 return false;
             }
@@ -631,8 +631,8 @@ implements CommandListener {
 
     /** 当前任务身份三元组（教程任务号在 .nfo 字节 31/32）。 */
     private int nfoMissionId() {
-        return this.var_byte_arr_f != null && this.var_byte_arr_f.length > 32
-            ? ((this.var_byte_arr_f[31] & 0xFF) << 8 | this.var_byte_arr_f[32] & 0xFF) : 0;
+        return this.nfoData != null && this.nfoData.length > 32
+            ? ((this.nfoData[31] & 0xFF) << 8 | this.nfoData[32] & 0xFF) : 0;
     }
 
     /** 桌面命令键（Canvas.keyPressed 转发）：1=F5 快存，2=F9 快读。 */
@@ -647,17 +647,17 @@ implements CommandListener {
 
     /** 每帧帧首（EDT）：存档请求串行化 + autoDismiss + 自动 checkpoint。 */
     private void devFrameHousekeeping() {
-        if (this.aA == 6) {
+        if (this.screenState == 6) {
             this.devMissionSeen = true;
-        } else if (this.aA == 4) {
+        } else if (this.screenState == 4) {
             this.devMissionSeen = false;
         }
-        if (DEV_AUTO_DISMISS && this.devMissionSeen && this.aA == 2
+        if (DEV_AUTO_DISMISS && this.devMissionSeen && this.screenState == 2
                 && ++this.devDismissFrames >= 4) {
             this.devDismissFrames = 0;
-            this.void_a(-6);
+            this.onKeyPress(-6);
         }
-        if (this.aA != 6) {
+        if (this.screenState != 6) {
             this.devStableFrames = 0;
         } else if (this.devStableFrames < 25) {
             if (++this.devStableFrames == 25 && DEV_AUTO_CHECKPOINT) {
@@ -696,7 +696,7 @@ implements CommandListener {
     }
 
     // ===== dev 鼠标驱动（-Daoe.devMouse=<fifo 路径>）=====
-    /** 从 FIFO 逐行读指令直接喂 mouseA/void_a（逻辑坐标 240x320）。宿主终端缺
+    /** 从 FIFO 逐行读指令直接喂 mouseA/onKeyPress（逻辑坐标 240x320）。宿主终端缺
      *  辅助功能/屏幕录制授权、无法注入真实 CGEvent 时，用它在游戏层驱动和验证
      *  鼠标逻辑；dump 指令同步导出帧缓冲（配合截图验证渲染结果）。
      *  指令：move x y | press x y | release x y | click x y | rclick x y |
@@ -779,7 +779,7 @@ implements CommandListener {
                 }
                 case "key": {
                     int kc = Integer.parseInt(p[1]);
-                    this.void_a(kc);
+                    this.onKeyPress(kc);
                     // 注入即松开（延迟队列）：否则 ab 永久保持，o()/e() 的按住重复
                     // 会让方向键每帧漂移一格，FIRE 也会被当成持续按住。
                     var_com_ulysseo_mad_b_a.queueSyntheticKeyRelease(kc);
@@ -787,50 +787,50 @@ implements CommandListener {
                 }
                 case "tapk": {
                     // 带验证重试的按键：注入单发键有"帧末 ax=0 vs 激活判断"竞态，
-                    // 可能被无痕吞掉——按 aA 是否到达期望值决定重注（最多 tries 次）。
+                    // 可能被无痕吞掉——按 screenState 是否到达期望值决定重注（最多 tries 次）。
                     int kc = Integer.parseInt(p[1]);
                     int expect = Integer.parseInt(p[2]);
                     int tries = p.length > 3 ? Integer.parseInt(p[3]) : 5;
-                    for (int i = 0; i < tries && this.aA != expect; ++i) {
-                        this.void_a(kc);
+                    for (int i = 0; i < tries && this.screenState != expect; ++i) {
+                        this.onKeyPress(kc);
                         var_com_ulysseo_mad_b_a.queueSyntheticKeyRelease(kc);
                         Thread.sleep(1000);
                     }
                     System.out.println("[devMouse] tapk " + kc + " expect aA=" + expect
-                        + ": " + (this.aA == expect ? "ok" : "timeout") + " (aA=" + this.aA + ")");
+                        + ": " + (this.screenState == expect ? "ok" : "timeout") + " (aA=" + this.screenState + ")");
                     break;
                 }
                 case "state": {
-                    System.out.println("[devMouse] aA=" + this.aA + "/" + this.am
-                        + " cursor=(" + this.aa + "," + this.aV + ") cam=(" + this.y + "," + this.N + ")"
-                        + " Q=" + this.Q + " aE=" + this.aE + " Y=" + this.Y + " sel=" + this.var_int_b);
+                    System.out.println("[devMouse] aA=" + this.screenState + "/" + this.pendingScreenState
+                        + " cursor=(" + this.cursorTileX + "," + this.cursorTileY + ") cam=(" + this.cameraPxX + "," + this.cameraPxY + ")"
+                        + " Q=" + this.cursorTileIdx + " aE=" + this.selectionMark + " Y=" + this.selectionPlayer + " sel=" + this.selectionMode);
                     StringBuilder json = new StringBuilder(512);
-                    json.append("{\"aA\":").append(this.aA).append(",\"am\":").append(this.am)
-                        .append(",\"ar\":").append(this.ar)
-                        .append(",\"cursor\":[").append(this.aa).append(',').append(this.aV).append(']')
-                        .append(",\"cam\":[").append(this.y).append(',').append(this.N).append(']')
-                        .append(",\"sel\":").append(this.var_int_b).append(",\"aE\":").append(this.aE);
-                    if (this.var_short_arr_a != null) {
+                    json.append("{\"aA\":").append(this.screenState).append(",\"am\":").append(this.pendingScreenState)
+                        .append(",\"ar\":").append(this.tickCount)
+                        .append(",\"cursor\":[").append(this.cursorTileX).append(',').append(this.cursorTileY).append(']')
+                        .append(",\"cam\":[").append(this.cameraPxX).append(',').append(this.cameraPxY).append(']')
+                        .append(",\"sel\":").append(this.selectionMode).append(",\"aE\":").append(this.selectionMark);
+                    if (this.mapTiles != null) {
                         int explored = 0;
-                        for (int i = 0; i < this.var_short_arr_a.length; ++i) {
-                            if ((this.var_short_arr_a[i] & 0x8000) == 0) {
+                        for (int i = 0; i < this.mapTiles.length; ++i) {
+                            if ((this.mapTiles[i] & 0x8000) == 0) {
                                 ++explored;
                             }
                         }
                         json.append(",\"explored\":").append(explored)
-                            .append(",\"tiles\":").append(this.var_short_arr_a.length);
+                            .append(",\"tiles\":").append(this.mapTiles.length);
                     }
                     json.append(",\"units\":[");
-                    int cnt = this.var_int_arr_arr_a[0][2];
+                    int cnt = this.playerUnitHeaders[0][2];
                     for (int i = 0; i < cnt && i < 16; ++i) {
                         int off = i * 8;
                         if (i > 0) {
                             json.append(',');
                         }
-                        json.append("{\"tile\":[").append(this.var_short_arr_arr_a[0][off] >>> 8)
-                            .append(',').append(this.var_short_arr_arr_a[0][off] & 0xFF)
-                            .append("],\"type\":").append(this.var_short_arr_arr_a[0][off + 3] & 0xFF)
-                            .append(",\"sel\":").append((this.var_short_arr_arr_a[0][off + 4] & 0x8000) != 0)
+                        json.append("{\"tile\":[").append(this.playerUnitSlots[0][off] >>> 8)
+                            .append(',').append(this.playerUnitSlots[0][off] & 0xFF)
+                            .append("],\"type\":").append(this.playerUnitSlots[0][off + 3] & 0xFF)
+                            .append(",\"sel\":").append((this.playerUnitSlots[0][off + 4] & 0x8000) != 0)
                             .append('}');
                     }
                     json.append("]}\n");
@@ -845,23 +845,23 @@ implements CommandListener {
                     for (int i = 0; i < cnt && i < 16; ++i) {
                         int off = i * 8;
                         System.out.println("[devMouse] unit " + i
-                            + " tile=(" + (this.var_short_arr_arr_a[0][off] >>> 8)
-                            + "," + (this.var_short_arr_arr_a[0][off] & 0xFF) + ")"
-                            + " type=" + (this.var_short_arr_arr_a[0][off + 3] & 0xFF)
-                            + " sel=" + ((this.var_short_arr_arr_a[0][off + 4] & 0x8000) != 0));
+                            + " tile=(" + (this.playerUnitSlots[0][off] >>> 8)
+                            + "," + (this.playerUnitSlots[0][off] & 0xFF) + ")"
+                            + " type=" + (this.playerUnitSlots[0][off + 3] & 0xFF)
+                            + " sel=" + ((this.playerUnitSlots[0][off + 4] & 0x8000) != 0));
                     }
                     break;
                 }
                 case "until": {
-                    // 阻塞等 aA 到目标值（把"发命令→sleep→grep 日志"循环挪进游戏进程）
+                    // 阻塞等 screenState 到目标值（把"发命令→sleep→grep 日志"循环挪进游戏进程）
                     int target = Integer.parseInt(p[1]);
                     long timeout = p.length > 2 ? Long.parseLong(p[2]) * 1000L : 30000L;
                     long start = System.currentTimeMillis();
-                    while (this.aA != target && System.currentTimeMillis() - start < timeout) {
+                    while (this.screenState != target && System.currentTimeMillis() - start < timeout) {
                         Thread.sleep(100);
                     }
                     System.out.println("[devMouse] until aA=" + target + ": "
-                        + (this.aA == target ? "ok" : "timeout") + " after "
+                        + (this.screenState == target ? "ok" : "timeout") + " after "
                         + (System.currentTimeMillis() - start) + "ms");
                     break;
                 }
@@ -941,8 +941,8 @@ implements CommandListener {
     // ===== dev 模式结束 =====
 
     public final void void_b(int n) {
-        this.var_byte_arr_k = com.ulysseo.mad.c.byte_arr_a(n);
-        this.ak = this.var_byte_arr_k.length >> 1;
+        this.keymap = com.ulysseo.mad.c.byte_arr_a(n);
+        this.keymapCount = this.keymap.length >> 1;
     }
 
     // ===== 桌面鼠标增强（Canvas→mad.b 转发；仅在任务主视图生效）=====
@@ -982,9 +982,9 @@ implements CommandListener {
     @Override
     public void mouseA(int kind, int mx, int my) {
         if (System.getProperty("aoe.debug") != null) {
-            System.out.println("[mouseA] kind=" + kind + " aA=" + this.aA);
+            System.out.println("[mouseA] kind=" + kind + " aA=" + this.screenState);
         }
-        if (this.aA != 6 && this.aA != 1) {
+        if (this.screenState != 6 && this.screenState != 1) {
             return;
         }
         switch (kind) {
@@ -1022,19 +1022,19 @@ implements CommandListener {
                     int tile = this.mousePickTile >= 0 ? this.mousePickTile : this.mouseLastTile;
                     if (tile >= 0) {
                         // 桌面惯例：点击 = 光标直达该格并就地确认
-                        this.aa = tile & 63;
-                        this.aV = tile >> 6;
+                        this.cursorTileX = tile & 63;
+                        this.cursorTileY = tile >> 6;
                         this.mouseApplyQ();
                     }
                     // 走键盘 FIRE 管道；松开走延迟队列（复用防吞点按机制）
-                    this.void_a(-5);
+                    this.onKeyPress(-5);
                     var_com_ulysseo_mad_b_a.queueSyntheticKeyRelease(-5);
                 }
                 this.mouseBandActive = false;
                 break;
             }
             case 3: {
-                if (this.aA != 6) {
+                if (this.screenState != 6) {
                     break;      // 全图视图里右键无意义，也别把指令挂起到回主视图后
                 }
                 // 右键不直接用 mouseLastTile（那是上一帧悬停的拾取结果）：快速甩动后
@@ -1058,11 +1058,11 @@ implements CommandListener {
 
     /** 复刻 f() 的光标格索引计算（含虚空格失效），供"点击直达"使用。 */
     private void mouseApplyQ() {
-        int idx = this.aa + (this.aV << 6) & 0xFFF;
-        if ((idx & 0xFFFFF000) != 0 || (this.var_short_arr_a[idx] & 0xFFF) == 768) {
-            this.Q = -1;
+        int idx = this.cursorTileX + (this.cursorTileY << 6) & 0xFFF;
+        if ((idx & 0xFFFFF000) != 0 || (this.mapTiles[idx] & 0xFFF) == 768) {
+            this.cursorTileIdx = -1;
         } else {
-            this.Q = idx;
+            this.cursorTileIdx = idx;
         }
     }
 
@@ -1108,10 +1108,10 @@ implements CommandListener {
             }
         }
         // 边缘滚动：鼠标贴窗口边缘时按方向键同款步进平移（半速），桌面 RTS 惯例
-        if (this.aA == 6 && this.mouseScreenX >= 0) {
+        if (this.screenState == 6 && this.mouseScreenX >= 0) {
             final int edge = 14;
-            int tx = this.aa;
-            int ty = this.aV;
+            int tx = this.cursorTileX;
+            int ty = this.cursorTileY;
             if (this.mouseScreenX <= edge) {
                 --tx;
                 ++ty;
@@ -1126,9 +1126,9 @@ implements CommandListener {
                 ++tx;
                 ++ty;
             }
-            if ((tx != this.aa || ty != this.aV) && (++this.mouseEdgeTick & 1) == 0) {
-                this.aa = Math.max(0, Math.min(63, tx));
-                this.aV = Math.max(0, Math.min(63, ty));
+            if ((tx != this.cursorTileX || ty != this.cursorTileY) && (++this.mouseEdgeTick & 1) == 0) {
+                this.cursorTileX = Math.max(0, Math.min(63, tx));
+                this.cursorTileY = Math.max(0, Math.min(63, ty));
             }
         }
     }
@@ -1152,24 +1152,24 @@ implements CommandListener {
         int tx2 = Math.max(this.mouseBandTx1, this.mouseBandTx2);
         int ty1 = Math.min(this.mouseBandTy1, this.mouseBandTy2);
         int ty2 = Math.max(this.mouseBandTy1, this.mouseBandTy2);
-        this.H();
-        int count = this.var_int_arr_arr_a[0][2];
+        this.clearSelection();
+        int count = this.playerUnitHeaders[0][2];
         int firstType = -1;
         int selected = 0;
         int off = 0;
         boolean dbg = System.getProperty("aoe.debug") != null;
         for (int i = 0; i < count; ++i, off += 8) {
-            int packed = this.var_short_arr_arr_a[0][off + 0];
+            int packed = this.playerUnitSlots[0][off + 0];
             int utx = packed >>> 8;
             int uty = packed & 0xFF;
             if (dbg) {
                 System.out.println("[band] unit " + i + " tile=" + utx + "," + uty);
             }
             if (utx >= tx1 && utx <= tx2 && uty >= ty1 && uty <= ty2) {
-                this.var_short_arr_arr_a[0][off + 4] |= 0x8000;
+                this.playerUnitSlots[0][off + 4] |= 0x8000;
                 ++selected;
                 if (firstType < 0) {
-                    firstType = this.var_short_arr_arr_a[0][off + 3] & 0xFF;
+                    firstType = this.playerUnitSlots[0][off + 3] & 0xFF;
                 }
             }
         }
@@ -1178,12 +1178,12 @@ implements CommandListener {
                 + ") count=" + count + " selected=" + selected);
         }
         if (selected > 0) {
-            this.aE = 512;
-            this.Y = 0;
-            this.aJ = -1;
-            this.var_int_h = firstType;
+            this.selectionMark = 512;
+            this.selectionPlayer = 0;
+            this.selectedSlot = -1;
+            this.selectedType = firstType;
             this.var_boolean_h = true;
-            this.var_int_b = 6;
+            this.selectionMode = 6;
         }
     }
 
@@ -1191,35 +1191,35 @@ implements CommandListener {
      *  无选中 → 清除选择（等价游戏自身的取消）。 */
     private void mouseCommand() {
         if (System.getProperty("aoe.debug") != null) {
-            System.out.println("[rcmd] Y=" + this.Y + " aE=" + this.aE
-                + " lastTile=" + this.mouseLastTile + " sel=" + this.var_int_b);
+            System.out.println("[rcmd] Y=" + this.selectionPlayer + " aE=" + this.selectionMark
+                + " lastTile=" + this.mouseLastTile + " sel=" + this.selectionMode);
         }
-        if (this.Y == 0 && this.aE == 512 && this.mouseLastTile >= 0) {
+        if (this.selectionPlayer == 0 && this.selectionMark == 512 && this.mouseLastTile >= 0) {
             int tx = this.mouseLastTile & 63;
             int ty = this.mouseLastTile >> 6;
-            this.var_int_d = this.y + this.aP;
-            this.S = this.N + this.aS;
-            this.au = this.var_int_j;
+            this.var_int_d = this.cameraPxX + this.cursorScreenPxX;
+            this.S = this.cameraPxY + this.cursorScreenPxY;
+            this.au = this.screenH;
             this.U = 8;
-            this.d(0, tx, ty);
+            this.orderMove(0, tx, ty);
         } else {
-            this.H();
-            this.var_int_b = 0;
+            this.clearSelection();
+            this.selectionMode = 0;
         }
     }
     // ===== 桌面鼠标增强结束 =====
 
     public final void commandAction(Command command, Displayable displayable) {
-        this.void_a(command.getCommandType());
+        this.onKeyPress(command.getCommandType());
     }
 
-    public final void m() {
+    public final void loadNfo() {
         try {
             RecordStore recordStore = RecordStore.openRecordStore((String)".nfo", (boolean)true);
             if (recordStore.getNumRecords() == 0) {
-                recordStore.addRecord(this.var_byte_arr_f, 0, this.var_byte_arr_f.length);
+                recordStore.addRecord(this.nfoData, 0, this.nfoData.length);
             } else {
-                this.var_byte_arr_f = recordStore.getRecord(1);
+                this.nfoData = recordStore.getRecord(1);
             }
             recordStore.closeRecordStore();
             return;
@@ -1229,13 +1229,13 @@ implements CommandListener {
         }
     }
 
-    public final void I() {
+    public final void saveNfo() {
         try {
             RecordStore recordStore = RecordStore.openRecordStore((String)".nfo", (boolean)true);
             if (recordStore.getNumRecords() == 0) {
-                recordStore.addRecord(this.var_byte_arr_f, 0, this.var_byte_arr_f.length);
+                recordStore.addRecord(this.nfoData, 0, this.nfoData.length);
             } else {
-                recordStore.setRecord(1, this.var_byte_arr_f, 0, this.var_byte_arr_f.length);
+                recordStore.setRecord(1, this.nfoData, 0, this.nfoData.length);
             }
             recordStore.closeRecordStore();
             return;
@@ -1245,39 +1245,39 @@ implements CommandListener {
         }
     }
 
-    public final int int_a(int n, int n2) {
+    public final int nfoReadInt(int n, int n2) {
         int n3 = 0;
         while (--n2 >= 0) {
             n3 <<= 8;
-            n3 |= this.var_byte_arr_f[n + n2] & 0xFF;
+            n3 |= this.nfoData[n + n2] & 0xFF;
         }
         return n3;
     }
 
-    public final void h(int n, int n2, int n3) {
+    public final void nfoWriteInt(int n, int n2, int n3) {
         int n4 = n3;
         while (n2 > 0) {
-            this.var_byte_arr_f[n++] = (byte)(n4 & 0xFF);
+            this.nfoData[n++] = (byte)(n4 & 0xFF);
             n4 >>= 8;
             --n2;
         }
     }
 
     /** 主循环体：框架每 80ms 调 paint → 这里（paint-driven），先推进游戏逻辑再渲染，
-     *  ar 计帧。屏幕切换按 aA 分发（见 GAME_NOTES.md 的状态机速查）。 */
+     *  ar 计帧。屏幕切换按 screenState 分发（见 GAME_NOTES.md 的状态机速查）。 */
     /** dev HUD（-Daoe.devHud=1）：画面顶部两行状态，dump 截图自描述。 */
     private void devDrawHud(Graphics graphics) {
         graphics.setColor(0);
-        graphics.fillRect(0, 27, this.aO, 26);
+        graphics.fillRect(0, 27, this.screenW, 26);
         graphics.setColor(0xFFFFFF);
-        String line1 = "aA=" + this.aA + "/" + this.am + " ar=" + this.ar;
-        if (this.var_byte_arr_i != null) {
-            line1 += " node=" + this.aR + " Z=" + this.Z + "/" + this.ao + " H=" + this.H;
+        String line1 = "aA=" + this.screenState + "/" + this.pendingScreenState + " ar=" + this.tickCount;
+        if (this.menuTree != null) {
+            line1 += " node=" + this.menuNode + " Z=" + this.menuHighlight + "/" + this.menuNodeCount + " H=" + this.menuScreenId;
         }
         String pick = this.mouseLastTile < 0 ? "-"
             : (this.mouseLastTile & 63) + "," + (this.mouseLastTile >> 6);
-        String line2 = "cur=" + this.aa + "," + this.aV + " cam=" + this.y + "," + this.N
-            + " pick=" + pick + " sel=" + this.var_int_b + "/" + (this.aE & 0xFFFF);
+        String line2 = "cur=" + this.cursorTileX + "," + this.cursorTileY + " cam=" + this.cameraPxX + "," + this.cameraPxY
+            + " pick=" + pick + " sel=" + this.selectionMode + "/" + (this.selectionMark & 0xFFFF);
         graphics.drawString(line1, 2, 28, 20);
         graphics.drawString(line2, 2, 40, 20);
     }
@@ -1287,15 +1287,15 @@ implements CommandListener {
         if (this.devToast == null || System.currentTimeMillis() >= this.devToastUntil) {
             return;
         }
-        graphics.setClip(0, 0, this.aO, this.var_int_j);
+        graphics.setClip(0, 0, this.screenW, this.screenH);
         graphics.setColor(0);
         graphics.fillRect(50, 46, 140, 16);
         graphics.setColor(0xFFFFFF);
         graphics.drawString(this.devToast, 120, 49, 17);    // TOP|HCENTER
     }
 
-    public final void p(Graphics graphics) {
-        ++this.ar;
+    public final void onPaint(Graphics graphics) {
+        ++this.tickCount;
         this.devFrameHousekeeping();
         if (this.var_boolean_j) {
             if (Runtime.getRuntime().freeMemory() < 50000L) {
@@ -1305,37 +1305,37 @@ implements CommandListener {
         }
         if (AgeOfEmpires.b.var_boolean_a) {
             AgeOfEmpires.b.var_boolean_b = true;
-            this.F = 0;
-            this.O = 0;
-            this.B = this.aO;
-            this.P = this.var_int_j;
-            graphics.setClip(0, 0, this.aO, this.var_int_j);
+            this.clipLeft = 0;
+            this.clipTop = 0;
+            this.clipRight = this.screenW;
+            this.clipBottom = this.screenH;
+            graphics.setClip(0, 0, this.screenW, this.screenH);
             graphics.setColor(0);
-            graphics.fillRect(0, 0, this.aO, this.var_int_j);
-            this.O = 0;
-            this.P = this.var_int_j;
+            graphics.fillRect(0, 0, this.screenW, this.screenH);
+            this.clipTop = 0;
+            this.clipBottom = this.screenH;
             AgeOfEmpires.b.var_boolean_a = false;
             this.s();
             this.var_boolean_h = false;
             this.var_boolean_j = true;
-            switch (this.aA) {
+            switch (this.screenState) {
                 case 0: 
                 case 10: 
                 case 12: {
                     return;
                 }
                 case 2: {
-                    if (this.aN == 1) {
-                        this.e(graphics);
-                    } else if (this.aN == 4 && this.z != 98) {
-                        this.f(graphics);
+                    if (this.overlayPrevState == 1) {
+                        this.renderMapView(graphics);
+                    } else if (this.overlayPrevState == 4 && this.z != 98) {
+                        this.renderMenu(graphics);
                     } else {
-                        this.j(graphics);
+                        this.renderWorld(graphics);
                     }
-                    this.F = 0;
-                    this.O = 0;
-                    this.B = this.aO;
-                    this.P = this.var_int_j;
+                    this.clipLeft = 0;
+                    this.clipTop = 0;
+                    this.clipRight = this.screenW;
+                    this.clipBottom = this.screenH;
                     return;
                 }
                 case 1: {
@@ -1343,39 +1343,39 @@ implements CommandListener {
                     return;
                 }
                 case 11: {
-                    this.boolean_c(0);
+                    this.beginMissionLoad(0);
                     this.aQ = 0;
                     return;
                 }
                 case 4: 
                 case 9: {
-                    this.am = 4;
-                    this.aA = 9;
+                    this.pendingScreenState = 4;
+                    this.screenState = 9;
                     return;
                 }
             }
-            this.j(graphics);
+            this.renderWorld(graphics);
             this.c(graphics);
             return;
         }
         try {
             boolean bl = false;
             graphics.setFont(this.var_javax_microedition_lcdui_Font_a);
-            graphics.setClip(this.F, this.O, this.B - this.F, this.P - this.O);
+            graphics.setClip(this.clipLeft, this.clipTop, this.clipRight - this.clipLeft, this.clipBottom - this.clipTop);
             if (this.boolean_a()) {
-                this.n(graphics);
-                graphics.setClip(0, 0, this.aO, this.var_int_j);
+                this.dispatchRender(graphics);
+                graphics.setClip(0, 0, this.screenW, this.screenH);
                 if (DEV_HUD) {
                     this.devDrawHud(graphics);
                 }
                 this.devDrawToast(graphics);
                 if (this.var_boolean_f) {
-                    this.a(graphics, 21, 4, this.var_int_j - 6, 14, 0, 7, 6, 0, 0);
+                    this.a(graphics, 21, 4, this.screenH - 6, 14, 0, 7, 6, 0, 0);
                 }
                 if (this.var_boolean_b) {
-                    this.a(graphics, 21, this.aO - 10, this.var_int_j - 6, 21, 0, 7, 6, 0, 0);
+                    this.a(graphics, 21, this.screenW - 10, this.screenH - 6, 21, 0, 7, 6, 0, 0);
                 }
-                switch (this.aA) {
+                switch (this.screenState) {
                     case 7: {
                         this.F();
                         break;
@@ -1406,15 +1406,15 @@ implements CommandListener {
                         if (this.ag <= 0) break;
                         if (this.var_java_lang_String_a != null) {
                             graphics.setColor(0);
-                            graphics.drawString(this.var_java_lang_String_a, this.F + 2, this.P - (this.ah - this.ay), 20);
+                            graphics.drawString(this.var_java_lang_String_a, this.clipLeft + 2, this.clipBottom - (this.ah - this.ay), 20);
                             graphics.setColor(0xFFFFFF);
-                            graphics.drawString(this.var_java_lang_String_a, this.F + 1, this.P - (this.ah - this.ay + 1), 20);
+                            graphics.drawString(this.var_java_lang_String_a, this.clipLeft + 1, this.clipBottom - (this.ah - this.ay + 1), 20);
                         }
                         if (this.var_java_lang_String_c != null) {
                             graphics.setColor(0);
-                            graphics.drawString(this.var_java_lang_String_c, this.F + 2, this.P - ((this.ah << 1) - this.ay), 20);
+                            graphics.drawString(this.var_java_lang_String_c, this.clipLeft + 2, this.clipBottom - ((this.ah << 1) - this.ay), 20);
                             graphics.setColor(0xFFFFFF);
-                            graphics.drawString(this.var_java_lang_String_c, this.F + 1, this.P - ((this.ah << 1) - this.ay + 1), 20);
+                            graphics.drawString(this.var_java_lang_String_c, this.clipLeft + 1, this.clipBottom - ((this.ah << 1) - this.ay + 1), 20);
                         }
                         --this.ag;
                         if (this.ag != 0) break;
@@ -1422,10 +1422,10 @@ implements CommandListener {
                         this.var_java_lang_String_c = null;
                     }
                 }
-                if (this.P != this.var_int_j && this.aA == 6 || this.aA == 7 && this.W != 0) {
+                if (this.clipBottom != this.screenH && this.screenState == 6 || this.screenState == 7 && this.W != 0) {
                     int n = 0;
                     int n2 = this.aL;
-                    int n3 = this.aO - 41;
+                    int n3 = this.screenW - 41;
                     int n4 = this.a(this.var_java_lang_String_b);
                     graphics.setClip(41, n2, n3, this.var_int_f);
                     graphics.setColor(0);
@@ -1434,7 +1434,7 @@ implements CommandListener {
                     graphics.setColor(0xFFFFFF);
                     graphics.drawString(this.var_java_lang_String_b, n + n3, n2 + this.ay, 20);
                 }
-                this.E();
+                this.beginStateTransition();
             }
             if (AgeOfEmpires.b.var_boolean_b) {
                 if (!AgeOfEmpires.b.c) {
@@ -1464,13 +1464,13 @@ implements CommandListener {
     }
 
     final boolean boolean_a() {
-        if (this.am == this.aA) {
+        if (this.pendingScreenState == this.screenState) {
             return true;
         }
         boolean bl = false;
-        switch (this.am) {
+        switch (this.pendingScreenState) {
             case 11: {
-                bl = this.boolean_c(this.aH);
+                bl = this.beginMissionLoad(this.aH);
                 break;
             }
             case 1: {
@@ -1502,7 +1502,7 @@ implements CommandListener {
                 break;
             }
             case 4: {
-                bl = this.boolean_d(this.aH);
+                bl = this.activateMenuScreen(this.aH);
                 break;
             }
             case 9: {
@@ -1514,30 +1514,30 @@ implements CommandListener {
             }
         }
         if (bl) {
-            this.aA = this.am;
+            this.screenState = this.pendingScreenState;
             this.aH = 0;
             return true;
         }
-        this.aA = 0;
+        this.screenState = 0;
         ++this.aH;
         return false;
     }
 
-    final void n(Graphics graphics) {
-        if (this.aA == 0) {
+    final void dispatchRender(Graphics graphics) {
+        if (this.screenState == 0) {
             return;
         }
-        switch (this.aA) {
+        switch (this.screenState) {
             case 11: {
-                this.h(graphics);
+                this.renderLoadingScreen(graphics);
                 return;
             }
             case 1: {
-                this.e(graphics);
+                this.renderMapView(graphics);
                 return;
             }
             case 2: {
-                this.g(graphics);
+                this.renderDialog(graphics);
                 return;
             }
             case 10: {
@@ -1561,7 +1561,7 @@ implements CommandListener {
                 return;
             }
             case 4: {
-                this.f(graphics);
+                this.renderMenu(graphics);
                 return;
             }
             case 9: {
@@ -1574,11 +1574,11 @@ implements CommandListener {
         }
     }
 
-    final void E() {
-        if (this.aA == this.am) {
+    final void beginStateTransition() {
+        if (this.screenState == this.pendingScreenState) {
             return;
         }
-        switch (this.aA) {
+        switch (this.screenState) {
             case 11: {
                 this.t();
                 return;
@@ -1621,37 +1621,37 @@ implements CommandListener {
         }
     }
 
-    final boolean boolean_g(int n) {
+    final boolean requestStateSwitch(int n) {
         if (System.getProperty("aoe.debug") != null && n != 4 && n != 6) {
-            System.out.println("[trace] g->" + n + " (aA=" + this.aA + " am=" + this.am + ")");
+            System.out.println("[trace] g->" + n + " (aA=" + this.screenState + " am=" + this.pendingScreenState + ")");
         }
-        if (this.am != this.aA && n == 8) {
+        if (this.pendingScreenState != this.screenState && n == 8) {
             return false;
         }
-        if (this.am != this.aA && n == 7) {
+        if (this.pendingScreenState != this.screenState && n == 7) {
             return false;
         }
-        if ((n == 7 || n == 8) && this.aA == 1) {
+        if ((n == 7 || n == 8) && this.screenState == 1) {
             return false;
         }
-        this.am = n;
+        this.pendingScreenState = n;
         return true;
     }
 
-    public final boolean boolean_d(int n) {
-        this.F = 0;
-        this.B = this.aO;
-        this.O = 0;
-        this.P = this.var_int_j;
+    public final boolean activateMenuScreen(int n) {
+        this.clipLeft = 0;
+        this.clipRight = this.screenW;
+        this.clipTop = 0;
+        this.clipBottom = this.screenH;
         this.ag = 0;
-        this.l();
+        this.loadMenuScreen();
         if (n == 0) {
-            if (this.v >= 0) {
-                this.var_byte_arr_i[this.aR + 0] = (byte)this.v;
+            if (this.pendingPanelSwitch >= 0) {
+                this.menuTree[this.menuNode + 0] = (byte)this.pendingPanelSwitch;
             }
             this.var_boolean_f = true;
             this.var_boolean_b = true;
-            switch (this.H) {
+            switch (this.menuScreenId) {
                 case 3: {
                     this.a(131, true);
                 }
@@ -1669,16 +1669,16 @@ implements CommandListener {
                 case 11: {
                     int n2 = this.int_c(4) + 9;
                     // 移植修改：随机地图 3 档全部解锁（原版 = aG + 1，按通关进度开放）
-                    this.var_byte_arr_i[n2 + 1] = 3;
-                    this.var_byte_arr_i[n2 + 2] = (byte)this.aG;
+                    this.menuTree[n2 + 1] = 3;
+                    this.menuTree[n2 + 2] = (byte)this.aG;
                     this.a(131, true);
                     break;
                 }
                 case 12: {
                     int n3 = this.int_c(4) + 9;
                     // 移植修改：战役 7 关全部解锁（原版 = aj + 1，按通关进度开放）
-                    this.var_byte_arr_i[n3 + 1] = 7;
-                    this.var_byte_arr_i[n3 + 2] = (byte)this.aj;
+                    this.menuTree[n3 + 1] = 7;
+                    this.menuTree[n3 + 2] = (byte)this.aj;
                     this.a(131, true);
                     break;
                 }
@@ -1688,18 +1688,18 @@ implements CommandListener {
                     if (this.var_boolean_d) {
                         bl = true;
                     }
-                    this.var_byte_arr_i[n4 + 2] = (byte)(bl ? 1 : 0);
+                    this.menuTree[n4 + 2] = (byte)(bl ? 1 : 0);
                     n4 = this.int_c(5) + 9;
                     bl = true;
                     if (AgeOfEmpires.b.c) {
                         bl = false;
                     }
-                    this.var_byte_arr_i[n4 + 2] = (byte)(bl ? 1 : 0);
+                    this.menuTree[n4 + 2] = (byte)(bl ? 1 : 0);
                     break;
                 }
                 case 8: {
                     int n5 = this.int_c(5) + 9;
-                    this.var_byte_arr_i[n5 + 2] = (byte)this.v;
+                    this.menuTree[n5 + 2] = (byte)this.pendingPanelSwitch;
                     break;
                 }
                 case 0: 
@@ -1714,52 +1714,52 @@ implements CommandListener {
 
     public final void C() {
         AgeOfEmpires.c.a(this.var_java_lang_String_arr_a);
-        this.F = 0;
-        this.B = this.aO;
-        this.O = 0;
-        this.P = this.var_int_j;
+        this.clipLeft = 0;
+        this.clipRight = this.screenW;
+        this.clipTop = 0;
+        this.clipBottom = this.screenH;
     }
 
-    public final void f(Graphics graphics) {
-        if (System.getProperty("aoe.debug") != null && this.ax != 0) {
-            System.out.println("[fHead] ax=" + this.ax);
+    public final void renderMenu(Graphics graphics) {
+        if (System.getProperty("aoe.debug") != null && this.keyActionPulse != 0) {
+            System.out.println("[fHead] ax=" + this.keyActionPulse);
         }
         if (System.getProperty("aoe.debug") != null) {
-            System.out.println("[fMenu] ao=" + this.ao + " Z=" + this.Z + " aR=" + this.aR
-                + " tmpl=" + (this.var_byte_arr_i == null ? "null" : this.var_byte_arr_i.length));
+            System.out.println("[fMenu] ao=" + this.menuNodeCount + " Z=" + this.menuHighlight + " aR=" + this.menuNode
+                + " tmpl=" + (this.menuTree == null ? "null" : this.menuTree.length));
         }
-        int n = this.aR + 6;
-        int n2 = this.var_int_a + this.var_byte_arr_i[this.aR + 4] >> 1;
-        int n3 = this.K + this.var_byte_arr_i[this.aR + 5] >> 1;
+        int n = this.menuNode + 6;
+        int n2 = this.var_int_a + this.menuTree[this.menuNode + 4] >> 1;
+        int n3 = this.K + this.menuTree[this.menuNode + 5] >> 1;
         this.var_int_a = n2;
         this.K = n3;
-        int n4 = this.aR + 6;
+        int n4 = this.menuNode + 6;
         int n5 = 0;
         int n6 = 0;
-        for (int i = 0; i < this.ao; ++i) {
+        for (int i = 0; i < this.menuNodeCount; ++i) {
             byte by;
-            if (i == this.Z) {
+            if (i == this.menuHighlight) {
                 n = n4;
             }
-            if (((by = this.var_byte_arr_i[n4 + 0]) & 0x20) == 0) {
+            if (((by = this.menuTree[n4 + 0]) & 0x20) == 0) {
                 n4 = this.int_e(n4);
                 continue;
             }
             if ((by & 0x40) != 0) {
                 byte by2;
-                byte by3 = this.var_byte_arr_i[n4 + 1];
+                byte by3 = this.menuTree[n4 + 1];
                 if ((by3 & 0x7F) != 127) {
                     int n7 = this.int_c(by3 & 0x7F);
-                    n5 = this.var_byte_arr_i[n7 + 4];
-                    n6 = this.var_byte_arr_i[n7 + 5];
+                    n5 = this.menuTree[n7 + 4];
+                    n6 = this.menuTree[n7 + 5];
                 }
-                int n8 = this.var_byte_arr_i[n4 + 6] & 0xFF;
-                int n9 = this.var_byte_arr_i[n4 + 7] & 0xFF;
-                byte by4 = this.var_byte_arr_i[n4 + 2];
-                int n10 = this.var_byte_arr_i[n4 + 3] & 0xFF;
+                int n8 = this.menuTree[n4 + 6] & 0xFF;
+                int n9 = this.menuTree[n4 + 7] & 0xFF;
+                byte by4 = this.menuTree[n4 + 2];
+                int n10 = this.menuTree[n4 + 3] & 0xFF;
                 if ((by3 & 0xFFFFFF80) != 0) {
                     if (by4 == -1) {
-                        n6 = -(this.var_int_j >> 3);
+                        n6 = -(this.screenH >> 3);
                     } else {
                         n5 += by4;
                         n6 = -4;
@@ -1768,34 +1768,34 @@ implements CommandListener {
                     n5 += n10 * AgeOfEmpires.b.int_b(by4 << 3) >> 16;
                     n6 += n10 * AgeOfEmpires.b.c(by4 << 3) >> 16;
                 }
-                int n11 = n5 + (this.aO >> 1);
-                int n12 = (this.var_int_j >> 1) - n6;
+                int n11 = n5 + (this.screenW >> 1);
+                int n12 = (this.screenH >> 1) - n6;
                 if ((by & 4) == 0) {
                     n11 -= n2;
                     n12 += n3;
                 }
-                if (((by2 = this.var_byte_arr_i[n4 + 8]) & 0x10) == 0) {
+                if (((by2 = this.menuTree[n4 + 8]) & 0x10) == 0) {
                     n11 = (by2 & 0x20) == 0 ? (n11 -= n8 >> 1) : (n11 -= n8);
                 }
                 if ((by2 & 0x40) == 0) {
-                    n12 = (by2 & 0xFFFFFF80) == 0 ? (n12 -= n9 >> 1) : (this.var_int_j >> 2) - (n9 >> 1);
+                    n12 = (by2 & 0xFFFFFF80) == 0 ? (n12 -= n9 >> 1) : (this.screenH >> 2) - (n9 >> 1);
                 }
-                if (i == this.Z) {
-                    if (n11 < this.F) {
-                        int n13 = this.aR + 4;
-                        this.var_byte_arr_i[n13] = (byte)(this.var_byte_arr_i[n13] - (this.F - n11));
+                if (i == this.menuHighlight) {
+                    if (n11 < this.clipLeft) {
+                        int n13 = this.menuNode + 4;
+                        this.menuTree[n13] = (byte)(this.menuTree[n13] - (this.clipLeft - n11));
                     }
-                    if (n12 < this.O) {
-                        int n14 = this.aR + 5;
-                        this.var_byte_arr_i[n14] = (byte)(this.var_byte_arr_i[n14] + (this.O - n12));
+                    if (n12 < this.clipTop) {
+                        int n14 = this.menuNode + 5;
+                        this.menuTree[n14] = (byte)(this.menuTree[n14] + (this.clipTop - n12));
                     }
-                    if (n11 + n8 > this.B) {
-                        int n15 = this.aR + 4;
-                        this.var_byte_arr_i[n15] = (byte)(this.var_byte_arr_i[n15] + (n11 + n8 - this.B));
+                    if (n11 + n8 > this.clipRight) {
+                        int n15 = this.menuNode + 4;
+                        this.menuTree[n15] = (byte)(this.menuTree[n15] + (n11 + n8 - this.clipRight));
                     }
-                    if (n12 + n9 > this.P) {
-                        int n16 = this.aR + 5;
-                        this.var_byte_arr_i[n16] = (byte)(this.var_byte_arr_i[n16] - (n12 + n9 - this.P));
+                    if (n12 + n9 > this.clipBottom) {
+                        int n16 = this.menuNode + 5;
+                        this.menuTree[n16] = (byte)(this.menuTree[n16] - (n12 + n9 - this.clipBottom));
                     }
                 }
                 if ((by & 0x10) != 0) {
@@ -1807,31 +1807,31 @@ implements CommandListener {
                         n6 += n12;
                         n12 = 0;
                     }
-                    if (n11 + n8 > this.aO) {
-                        n5 += n11 - this.aO;
-                        n11 = this.aO - n8;
+                    if (n11 + n8 > this.screenW) {
+                        n5 += n11 - this.screenW;
+                        n11 = this.screenW - n8;
                     }
-                    if (n12 + n9 > this.var_int_j) {
-                        n6 -= n12 - this.var_int_j;
-                        n12 = this.var_int_j - n9;
+                    if (n12 + n9 > this.screenH) {
+                        n6 -= n12 - this.screenH;
+                        n12 = this.screenH - n9;
                     }
                 }
-                this.var_byte_arr_i[n4 + 4] = (byte)n5;
-                this.var_byte_arr_i[n4 + 5] = (byte)n6;
+                this.menuTree[n4 + 4] = (byte)n5;
+                this.menuTree[n4 + 5] = (byte)n6;
                 switch (by2 & 0xF) {
                     case 7: {
-                        graphics.setColor(this.var_byte_arr_i[n4 + 9] & 0xFF, this.var_byte_arr_i[n4 + 9 + 1] & 0xFF, this.var_byte_arr_i[n4 + 9 + 2] & 0xFF);
-                        graphics.fillRect(0, 0, this.aO, this.var_int_j);
+                        graphics.setColor(this.menuTree[n4 + 9] & 0xFF, this.menuTree[n4 + 9 + 1] & 0xFF, this.menuTree[n4 + 9 + 2] & 0xFF);
+                        graphics.fillRect(0, 0, this.screenW, this.screenH);
                         break;
                     }
                     case 3: {
-                        byte by5 = this.var_byte_arr_i[n4 + 9];
-                        this.a(graphics, 10 + by5, n11, n12, 0);
+                        byte by5 = this.menuTree[n4 + 9];
+                        this.drawTileSprite(graphics, 10 + by5, n11, n12, 0);
                         break;
                     }
                     case 6: {
                         byte by5 = 0;
-                        this.e(graphics, 0, 0, this.aO, this.var_int_j);
+                        this.e(graphics, 0, 0, this.screenW, this.screenH);
                         break;
                     }
                     case 0: {
@@ -1843,36 +1843,36 @@ implements CommandListener {
                     }
                 }
             } else {
-                switch (this.var_byte_arr_i[n4 + 8]) {
+                switch (this.menuTree[n4 + 8]) {
                     case 10: {
-                        this.F = this.aO * this.var_byte_arr_i[n4 + 9] / 100;
-                        this.O = this.var_int_j * this.var_byte_arr_i[n4 + 9 + 1] / 100;
-                        this.B = this.aO * this.var_byte_arr_i[n4 + 9 + 2] / 100;
-                        this.P = this.var_int_j * this.var_byte_arr_i[n4 + 9 + 3] / 100;
-                        graphics.setClip(this.F, this.O, this.B - this.F, this.P - this.O);
+                        this.clipLeft = this.screenW * this.menuTree[n4 + 9] / 100;
+                        this.clipTop = this.screenH * this.menuTree[n4 + 9 + 1] / 100;
+                        this.clipRight = this.screenW * this.menuTree[n4 + 9 + 2] / 100;
+                        this.clipBottom = this.screenH * this.menuTree[n4 + 9 + 3] / 100;
+                        graphics.setClip(this.clipLeft, this.clipTop, this.clipRight - this.clipLeft, this.clipBottom - this.clipTop);
                         break;
                     }
                     case 4: {
-                        if (this.aQ <= this.var_byte_arr_i[n4 + 9]) break;
-                        this.k(n4, 0);
+                        if (this.aQ <= this.menuTree[n4 + 9]) break;
+                        this.runMenuScript(n4, 0);
                         break;
                     }
                     case 5: {
                         if (System.getProperty("aoe.debug") != null) {
-                            System.out.println("[menuGate] ax=" + this.ax + " ab=" + this.ab);
+                            System.out.println("[menuGate] ax=" + this.keyActionPulse + " ab=" + this.keyActionHeld);
                         }
-                        if (this.ax != 38 && this.ax != 22 && this.ax != 6) break;
-                        this.k(n4, 0);
+                        if (this.keyActionPulse != 38 && this.keyActionPulse != 22 && this.keyActionPulse != 6) break;
+                        this.runMenuScript(n4, 0);
                     }
                 }
             }
             n4 = this.int_e(n4);
         }
         this.void_d(n);
-        if (this.ab == 22) {
-            this.ab = 0;
+        if (this.keyActionHeld == 22) {
+            this.keyActionHeld = 0;
         }
-        this.ax = 0;
+        this.keyActionPulse = 0;
         ++this.aQ;
     }
 
@@ -1880,82 +1880,82 @@ implements CommandListener {
         if (this.aQ < 10) {
             return;
         }
-        this.var_byte_arr_i[this.aR + 1] = (byte)this.Z;
-        switch (this.ax) {
+        this.menuTree[this.menuNode + 1] = (byte)this.menuHighlight;
+        switch (this.keyActionPulse) {
             case 6: 
             case 22: 
             case 38: {
-                this.v = this.H;
-                this.k(n, 1);
+                this.pendingPanelSwitch = this.menuScreenId;
+                this.runMenuScript(n, 1);
                 return;
             }
             case 47: {
-                if (this.H >= 2 && this.H <= 5) {
+                if (this.menuScreenId >= 2 && this.menuScreenId <= 5) {
                     return;
                 }
-                if (!this.boolean_g(9)) break;
+                if (!this.requestStateSwitch(9)) break;
                 this.D();
-                this.v = -1;
-                if (this.H == 0) {
+                this.pendingPanelSwitch = -1;
+                if (this.menuScreenId == 0) {
                     this.ap = 0;
-                    this.var_byte_arr_i[this.aR + 1] = (byte)(this.var_byte_arr_i[this.aR + 2] - 1);
+                    this.menuTree[this.menuNode + 1] = (byte)(this.menuTree[this.menuNode + 2] - 1);
                     return;
                 }
-                this.ap = this.var_byte_arr_i[this.aR + 0];
+                this.ap = this.menuTree[this.menuNode + 0];
                 return;
             }
             case 5: 
             case 21: {
-                switch (this.var_byte_arr_i[n + 8]) {
+                switch (this.menuTree[n + 8]) {
                     case 2: {
-                        byte by = this.var_byte_arr_i[n + 9 + 2];
-                        this.var_byte_arr_i[n + 9 + 2] = by > 0 ? (byte)(by - 1 & 0xFF) : (byte)(this.var_byte_arr_i[n + 9 + 1] - 1);
-                        this.k(n, 0);
+                        byte by = this.menuTree[n + 9 + 2];
+                        this.menuTree[n + 9 + 2] = by > 0 ? (byte)(by - 1 & 0xFF) : (byte)(this.menuTree[n + 9 + 1] - 1);
+                        this.runMenuScript(n, 0);
                     }
                 }
                 return;
             }
             case 7: 
             case 23: {
-                switch (this.var_byte_arr_i[n + 8]) {
+                switch (this.menuTree[n + 8]) {
                     case 2: {
-                        byte by = this.var_byte_arr_i[n + 9 + 2];
-                        byte by2 = this.var_byte_arr_i[n + 9 + 1];
-                        this.var_byte_arr_i[n + 9 + 2] = by < by2 - 1 ? (byte)(by + 1 & 0xFF) : (byte)0;
-                        this.k(n, 0);
+                        byte by = this.menuTree[n + 9 + 2];
+                        byte by2 = this.menuTree[n + 9 + 1];
+                        this.menuTree[n + 9 + 2] = by < by2 - 1 ? (byte)(by + 1 & 0xFF) : (byte)0;
+                        this.runMenuScript(n, 0);
                     }
                 }
                 return;
             }
             case 3: 
             case 19: {
-                int n2 = this.Z;
+                int n2 = this.menuHighlight;
                 int n3 = 0;
                 do {
                     if (--n2 >= 0) continue;
                     return;
-                } while ((this.var_byte_arr_i[n3 = this.int_c(n2)] & 0xFFFFFF80) == 0);
-                this.Z = n2;
+                } while ((this.menuTree[n3 = this.int_c(n2)] & 0xFFFFFF80) == 0);
+                this.menuHighlight = n2;
                 return;
             }
             case 9: 
             case 25: {
-                int n4 = this.Z;
+                int n4 = this.menuHighlight;
                 int n5 = 0;
                 do {
-                    if (++n4 < this.ao) continue;
+                    if (++n4 < this.menuNodeCount) continue;
                     return;
-                } while ((this.var_byte_arr_i[n5 = this.int_c(n4)] & 0xFFFFFF80) == 0);
-                this.Z = n4;
+                } while ((this.menuTree[n5 = this.int_c(n4)] & 0xFFFFFF80) == 0);
+                this.menuHighlight = n4;
             }
         }
     }
 
     public final void d(Graphics graphics, int n, int n2, int n3, int n4) {
         int n5 = this.aQ - n4;
-        int n6 = this.var_byte_arr_i[n3 + 9] & 0xFF;
+        int n6 = this.menuTree[n3 + 9] & 0xFF;
         n2 += this.ay;
-        if (this.var_byte_arr_i[n3 + 0] == 104) {
+        if (this.menuTree[n3 + 0] == 104) {
             graphics.setColor(this.int_a(0xFFFFFF, 14595245, n5, 10));
             graphics.drawString(this.var_java_lang_String_arr_a[n6], n + 1, n2 + 1, 20);
             graphics.setColor(this.int_a(0xFF0000, 14595245, n5, 10));
@@ -1964,8 +1964,8 @@ implements CommandListener {
         }
         int n7 = 0;
         int n8 = 0xFFFFFF;
-        if ((this.var_byte_arr_i[n3 + 0] & 0xFFFFFF80) != 0) {
-            if (n4 == this.Z) {
+        if ((this.menuTree[n3 + 0] & 0xFFFFFF80) != 0) {
+            if (n4 == this.menuHighlight) {
                 n7 = 0xFF0000;
                 n8 = 0xFFFFFF;
             }
@@ -1979,13 +1979,13 @@ implements CommandListener {
     }
 
     public final void c(Graphics graphics, int n, int n2, int n3, int n4) {
-        int n5 = (this.var_byte_arr_i[n3 + 9] & 0xFF) + (this.var_byte_arr_i[n3 + 9 + 2] & 0xFF);
-        int n6 = this.var_byte_arr_i[n3 + 6] & 0xFF;
+        int n5 = (this.menuTree[n3 + 9] & 0xFF) + (this.menuTree[n3 + 9 + 2] & 0xFF);
+        int n6 = this.menuTree[n3 + 6] & 0xFF;
         int n7 = this.aQ - n4;
         boolean bl = false;
         int n8 = 0xFFFFFF;
         int n9 = 14595245;
-        if (n4 == this.Z) {
+        if (n4 == this.menuHighlight) {
             int n10 = (AgeOfEmpires.b.int_b(this.aQ << 7) >> 9) + 128 << 16;
             n10 = this.int_a(n10, n9, n7, 10);
             graphics.setColor(n10);
@@ -1994,14 +1994,14 @@ implements CommandListener {
             graphics.fillRect(n + 1, n2 + 1, n6 - 2, this.ah + 4);
             graphics.setColor(14595245);
             graphics.fillRect(n + 2, n2 + 2, n6 - 4, this.ah + 2);
-            if (this.var_byte_arr_i[n3 + 9 + 1] > 1) {
-                int n11 = AgeOfEmpires.b.int_b(this.ar << 8) >> 14;
+            if (this.menuTree[n3 + 9 + 1] > 1) {
+                int n11 = AgeOfEmpires.b.int_b(this.tickCount << 8) >> 14;
                 if (n7 > 6) {
                     this.a(graphics, 21, n - n11 - 13, n2 + (this.ah >> 1), 28, 0, 7, 6, 0, 0);
                     this.a(graphics, 21, n + n6 + n11 + 6, n2 + (this.ah >> 1), 35, 0, 7, 6, 0, 0);
                 }
             }
-        } else if ((this.var_byte_arr_i[n3 + 0] & 0xFFFFFF80) != 0) {
+        } else if ((this.menuTree[n3 + 0] & 0xFFFFFF80) != 0) {
             graphics.setColor(this.int_a(0xD0D0D0, n9, n7, 10));
             graphics.fillRect(n + 1, n2 + 1, n6 - 2, this.ah + 4);
             graphics.setColor(this.int_a(14595245, n9, n7, 10));
@@ -2016,7 +2016,7 @@ implements CommandListener {
     }
 
     public final int int_c(int n) {
-        int n2 = this.aR + 6;
+        int n2 = this.menuNode + 6;
         for (int i = 0; i < n; ++i) {
             n2 = this.int_e(n2);
         }
@@ -2024,7 +2024,7 @@ implements CommandListener {
     }
 
     public final int int_j(int n) {
-        int n2 = this.var_byte_arr_i[n + 2];
+        int n2 = this.menuTree[n + 2];
         n += 6;
         for (int i = 0; i < n2; ++i) {
             n = this.int_e(n);
@@ -2033,7 +2033,7 @@ implements CommandListener {
     }
 
     public final int int_e(int n) {
-        byte by = this.var_byte_arr_i[n + 8];
+        byte by = this.menuTree[n + 8];
         n = this.int_k(n);
         n = this.int_i(n);
         if (by == 2) {
@@ -2043,7 +2043,7 @@ implements CommandListener {
     }
 
     public final int int_i(int n) {
-        switch (this.var_byte_arr_i[n++]) {
+        switch (this.menuTree[n++]) {
             case 2: 
             case 3: 
             case 6: 
@@ -2060,7 +2060,7 @@ implements CommandListener {
 
     public final int int_k(int n) {
         n += 8;
-        switch (this.var_byte_arr_i[n++] & 0xF) {
+        switch (this.menuTree[n++] & 0xF) {
             case 0: 
             case 4: {
                 ++n;
@@ -2085,54 +2085,54 @@ implements CommandListener {
         return n;
     }
 
-    public final void l() {
+    public final void loadMenuScreen() {
         int n;
         int n2;
-        this.aR = 0;
-        for (n2 = 0; n2 < this.H; ++n2) {
-            this.aR = this.int_j(this.aR);
+        this.menuNode = 0;
+        for (n2 = 0; n2 < this.menuScreenId; ++n2) {
+            this.menuNode = this.int_j(this.menuNode);
         }
-        n2 = this.var_byte_arr_i[this.aR + 3] & 0xFF;
-        this.Z = this.var_byte_arr_i[this.aR + 1];
-        a a2 = new a(this.H + 83);
+        n2 = this.menuTree[this.menuNode + 3] & 0xFF;
+        this.menuHighlight = this.menuTree[this.menuNode + 1];
+        a a2 = new a(this.menuScreenId + 83);
         this.var_java_lang_String_arr_a = new String[n2];
         for (n = 0; n < n2; ++n) {
             this.var_java_lang_String_arr_a[n] = a2.a(n);
         }
-        this.ao = this.var_byte_arr_i[this.aR + 2] & 0xFF;
-        n = this.aR + 6;
+        this.menuNodeCount = this.menuTree[this.menuNode + 2] & 0xFF;
+        n = this.menuNode + 6;
         boolean bl = false;
-        for (int i = 0; i < this.ao; ++i) {
-            switch (this.var_byte_arr_i[n + 8] & 0xF) {
+        for (int i = 0; i < this.menuNodeCount; ++i) {
+            switch (this.menuTree[n + 8] & 0xF) {
                 case 3: 
                 case 6: 
                 case 8: 
                 case 9: {
-                    Image image = this.javax_microedition_lcdui_Image_a(10 + this.var_byte_arr_i[n + 9], 0);
+                    Image image = this.javax_microedition_lcdui_Image_a(10 + this.menuTree[n + 9], 0);
                     if (image == null) break;
-                    this.var_byte_arr_i[n + 6] = (byte)(image.getWidth() & 0xFF);
-                    this.var_byte_arr_i[n + 7] = (byte)(image.getHeight() & 0xFF);
+                    this.menuTree[n + 6] = (byte)(image.getWidth() & 0xFF);
+                    this.menuTree[n + 7] = (byte)(image.getHeight() & 0xFF);
                     break;
                 }
                 case 0: {
-                    if (this.var_byte_arr_i[n + 3] == 10) {
-                        this.var_byte_arr_i[n + 3] = (byte)this.ah;
+                    if (this.menuTree[n + 3] == 10) {
+                        this.menuTree[n + 3] = (byte)this.ah;
                     }
-                    this.var_byte_arr_i[n + 6] = (byte)(this.a(this.var_java_lang_String_arr_a[this.var_byte_arr_i[n + 9]]) + 1);
-                    this.var_byte_arr_i[n + 7] = (byte)this.ah;
+                    this.menuTree[n + 6] = (byte)(this.a(this.var_java_lang_String_arr_a[this.menuTree[n + 9]]) + 1);
+                    this.menuTree[n + 7] = (byte)this.ah;
                     break;
                 }
                 case 2: {
                     int n3 = 0;
-                    for (int j = 0; j < this.var_byte_arr_i[n + 9 + 1]; ++j) {
-                        int n4 = this.a(this.var_java_lang_String_arr_a[this.var_byte_arr_i[n + 9] + j]);
+                    for (int j = 0; j < this.menuTree[n + 9 + 1]; ++j) {
+                        int n4 = this.a(this.var_java_lang_String_arr_a[this.menuTree[n + 9] + j]);
                         if (n4 <= n3) continue;
                         n3 = n4;
                     }
-                    this.var_byte_arr_i[n + 6] = (byte)(n3 + 8 & 0xFF);
-                    this.var_byte_arr_i[n + 7] = (byte)(this.ah + 4);
-                    this.var_byte_arr_i[n + 3] = (byte)(this.ah + 8);
-                    this.var_byte_arr_i[this.int_e((int)n) + 3] = (byte)(this.ah + 8);
+                    this.menuTree[n + 6] = (byte)(n3 + 8 & 0xFF);
+                    this.menuTree[n + 7] = (byte)(this.ah + 4);
+                    this.menuTree[n + 3] = (byte)(this.ah + 8);
+                    this.menuTree[this.int_e((int)n) + 3] = (byte)(this.ah + 8);
                 }
             }
             n = this.int_e(n);
@@ -2140,70 +2140,70 @@ implements CommandListener {
     }
 
     public final void D() {
-        for (int i = 0; i < this.ao; ++i) {
+        for (int i = 0; i < this.menuNodeCount; ++i) {
             int n = this.int_c(i);
-            if ((this.var_byte_arr_i[n + 0] & 0x20) == 0 || this.var_byte_arr_i[n + 8] != 2) continue;
-            this.k(n, 0);
+            if ((this.menuTree[n + 0] & 0x20) == 0 || this.menuTree[n + 8] != 2) continue;
+            this.runMenuScript(n, 0);
         }
     }
 
-    public final void k(int n, int n2) {
+    public final void runMenuScript(int n, int n2) {
         int n3 = n;
         n3 = this.int_k(n3);
         if (System.getProperty("aoe.debug") != null) {
-            System.out.println("[k] node=" + n + " mode=" + n2 + " type=" + this.var_byte_arr_i[n + 8]
-                + " op=" + this.var_byte_arr_i[n3]);
+            System.out.println("[k] node=" + n + " mode=" + n2 + " type=" + this.menuTree[n + 8]
+                + " op=" + this.menuTree[n3]);
         }
-        if (this.var_byte_arr_i[n + 8] == 2 && n2 > 0) {
+        if (this.menuTree[n + 8] == 2 && n2 > 0) {
             n3 = this.int_i(n3);
         }
-        switch (this.var_byte_arr_i[n3++]) {
+        switch (this.menuTree[n3++]) {
             case 11: {
-                this.O = 0;
-                this.P = this.var_int_j;
-                this.m();
-                if (this.var_byte_arr_f[33] == 0) {
-                    this.g(0, 82, 2);
+                this.clipTop = 0;
+                this.clipBottom = this.screenH;
+                this.loadNfo();
+                if (this.nfoData[33] == 0) {
+                    this.startMissionBriefing(0, 82, 2);
                 } else {
-                    this.boolean_g(14);
+                    this.requestStateSwitch(14);
                 }
-                this.v = 0;
+                this.pendingPanelSwitch = 0;
                 return;
             }
             case 8: {
-                this.O = 0;
-                this.P = this.var_int_j;
+                this.clipTop = 0;
+                this.clipBottom = this.screenH;
                 for (int i = 0; i < 7; ++i) {
-                    this.var_int_arr_e[i] = this.var_int_arr_d[i];
+                    this.var_int_arr_e[i] = this.nfoHighScores[i];
                 }
-                this.g(0, 82, 3);
-                this.v = 0;
+                this.startMissionBriefing(0, 82, 3);
+                this.pendingPanelSwitch = 0;
                 return;
             }
             case 7: {
-                if (!this.boolean_g(this.var_byte_arr_i[n3])) break;
+                if (!this.requestStateSwitch(this.menuTree[n3])) break;
                 this.D();
                 return;
             }
             case 6: {
-                this.O = 0;
-                this.P = this.var_int_j;
-                this.g(0, 82, this.var_byte_arr_i[n3]);
-                this.v = -1;
+                this.clipTop = 0;
+                this.clipBottom = this.screenH;
+                this.startMissionBriefing(0, 82, this.menuTree[n3]);
+                this.pendingPanelSwitch = -1;
                 return;
             }
             case 2: {
-                if (!this.boolean_g(9)) break;
+                if (!this.requestStateSwitch(9)) break;
                 this.D();
-                this.ap = this.var_byte_arr_i[n3];
-                this.v = this.H;
+                this.ap = this.menuTree[n3];
+                this.pendingPanelSwitch = this.menuScreenId;
                 return;
             }
             case 5: {
-                byte by = this.var_byte_arr_i[n3++];
-                byte by2 = this.var_byte_arr_i[n3];
+                byte by = this.menuTree[n3++];
+                byte by2 = this.menuTree[n3];
                 n3 = this.int_c(by);
-                this.var_byte_arr_i[n3] = (byte)(by2 & 0xFF);
+                this.menuTree[n3] = (byte)(by2 & 0xFF);
                 return;
             }
             case 4: {
@@ -2211,65 +2211,65 @@ implements CommandListener {
                 return;
             }
             case 3: {
-                int n4 = this.var_byte_arr_i[n + 9 + 2];
-                if (this.var_byte_arr_i[n3] == 74) {
+                int n4 = this.menuTree[n + 9 + 2];
+                if (this.menuTree[n3] == 74) {
                     return;
                 }
-                if (this.var_byte_arr_i[n3] == 67) {
-                    this.m();
-                    this.var_byte_arr_f[30] = 0;
+                if (this.menuTree[n3] == 67) {
+                    this.loadNfo();
+                    this.nfoData[30] = 0;
                     if (n4 == 1) {
-                        this.var_byte_arr_f[30] = 1;
+                        this.nfoData[30] = 1;
                         AgeOfEmpires.b.c();
                         AgeOfEmpires.b.c = false;
                     } else {
                         AgeOfEmpires.b.c = true;
                         AgeOfEmpires.b.var_boolean_b = true;
                     }
-                    this.I();
+                    this.saveNfo();
                     return;
                 }
-                if (this.var_byte_arr_i[n3] == 71) {
-                    this.ac = 16;
-                    this.aC = n4;
+                if (this.menuTree[n3] == 71) {
+                    this.gameMode = 16;
+                    this.missionIndex = n4;
                     return;
                 }
-                if (this.var_byte_arr_i[n3] == 73) {
-                    this.ac = 32;
-                    this.aC = n4;
+                if (this.menuTree[n3] == 73) {
+                    this.gameMode = 32;
+                    this.missionIndex = n4;
                     return;
                 }
-                if (this.var_byte_arr_i[n3] == 72) {
-                    this.m();
-                    this.var_byte_arr_f[29] = 0;
+                if (this.menuTree[n3] == 72) {
+                    this.loadNfo();
+                    this.nfoData[29] = 0;
                     if (n4 == 0) {
-                        this.var_byte_arr_f[29] = 1;
+                        this.nfoData[29] = 1;
                         this.var_boolean_d = false;
                     } else {
                         this.var_boolean_d = true;
                     }
-                    this.I();
+                    this.saveNfo();
                     return;
                 }
-                if (this.var_byte_arr_i[n3] == 65) {
-                    this.ac = 0;
+                if (this.menuTree[n3] == 65) {
+                    this.gameMode = 0;
                     n3 = this.int_k(this.int_c(4));
                     n3 = this.int_i(n3);
-                    this.var_byte_arr_i[n3] = 2;
+                    this.menuTree[n3] = 2;
                     if (n4 == 0) {
-                        this.var_byte_arr_i[n3 + 1] = 11;
+                        this.menuTree[n3 + 1] = 11;
                         return;
                     }
                     if (n4 == 1) {
-                        this.var_byte_arr_i[n3 + 1] = 12;
+                        this.menuTree[n3 + 1] = 12;
                         return;
                     }
                     if (n4 != 2) break;
-                    this.var_byte_arr_i[n3 + 1] = 10;
+                    this.menuTree[n3 + 1] = 10;
                     return;
                 }
-                if (this.var_byte_arr_i[n3] != 66) break;
-                this.ac = 0;
+                if (this.menuTree[n3] != 66) break;
+                this.gameMode = 0;
                 this.var_byte_a = (byte)(n4 & 0xF);
             }
         }
@@ -2280,15 +2280,15 @@ implements CommandListener {
     }
 
     public final void o(Graphics graphics) {
-        if (this.v != -1) {
-            this.v = this.H;
+        if (this.pendingPanelSwitch != -1) {
+            this.pendingPanelSwitch = this.menuScreenId;
         }
-        if (this.ap != this.H) {
-            this.H = this.ap;
+        if (this.ap != this.menuScreenId) {
+            this.menuScreenId = this.ap;
             this.aQ = 0;
             this.var_int_a = 0;
             this.K = 0;
-            if (this.H == 2 || this.H == 3 || this.H == 4) {
+            if (this.menuScreenId == 2 || this.menuScreenId == 3 || this.menuScreenId == 4) {
                 this.var_boolean_f = false;
                 this.var_boolean_b = false;
             } else {
@@ -2296,16 +2296,16 @@ implements CommandListener {
                 this.var_boolean_b = true;
             }
         }
-        this.boolean_g(4);
+        this.requestStateSwitch(4);
     }
 
     public final boolean boolean_f(int n) {
         this.var_boolean_f = true;
         this.var_boolean_b = false;
-        this.O = 0;
-        this.F = 0;
-        this.P = this.var_int_j;
-        this.B = this.aO;
+        this.clipTop = 0;
+        this.clipLeft = 0;
+        this.clipBottom = this.screenH;
+        this.clipRight = this.screenW;
         this.var_java_lang_String_arr_a = new String[6];
         a a2 = new a(97);
         for (int i = 0; i < 6; ++i) {
@@ -2320,28 +2320,28 @@ implements CommandListener {
 
     public final void b(Graphics graphics) {
         int n;
-        this.e(graphics, 0, 0, this.aO, this.var_int_j);
-        this.a(graphics, this.var_java_lang_String_arr_a[5], this.aO - this.a(this.var_java_lang_String_arr_a[5]) >> 1, 9 + this.ay, this.aQ);
-        int n2 = this.B - this.F - 24;
+        this.e(graphics, 0, 0, this.screenW, this.screenH);
+        this.a(graphics, this.var_java_lang_String_arr_a[5], this.screenW - this.a(this.var_java_lang_String_arr_a[5]) >> 1, 9 + this.ay, this.aQ);
+        int n2 = this.clipRight - this.clipLeft - 24;
         boolean bl = false;
-        int n3 = (this.var_int_j >> 1) - 35;
+        int n3 = (this.screenH >> 1) - 35;
         if (n3 < 17) {
             n3 = 17;
         }
         this.a(graphics, this.var_java_lang_String_arr_a[1], 12, n3, this.aQ);
         n3 += this.ah + 3;
-        int n4 = this.var_int_arr_arr_a[0][86] + this.var_int_arr_arr_a[1][86];
+        int n4 = this.playerUnitHeaders[0][86] + this.playerUnitHeaders[1][86];
         if (n4 > 0) {
-            n = this.var_int_arr_arr_a[0][86] * n2 / n4;
+            n = this.playerUnitHeaders[0][86] * n2 / n4;
             graphics.setColor(1065087);
             graphics.fillRect(12, n3, n, 3);
-            n = this.var_int_arr_arr_a[0][2] * n2 / n4;
+            n = this.playerUnitHeaders[0][2] * n2 / n4;
             graphics.setColor(2130175);
             graphics.fillRect(12, n3, n, 3);
-            n = this.var_int_arr_arr_a[1][86] * n2 / n4;
+            n = this.playerUnitHeaders[1][86] * n2 / n4;
             graphics.setColor(8329232);
             graphics.fillRect(12, n3 += 3, n, 3);
-            n = this.var_int_arr_arr_a[1][2] * n2 / n4;
+            n = this.playerUnitHeaders[1][2] * n2 / n4;
             graphics.setColor(16724000);
             graphics.fillRect(12, n3, n, 3);
             n3 += 7;
@@ -2350,18 +2350,18 @@ implements CommandListener {
         }
         this.a(graphics, this.var_java_lang_String_arr_a[2], 12, n3, this.aQ + 1);
         n3 += this.ah + 3;
-        n4 = this.var_int_arr_arr_a[0][88] + this.var_int_arr_arr_a[1][88];
+        n4 = this.playerUnitHeaders[0][88] + this.playerUnitHeaders[1][88];
         if (n4 > 0) {
-            n = this.var_int_arr_arr_a[0][88] * n2 / n4;
+            n = this.playerUnitHeaders[0][88] * n2 / n4;
             graphics.setColor(1065087);
             graphics.fillRect(12, n3, n, 3);
-            n = this.var_int_arr_arr_a[0][4] * n2 / n4;
+            n = this.playerUnitHeaders[0][4] * n2 / n4;
             graphics.setColor(2130175);
             graphics.fillRect(12, n3, n, 3);
-            n = this.var_int_arr_arr_a[1][88] * n2 / n4;
+            n = this.playerUnitHeaders[1][88] * n2 / n4;
             graphics.setColor(8329232);
             graphics.fillRect(12, n3 += 3, n, 3);
-            n = this.var_int_arr_arr_a[1][4] * n2 / n4;
+            n = this.playerUnitHeaders[1][4] * n2 / n4;
             graphics.setColor(16724000);
             graphics.fillRect(12, n3, n, 3);
             n3 += 7;
@@ -2370,33 +2370,33 @@ implements CommandListener {
         }
         this.a(graphics, this.var_java_lang_String_arr_a[0], 12, n3, this.aQ + 1);
         n3 += this.ah + 3;
-        n4 = this.var_int_arr_arr_a[0][90] + this.var_int_arr_arr_a[1][90];
+        n4 = this.playerUnitHeaders[0][90] + this.playerUnitHeaders[1][90];
         if (n4 > 0) {
-            n = this.var_int_arr_arr_a[0][90] * n2 / n4;
+            n = this.playerUnitHeaders[0][90] * n2 / n4;
             graphics.setColor(2130175);
             graphics.fillRect(12, n3, n, 3);
-            n = this.var_int_arr_arr_a[1][90] * n2 / n4;
+            n = this.playerUnitHeaders[1][90] * n2 / n4;
             graphics.setColor(16724000);
             graphics.fillRect(12, n3 += 3, n, 3);
         }
-        if (this.ab == 22 || this.ab == 6 || this.ab == 38) {
-            this.boolean_g(4);
+        if (this.keyActionHeld == 22 || this.keyActionHeld == 6 || this.keyActionHeld == 38) {
+            this.requestStateSwitch(4);
         }
-        if (this.ab == 22) {
-            this.ab = 0;
+        if (this.keyActionHeld == 22) {
+            this.keyActionHeld = 0;
         }
-        this.ax = 0;
-        this.ab = 0;
+        this.keyActionPulse = 0;
+        this.keyActionHeld = 0;
         ++this.aQ;
     }
 
     public final boolean boolean_a(int n) {
         this.var_boolean_f = true;
         this.var_boolean_b = false;
-        this.F = 0;
-        this.B = this.aO;
-        this.O = 0;
-        this.P = this.var_int_j;
+        this.clipLeft = 0;
+        this.clipRight = this.screenW;
+        this.clipTop = 0;
+        this.clipBottom = this.screenH;
         a a2 = new a(65);
         this.var_java_lang_String_arr_a = new String[160];
         int n2 = 0;
@@ -2409,31 +2409,31 @@ implements CommandListener {
 
     public final void r() {
         AgeOfEmpires.c.a(this.var_java_lang_String_arr_a);
-        this.v = -1;
-        this.ab = 0;
-        this.ax = 0;
+        this.pendingPanelSwitch = -1;
+        this.keyActionHeld = 0;
+        this.keyActionPulse = 0;
     }
 
     public final void k(Graphics graphics) {
-        int n = this.var_int_j / 19;
+        int n = this.screenH / 19;
         int n2 = this.aQ / 19 - n;
         int n3 = -(this.aQ % 19);
         int n4 = n + 1 + n2;
         graphics.setColor(0);
-        graphics.fillRect(0, 0, this.aO, this.var_int_j);
+        graphics.fillRect(0, 0, this.screenW, this.screenH);
         if (n2 > 0 && this.var_java_lang_String_arr_a[n2] == null) {
-            this.boolean_g(4);
+            this.requestStateSwitch(4);
             return;
         }
         for (int i = n2; i < n4; ++i) {
             if (i >= 0 && this.var_java_lang_String_arr_a[i] != null) {
-                int n5 = this.aO - this.a(this.var_java_lang_String_arr_a[i]) >> 1;
-                int n6 = this.int_a(0x606060, 0, this.var_int_j - n3 - 19, this.var_int_j >> 2);
+                int n5 = this.screenW - this.a(this.var_java_lang_String_arr_a[i]) >> 1;
+                int n6 = this.int_a(0x606060, 0, this.screenH - n3 - 19, this.screenH >> 2);
                 if (n6 > 0) {
                     graphics.setColor(n6);
                     graphics.drawString(this.var_java_lang_String_arr_a[i], n5, n3 + 1, 20);
                 }
-                if ((n6 = this.int_a(0xFFFFFF, 0, this.var_int_j - n3 - 19, this.var_int_j >> 2)) > 0) {
+                if ((n6 = this.int_a(0xFFFFFF, 0, this.screenH - n3 - 19, this.screenH >> 2)) > 0) {
                     graphics.setColor(n6);
                     graphics.drawString(this.var_java_lang_String_arr_a[i], n5, n3, 20);
                 }
@@ -2441,35 +2441,35 @@ implements CommandListener {
             n3 += 19;
         }
         ++this.aQ;
-        if (this.ax == 38 || this.ax == 22 || this.ax == 6 || this.ax == 47) {
-            this.boolean_g(4);
-            this.ab = 0;
+        if (this.keyActionPulse == 38 || this.keyActionPulse == 22 || this.keyActionPulse == 6 || this.keyActionPulse == 47) {
+            this.requestStateSwitch(4);
+            this.keyActionHeld = 0;
         }
     }
 
-    public final boolean boolean_c(int n) {
+    public final boolean beginMissionLoad(int n) {
         if (System.getProperty("aoe.debug") != null) {
-            System.out.println("[trace] boolean_c aH=" + n + " ac=" + this.ac + " aC=" + this.aC);
+            System.out.println("[trace] boolean_c aH=" + n + " ac=" + this.gameMode + " aC=" + this.missionIndex);
         }
         Object object;
         this.var_boolean_f = false;
         this.var_boolean_b = false;
-        this.F = 0;
-        this.B = this.aO;
-        this.O = 0;
-        this.P = this.var_int_j;
+        this.clipLeft = 0;
+        this.clipRight = this.screenW;
+        this.clipTop = 0;
+        this.clipBottom = this.screenH;
         this.var_AgeOfEmpires_d_a = new d();
-        if (this.ac == 0) {
-            this.m();
-            this.var_AgeOfEmpires_d_a.o = this.int_a(31, 2);
+        if (this.gameMode == 0) {
+            this.loadNfo();
+            this.var_AgeOfEmpires_d_a.o = this.nfoReadInt(31, 2);
             if (this.var_AgeOfEmpires_d_a.o == 0) {
                 this.var_AgeOfEmpires_d_a.o = 8224;
             }
             var_int_k = (byte)(this.var_AgeOfEmpires_d_a.o >>> 8) & 0xFF;
             r = (byte)(this.var_AgeOfEmpires_d_a.o & 0xFF);
         }
-        if (this.aF != 0) {
-            byte[] var_byte_arr_t = com.ulysseo.mad.c.byte_arr_a(this.aF);
+        if (this.missionResId != 0) {
+            byte[] var_byte_arr_t = com.ulysseo.mad.c.byte_arr_a(this.missionResId);
             this.var_boolean_k = false;
             int n2 = var_byte_arr_t[0] & 0xFF;
             int n3 = var_byte_arr_t[1] & 0xFF;
@@ -2480,7 +2480,7 @@ implements CommandListener {
                 this.var_boolean_k = true;
             }
         }
-        this.var_AgeOfEmpires_d_a.a(9, 20, this.var_short_arr_a, this.var_boolean_k);
+        this.var_AgeOfEmpires_d_a.a(9, 20, this.mapTiles, this.var_boolean_k);
         this.aQ = 0;
         object = new a(99);
         this.var_java_lang_String_a = ((a)object).a(0);
@@ -2489,26 +2489,26 @@ implements CommandListener {
 
     public final void t() {
         if (this.var_boolean_k) {
-            this.var_short_arr_a[this.var_AgeOfEmpires_d_a.var_int_arr_a[0] + 1 + (this.var_AgeOfEmpires_d_a.var_int_arr_a[1] + 1 << 6)] = 0;
-            this.var_short_arr_a[this.var_AgeOfEmpires_d_a.var_int_arr_a[0] - 1 + (this.var_AgeOfEmpires_d_a.var_int_arr_a[1] + 1 << 6)] = 0;
-            this.var_short_arr_a[this.var_AgeOfEmpires_d_a.var_int_arr_a[0] + 1 + (this.var_AgeOfEmpires_d_a.var_int_arr_a[1] << 6)] = 0;
+            this.mapTiles[this.var_AgeOfEmpires_d_a.var_int_arr_a[0] + 1 + (this.var_AgeOfEmpires_d_a.var_int_arr_a[1] + 1 << 6)] = 0;
+            this.mapTiles[this.var_AgeOfEmpires_d_a.var_int_arr_a[0] - 1 + (this.var_AgeOfEmpires_d_a.var_int_arr_a[1] + 1 << 6)] = 0;
+            this.mapTiles[this.var_AgeOfEmpires_d_a.var_int_arr_a[0] + 1 + (this.var_AgeOfEmpires_d_a.var_int_arr_a[1] << 6)] = 0;
             this.a(0, 9, this.var_AgeOfEmpires_d_a.var_int_arr_a[0], this.var_AgeOfEmpires_d_a.var_int_arr_a[1], 255, false);
             this.a(0, 0, this.var_AgeOfEmpires_d_a.var_int_arr_a[0] + 1, this.var_AgeOfEmpires_d_a.var_int_arr_a[1] + 1, false);
             this.a(0, 0, this.var_AgeOfEmpires_d_a.var_int_arr_a[0] - 1, this.var_AgeOfEmpires_d_a.var_int_arr_a[1] + 1, false);
             if (this.var_byte_a < 2) {
                 this.a(0, 5, this.var_AgeOfEmpires_d_a.var_int_arr_a[0] + 1, this.var_AgeOfEmpires_d_a.var_int_arr_a[1], false);
             }
-            this.aa = this.var_AgeOfEmpires_d_a.var_int_arr_a[0];
-            this.aV = this.var_AgeOfEmpires_d_a.var_int_arr_a[1];
-            this.Q = this.aa + (this.aV << 6);
-            this.var_short_arr_a[this.var_AgeOfEmpires_d_a.var_int_arr_a[2] + 1 + (this.var_AgeOfEmpires_d_a.var_int_arr_a[3] + 1 << 6)] = Short.MIN_VALUE;
-            this.var_short_arr_a[this.var_AgeOfEmpires_d_a.var_int_arr_a[2] - 1 + (this.var_AgeOfEmpires_d_a.var_int_arr_a[3] + 1 << 6)] = Short.MIN_VALUE;
+            this.cursorTileX = this.var_AgeOfEmpires_d_a.var_int_arr_a[0];
+            this.cursorTileY = this.var_AgeOfEmpires_d_a.var_int_arr_a[1];
+            this.cursorTileIdx = this.cursorTileX + (this.cursorTileY << 6);
+            this.mapTiles[this.var_AgeOfEmpires_d_a.var_int_arr_a[2] + 1 + (this.var_AgeOfEmpires_d_a.var_int_arr_a[3] + 1 << 6)] = Short.MIN_VALUE;
+            this.mapTiles[this.var_AgeOfEmpires_d_a.var_int_arr_a[2] - 1 + (this.var_AgeOfEmpires_d_a.var_int_arr_a[3] + 1 << 6)] = Short.MIN_VALUE;
             this.a(1, 9, this.var_AgeOfEmpires_d_a.var_int_arr_a[2], this.var_AgeOfEmpires_d_a.var_int_arr_a[3], 255, false);
             this.a(1, 0, this.var_AgeOfEmpires_d_a.var_int_arr_a[2] + 1, this.var_AgeOfEmpires_d_a.var_int_arr_a[3] + 1, false);
             this.a(1, 0, this.var_AgeOfEmpires_d_a.var_int_arr_a[2] - 1, this.var_AgeOfEmpires_d_a.var_int_arr_a[3] + 1, false);
         }
-        if (this.aF != 0) {
-            this.void_f(this.aF);
+        if (this.missionResId != 0) {
+            this.spawnMission(this.missionResId);
         }
         this.var_AgeOfEmpires_d_a.d();
         this.var_AgeOfEmpires_d_a = null;
@@ -2516,22 +2516,22 @@ implements CommandListener {
         AgeOfEmpires.b.c();
     }
 
-    public final void h(Graphics graphics) {
+    public final void renderLoadingScreen(Graphics graphics) {
         boolean bl = false;
-        int n = (this.var_int_j >> 1) - 10;
-        graphics.setClip(0, 0, this.aO, this.var_int_j);
-        this.e(graphics, 0, 0, this.aO, this.var_int_j);
+        int n = (this.screenH >> 1) - 10;
+        graphics.setClip(0, 0, this.screenW, this.screenH);
+        this.e(graphics, 0, 0, this.screenW, this.screenH);
         graphics.setColor(7039826);
         graphics.drawString(this.var_java_lang_String_a, 14, n + 1, 20);
         graphics.setColor(0xFFFFFF);
         graphics.drawString(this.var_java_lang_String_a, 13, n, 20);
         graphics.setColor(7039826);
-        graphics.fillRect(11, (n += this.ah + 3) + 2, this.aO - 21, 10);
+        graphics.fillRect(11, (n += this.ah + 3) + 2, this.screenW - 21, 10);
         graphics.setColor(0);
-        graphics.fillRect(10, n + 1, this.aO - 21, 10);
+        graphics.fillRect(10, n + 1, this.screenW - 21, 10);
         graphics.setColor(0xFFFFFF);
-        graphics.fillRect(8, n, this.aO - 21, 9);
-        int n2 = this.aO - 23;
+        graphics.fillRect(8, n, this.screenW - 21, 9);
+        int n2 = this.screenW - 23;
         int n3 = this.var_AgeOfEmpires_d_a.n * n2 >> 8;
         int n4 = 128;
         int n5 = 7;
@@ -2549,7 +2549,7 @@ implements CommandListener {
             this.var_AgeOfEmpires_d_a.run();
         }
         if (this.var_AgeOfEmpires_d_a.var_boolean_c) {
-            this.boolean_g(6);
+            this.requestStateSwitch(6);
         }
         ++this.aQ;
     }
@@ -2564,45 +2564,45 @@ implements CommandListener {
 
     public final void void_a(int n, int n2, int n3, int n4) {
         int n5 = n2 + (n3 << 6) & 0xFFF;
-        this.var_short_arr_a[n5] = (short)(this.var_short_arr_a[n5] & 0xF000);
+        this.mapTiles[n5] = (short)(this.mapTiles[n5] & 0xF000);
         if (n4 > 31) {
             n4 = 31;
         }
         int n6 = n2 + (n3 << 6) & 0xFFF;
-        this.var_short_arr_a[n6] = (short)(this.var_short_arr_a[n6] | (short)(0x300 | n & 0xFF | (n4 <<= 2)));
+        this.mapTiles[n6] = (short)(this.mapTiles[n6] | (short)(0x300 | n & 0xFF | (n4 <<= 2)));
     }
 
     public final boolean boolean_j(int n) {
-        this.F = 0;
-        this.B = this.aO;
-        this.O = 0;
-        this.P = this.var_int_j;
-        this.aU = this.y;
-        this.A = this.N;
-        this.at = this.aa;
-        this.n = this.aV;
-        this.af = 0;
+        this.clipLeft = 0;
+        this.clipRight = this.screenW;
+        this.clipTop = 0;
+        this.clipBottom = this.screenH;
+        this.mapViewSavedCamX = this.cameraPxX;
+        this.mapViewSavedCamY = this.cameraPxY;
+        this.mapViewSavedCursorX = this.cursorTileX;
+        this.mapViewSavedCursorY = this.cursorTileY;
+        this.mapThumbStampRow = 0;
         int n2 = this.az + this.ad;
         int n3 = (this.al << 1) + this.J;
         int n4 = n2 + n3 >> 5;
         int n5 = n3 - n2 >> 5;
-        this.y = n4 - n5 << 1;
-        this.N = n4 + n5;
+        this.cameraPxX = n4 - n5 << 1;
+        this.cameraPxY = n4 + n5;
         this.ag = 0;
-        this.ab = 0;
+        this.keyActionHeld = 0;
         return true;
     }
 
     public final void d() {
-        this.y = this.aU;
-        this.N = this.A;
-        this.aa = this.at;
-        this.aV = this.n;
-        this.ax = 0;
-        this.ab = 0;
+        this.cameraPxX = this.mapViewSavedCamX;
+        this.cameraPxY = this.mapViewSavedCamY;
+        this.cursorTileX = this.mapViewSavedCursorX;
+        this.cursorTileY = this.mapViewSavedCursorY;
+        this.keyActionPulse = 0;
+        this.keyActionHeld = 0;
     }
 
-    public final void e(Graphics graphics) {
+    public final void renderMapView(Graphics graphics) {
         int n;
         int n2;
         int n3;
@@ -2610,59 +2610,59 @@ implements CommandListener {
         int n5;
         int n6;
         int n7;
-        graphics.setClip(0, 0, this.aO, this.var_int_j);
+        graphics.setClip(0, 0, this.screenW, this.screenH);
         graphics.setColor(3438335);
-        graphics.fillRect(0, 0, this.aO, this.var_int_j);
-        int n8 = this.aO >> 1;
-        int n9 = this.var_int_j >> 1;
+        graphics.fillRect(0, 0, this.screenW, this.screenH);
+        int n8 = this.screenW >> 1;
+        int n9 = this.screenH >> 1;
         Image image = this.javax_microedition_lcdui_Image_a(20, 240, 120, 3438335);
         if (image == null) {
             return;
         }
-        if (this.af < 64) {
-            for (n7 = 0; n7 <= 64 && this.af < 64; ++n7) {
+        if (this.mapThumbStampRow < 64) {
+            for (n7 = 0; n7 <= 64 && this.mapThumbStampRow < 64; ++n7) {
                 for (n6 = 0; n6 < 64; ++n6) {
-                    this.b(this.var_javax_microedition_lcdui_Graphics_a, n6, this.af);
+                    this.b(this.var_javax_microedition_lcdui_Graphics_a, n6, this.mapThumbStampRow);
                 }
-                ++this.af;
+                ++this.mapThumbStampRow;
             }
         } else {
             for (n5 = 0; n5 < 2; ++n5) {
                 n7 = 0;
-                n6 = this.var_int_arr_arr_a[n5][2];
+                n6 = this.playerUnitHeaders[n5][2];
                 n4 = 0;
                 while (n4 < n6) {
-                    n3 = this.var_short_arr_arr_a[n5][n7 + 0];
+                    n3 = this.playerUnitSlots[n5][n7 + 0];
                     n2 = n3 >>> 8;
-                    int n10 = this.var_short_arr_arr_a[n5][n7 + 1];
+                    int n10 = this.playerUnitSlots[n5][n7 + 1];
                     int n11 = n10 >>> 8;
-                    n = this.var_short_arr_arr_a[n5][n7 + 6] & 0xF0;
-                    if (((n11 != n2 || (n10 &= 0xFF) != (n3 &= 0xFF)) && n == 0 || n4 == this.ar % n6) && (this.var_short_arr_a[n2 + (n3 << 6)] & 0x8000) == 0) {
+                    n = this.playerUnitSlots[n5][n7 + 6] & 0xF0;
+                    if (((n11 != n2 || (n10 &= 0xFF) != (n3 &= 0xFF)) && n == 0 || n4 == this.tickCount % n6) && (this.mapTiles[n2 + (n3 << 6)] & 0x8000) == 0) {
                         this.b(this.var_javax_microedition_lcdui_Graphics_a, n11, n10);
                         this.b(this.var_javax_microedition_lcdui_Graphics_a, n2, n3);
                     }
                     ++n4;
                     n7 += 8;
                 }
-                n7 = this.var_int_arr_arr_a[n5][4];
+                n7 = this.playerUnitHeaders[n5][4];
                 if (n7 == 0) continue;
                 if (n7 > 1) {
-                    n7 = this.ar % (n7 - 1) << 2;
+                    n7 = this.tickCount % (n7 - 1) << 2;
                 }
                 n3 = this.var_int_arr_arr_b[n5][n7 + 0];
                 n2 = n3 >>> 8;
                 this.b(this.var_javax_microedition_lcdui_Graphics_a, n2, n3 &= 0xFF);
             }
         }
-        n7 = n8 - this.y - 120;
-        n6 = n9 - this.N;
-        graphics.setClip(this.F, this.O, this.B - this.F, this.P - this.O);
+        n7 = n8 - this.cameraPxX - 120;
+        n6 = n9 - this.cameraPxY;
+        graphics.setClip(this.clipLeft, this.clipTop, this.clipRight - this.clipLeft, this.clipBottom - this.clipTop);
         com.ulysseo.mad.d.a(graphics, image, 0, 0, 240, 120, 0, n7, n6, 0);
         graphics.setColor(0xFFFFFF);
-        this.aQ = (this.ar & 3) >= 2 ? 4 - (this.ar & 3) : this.ar & 3;
-        n2 = (this.aI >> 1) + this.aQ;
+        this.aQ = (this.tickCount & 3) >= 2 ? 4 - (this.tickCount & 3) : this.tickCount & 3;
+        n2 = (this.viewTileCols >> 1) + this.aQ;
         n3 = (this.aB >> 2) + this.aQ;
-        n = this.aI / 3 + 1;
+        n = this.viewTileCols / 3 + 1;
         n5 = n8 - n2;
         n4 = n9 - n3;
         n2 = n8 + n2;
@@ -2675,36 +2675,36 @@ implements CommandListener {
         graphics.drawLine(n2, n4, n2, n4 + n);
         graphics.drawLine(n5, n3, n5 + n, n3);
         graphics.drawLine(n5, n3, n5, n3 - n);
-        if (this.af >= 10) {
-            int n12 = this.ax;
-            if (this.ab == 0) {
+        if (this.mapThumbStampRow >= 10) {
+            int n12 = this.keyActionPulse;
+            if (this.keyActionHeld == 0) {
                 return;
             }
-            if (this.ab == this.L) {
-                ++this.s;
-                if (this.s >= 5) {
-                    n12 = this.ab;
+            if (this.keyActionHeld == this.keyRepeatLast) {
+                ++this.keyRepeatFrames;
+                if (this.keyRepeatFrames >= 5) {
+                    n12 = this.keyActionHeld;
                 }
             } else {
-                this.s = 0;
-                this.L = this.ab;
+                this.keyRepeatFrames = 0;
+                this.keyRepeatLast = this.keyActionHeld;
             }
             switch (n12) {
                 case 1: 
                 case 6: 
                 case 22: 
                 case 38: {
-                    this.aU = this.y;
-                    this.A = this.N;
-                    this.at = this.aa;
-                    this.n = this.aV;
+                    this.mapViewSavedCamX = this.cameraPxX;
+                    this.mapViewSavedCamY = this.cameraPxY;
+                    this.mapViewSavedCursorX = this.cursorTileX;
+                    this.mapViewSavedCursorY = this.cursorTileY;
                 }
                 case 47: {
-                    this.O = 0;
-                    this.P = this.var_int_j;
+                    this.clipTop = 0;
+                    this.clipBottom = this.screenH;
                     this.var_boolean_h = true;
-                    this.am = 8;
-                    this.f();
+                    this.pendingScreenState = 8;
+                    this.updateCamera();
                     break;
                 }
                 case 2: {
@@ -2748,27 +2748,27 @@ implements CommandListener {
                 }
             }
             if ((n12 & 0xF0) == 240) {
-                if (this.y > -119) {
-                    this.y -= 4;
-                    --this.aa;
-                    ++this.aV;
+                if (this.cameraPxX > -119) {
+                    this.cameraPxX -= 4;
+                    --this.cursorTileX;
+                    ++this.cursorTileY;
                 }
-            } else if ((n12 & 0xF0) == 16 && this.y < 119) {
-                this.y += 4;
-                ++this.aa;
-                --this.aV;
+            } else if ((n12 & 0xF0) == 16 && this.cameraPxX < 119) {
+                this.cameraPxX += 4;
+                ++this.cursorTileX;
+                --this.cursorTileY;
             }
             if ((n12 & 0xF) == 15) {
-                if (this.N > 0) {
-                    this.N -= 2;
-                    --this.aa;
-                    --this.aV;
+                if (this.cameraPxY > 0) {
+                    this.cameraPxY -= 2;
+                    --this.cursorTileX;
+                    --this.cursorTileY;
                     return;
                 }
-            } else if ((n12 & 0xF) == 1 && this.N < 119) {
-                this.N += 2;
-                ++this.aa;
-                ++this.aV;
+            } else if ((n12 & 0xF) == 1 && this.cameraPxY < 119) {
+                this.cameraPxY += 2;
+                ++this.cursorTileX;
+                ++this.cursorTileY;
             }
         }
     }
@@ -2779,7 +2779,7 @@ implements CommandListener {
         int n5 = 0;
         int n6 = 0;
         int n7 = 0;
-        int n8 = this.var_short_arr_a[n + (n2 << 6) & 0xFFF];
+        int n8 = this.mapTiles[n + (n2 << 6) & 0xFFF];
         graphics.setClip(0, 0, 240, 120);
         n += n;
         n2 += n2;
@@ -2866,7 +2866,7 @@ implements CommandListener {
                     break;
                 }
                 case 512: {
-                    if (this.af < 64) {
+                    if (this.mapThumbStampRow < 64) {
                         return;
                     }
                     n6 = 0x206000;
@@ -2901,10 +2901,10 @@ implements CommandListener {
     }
 
     public final boolean boolean_h(int n) {
-        this.F = 0;
-        this.B = this.aO;
-        this.v = -1;
-        if (this.O == 0) {
+        this.clipLeft = 0;
+        this.clipRight = this.screenW;
+        this.pendingPanelSwitch = -1;
+        if (this.clipTop == 0) {
             this.var_boolean_l = true;
         }
         this.var_boolean_f = true;
@@ -2915,15 +2915,15 @@ implements CommandListener {
     public final void a(Graphics graphics) {
         this.mouseTick();
         if (this.var_boolean_l) {
-            this.boolean_g(8);
+            this.requestStateSwitch(8);
         }
-        this.o();
-        if (this.ab == 22) {
-            this.ab = 0;
+        this.tickCursor();
+        if (this.keyActionHeld == 22) {
+            this.keyActionHeld = 0;
         }
-        this.ax = 0;
-        this.f();
-        this.j(graphics);
+        this.keyActionPulse = 0;
+        this.updateCamera();
+        this.renderWorld(graphics);
         // 移植增强：桌面拖选橡皮筋 + 悬停格高亮（画在世界之上）
         if (this.mouseBandActive) {
             graphics.setColor(0xFFFFFF);
@@ -2945,10 +2945,10 @@ implements CommandListener {
     public final boolean o(int n) {
         int n2;
         this.m = 0;
-        this.F = 0;
-        this.B = this.aO;
-        this.O = 0;
-        this.P = this.var_int_j;
+        this.clipLeft = 0;
+        this.clipRight = this.screenW;
+        this.clipTop = 0;
+        this.clipBottom = this.screenH;
         if (n == 0) {
             this.var_int_c = 0;
             this.var_int_arr_b = null;
@@ -2956,11 +2956,11 @@ implements CommandListener {
             for (int i = 0; i < 181; ++i) {
                 this.var_javax_microedition_lcdui_Image_arr_a[i] = null;
             }
-            this.aE = 0;
-            this.var_int_h = -1;
-            this.aJ = 0;
-            this.Y = 0;
-            this.var_int_b = 0;
+            this.selectionMark = 0;
+            this.selectedType = -1;
+            this.selectedSlot = 0;
+            this.selectionPlayer = 0;
+            this.selectionMode = 0;
             this.var_short_a = (short)-1;
             this.var_short_c = (short)-1;
             this.var_short_b = (short)-1;
@@ -2982,33 +2982,33 @@ implements CommandListener {
         this.var_byte_arr_g = com.ulysseo.mad.c.byte_arr_a(123);
         this.var_int_i = 0;
         for (n2 = 0; n2 < 4096; ++n2) {
-            this.var_short_arr_a[n2] = Short.MIN_VALUE;
+            this.mapTiles[n2] = Short.MIN_VALUE;
         }
         for (n2 = 0; n2 < 2; ++n2) {
             byte[] byArray = com.ulysseo.mad.c.byte_arr_a(121);
             for (int i = 0; i < 91; ++i) {
-                this.var_int_arr_arr_a[n2][i] = byArray[i];
+                this.playerUnitHeaders[n2][i] = byArray[i];
             }
-            int[] nArray = this.var_int_arr_arr_a[n2];
+            int[] nArray = this.playerUnitHeaders[n2];
             nArray[56] = nArray[56] << 8;
-            this.var_int_arr_arr_a[n2][54] = 0xFFFFFF;
-            this.var_int_arr_arr_a[n2][12] = 16;
+            this.playerUnitHeaders[n2][54] = 0xFFFFFF;
+            this.playerUnitHeaders[n2][12] = 16;
         }
         this.aM = 256;
         this.q = 0;
         this.w = 0;
         this.aq = 0;
         this.var_int_i = 0;
-        if (this.ac == 0) {
+        if (this.gameMode == 0) {
             this.var_boolean_i = true;
             switch (this.var_byte_a) {
                 case 0: {
-                    this.var_int_arr_arr_a[0][5] = 200;
-                    this.var_int_arr_arr_a[0][6] = 100;
-                    this.var_int_arr_arr_a[0][7] = 100;
-                    this.var_int_arr_arr_a[1][5] = 50;
-                    this.var_int_arr_arr_a[1][6] = 15;
-                    this.var_int_arr_arr_a[1][7] = 15;
+                    this.playerUnitHeaders[0][5] = 200;
+                    this.playerUnitHeaders[0][6] = 100;
+                    this.playerUnitHeaders[0][7] = 100;
+                    this.playerUnitHeaders[1][5] = 50;
+                    this.playerUnitHeaders[1][6] = 15;
+                    this.playerUnitHeaders[1][7] = 15;
                     this.aM = 512;
                     this.an = 250;
                     this.q = 50;
@@ -3018,12 +3018,12 @@ implements CommandListener {
                     break;
                 }
                 case 1: {
-                    this.var_int_arr_arr_a[0][5] = 200;
-                    this.var_int_arr_arr_a[0][6] = 100;
-                    this.var_int_arr_arr_a[0][7] = 100;
-                    this.var_int_arr_arr_a[1][5] = 50;
-                    this.var_int_arr_arr_a[1][6] = 50;
-                    this.var_int_arr_arr_a[1][7] = 50;
+                    this.playerUnitHeaders[0][5] = 200;
+                    this.playerUnitHeaders[0][6] = 100;
+                    this.playerUnitHeaders[0][7] = 100;
+                    this.playerUnitHeaders[1][5] = 50;
+                    this.playerUnitHeaders[1][6] = 50;
+                    this.playerUnitHeaders[1][7] = 50;
                     this.aM = 786;
                     this.an = 150;
                     this.q = 60;
@@ -3033,12 +3033,12 @@ implements CommandListener {
                     break;
                 }
                 case 2: {
-                    this.var_int_arr_arr_a[0][5] = 200;
-                    this.var_int_arr_arr_a[0][6] = 100;
-                    this.var_int_arr_arr_a[0][7] = 100;
-                    this.var_int_arr_arr_a[1][5] = 20;
-                    this.var_int_arr_arr_a[1][6] = 20;
-                    this.var_int_arr_arr_a[1][7] = 20;
+                    this.playerUnitHeaders[0][5] = 200;
+                    this.playerUnitHeaders[0][6] = 100;
+                    this.playerUnitHeaders[0][7] = 100;
+                    this.playerUnitHeaders[1][5] = 20;
+                    this.playerUnitHeaders[1][6] = 20;
+                    this.playerUnitHeaders[1][7] = 20;
                     this.aM = 2048;
                     this.an = 100;
                     this.q = 100;
@@ -3049,58 +3049,58 @@ implements CommandListener {
             }
         }
         n2 = 128;
-        this.aF = 0;
-        switch (this.ac) {
+        this.missionResId = 0;
+        switch (this.gameMode) {
             case 16: {
-                if (this.aC == 0) {
+                if (this.missionIndex == 0) {
                     n2 = 124;
                     this.I = 78;
-                    this.aF = 118;
+                    this.missionResId = 118;
                     break;
                 }
-                if (this.aC == 1) {
+                if (this.missionIndex == 1) {
                     n2 = 125;
                     this.I = 79;
-                    this.aF = 119;
+                    this.missionResId = 119;
                     break;
                 }
-                if (this.aC != 2) break;
+                if (this.missionIndex != 2) break;
                 n2 = 126;
                 this.I = 80;
-                this.aF = 120;
+                this.missionResId = 120;
                 break;
             }
             case 32: {
                 this.var_boolean_i = false;
-                switch (this.aC) {
+                switch (this.missionIndex) {
                     case 0: {
                         n2 = 110;
                         this.I = 71;
-                        this.aF = 103;
+                        this.missionResId = 103;
                         break;
                     }
                     case 1: {
                         n2 = 111;
                         this.I = 72;
-                        this.aF = 104;
+                        this.missionResId = 104;
                         break;
                     }
                     case 2: {
                         n2 = 112;
                         this.I = 73;
-                        this.aF = 105;
+                        this.missionResId = 105;
                         break;
                     }
                     case 3: {
                         n2 = 113;
                         this.I = 74;
-                        this.aF = 106;
+                        this.missionResId = 106;
                         break;
                     }
                     case 4: {
                         n2 = 114;
                         this.I = 75;
-                        this.aF = 107;
+                        this.missionResId = 107;
                         this.var_boolean_i = true;
                         this.an = 100;
                         this.aM = 256;
@@ -3114,14 +3114,14 @@ implements CommandListener {
                     case 5: {
                         n2 = 115;
                         this.I = 76;
-                        this.aF = 108;
+                        this.missionResId = 108;
                         this.q = -1000;
                         break;
                     }
                     case 6: {
                         n2 = 116;
                         this.I = 77;
-                        this.aF = 109;
+                        this.missionResId = 109;
                     }
                 }
                 break;
@@ -3140,17 +3140,17 @@ implements CommandListener {
     }
 
     public final void i(Graphics graphics) {
-        if (this.ac == 16 && (this.aC == 0 || this.aC == 2)) {
-            this.void_f(this.aF);
-            this.boolean_g(6);
+        if (this.gameMode == 16 && (this.missionIndex == 0 || this.missionIndex == 2)) {
+            this.spawnMission(this.missionResId);
+            this.requestStateSwitch(6);
             return;
         }
-        this.boolean_g(11);
+        this.requestStateSwitch(11);
     }
 
     public final boolean m(int n) {
-        this.F = 0;
-        this.B = this.aO;
+        this.clipLeft = 0;
+        this.clipRight = this.screenW;
         if (this.var_boolean_a) {
             if (this.var_boolean_g) {
                 this.aK = 0;
@@ -3190,33 +3190,33 @@ implements CommandListener {
 
     public final void l(Graphics graphics) {
         if (this.W == 0) {
-            this.am = 6;
+            this.pendingScreenState = 6;
             return;
         }
-        this.P = this.aL;
-        graphics.setClip(0, 0, this.aO, this.var_int_j);
+        this.clipBottom = this.aL;
+        graphics.setClip(0, 0, this.screenW, this.screenH);
         graphics.setColor(0);
-        graphics.fillRect(0, this.P, this.aO, this.var_int_j - this.P);
+        graphics.fillRect(0, this.clipBottom, this.screenW, this.screenH - this.clipBottom);
         if (this.var_boolean_a) {
             int n = 0;
             boolean bl = false;
-            int n2 = this.aO - 111 >> 1;
-            int n3 = this.P - this.O - 111 >> 1;
-            if (n3 < this.O) {
-                n3 = this.O;
+            int n2 = this.screenW - 111 >> 1;
+            int n3 = this.clipBottom - this.clipTop - 111 >> 1;
+            if (n3 < this.clipTop) {
+                n3 = this.clipTop;
             }
             if (this.var_boolean_g) {
                 graphics.setColor(0x408040);
                 graphics.fillRect(n2 - 1, n3 - 1, 112, 112);
                 this.i();
-                this.ax = 0;
-                this.ab = 0;
+                this.keyActionPulse = 0;
+                this.keyActionHeld = 0;
                 for (int i = 0; i < 3; ++i) {
                     for (int j = 0; j < 3; ++j) {
                         int n4 = j * 37 + n2;
                         int n5 = i * 37 + n3;
                         if (n == this.T) {
-                            if ((this.ar & 1) == 0) {
+                            if ((this.tickCount & 1) == 0) {
                                 graphics.setColor(0xFFFFFF);
                             } else {
                                 graphics.setColor(0xFF0000);
@@ -3225,7 +3225,7 @@ implements CommandListener {
                         }
                         if (n < this.W) {
                             int n6 = 0;
-                            n6 = this.var_int_g == 0 ? (this.var_int_arr_arr_a[0][3] > this.var_int_arr_arr_a[0][49] + this.var_int_arr_arr_a[0][2] ? (this.boolean_a(0, this.var_int_g, this.var_int_arr_c[n]) ? 0 : 4) : 4) : (this.boolean_a(0, this.var_int_g, this.var_int_arr_c[n]) ? 0 : 4);
+                            n6 = this.var_int_g == 0 ? (this.playerUnitHeaders[0][3] > this.playerUnitHeaders[0][49] + this.playerUnitHeaders[0][2] ? (this.boolean_a(0, this.var_int_g, this.var_int_arr_c[n]) ? 0 : 4) : 4) : (this.boolean_a(0, this.var_int_g, this.var_int_arr_c[n]) ? 0 : 4);
                             this.a(graphics, this.x, n4, n5, this.var_int_arr_c[n] * 36, 0, 36, 36, 0, n6);
                             graphics.setColor(0);
                             graphics.fillRect(n4 + 36 - 5, n5 + 36 - 7, 4, 6);
@@ -3240,7 +3240,7 @@ implements CommandListener {
             } else {
                 int n8 = 0;
                 boolean bl2 = this.boolean_a(0, 2, this.aK);
-                switch (this.ax) {
+                switch (this.keyActionPulse) {
                     case 5: 
                     case 21: {
                         if (this.T <= 0) break;
@@ -3257,22 +3257,22 @@ implements CommandListener {
                     case 22: 
                     case 38: {
                         if (this.T == 2) {
-                            this.g(0, 81, this.aK);
+                            this.startMissionBriefing(0, 81, this.aK);
                             break;
                         }
                         if (bl2 && this.T == 0) {
                             this.y();
                         }
-                        this.am = 6;
+                        this.pendingScreenState = 6;
                         break;
                     }
                     case 47: {
                         this.T = 1;
-                        this.am = 6;
+                        this.pendingScreenState = 6;
                     }
                 }
-                this.ax = 0;
-                this.ab = 0;
+                this.keyActionPulse = 0;
+                this.keyActionHeld = 0;
                 if (bl2) {
                     n8 = 0;
                 } else {
@@ -3291,8 +3291,8 @@ implements CommandListener {
                 if (n10 < 44) {
                     n10 = 44;
                 }
-                int n11 = this.aO - n9 >> 1;
-                int n12 = (this.P - this.O >> 1) + this.O - (n10 >> 1);
+                int n11 = this.screenW - n9 >> 1;
+                int n12 = (this.clipBottom - this.clipTop >> 1) + this.clipTop - (n10 >> 1);
                 graphics.setColor(0);
                 graphics.fillRect(n11 + 1, n12 + 1, n9, n10);
                 graphics.setColor(7031296);
@@ -3305,7 +3305,7 @@ implements CommandListener {
                 graphics.drawString(this.var_java_lang_String_a, n11 + 36 + 7, n12 + 3 - 2, 20);
                 this.a(graphics, this.x, n11 + 3, n12 + (n10 - 36 >> 1), this.aK * 36, 0, 36, 36, 0, n8);
                 n12 = n12 + n10 - 4 - 20;
-                if ((this.ar & 1) == 0) {
+                if ((this.tickCount & 1) == 0) {
                     graphics.setColor(0xFFFFFF);
                 } else {
                     graphics.setColor(0xFF0000);
@@ -3329,8 +3329,8 @@ implements CommandListener {
         }
         this.a(graphics, this.var_int_arr_c[this.aK], this.var_java_lang_String_arr_a[this.aK << 1], this.var_java_lang_String_arr_a[(this.aK << 1) + 1]);
         if (!this.var_boolean_a) {
-            this.t = this.Q;
-            this.am = 6;
+            this.t = this.cursorTileIdx;
+            this.pendingScreenState = 6;
         }
     }
 
@@ -3338,7 +3338,7 @@ implements CommandListener {
         boolean bl = false;
         boolean bl2 = false;
         int n = 1000;
-        switch (this.ax) {
+        switch (this.keyActionPulse) {
             case 19: {
                 n = this.T - 3;
                 bl = true;
@@ -3401,8 +3401,8 @@ implements CommandListener {
                 break;
             }
             case 47: {
-                this.boolean_g(6);
-                this.t = this.Q;
+                this.requestStateSwitch(6);
+                this.t = this.cursorTileIdx;
                 return;
             }
         }
@@ -3420,15 +3420,15 @@ implements CommandListener {
         this.aK = this.T;
         if (bl2) {
             this.y();
-            this.boolean_g(8);
-            this.t = this.Q;
+            this.requestStateSwitch(8);
+            this.t = this.cursorTileIdx;
         }
     }
 
     final void y() {
         switch (this.var_int_g) {
             case 0: {
-                if (this.var_int_arr_arr_a[0][2] + this.var_int_arr_arr_a[0][49] >= this.var_int_arr_arr_a[0][3] || !this.boolean_a(0, 0, this.var_int_arr_c[this.aK])) break;
+                if (this.playerUnitHeaders[0][2] + this.playerUnitHeaders[0][49] >= this.playerUnitHeaders[0][3] || !this.boolean_a(0, 0, this.var_int_arr_c[this.aK])) break;
                 this.int_c(0, this.var_int_arr_c[this.aK]);
                 return;
             }
@@ -3438,11 +3438,11 @@ implements CommandListener {
                     n = 12;
                 }
                 if (!this.boolean_a(0, 1, this.var_int_arr_c[this.aK])) break;
-                this.var_int_b = 1;
+                this.selectionMode = 1;
                 this.p = n;
-                this.var_int_d = this.y + this.aP;
-                this.S = this.N + this.aS;
-                this.au = this.var_int_j;
+                this.var_int_d = this.cameraPxX + this.cursorScreenPxX;
+                this.S = this.cameraPxY + this.cursorScreenPxY;
+                this.au = this.screenH;
                 this.U = 8;
                 return;
             }
@@ -3471,7 +3471,7 @@ implements CommandListener {
                 if (this.var_byte_arr_c[0 + n] == 0) {
                     return false;
                 }
-                if (n != 9 || this.var_int_arr_arr_a[0][74] + this.var_int_arr_arr_a[0][65] <= 0) break;
+                if (n != 9 || this.playerUnitHeaders[0][74] + this.playerUnitHeaders[0][65] <= 0) break;
                 return false;
             }
             case 1: {
@@ -3503,32 +3503,32 @@ implements CommandListener {
     }
 
     public final boolean boolean_i(int n) {
-        this.F = 0;
-        this.B = this.aO;
+        this.clipLeft = 0;
+        this.clipRight = this.screenW;
         return true;
     }
 
     public final void c(Graphics graphics) {
         this.d(graphics);
-        this.am = 6;
+        this.pendingScreenState = 6;
     }
 
     public final void d(Graphics graphics) {
-        graphics.setClip(0, 0, this.aO, this.var_int_j);
-        int n = this.aO - 240 >> 1;
+        graphics.setClip(0, 0, this.screenW, this.screenH);
+        int n = this.screenW - 240 >> 1;
         graphics.setColor(0);
         if (n > 0) {
-            graphics.fillRect(0, 0, this.aO, 21);
+            graphics.fillRect(0, 0, this.screenW, 21);
         } else {
-            graphics.fillRect(0, 19, this.aO, 1);
+            graphics.fillRect(0, 19, this.screenW, 1);
         }
         this.a(graphics, 16, n, 0, 0, 0, 240, 19, 0, 0);
-        this.b(graphics, this.var_int_arr_arr_a[0][5], n + 26, 3, 3);
-        this.b(graphics, this.var_int_arr_arr_a[0][6], n + 84, 3, 3);
-        this.b(graphics, this.var_int_arr_arr_a[0][7], n + 140, 3, 3);
-        this.b(graphics, this.var_int_arr_arr_a[0][2], n + 197, 3, 2);
-        this.b(graphics, this.var_int_arr_arr_a[0][3], n + 220, 3, 2);
-        this.O = 21;
+        this.b(graphics, this.playerUnitHeaders[0][5], n + 26, 3, 3);
+        this.b(graphics, this.playerUnitHeaders[0][6], n + 84, 3, 3);
+        this.b(graphics, this.playerUnitHeaders[0][7], n + 140, 3, 3);
+        this.b(graphics, this.playerUnitHeaders[0][2], n + 197, 3, 2);
+        this.b(graphics, this.playerUnitHeaders[0][3], n + 220, 3, 2);
+        this.clipTop = 21;
         this.var_boolean_l = false;
     }
 
@@ -3555,7 +3555,7 @@ implements CommandListener {
 
     public final void a(Graphics graphics, int n, String string, String string2) {
         int n2 = 0;
-        if (this.aO > 128) {
+        if (this.screenW > 128) {
             n2 += 2;
         }
         int n3 = 0;
@@ -3577,11 +3577,11 @@ implements CommandListener {
             }
         }
         int n5 = 0;
-        if (this.var_boolean_a && (this.var_byte_arr_e[n3 *= 3] > this.var_int_arr_arr_a[0][5] || this.var_byte_arr_e[n3 + 1] > this.var_int_arr_arr_a[0][6] || this.var_byte_arr_e[n3 + 2] > this.var_int_arr_arr_a[0][7])) {
+        if (this.var_boolean_a && (this.var_byte_arr_e[n3 *= 3] > this.playerUnitHeaders[0][5] || this.var_byte_arr_e[n3 + 1] > this.playerUnitHeaders[0][6] || this.var_byte_arr_e[n3 + 2] > this.playerUnitHeaders[0][7])) {
             n5 = 4;
         }
-        int n6 = this.var_int_j - 19 + 2;
-        this.a(graphics, n4, n2, this.aL + (this.var_int_j - this.aL - 36 >> 1), n * 36, 0, 36, 36, 0, n5);
+        int n6 = this.screenH - 19 + 2;
+        this.a(graphics, n4, n2, this.aL + (this.screenH - this.aL - 36 >> 1), n * 36, 0, 36, 36, 0, n5);
         this.a(graphics, 16, 41, n6, 1, 1, 27, 17, 0, 0);
         this.b(graphics, this.var_byte_arr_e[n3++], 67, n6, 2);
         this.a(graphics, 16, 99, n6, 58, 1, 27, 17, 0, 0);
@@ -3591,33 +3591,33 @@ implements CommandListener {
         this.var_java_lang_String_b = string + " " + string2;
     }
 
-    public final void f() {
-        this.az = (this.aa - this.aV << 4) - this.ad;
-        this.al = (this.aa + this.aV << 3) - (this.J >> 1) + 8;
-        this.y = ((this.az << 1) + this.y + 1) / 3;
-        this.N = ((this.al << 1) + this.N + 1) / 3;
-        this.Q = this.aa + (this.aV << 6) & 0xFFF;
-        if ((this.Q & 0xFFFFF000) != 0) {
-            this.Q = -1;
+    public final void updateCamera() {
+        this.az = (this.cursorTileX - this.cursorTileY << 4) - this.ad;
+        this.al = (this.cursorTileX + this.cursorTileY << 3) - (this.J >> 1) + 8;
+        this.cameraPxX = ((this.az << 1) + this.cameraPxX + 1) / 3;
+        this.cameraPxY = ((this.al << 1) + this.cameraPxY + 1) / 3;
+        this.cursorTileIdx = this.cursorTileX + (this.cursorTileY << 6) & 0xFFF;
+        if ((this.cursorTileIdx & 0xFFFFF000) != 0) {
+            this.cursorTileIdx = -1;
             return;
         }
-        if ((this.var_short_arr_a[this.Q] & 0xFFF) == 768) {
-            this.Q = -1;
+        if ((this.mapTiles[this.cursorTileIdx] & 0xFFF) == 768) {
+            this.cursorTileIdx = -1;
         }
     }
 
     public final void m(int n, int n2) {
-        this.aO = n;
-        this.var_int_j = n2;
-        this.aI = (this.aO >> 6) + 3;
-        this.aB = (this.var_int_j >> 4) + 5;
-        this.ad = (this.aO >> 1) + 64 >> 1;
-        this.J = this.var_int_j + 48 >> 1;
+        this.screenW = n;
+        this.screenH = n2;
+        this.viewTileCols = (this.screenW >> 6) + 3;
+        this.aB = (this.screenH >> 4) + 5;
+        this.ad = (this.screenW >> 1) + 64 >> 1;
+        this.J = this.screenH + 48 >> 1;
         this.aL = this.var_int_f + 19 + 2;
         if (this.aL < 36) {
             this.aL = 36;
         }
-        this.aL = this.var_int_j - this.aL;
+        this.aL = this.screenH - this.aL;
     }
 
     public final void j(int n, int n2) {
@@ -3694,7 +3694,7 @@ implements CommandListener {
         return this.var_javax_microedition_lcdui_Image_arr_a[n];
     }
 
-    public final void a(Graphics graphics, int n, int n2, int n3, int n4) {
+    public final void drawTileSprite(Graphics graphics, int n, int n2, int n3, int n4) {
         int n5 = n << 1;
         n2 -= this.var_byte_arr_b[n5++];
         n3 -= this.var_byte_arr_b[n5];
@@ -3756,80 +3756,80 @@ implements CommandListener {
     }
 
     /** 游戏内光标移动（按 ab 持续消费方向动作；ab==0 直接返回——"按住"的判定点）。 */
-    public final void o() {
-        if (this.Q != this.t) {
-            this.P = this.var_int_j;
+    public final void tickCursor() {
+        if (this.cursorTileIdx != this.t) {
+            this.clipBottom = this.screenH;
         }
-        int n = this.ax;
-        if (this.ab == 0) {
+        int n = this.keyActionPulse;
+        if (this.keyActionHeld == 0) {
             return;
         }
-        if (this.ab == this.L) {
-            ++this.s;
-            if (this.s >= 5) {
-                n = this.ab;
+        if (this.keyActionHeld == this.keyRepeatLast) {
+            ++this.keyRepeatFrames;
+            if (this.keyRepeatFrames >= 5) {
+                n = this.keyActionHeld;
             }
         } else {
-            this.s = 0;
-            this.L = this.ab;
+            this.keyRepeatFrames = 0;
+            this.keyRepeatLast = this.keyActionHeld;
         }
         switch (n) {
             case 2: {
-                --this.aa;
+                --this.cursorTileX;
                 break;
             }
             case 3: 
             case 19: {
-                --this.aa;
-                --this.aV;
+                --this.cursorTileX;
+                --this.cursorTileY;
                 break;
             }
             case 4: {
-                --this.aV;
+                --this.cursorTileY;
                 break;
             }
             case 5: 
             case 21: {
-                --this.aa;
-                ++this.aV;
+                --this.cursorTileX;
+                ++this.cursorTileY;
                 break;
             }
             case 7: 
             case 23: {
-                ++this.aa;
-                --this.aV;
+                ++this.cursorTileX;
+                --this.cursorTileY;
                 break;
             }
             case 9: 
             case 25: {
-                ++this.aa;
-                ++this.aV;
+                ++this.cursorTileX;
+                ++this.cursorTileY;
                 break;
             }
             case 8: {
-                ++this.aV;
+                ++this.cursorTileY;
                 break;
             }
             case 10: {
-                ++this.aa;
+                ++this.cursorTileX;
             }
         }
-        switch (this.ax) {
+        switch (this.keyActionPulse) {
             case 6: 
             case 22: 
             case 38: {
-                this.x();
+                this.confirmAtCursor();
                 return;
             }
             case 1: {
                 this.var_boolean_h = true;
-                this.boolean_g(1);
+                this.requestStateSwitch(1);
                 return;
             }
             case 47: {
                 int n2;
-                if (this.Q != -1 && (this.var_short_arr_a[this.Q] & 0x300) == 256 && (n2 = (this.var_short_arr_a[this.Q] & 0xC00) >> 10) == 0) {
-                    int n3 = (this.var_short_arr_a[this.Q] & 0xFF) << 2;
+                if (this.cursorTileIdx != -1 && (this.mapTiles[this.cursorTileIdx] & 0x300) == 256 && (n2 = (this.mapTiles[this.cursorTileIdx] & 0xC00) >> 10) == 0) {
+                    int n3 = (this.mapTiles[this.cursorTileIdx] & 0xFF) << 2;
                     if ((this.var_int_arr_arr_b[0][n3 + 2] & 0x20000000) != 0) {
                         return;
                     }
@@ -3845,7 +3845,7 @@ implements CommandListener {
                             int n6 = n3 + 2;
                             nArray3[n6] = nArray3[n6] & 0xFFFF00FF;
                         }
-                        int n7 = this.var_int_arr_arr_a[0][0];
+                        int n7 = this.playerUnitHeaders[0][0];
                         int n8 = 1;
                         int n9 = this.var_int_arr_arr_b[0][n3 + 3] & 0xFF;
                         if (n9 == 10) {
@@ -3861,54 +3861,54 @@ implements CommandListener {
                         } else if (n9 == 3) {
                             n8 = 9;
                         }
-                        int[] nArray4 = this.var_int_arr_arr_a[0];
+                        int[] nArray4 = this.playerUnitHeaders[0];
                         nArray4[49] = nArray4[49] - 1;
                         if (n8 < 2) {
-                            int[] nArray5 = this.var_int_arr_arr_a[0];
+                            int[] nArray5 = this.playerUnitHeaders[0];
                             nArray5[66] = nArray5[66] - 1;
                             return;
                         }
-                        int[] nArray6 = this.var_int_arr_arr_a[0];
+                        int[] nArray6 = this.playerUnitHeaders[0];
                         int n10 = 66 + n8 - 1;
                         nArray6[n10] = nArray6[n10] - 1;
                         return;
                     }
                     if ((this.var_int_arr_arr_b[0][n3 + 2] & 0x40000000) != 0) {
-                        n3 = this.var_short_arr_a[this.Q] & 0xFF;
+                        n3 = this.mapTiles[this.cursorTileIdx] & 0xFF;
                         int n11 = this.var_int_arr_arr_b[0][(n3 << 2) + 3] & 0xFF;
                         this.i(0, n3);
                         this.b(0, 1, n11);
                         return;
                     }
                 }
-                if (this.var_int_b == 1) {
-                    this.H();
+                if (this.selectionMode == 1) {
+                    this.clearSelection();
                     return;
                 }
-                if (this.var_int_h != -1) {
-                    if (this.var_int_h == 256 && this.Y == 0 && (n2 = this.var_int_arr_arr_b[0][this.aJ + 2] & 0xFF0000) != 0) {
+                if (this.selectedType != -1) {
+                    if (this.selectedType == 256 && this.selectionPlayer == 0 && (n2 = this.var_int_arr_arr_b[0][this.selectedSlot + 2] & 0xFF0000) != 0) {
                         int[] nArray = this.var_int_arr_arr_b[0];
-                        int n12 = this.aJ + 2;
+                        int n12 = this.selectedSlot + 2;
                         nArray[n12] = nArray[n12] - 65536;
                         return;
                     }
-                    this.H();
+                    this.clearSelection();
                     return;
                 }
-                if (this.var_int_b != 0) {
-                    this.H();
+                if (this.selectionMode != 0) {
+                    this.clearSelection();
                     return;
                 }
-                if (!this.boolean_g(4)) break;
-                this.O = 0;
-                this.F = 0;
-                this.P = this.var_int_j;
-                this.B = this.aO;
-                this.v = this.H = 6;
+                if (!this.requestStateSwitch(4)) break;
+                this.clipTop = 0;
+                this.clipLeft = 0;
+                this.clipBottom = this.screenH;
+                this.clipRight = this.screenW;
+                this.pendingPanelSwitch = this.menuScreenId = 6;
                 return;
             }
             case 11: {
-                if (!this.boolean_g(7)) break;
+                if (!this.requestStateSwitch(7)) break;
                 this.var_int_g = 0;
                 this.x = 17;
                 this.G = 67;
@@ -3918,7 +3918,7 @@ implements CommandListener {
                 return;
             }
             case 12: {
-                if (!this.boolean_g(7)) break;
+                if (!this.requestStateSwitch(7)) break;
                 this.var_int_g = 1;
                 this.x = 18;
                 this.G = 63;
@@ -3976,11 +3976,11 @@ implements CommandListener {
         if ((this.var_int_arr_arr_b[0][(n <<= 2) + 2] & 0x40000000) != 0) {
             return false;
         }
-        if ((this.var_int_arr_arr_b[0][n + 2] & 0xFF) != 255 && this.var_int_h < 2 && this.Y == 0) {
+        if ((this.var_int_arr_arr_b[0][n + 2] & 0xFF) != 255 && this.selectedType < 2 && this.selectionPlayer == 0) {
             return false;
         }
         this.var_int_g = -1;
-        int n2 = this.var_int_arr_arr_a[0][0];
+        int n2 = this.playerUnitHeaders[0][0];
         switch (this.var_int_arr_arr_b[0][n + 3] & 0xFF) {
             case 9: {
                 this.var_int_g = 2;
@@ -4093,7 +4093,7 @@ implements CommandListener {
                 break;
             }
             case 3: {
-                if (this.var_int_arr_arr_a[0][74] + this.var_int_arr_arr_a[0][65] > 0) {
+                if (this.playerUnitHeaders[0][74] + this.playerUnitHeaders[0][65] > 0) {
                     return false;
                 }
                 this.aK = 9;
@@ -4133,7 +4133,7 @@ implements CommandListener {
                 if ((this.var_int_arr_arr_b[0][n + 2] & 0x20000000) != 0) {
                     return true;
                 }
-                if (this.boolean_g(7)) {
+                if (this.requestStateSwitch(7)) {
                     this.x = 19;
                     this.G = 64;
                     this.X = 24;
@@ -4150,23 +4150,23 @@ implements CommandListener {
                 break;
             }
             case 0: {
-                if (this.var_int_arr_arr_a[0][3] <= this.var_int_arr_arr_a[0][49] + this.var_int_arr_arr_a[0][2]) {
+                if (this.playerUnitHeaders[0][3] <= this.playerUnitHeaders[0][49] + this.playerUnitHeaders[0][2]) {
                     return true;
                 }
-                if (this.boolean_g(7)) {
+                if (this.requestStateSwitch(7)) {
                     this.var_boolean_a = false;
                     this.x = 17;
                     this.G = 67;
                     this.X = 10;
                     this.var_boolean_g = false;
                 }
-                int[] nArray = this.var_int_arr_arr_a[0];
+                int[] nArray = this.playerUnitHeaders[0];
                 nArray[49] = nArray[49] + 1;
                 if (this.aK < 2) {
-                    int[] nArray3 = this.var_int_arr_arr_a[0];
+                    int[] nArray3 = this.playerUnitHeaders[0];
                     nArray3[66] = nArray3[66] + 1;
                 } else {
-                    int[] nArray4 = this.var_int_arr_arr_a[0];
+                    int[] nArray4 = this.playerUnitHeaders[0];
                     int n5 = 66 + this.aK - 1;
                     nArray4[n5] = nArray4[n5] + 1;
                 }
@@ -4182,140 +4182,140 @@ implements CommandListener {
         return true;
     }
 
-    final void x() {
-        if (((this.aa | this.aV) & 0xFFFFFFC0) != 0 || this.Q == -1) {
+    final void confirmAtCursor() {
+        if (((this.cursorTileX | this.cursorTileY) & 0xFFFFFFC0) != 0 || this.cursorTileIdx == -1) {
             return;
         }
-        int n = (this.var_short_arr_a[this.Q] & 0xC00) >> 10;
-        int n2 = this.var_short_arr_a[this.Q] & 0x300;
-        int n3 = this.var_short_arr_a[this.Q] & 0xFF;
+        int n = (this.mapTiles[this.cursorTileIdx] & 0xC00) >> 10;
+        int n2 = this.mapTiles[this.cursorTileIdx] & 0x300;
+        int n3 = this.mapTiles[this.cursorTileIdx] & 0xFF;
         if (n2 == 256 && n == 0 && this.l(n3)) {
             return;
         }
-        switch (this.var_int_b) {
+        switch (this.selectionMode) {
             case 0: {
                 if (n2 == 256 && (this.var_int_arr_arr_b[n][(n3 << 2) + 2] & 0x40000000) != 0) {
                     return;
                 }
-                this.f(n, n2, n3);
-                this.var_int_b = 6;
+                this.selectUnderCursor(n, n2, n3);
+                this.selectionMode = 6;
                 return;
             }
             case 6: {
                 if (n == 0) {
-                    if (this.Y == 0 && n2 == 256 && this.aE == 512 && this.var_int_h >= 2) {
-                        this.H();
-                        this.f(n, n2, n3);
+                    if (this.selectionPlayer == 0 && n2 == 256 && this.selectionMark == 512 && this.selectedType >= 2) {
+                        this.clearSelection();
+                        this.selectUnderCursor(n, n2, n3);
                         return;
                     }
                     if (n2 == 512) {
-                        if (this.aE == 512 && this.Y == 0) {
-                            int n4 = this.var_short_arr_arr_a[0][(n3 << 3) + 3] & 0xFF;
-                            if (this.var_int_h != -1 && this.var_int_h == n4) {
-                                if (this.aJ == -1) {
-                                    this.h(0, -1);
+                        if (this.selectionMark == 512 && this.selectionPlayer == 0) {
+                            int n4 = this.playerUnitSlots[0][(n3 << 3) + 3] & 0xFF;
+                            if (this.selectedType != -1 && this.selectedType == n4) {
+                                if (this.selectedSlot == -1) {
+                                    this.selectUnits(0, -1);
                                     return;
                                 }
-                                if (this.aJ == n3 << 3) {
-                                    this.h(0, n4);
+                                if (this.selectedSlot == n3 << 3) {
+                                    this.selectUnits(0, n4);
                                     return;
                                 }
                             }
                         }
-                        this.H();
-                        this.f(n, n2, n3);
+                        this.clearSelection();
+                        this.selectUnderCursor(n, n2, n3);
                         return;
                     }
                 }
-                if (this.Y == 0 && this.aE == 512) {
-                    this.var_int_d = this.y + this.aP;
-                    this.S = this.N + this.aS;
-                    this.au = this.var_int_j;
+                if (this.selectionPlayer == 0 && this.selectionMark == 512) {
+                    this.var_int_d = this.cameraPxX + this.cursorScreenPxX;
+                    this.S = this.cameraPxY + this.cursorScreenPxY;
+                    this.au = this.screenH;
                     this.U = 8;
-                    this.d(0, this.aa, this.aV);
-                    if (this.var_int_h >= 2 || n2 != 768 || (this.var_short_arr_a[this.Q] & 0xF000) != 0) break;
-                    this.H();
-                    this.var_int_b = 0;
+                    this.orderMove(0, this.cursorTileX, this.cursorTileY);
+                    if (this.selectedType >= 2 || n2 != 768 || (this.mapTiles[this.cursorTileIdx] & 0xF000) != 0) break;
+                    this.clearSelection();
+                    this.selectionMode = 0;
                     return;
                 }
-                this.H();
-                this.f(n, n2, n3);
+                this.clearSelection();
+                this.selectUnderCursor(n, n2, n3);
                 return;
             }
             case 1: {
-                if (n2 != 0 || this.var_short_arr_a[this.Q] < 0) {
+                if (n2 != 0 || this.mapTiles[this.cursorTileIdx] < 0) {
                     return;
                 }
                 if (this.boolean_a(0, 1, this.p)) {
-                    this.a(0, this.p, this.aa, this.aV, 0x40000000, true);
+                    this.a(0, this.p, this.cursorTileX, this.cursorTileY, 0x40000000, true);
                 }
-                this.H();
-                this.var_int_b = 0;
+                this.clearSelection();
+                this.selectionMode = 0;
             }
         }
     }
 
-    public final void f(int n, int n2, int n3) {
-        this.aE = n2;
-        this.Y = n;
+    public final void selectUnderCursor(int n, int n2, int n3) {
+        this.selectionMark = n2;
+        this.selectionPlayer = n;
         this.R = 40;
         switch (n2) {
             case 512: {
-                short[] sArray = this.var_short_arr_arr_a[n];
+                short[] sArray = this.playerUnitSlots[n];
                 int n4 = (n3 <<= 3) + 4;
                 sArray[n4] = (short)(sArray[n4] | 0x8000);
-                this.aJ = n3;
-                this.var_int_h = this.var_short_arr_arr_a[n][n3 + 3] & 0xFF;
+                this.selectedSlot = n3;
+                this.selectedType = this.playerUnitSlots[n][n3 + 3] & 0xFF;
                 this.var_boolean_h = true;
-                if (this.P != this.var_int_j || !this.boolean_g(7)) break;
+                if (this.clipBottom != this.screenH || !this.requestStateSwitch(7)) break;
                 this.var_int_g = 0;
                 this.x = 17;
                 this.G = 67;
                 this.var_boolean_a = false;
                 this.X = 10;
-                this.aK = this.var_int_h;
+                this.aK = this.selectedType;
                 break;
             }
             case 256: {
                 int[] nArray = this.var_int_arr_arr_b[n];
                 int n5 = (n3 <<= 2) + 2;
                 nArray[n5] = nArray[n5] | Integer.MIN_VALUE;
-                this.aJ = n3;
-                this.var_int_h = this.var_int_arr_arr_b[n][n3 + 3] & 0xFF;
+                this.selectedSlot = n3;
+                this.selectedType = this.var_int_arr_arr_b[n][n3 + 3] & 0xFF;
                 this.var_boolean_h = true;
-                if (!this.boolean_g(7)) break;
+                if (!this.requestStateSwitch(7)) break;
                 this.var_int_g = 1;
                 this.x = 18;
                 this.G = 63;
                 this.var_boolean_a = false;
                 this.X = 13;
-                this.aK = this.var_int_h;
+                this.aK = this.selectedType;
                 break;
             }
             case 768: {
                 int n6 = n3;
-                this.var_short_arr_a[n6] = (short)(this.var_short_arr_a[n6] | 0x80);
+                this.mapTiles[n6] = (short)(this.mapTiles[n6] | 0x80);
                 break;
             }
             default: {
                 return;
             }
         }
-        this.var_int_b = 6;
+        this.selectionMode = 6;
     }
 
-    public final void h(int n, int n2) {
-        this.aE = 512;
-        this.var_int_h = n2;
-        this.aJ = -1;
-        this.Y = n;
-        this.var_int_b = 6;
+    public final void selectUnits(int n, int n2) {
+        this.selectionMark = 512;
+        this.selectedType = n2;
+        this.selectedSlot = -1;
+        this.selectionPlayer = n;
+        this.selectionMode = 6;
         int n3 = 0;
-        int n4 = this.var_int_arr_arr_a[this.Y][2];
+        int n4 = this.playerUnitHeaders[this.selectionPlayer][2];
         if (n2 == -1) {
             for (int i = 0; i < n4; ++i) {
-                if ((this.var_short_arr_arr_a[this.Y][n3 + 3] & 0xFF) >= 2) {
-                    short[] sArray = this.var_short_arr_arr_a[this.Y];
+                if ((this.playerUnitSlots[this.selectionPlayer][n3 + 3] & 0xFF) >= 2) {
+                    short[] sArray = this.playerUnitSlots[this.selectionPlayer];
                     int n5 = n3 + 4;
                     sArray[n5] = (short)(sArray[n5] | 0x8000);
                 }
@@ -4323,8 +4323,8 @@ implements CommandListener {
             }
         } else if (n2 < 2) {
             for (int i = 0; i < n4; ++i) {
-                if ((this.var_short_arr_arr_a[this.Y][n3 + 3] & 0xFF) < 2 && (this.var_short_arr_arr_a[this.Y][n3 + 7] & 0xF) == 0) {
-                    short[] sArray = this.var_short_arr_arr_a[this.Y];
+                if ((this.playerUnitSlots[this.selectionPlayer][n3 + 3] & 0xFF) < 2 && (this.playerUnitSlots[this.selectionPlayer][n3 + 7] & 0xF) == 0) {
+                    short[] sArray = this.playerUnitSlots[this.selectionPlayer];
                     int n6 = n3 + 4;
                     sArray[n6] = (short)(sArray[n6] | 0x8000);
                 }
@@ -4332,8 +4332,8 @@ implements CommandListener {
             }
         } else {
             for (int i = 0; i < n4; ++i) {
-                if ((this.var_short_arr_arr_a[this.Y][n3 + 3] & 0xFF) == this.var_int_h) {
-                    short[] sArray = this.var_short_arr_arr_a[this.Y];
+                if ((this.playerUnitSlots[this.selectionPlayer][n3 + 3] & 0xFF) == this.selectedType) {
+                    short[] sArray = this.playerUnitSlots[this.selectionPlayer];
                     int n7 = n3 + 4;
                     sArray[n7] = (short)(sArray[n7] | 0x8000);
                 }
@@ -4342,41 +4342,41 @@ implements CommandListener {
         }
     }
 
-    public final void H() {
+    public final void clearSelection() {
         int n;
         boolean bl = false;
-        this.var_int_b = 0;
-        if (this.aE == -1) {
+        this.selectionMode = 0;
+        if (this.selectionMark == -1) {
             return;
         }
         int n2 = 0;
-        for (n = 0; n < this.var_int_arr_arr_a[this.Y][2]; ++n) {
-            short[] sArray = this.var_short_arr_arr_a[this.Y];
+        for (n = 0; n < this.playerUnitHeaders[this.selectionPlayer][2]; ++n) {
+            short[] sArray = this.playerUnitSlots[this.selectionPlayer];
             int n3 = n2 + 4;
             sArray[n3] = (short)(sArray[n3] & Short.MAX_VALUE);
             n2 += 8;
         }
         n2 = 0;
-        for (n = 0; n < this.var_int_arr_arr_a[this.Y][4]; ++n) {
-            int[] nArray = this.var_int_arr_arr_b[this.Y];
+        for (n = 0; n < this.playerUnitHeaders[this.selectionPlayer][4]; ++n) {
+            int[] nArray = this.var_int_arr_arr_b[this.selectionPlayer];
             int n4 = n2 + 2;
             nArray[n4] = nArray[n4] & Integer.MAX_VALUE;
             n2 += 4;
         }
-        this.aE = -1;
-        this.var_int_h = -1;
+        this.selectionMark = -1;
+        this.selectedType = -1;
     }
 
-    final void d(int n, int n2, int n3) {
+    final void orderMove(int n, int n2, int n3) {
         short s = (short)(n2 << 8 | n3);
         int n4 = 0;
         int n5 = 0;
-        while (n5 < this.var_int_arr_arr_a[n][2]) {
-            if ((this.var_short_arr_arr_a[n][n4 + 4] & 0x8000) != 0) {
-                this.var_short_arr_arr_a[n][n4 + 2] = s;
-                this.var_short_arr_arr_a[n][n4 + 1] = this.var_short_arr_arr_a[n][n4 + 0];
-                this.var_short_arr_arr_a[n][n4 + 7] = 0;
-                short[] sArray = this.var_short_arr_arr_a[n];
+        while (n5 < this.playerUnitHeaders[n][2]) {
+            if ((this.playerUnitSlots[n][n4 + 4] & 0x8000) != 0) {
+                this.playerUnitSlots[n][n4 + 2] = s;
+                this.playerUnitSlots[n][n4 + 1] = this.playerUnitSlots[n][n4 + 0];
+                this.playerUnitSlots[n][n4 + 7] = 0;
+                short[] sArray = this.playerUnitSlots[n];
                 int n6 = n4 + 3;
                 sArray[n6] = (short)(sArray[n6] & 0xFF);
             }
@@ -4402,20 +4402,20 @@ implements CommandListener {
         }
         n3 += n4;
         n3 *= 3;
-        int[] nArray = this.var_int_arr_arr_a[n];
+        int[] nArray = this.playerUnitHeaders[n];
         nArray[5] = nArray[5] - this.var_byte_arr_e[n3++];
-        int[] nArray2 = this.var_int_arr_arr_a[n];
+        int[] nArray2 = this.playerUnitHeaders[n];
         nArray2[6] = nArray2[6] - this.var_byte_arr_e[n3++];
-        int[] nArray3 = this.var_int_arr_arr_a[n];
+        int[] nArray3 = this.playerUnitHeaders[n];
         nArray3[7] = nArray3[7] - this.var_byte_arr_e[n3];
-        if (this.var_int_arr_arr_a[n][5] < 0) {
-            this.var_int_arr_arr_a[n][5] = 0;
+        if (this.playerUnitHeaders[n][5] < 0) {
+            this.playerUnitHeaders[n][5] = 0;
         }
-        if (this.var_int_arr_arr_a[n][6] < 0) {
-            this.var_int_arr_arr_a[n][6] = 0;
+        if (this.playerUnitHeaders[n][6] < 0) {
+            this.playerUnitHeaders[n][6] = 0;
         }
-        if (this.var_int_arr_arr_a[n][7] < 0) {
-            this.var_int_arr_arr_a[n][7] = 0;
+        if (this.playerUnitHeaders[n][7] < 0) {
+            this.playerUnitHeaders[n][7] = 0;
         }
         this.var_boolean_l = true;
     }
@@ -4437,11 +4437,11 @@ implements CommandListener {
         }
         n3 += n4;
         n3 *= 3;
-        int[] nArray = this.var_int_arr_arr_a[n];
+        int[] nArray = this.playerUnitHeaders[n];
         nArray[5] = nArray[5] + this.var_byte_arr_e[n3++];
-        int[] nArray2 = this.var_int_arr_arr_a[n];
+        int[] nArray2 = this.playerUnitHeaders[n];
         nArray2[6] = nArray2[6] + this.var_byte_arr_e[n3++];
-        int[] nArray3 = this.var_int_arr_arr_a[n];
+        int[] nArray3 = this.playerUnitHeaders[n];
         nArray3[7] = nArray3[7] + this.var_byte_arr_e[n3];
         this.var_boolean_l = true;
     }
@@ -4463,22 +4463,22 @@ implements CommandListener {
         }
         n3 += n4;
         n3 *= 3;
-        if (this.var_int_arr_arr_a[n][5] < this.var_byte_arr_e[n3++]) {
+        if (this.playerUnitHeaders[n][5] < this.var_byte_arr_e[n3++]) {
             return false;
         }
-        if (this.var_int_arr_arr_a[n][6] < this.var_byte_arr_e[n3++]) {
+        if (this.playerUnitHeaders[n][6] < this.var_byte_arr_e[n3++]) {
             return false;
         }
-        return this.var_int_arr_arr_a[n][7] >= this.var_byte_arr_e[n3];
+        return this.playerUnitHeaders[n][7] >= this.var_byte_arr_e[n3];
     }
 
     final void p() {
         int n;
-        for (n = 0; n < this.var_int_arr_arr_a[0][2]; ++n) {
+        for (n = 0; n < this.playerUnitHeaders[0][2]; ++n) {
             this.void_d(0, n);
         }
-        if (this.var_int_arr_arr_a[0][4] > 0) {
-            n = this.ar % this.var_int_arr_arr_a[0][4];
+        if (this.playerUnitHeaders[0][4] > 0) {
+            n = this.tickCount % this.playerUnitHeaders[0][4];
             int n2 = n << 2;
             int n3 = this.var_int_arr_arr_b[0][n2 + 0];
             int n4 = n3 & 0xFF;
@@ -4501,23 +4501,23 @@ implements CommandListener {
             int n6;
             for (n6 = 0; n6 < i << 1; ++n6) {
                 int n7 = n - i + n6 + (n2 + n4 << 6) & 0xFFF;
-                this.var_short_arr_a[n7] = (short)(this.var_short_arr_a[n7] & 0xFFF);
+                this.mapTiles[n7] = (short)(this.mapTiles[n7] & 0xFFF);
                 int n8 = n - i + n6 + (n2 + n4 << 6) & 0xFFF;
-                this.var_short_arr_a[n8] = (short)(this.var_short_arr_a[n8] | 0x1000);
+                this.mapTiles[n8] = (short)(this.mapTiles[n8] | 0x1000);
                 int n9 = n - i + n6 + (n2 - n4 << 6) & 0xFFF;
-                this.var_short_arr_a[n9] = (short)(this.var_short_arr_a[n9] & 0xFFF);
+                this.mapTiles[n9] = (short)(this.mapTiles[n9] & 0xFFF);
                 int n10 = n - i + n6 + (n2 - n4 << 6) & 0xFFF;
-                this.var_short_arr_a[n10] = (short)(this.var_short_arr_a[n10] | 0x1000);
+                this.mapTiles[n10] = (short)(this.mapTiles[n10] | 0x1000);
             }
             for (n6 = 0; n6 < n4 << 1; ++n6) {
                 int n11 = n - n4 + n6 + (n2 + i << 6) & 0xFFF;
-                this.var_short_arr_a[n11] = (short)(this.var_short_arr_a[n11] & 0x1FFF);
+                this.mapTiles[n11] = (short)(this.mapTiles[n11] & 0x1FFF);
                 int n12 = n - n4 + n6 + (n2 + i << 6) & 0xFFF;
-                this.var_short_arr_a[n12] = (short)(this.var_short_arr_a[n12] | 0x1000);
+                this.mapTiles[n12] = (short)(this.mapTiles[n12] | 0x1000);
                 int n13 = n - n4 + n6 + (n2 - i << 6) & 0xFFF;
-                this.var_short_arr_a[n13] = (short)(this.var_short_arr_a[n13] & 0x1FFF);
+                this.mapTiles[n13] = (short)(this.mapTiles[n13] & 0x1FFF);
                 int n14 = n - n4 + n6 + (n2 - i << 6) & 0xFFF;
-                this.var_short_arr_a[n14] = (short)(this.var_short_arr_a[n14] | 0x1000);
+                this.mapTiles[n14] = (short)(this.mapTiles[n14] | 0x1000);
             }
             if (n5 < 0) {
                 n5 += (i << 1) + 3;
@@ -4536,7 +4536,7 @@ implements CommandListener {
             int n8 = n;
             while (n6-- > 0) {
                 int n9 = n8 + n7 & 0xFFF;
-                this.var_short_arr_a[n9] = (short)(this.var_short_arr_a[n9] | s);
+                this.mapTiles[n9] = (short)(this.mapTiles[n9] | s);
                 ++n8;
             }
         }
@@ -4549,9 +4549,9 @@ implements CommandListener {
             int n7 = n;
             while (n5-- > 0) {
                 int n8 = n7 + n6 & 0xFFF;
-                this.var_short_arr_a[n8] = (short)(this.var_short_arr_a[n8] & 0xFFF);
+                this.mapTiles[n8] = (short)(this.mapTiles[n8] & 0xFFF);
                 int n9 = n7 + n6 & 0xFFF;
-                this.var_short_arr_a[n9] = (short)(this.var_short_arr_a[n9] | 0x1000);
+                this.mapTiles[n9] = (short)(this.mapTiles[n9] | 0x1000);
                 ++n7;
             }
         }
@@ -4559,13 +4559,13 @@ implements CommandListener {
 
     public final void l(int n, int n2) {
         int n3 = n2 << 3;
-        int n4 = this.var_short_arr_arr_a[n][n3 + 0] >>> 8;
-        int n5 = this.var_short_arr_arr_a[n][n3 + 0] & 0xFF;
+        int n4 = this.playerUnitSlots[n][n3 + 0] >>> 8;
+        int n5 = this.playerUnitSlots[n][n3 + 0] & 0xFF;
         int n6 = n4 + (n5 << 6) - 65 & 0xFFF;
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 3; ++j) {
-                if ((this.var_short_arr_a[n6] & 0x1000) == 0) {
-                    this.var_short_arr_a[n6] = (short)(this.var_short_arr_a[n6] & 0x3FFF | 0x4000);
+                if ((this.mapTiles[n6] & 0x1000) == 0) {
+                    this.mapTiles[n6] = (short)(this.mapTiles[n6] & 0x3FFF | 0x4000);
                 }
                 ++n6;
                 n6 &= 0xFFF;
@@ -4577,30 +4577,30 @@ implements CommandListener {
 
     final void void_d(int n, int n2) {
         int n3 = n2 << 3;
-        int n4 = this.var_short_arr_arr_a[n][n3 + 0];
+        int n4 = this.playerUnitSlots[n][n3 + 0];
         int n5 = n4 >>> 8;
         int n6 = n5 + ((n4 &= 0xFF) << 6);
         int n7 = n6 - 65 & 0xFFF;
-        this.var_short_arr_a[n7] = (short)(this.var_short_arr_a[n7] & 0x3FFF);
+        this.mapTiles[n7] = (short)(this.mapTiles[n7] & 0x3FFF);
         int n8 = n6 - 64 & 0xFFF;
-        this.var_short_arr_a[n8] = (short)(this.var_short_arr_a[n8] & 0x3FFF);
+        this.mapTiles[n8] = (short)(this.mapTiles[n8] & 0x3FFF);
         int n9 = n6 - 63 & 0xFFF;
-        this.var_short_arr_a[n9] = (short)(this.var_short_arr_a[n9] & 0x3FFF);
+        this.mapTiles[n9] = (short)(this.mapTiles[n9] & 0x3FFF);
         int n10 = n6 - 1 & 0xFFF;
-        this.var_short_arr_a[n10] = (short)(this.var_short_arr_a[n10] & 0x3FFF);
+        this.mapTiles[n10] = (short)(this.mapTiles[n10] & 0x3FFF);
         int n11 = n6 & 0xFFF;
-        this.var_short_arr_a[n11] = (short)(this.var_short_arr_a[n11] & 0x3FFF);
+        this.mapTiles[n11] = (short)(this.mapTiles[n11] & 0x3FFF);
         int n12 = n6 + 1 & 0xFFF;
-        this.var_short_arr_a[n12] = (short)(this.var_short_arr_a[n12] & 0x3FFF);
+        this.mapTiles[n12] = (short)(this.mapTiles[n12] & 0x3FFF);
         int n13 = n6 + 63 & 0xFFF;
-        this.var_short_arr_a[n13] = (short)(this.var_short_arr_a[n13] & 0x3FFF);
+        this.mapTiles[n13] = (short)(this.mapTiles[n13] & 0x3FFF);
         int n14 = n6 + 64 & 0xFFF;
-        this.var_short_arr_a[n14] = (short)(this.var_short_arr_a[n14] & 0x3FFF);
+        this.mapTiles[n14] = (short)(this.mapTiles[n14] & 0x3FFF);
         int n15 = n6 + 65 & 0xFFF;
-        this.var_short_arr_a[n15] = (short)(this.var_short_arr_a[n15] & 0x3FFF);
+        this.mapTiles[n15] = (short)(this.mapTiles[n15] & 0x3FFF);
     }
 
-    public final void void_f(int n) {
+    public final void spawnMission(int n) {
         int n2;
         this.a(0, 0, 64, 64, Short.MIN_VALUE);
         byte[] byArray = com.ulysseo.mad.c.byte_arr_a(n);
@@ -4615,19 +4615,19 @@ implements CommandListener {
         for (n2 = 0; n2 < 4; ++n2) {
             this.var_int_arr_a[n2] = 0;
         }
-        this.var_int_arr_arr_a[0][0] = byArray[2] & 0xFF;
-        this.var_int_arr_arr_a[0][5] = byArray[3] & 0xFF;
-        this.var_int_arr_arr_a[0][6] = byArray[4] & 0xFF;
-        this.var_int_arr_arr_a[0][7] = byArray[5] & 0xFF;
-        this.var_int_arr_arr_a[1][5] = byArray[6] & 0xFF;
-        this.var_int_arr_arr_a[1][6] = byArray[7] & 0xFF;
-        this.var_int_arr_arr_a[1][7] = byArray[8] & 0xFF;
-        this.var_int_arr_arr_a[0][8] = -1;
-        this.var_int_arr_arr_a[1][8] = -1;
+        this.playerUnitHeaders[0][0] = byArray[2] & 0xFF;
+        this.playerUnitHeaders[0][5] = byArray[3] & 0xFF;
+        this.playerUnitHeaders[0][6] = byArray[4] & 0xFF;
+        this.playerUnitHeaders[0][7] = byArray[5] & 0xFF;
+        this.playerUnitHeaders[1][5] = byArray[6] & 0xFF;
+        this.playerUnitHeaders[1][6] = byArray[7] & 0xFF;
+        this.playerUnitHeaders[1][7] = byArray[8] & 0xFF;
+        this.playerUnitHeaders[0][8] = -1;
+        this.playerUnitHeaders[1][8] = -1;
         this.var_boolean_l = true;
-        this.aa = byArray[9] & 0xFF;
-        this.aV = byArray[10] & 0xFF;
-        this.f();
+        this.cursorTileX = byArray[9] & 0xFF;
+        this.cursorTileY = byArray[10] & 0xFF;
+        this.updateCamera();
         int n5 = (byArray[12] & 0xFF) << 8 | byArray[11] & 0xFF;
         int n6 = 13;
         block6: for (int i = 0; i < n5; ++i) {
@@ -4667,7 +4667,7 @@ implements CommandListener {
         for (int i = 0; i < 2; ++i) {
             int n = 0;
             int n2 = 0;
-            while (n2 < this.var_int_arr_arr_a[i][4]) {
+            while (n2 < this.playerUnitHeaders[i][4]) {
                 int n3;
                 int n4;
                 int n5 = this.var_int_arr_arr_b[i][n + 2];
@@ -4687,12 +4687,12 @@ implements CommandListener {
                             this.var_java_lang_String_c = a2.a(n3);
                             this.var_java_lang_String_a = a2.a(16);
                             if (this.var_boolean_d && this.a(0, n4, true) == 1) {
-                                this.g(0, 70, n4);
+                                this.startMissionBriefing(0, 70, n4);
                             }
                         }
                         switch (n4) {
                             case 9: {
-                                int[] nArray = this.var_int_arr_arr_a[i];
+                                int[] nArray = this.playerUnitHeaders[i];
                                 nArray[3] = nArray[3] + 5;
                                 if (i != 0) break;
                                 this.var_boolean_l = true;
@@ -4703,7 +4703,7 @@ implements CommandListener {
                                     this.var_byte_arr_c[0] = 1;
                                     this.var_boolean_l = true;
                                 }
-                                int[] nArray = this.var_int_arr_arr_a[i];
+                                int[] nArray = this.playerUnitHeaders[i];
                                 nArray[3] = nArray[3] + 5;
                                 break;
                             }
@@ -4724,7 +4724,7 @@ implements CommandListener {
                             }
                             case 8: {
                                 if (i != 0) break;
-                                if (this.var_int_arr_arr_a[0][0] >= 2) {
+                                if (this.playerUnitHeaders[0][0] >= 2) {
                                     this.var_byte_arr_c[6] = 1;
                                     break;
                                 }
@@ -4737,18 +4737,18 @@ implements CommandListener {
                                 break;
                             }
                             case 5: {
-                                int[] nArray = this.var_int_arr_arr_a[i];
-                                nArray[56] = nArray[56] + (this.var_int_arr_arr_a[i][56] >> 1);
+                                int[] nArray = this.playerUnitHeaders[i];
+                                nArray[56] = nArray[56] + (this.playerUnitHeaders[i][56] >> 1);
                                 break;
                             }
                             case 12: {
-                                int[] nArray = this.var_int_arr_arr_a[i];
-                                nArray[55] = nArray[55] + (this.var_int_arr_arr_a[i][45] + this.var_int_arr_arr_a[i][46]);
-                                int n6 = this.var_int_arr_arr_a[i][48] << 2;
+                                int[] nArray = this.playerUnitHeaders[i];
+                                nArray[55] = nArray[55] + (this.playerUnitHeaders[i][45] + this.playerUnitHeaders[i][46]);
+                                int n6 = this.playerUnitHeaders[i][48] << 2;
                                 this.var_short_arr_arr_b[i][n6 + 0] = (short)n;
                                 this.var_short_arr_arr_b[i][n6 + 1] = 1000;
                                 this.var_short_arr_arr_b[i][n6 + 3] = 0;
-                                int[] nArray2 = this.var_int_arr_arr_a[i];
+                                int[] nArray2 = this.playerUnitHeaders[i];
                                 nArray2[48] = nArray2[48] + 1;
                                 int[] nArray3 = this.var_int_arr_arr_b[i];
                                 int n7 = n + 3;
@@ -4759,12 +4759,12 @@ implements CommandListener {
                                 break;
                             }
                             case 1: {
-                                if (this.var_int_arr_arr_a[i][10] == -1) {
-                                    this.var_int_arr_arr_a[i][10] = this.var_int_arr_arr_b[i][n + 0];
+                                if (this.playerUnitHeaders[i][10] == -1) {
+                                    this.playerUnitHeaders[i][10] = this.var_int_arr_arr_b[i][n + 0];
                                     break;
                                 }
-                                if (this.var_int_arr_arr_a[i][11] == -1) {
-                                    this.var_int_arr_arr_a[i][11] = this.var_int_arr_arr_b[i][n + 0];
+                                if (this.playerUnitHeaders[i][11] == -1) {
+                                    this.playerUnitHeaders[i][11] = this.var_int_arr_arr_b[i][n + 0];
                                 }
                                 if (i != 0) break;
                                 this.var_byte_arr_c[10 + n4] = 0;
@@ -4785,9 +4785,9 @@ implements CommandListener {
                                     n3 = -1;
                                     switch (this.var_int_arr_arr_b[0][n + 3] & 0xFF) {
                                         case 9: {
-                                            int[] nArray = this.var_int_arr_arr_a[0];
+                                            int[] nArray = this.playerUnitHeaders[0];
                                             nArray[0] = nArray[0] + 1;
-                                            if (this.var_int_arr_arr_a[0][0] == 1) {
+                                            if (this.playerUnitHeaders[0][0] == 1) {
                                                 this.var_byte_arr_c[15] = 1;
                                                 this.var_byte_arr_c[16] = 1;
                                                 this.var_byte_arr_c[17] = 1;
@@ -4795,7 +4795,7 @@ implements CommandListener {
                                                 this.var_byte_arr_c[2] = 0;
                                                 this.var_byte_arr_c[3] = 1;
                                                 this.e(2, 3);
-                                            } else if (this.var_int_arr_arr_a[0][0] == 2) {
+                                            } else if (this.playerUnitHeaders[0][0] == 2) {
                                                 this.var_byte_arr_c[12] = 1;
                                                 this.var_byte_arr_c[14] = 1;
                                                 this.var_byte_arr_c[13] = 1;
@@ -4804,86 +4804,86 @@ implements CommandListener {
                                                 this.e(5, 6);
                                             }
                                             this.var_boolean_l = true;
-                                            this.g(0, 62, this.var_int_arr_arr_a[0][0] - 1);
+                                            this.startMissionBriefing(0, 62, this.playerUnitHeaders[0][0] - 1);
                                             break;
                                         }
                                         case 0: {
                                             if (this.var_byte_arr_c[26] == 0) {
                                                 n3 = 3;
-                                                int[] nArray = this.var_int_arr_arr_a[0];
+                                                int[] nArray = this.playerUnitHeaders[0];
                                                 nArray[50] = nArray[50] + 5;
                                                 break;
                                             }
                                             if (this.var_byte_arr_c[24] != 0) break;
                                             n3 = 1;
-                                            int[] nArray = this.var_int_arr_arr_a[0];
+                                            int[] nArray = this.playerUnitHeaders[0];
                                             nArray[50] = nArray[50] + 5;
                                             break;
                                         }
                                         case 1: {
                                             if (this.var_byte_arr_c[28] == 0) {
                                                 n3 = 5;
-                                                int[] nArray = this.var_int_arr_arr_a[0];
+                                                int[] nArray = this.playerUnitHeaders[0];
                                                 nArray[52] = nArray[52] + 3;
                                                 break;
                                             }
                                             if (this.var_byte_arr_c[32] == 0) {
                                                 n3 = 9;
-                                                int[] nArray = this.var_int_arr_arr_a[0];
+                                                int[] nArray = this.playerUnitHeaders[0];
                                                 nArray[51] = nArray[51] + 3;
                                                 break;
                                             }
                                             if (this.var_byte_arr_c[42] == 0) {
                                                 n3 = 19;
-                                                int[] nArray = this.var_int_arr_arr_a[0];
+                                                int[] nArray = this.playerUnitHeaders[0];
                                                 nArray[52] = nArray[52] + 3;
                                                 break;
                                             }
                                             if (this.var_byte_arr_c[41] != 0) break;
                                             n3 = 18;
-                                            int[] nArray = this.var_int_arr_arr_a[0];
+                                            int[] nArray = this.playerUnitHeaders[0];
                                             nArray[51] = nArray[51] + 3;
                                             break;
                                         }
                                         case 5: {
                                             n3 = 6;
-                                            int[] nArray = this.var_int_arr_arr_a[0];
-                                            nArray[56] = nArray[56] + (this.var_int_arr_arr_a[0][56] >> 1);
+                                            int[] nArray = this.playerUnitHeaders[0];
+                                            nArray[56] = nArray[56] + (this.playerUnitHeaders[0][56] >> 1);
                                             break;
                                         }
                                         case 6: {
                                             if (this.var_byte_arr_c[27] == 0) {
                                                 n3 = 4;
                                                 for (int j = 0; j < 9; ++j) {
-                                                    int[] nArray = this.var_int_arr_arr_a[0];
+                                                    int[] nArray = this.playerUnitHeaders[0];
                                                     int n10 = 13 + j;
                                                     nArray[n10] = nArray[n10] + 1;
                                                 }
                                             } else if (this.var_byte_arr_c[31] == 0) {
                                                 n3 = 8;
                                                 for (int j = 0; j < 9; ++j) {
-                                                    int[] nArray = this.var_int_arr_arr_a[0];
+                                                    int[] nArray = this.playerUnitHeaders[0];
                                                     int n11 = 23 + j;
                                                     nArray[n11] = nArray[n11] + 1;
                                                 }
                                             } else if (this.var_byte_arr_c[30] == 0) {
                                                 n3 = 7;
                                                 for (int j = 0; j < 9; ++j) {
-                                                    int[] nArray = this.var_int_arr_arr_a[0];
+                                                    int[] nArray = this.playerUnitHeaders[0];
                                                     int n12 = 13 + j;
                                                     nArray[n12] = nArray[n12] + 1;
                                                 }
                                             } else if (this.var_byte_arr_c[25] == 0) {
                                                 n3 = 2;
                                                 for (int j = 0; j < 9; ++j) {
-                                                    int[] nArray = this.var_int_arr_arr_a[0];
+                                                    int[] nArray = this.playerUnitHeaders[0];
                                                     int n13 = 23 + j;
                                                     nArray[n13] = nArray[n13] + 1;
                                                 }
                                             } else if (this.var_byte_arr_c[23] == 0) {
                                                 n3 = 0;
                                                 for (int j = 0; j < 9; ++j) {
-                                                    int[] nArray = this.var_int_arr_arr_a[0];
+                                                    int[] nArray = this.playerUnitHeaders[0];
                                                     int n14 = 13 + j;
                                                     nArray[n14] = nArray[n14] + 1;
                                                 }
@@ -4892,7 +4892,7 @@ implements CommandListener {
                                                 n3 = 15;
                                                 this.var_byte_arr_c[8] = 1;
                                                 for (int j = 0; j < 9; ++j) {
-                                                    int[] nArray = this.var_int_arr_arr_a[0];
+                                                    int[] nArray = this.playerUnitHeaders[0];
                                                     int n15 = 23 + j;
                                                     nArray[n15] = nArray[n15] + 1;
                                                 }
@@ -4903,7 +4903,7 @@ implements CommandListener {
                                             if (this.var_byte_arr_c[37] == 0) {
                                                 n3 = 14;
                                                 for (int j = 0; j < 13; ++j) {
-                                                    int[] nArray = this.var_int_arr_arr_a[0];
+                                                    int[] nArray = this.playerUnitHeaders[0];
                                                     int n16 = 33 + j;
                                                     nArray[n16] = nArray[n16] + 1;
                                                 }
@@ -4911,16 +4911,16 @@ implements CommandListener {
                                             }
                                             if (this.var_byte_arr_c[34] == 0) {
                                                 n3 = 11;
-                                                int[] nArray = this.var_int_arr_arr_a[0];
+                                                int[] nArray = this.playerUnitHeaders[0];
                                                 nArray[42] = nArray[42] + 1;
-                                                int[] nArray5 = this.var_int_arr_arr_a[0];
+                                                int[] nArray5 = this.playerUnitHeaders[0];
                                                 nArray5[45] = nArray5[45] + 1;
                                                 break;
                                             }
                                             if (this.var_byte_arr_c[33] == 0) {
                                                 n3 = 10;
                                                 for (int j = 0; j < 13; ++j) {
-                                                    int[] nArray = this.var_int_arr_arr_a[0];
+                                                    int[] nArray = this.playerUnitHeaders[0];
                                                     int n17 = 33 + j;
                                                     nArray[n17] = nArray[n17] + 1;
                                                 }
@@ -4928,38 +4928,38 @@ implements CommandListener {
                                             }
                                             if (this.var_byte_arr_c[35] != 0) break;
                                             n3 = 12;
-                                            int[] nArray = this.var_int_arr_arr_a[0];
+                                            int[] nArray = this.playerUnitHeaders[0];
                                             nArray[42] = nArray[42] + 1;
-                                            int[] nArray6 = this.var_int_arr_arr_a[0];
+                                            int[] nArray6 = this.playerUnitHeaders[0];
                                             nArray6[45] = nArray6[45] + 1;
                                             break;
                                         }
                                         case 12: {
                                             if (this.var_byte_arr_c[36] == 0) {
                                                 n3 = 13;
-                                                this.var_int_arr_arr_a[0][47] = 0;
-                                                this.var_int_arr_arr_a[0][46] = 2;
-                                                this.var_int_arr_arr_a[0][45] = 15;
-                                                this.var_int_arr_arr_a[0][12] = 25;
-                                                this.var_int_arr_arr_a[1][12] = 25;
+                                                this.playerUnitHeaders[0][47] = 0;
+                                                this.playerUnitHeaders[0][46] = 2;
+                                                this.playerUnitHeaders[0][45] = 15;
+                                                this.playerUnitHeaders[0][12] = 25;
+                                                this.playerUnitHeaders[1][12] = 25;
                                                 break;
                                             }
                                             if (this.var_byte_arr_c[40] == 0) {
                                                 n3 = 17;
-                                                this.var_int_arr_arr_a[0][47] = 3;
-                                                this.var_int_arr_arr_a[0][46] = 3;
-                                                this.var_int_arr_arr_a[0][45] = 20;
-                                                this.var_int_arr_arr_a[0][12] = 36;
-                                                this.var_int_arr_arr_a[1][12] = 36;
+                                                this.playerUnitHeaders[0][47] = 3;
+                                                this.playerUnitHeaders[0][46] = 3;
+                                                this.playerUnitHeaders[0][45] = 20;
+                                                this.playerUnitHeaders[0][12] = 36;
+                                                this.playerUnitHeaders[1][12] = 36;
                                                 break;
                                             }
                                             if (this.var_byte_arr_c[43] != 0) break;
                                             n3 = 20;
-                                            this.var_int_arr_arr_a[0][47] = 2;
-                                            this.var_int_arr_arr_a[0][46] = 4;
-                                            this.var_int_arr_arr_a[0][45] = 25;
-                                            this.var_int_arr_arr_a[0][12] = 36;
-                                            this.var_int_arr_arr_a[1][12] = 36;
+                                            this.playerUnitHeaders[0][47] = 2;
+                                            this.playerUnitHeaders[0][46] = 4;
+                                            this.playerUnitHeaders[0][45] = 25;
+                                            this.playerUnitHeaders[0][12] = 36;
+                                            this.playerUnitHeaders[1][12] = 36;
                                         }
                                     }
                                     if (n3 >= 0) {
@@ -4969,7 +4969,7 @@ implements CommandListener {
                                         this.var_java_lang_String_c = a3.a(24);
                                         this.var_java_lang_String_a = a3.a(n3);
                                     }
-                                    this.boolean_g(8);
+                                    this.requestStateSwitch(8);
                                 }
                                 int[] nArray = this.var_int_arr_arr_b[i];
                                 int n18 = n + 2;
@@ -4980,7 +4980,7 @@ implements CommandListener {
                                 nArray[n19] = nArray[n19] + 2048;
                             }
                         } else {
-                            int n20 = this.var_int_arr_arr_a[i][56];
+                            int n20 = this.playerUnitHeaders[i][56];
                             if ((n5 & 0xFF00) + n20 < 65280) {
                                 int[] nArray = this.var_int_arr_arr_b[i];
                                 int n21 = n + 2;
@@ -4990,12 +4990,12 @@ implements CommandListener {
                                 switch (this.var_int_arr_arr_b[i][n + 3] & 0xFF) {
                                     case 11: {
                                         n3 = 1;
-                                        if ((this.ar & 1) == 0) break;
+                                        if ((this.tickCount & 1) == 0) break;
                                         n3 = 0;
                                         break;
                                     }
                                     case 10: {
-                                        if (this.var_int_arr_arr_a[0][0] == 0) {
+                                        if (this.playerUnitHeaders[0][0] == 0) {
                                             n3 = 2;
                                             break;
                                         }
@@ -5007,7 +5007,7 @@ implements CommandListener {
                                         break;
                                     }
                                     case 8: {
-                                        if (this.var_int_arr_arr_a[0][0] >= 2) {
+                                        if (this.playerUnitHeaders[0][0] >= 2) {
                                             n3 = 6;
                                             break;
                                         }
@@ -5035,7 +5035,7 @@ implements CommandListener {
                                     int n27 = 1;
                                     int n28 = 0;
                                     int n29 = 1;
-                                    while ((this.var_short_arr_a[n24 + (n25 << 6) & 0xFFF] & 0xFFF) != 0 || ((n24 | n25) & 0xFFFFFFC0) != 0) {
+                                    while ((this.mapTiles[n24 + (n25 << 6) & 0xFFF] & 0xFFF) != 0 || ((n24 | n25) & 0xFFFFFFC0) != 0) {
                                         if (++n26 > 8) {
                                             ++n29;
                                             n26 = 0;
@@ -5056,12 +5056,12 @@ implements CommandListener {
                                         this.var_java_lang_String_a = a4.a(10);
                                     }
                                     if (this.a(i, n3, n24, n25, true)) {
-                                        int[] nArray = this.var_int_arr_arr_a[i];
+                                        int[] nArray = this.playerUnitHeaders[i];
                                         nArray[49] = nArray[49] - 1;
                                         if (--n3 < 0) {
                                             n3 = 0;
                                         }
-                                        int[] nArray7 = this.var_int_arr_arr_a[i];
+                                        int[] nArray7 = this.playerUnitHeaders[i];
                                         int n31 = 66 + n3;
                                         nArray7[n31] = nArray7[n31] - 1;
                                         if (n4 == 0) {
@@ -5085,7 +5085,7 @@ implements CommandListener {
                                         nArray11[n36] = nArray11[n36] & 0xFF00FFFF;
                                     }
                                     if (i == 0) {
-                                        this.boolean_g(8);
+                                        this.requestStateSwitch(8);
                                     }
                                 }
                             }
@@ -5098,19 +5098,19 @@ implements CommandListener {
         }
     }
 
-    final void j(Graphics graphics) {
+    final void renderWorld(Graphics graphics) {
         int n;
         int n2;
         int n3;
         int n4 = 0xFF0000;
-        if (this.var_int_b == 1) {
+        if (this.selectionMode == 1) {
             n4 = 65280;
         }
         graphics.setColor(0);
-        graphics.fillRect(0, 0, this.aO, this.var_int_j);
+        graphics.fillRect(0, 0, this.screenW, this.screenH);
         int n5 = this.aB;
-        int n6 = this.y + (this.N << 1);
-        int n7 = (this.N << 1) - this.y;
+        int n6 = this.cameraPxX + (this.cameraPxY << 1);
+        int n7 = (this.cameraPxY << 1) - this.cameraPxX;
         int n8 = -(n6 & 0x1F) + (n7 & 0x1F);
         int n9 = (n6 & 0x1F) + (n7 & 0x1F) >> 1;
         int n10 = n8 - 32;
@@ -5120,11 +5120,11 @@ implements CommandListener {
         int n14 = n11;
         int n15 = n6 >>= 5;
         int n16 = n7 >>= 5;
-        this.aP = -64;
-        this.aS = -64;
+        this.cursorScreenPxX = -64;
+        this.cursorScreenPxY = -64;
         while (n5-- > 0) {
             n3 = n10 - n12;
-            n2 = this.aI;
+            n2 = this.viewTileCols;
             while (n2-- > 0) {
                 if (((n6 | n7) & 0xFFFFFFC0) == 0) {
                     n = n6 + (n7 << 6);
@@ -5141,26 +5141,26 @@ implements CommandListener {
                             System.out.println("[pick] tile=" + n + " at " + n3 + "," + n11);
                         }
                     }
-                    if (n == this.Q) {
-                        this.aP = n3;
-                        this.aS = n11;
+                    if (n == this.cursorTileIdx) {
+                        this.cursorScreenPxX = n3;
+                        this.cursorScreenPxY = n11;
                     }
-                    if ((this.var_short_arr_a[n] & 0xFFF) == 768) {
-                        this.a(graphics, 0, n3, n11, 0);
+                    if ((this.mapTiles[n] & 0xFFF) == 768) {
+                        this.drawTileSprite(graphics, 0, n3, n11, 0);
                     } else {
-                        switch (this.var_short_arr_a[n] & 0xF000) {
+                        switch (this.mapTiles[n] & 0xF000) {
                             case 0: 
                             case 4096: {
-                                this.a(graphics, 4, n3, n11, 0);
+                                this.drawTileSprite(graphics, 4, n3, n11, 0);
                                 break;
                             }
                             case 16384: {
-                                this.a(graphics, 5, n3, n11, 0);
+                                this.drawTileSprite(graphics, 5, n3, n11, 0);
                             }
                         }
                     }
                 } else {
-                    this.a(graphics, 0, n3, n11, 0);
+                    this.drawTileSprite(graphics, 0, n3, n11, 0);
                 }
                 n3 += 64;
                 ++n6;
@@ -5168,23 +5168,23 @@ implements CommandListener {
             }
             if (n12 == 0) {
                 n12 ^= 0x20;
-                n6 -= this.aI;
-                n7 += this.aI + 1;
+                n6 -= this.viewTileCols;
+                n7 += this.viewTileCols + 1;
             } else {
                 n12 = 0;
-                n6 -= this.aI - 1;
-                n7 += this.aI;
+                n6 -= this.viewTileCols - 1;
+                n7 += this.viewTileCols;
             }
             n11 += 16;
         }
-        if (this.Q >= 0 && (this.var_int_b != 1 || this.var_short_arr_a[this.Q] >= 0)) {
+        if (this.cursorTileIdx >= 0 && (this.selectionMode != 1 || this.mapTiles[this.cursorTileIdx] >= 0)) {
             graphics.setColor(n4);
-            graphics.drawLine(this.aP - 32, this.aS, this.aP, this.aS - 16);
-            graphics.drawLine(this.aP + 32, this.aS, this.aP, this.aS - 16);
-            ++this.aP;
-            graphics.drawLine(this.aP - 32, this.aS, this.aP, this.aS - 16);
-            graphics.drawLine(this.aP + 32, this.aS, this.aP, this.aS - 16);
-            --this.aP;
+            graphics.drawLine(this.cursorScreenPxX - 32, this.cursorScreenPxY, this.cursorScreenPxX, this.cursorScreenPxY - 16);
+            graphics.drawLine(this.cursorScreenPxX + 32, this.cursorScreenPxY, this.cursorScreenPxX, this.cursorScreenPxY - 16);
+            ++this.cursorScreenPxX;
+            graphics.drawLine(this.cursorScreenPxX - 32, this.cursorScreenPxY, this.cursorScreenPxX, this.cursorScreenPxY - 16);
+            graphics.drawLine(this.cursorScreenPxX + 32, this.cursorScreenPxY, this.cursorScreenPxX, this.cursorScreenPxY - 16);
+            --this.cursorScreenPxX;
         }
         if (this.U > 0) {
             this.m(graphics);
@@ -5197,16 +5197,16 @@ implements CommandListener {
         n5 = this.aB;
         while (n5-- > 0) {
             n3 = n10 - n12;
-            n2 = this.aI;
+            n2 = this.viewTileCols;
             while (n2-- > 0) {
                 if (((n6 | n7) & 0xFFFFFFC0) == 0) {
                     n = n6 + (n7 << 6);
-                    short s = this.var_short_arr_a[n];
+                    short s = this.mapTiles[n];
                     int n17 = s & 0x300;
                     if (s > 0) {
                         switch (n17) {
                             case 768: {
-                                if ((this.var_short_arr_a[n] & 3) == 0) break;
+                                if ((this.mapTiles[n] & 3) == 0) break;
                                 this.a(graphics, n3, n11, n);
                                 break;
                             }
@@ -5223,20 +5223,20 @@ implements CommandListener {
                             case 512: {
                                 int n18 = (s & 0xC00) >> 10;
                                 int n19 = s & 0xFF;
-                                if ((this.var_short_arr_arr_a[n18][(n19 << 3) + 7] & 0xFF) != 1) break;
+                                if ((this.playerUnitSlots[n18][(n19 << 3) + 7] & 0xFF) != 1) break;
                                 this.void_d(n18, n19);
                                 this.c(graphics, n3, n11, n);
                             }
                         }
                     }
-                    if (n == this.Q && (this.var_int_b != 1 || this.var_short_arr_a[this.Q] >= 0)) {
+                    if (n == this.cursorTileIdx && (this.selectionMode != 1 || this.mapTiles[this.cursorTileIdx] >= 0)) {
                         graphics.setColor(n4);
-                        graphics.drawLine(this.aP - 32, this.aS, this.aP, this.aS + 16);
-                        graphics.drawLine(this.aP + 32, this.aS, this.aP, this.aS + 16);
-                        ++this.aP;
-                        graphics.drawLine(this.aP - 32, this.aS, this.aP, this.aS + 16);
-                        graphics.drawLine(this.aP + 32, this.aS, this.aP, this.aS + 16);
-                        --this.aP;
+                        graphics.drawLine(this.cursorScreenPxX - 32, this.cursorScreenPxY, this.cursorScreenPxX, this.cursorScreenPxY + 16);
+                        graphics.drawLine(this.cursorScreenPxX + 32, this.cursorScreenPxY, this.cursorScreenPxX, this.cursorScreenPxY + 16);
+                        ++this.cursorScreenPxX;
+                        graphics.drawLine(this.cursorScreenPxX - 32, this.cursorScreenPxY, this.cursorScreenPxX, this.cursorScreenPxY + 16);
+                        graphics.drawLine(this.cursorScreenPxX + 32, this.cursorScreenPxY, this.cursorScreenPxX, this.cursorScreenPxY + 16);
+                        --this.cursorScreenPxX;
                     }
                 }
                 n3 += 64;
@@ -5245,12 +5245,12 @@ implements CommandListener {
             }
             if (n12 == 0) {
                 n12 ^= 0x20;
-                n6 -= this.aI;
-                n7 += this.aI + 1;
+                n6 -= this.viewTileCols;
+                n7 += this.viewTileCols + 1;
             } else {
                 n12 = 0;
-                n6 -= this.aI - 1;
-                n7 += this.aI;
+                n6 -= this.viewTileCols - 1;
+                n7 += this.viewTileCols;
             }
             n11 += 16;
         }
@@ -5324,22 +5324,22 @@ implements CommandListener {
         int n5;
         int n6;
         int n7;
-        short s = this.var_short_arr_a[n3];
+        short s = this.mapTiles[n3];
         int n8 = (s & 0xFF) << 3;
         int n9 = (s & 0xC00) >> 10;
-        int n10 = this.var_short_arr_arr_a[n9][n8 + 3] & 0xFF;
+        int n10 = this.playerUnitSlots[n9][n8 + 3] & 0xFF;
         int n11 = n9;
-        int n12 = this.var_short_arr_arr_a[n9][n8 + 7] & 0xF;
+        int n12 = this.playerUnitSlots[n9][n8 + 7] & 0xF;
         if (n9 != 0 && (s & 0x4000) != 0 && n12 != 1) {
             return;
         }
         int n13 = 0;
         int n14 = 0;
-        int n15 = this.var_short_arr_arr_a[n9][n8 + 7] >>> 8 & 0xFF;
+        int n15 = this.playerUnitSlots[n9][n8 + 7] >>> 8 & 0xFF;
         switch (n12) {
             case 0: 
             case 3: {
-                n14 = (this.var_short_arr_arr_a[n9][n8 + 6] & 0xFF00) >> 8;
+                n14 = (this.playerUnitSlots[n9][n8 + 6] & 0xFF00) >> 8;
                 break;
             }
             case 4: {
@@ -5361,23 +5361,23 @@ implements CommandListener {
                 n13 = 4;
             }
         }
-        int n16 = ((this.var_short_arr_arr_a[n9][n8 + 6] & 0xFF) << 1) + 80;
+        int n16 = ((this.playerUnitSlots[n9][n8 + 6] & 0xFF) << 1) + 80;
         int n17 = 0;
         if (n14 != 0) {
-            n17 = this.ar & 1;
+            n17 = this.tickCount & 1;
         }
         int n18 = n14 * this.var_byte_arr_g[n16++];
         n14 *= this.var_byte_arr_g[n16];
         int n19 = 0;
-        if ((this.var_short_arr_arr_a[n9][n8 + 4] & 0x4000) != 0) {
+        if ((this.playerUnitSlots[n9][n8 + 4] & 0x4000) != 0) {
             n19 = 2;
         }
-        if ((this.var_short_arr_arr_a[n9][n8 + 4] & 0x2000) != 0) {
+        if ((this.playerUnitSlots[n9][n8 + 4] & 0x2000) != 0) {
             n17 += 2;
         }
-        if ((this.var_short_arr_arr_a[n9][n8 + 4] & 0x1000) != 0) {
+        if ((this.playerUnitSlots[n9][n8 + 4] & 0x1000) != 0) {
             n11 = 3;
-            short[] sArray = this.var_short_arr_arr_a[n9];
+            short[] sArray = this.playerUnitSlots[n9];
             int n20 = n8 + 4;
             sArray[n20] = (short)(sArray[n20] & 0xEFFF);
         }
@@ -5406,9 +5406,9 @@ implements CommandListener {
                 if (n17 == 0) {
                     this.a(graphics, n10, n + n18, n2 + n14, n17, n19, n11);
                 }
-                n7 = this.var_short_arr_arr_a[n9][n8 + 5] >>> 8;
-                n6 = this.var_short_arr_arr_a[n9][n8 + 5] & 0xFF;
-                n5 = ((n7 -= this.var_short_arr_arr_a[n9][n8 + 0] >>> 8) - (n6 -= this.var_short_arr_arr_a[n9][n8 + 0] & 0xFF)) * 26;
+                n7 = this.playerUnitSlots[n9][n8 + 5] >>> 8;
+                n6 = this.playerUnitSlots[n9][n8 + 5] & 0xFF;
+                n5 = ((n7 -= this.playerUnitSlots[n9][n8 + 0] >>> 8) - (n6 -= this.playerUnitSlots[n9][n8 + 0] & 0xFF)) * 26;
                 n4 = (n7 + n6) * 12;
                 if (n10 == 4) {
                     this.b(graphics, n, n2 - 4, n + n5, n2 + n4, n15, 1);
@@ -5419,12 +5419,12 @@ implements CommandListener {
                 this.a(graphics, n10, n + n18, n2 + n14, n17, n19, n11);
             }
         }
-        n7 = this.var_short_arr_arr_a[n9][n8 + 4];
+        n7 = this.playerUnitSlots[n9][n8 + 4];
         n += n18;
         n2 += n14 - 5;
         n2 -= (this.var_byte_arr_d[n10] >> 1) + 5;
         n6 = 0;
-        switch (this.var_short_arr_arr_a[n9][n8 + 7] & 0xF) {
+        switch (this.playerUnitSlots[n9][n8 + 7] & 0xF) {
             case 0: {
                 n6 = -1;
                 break;
@@ -5448,12 +5448,12 @@ implements CommandListener {
             if ((n7 & 0x8000) != 0) {
                 graphics.setColor(0);
                 graphics.fillRect(n, n2, 18, 4);
-                if (this.aJ == -1) {
+                if (this.selectedSlot == -1) {
                     n4 = 0;
                 }
                 graphics.setColor(n4);
                 graphics.fillRect(n - 1, n2 - 1, 18, 4);
-                n4 = this.var_int_h == -1 ? 8703 : 65280;
+                n4 = this.selectedType == -1 ? 8703 : 65280;
             } else {
                 graphics.setColor(0);
                 graphics.fillRect(n - 1, n2 - 1, 18, 4);
@@ -5482,12 +5482,12 @@ implements CommandListener {
         int n5;
         int n6;
         int n7;
-        short s = this.var_short_arr_a[n3];
+        short s = this.mapTiles[n3];
         int n8 = (s & 0xFF) << 2;
         int n9 = (s & 0xC00) >> 10;
         int n10 = this.var_int_arr_arr_b[n9][n8 + 2];
         int n11 = this.var_int_arr_arr_b[n9][n8 + 3];
-        int n12 = this.var_int_arr_arr_a[n9][0];
+        int n12 = this.playerUnitHeaders[n9][0];
         int n13 = n9;
         if (n11 >= 12) {
             n7 = 0;
@@ -5515,19 +5515,19 @@ implements CommandListener {
             n5 &= 0xFF;
             int n15 = ((n4 -= this.var_int_arr_arr_b[n9][n8 + 0] >>> 8) - (n5 -= this.var_int_arr_arr_b[n9][n8 + 0] & 0xFF)) * 26;
             int n16 = (n4 + n5) * 12;
-            int n17 = this.var_int_arr_arr_a[n9][47];
+            int n17 = this.playerUnitHeaders[n9][47];
             if (n16 >= -10) {
-                this.a(graphics, n6, n, n2, n13);
+                this.drawTileSprite(graphics, n6, n, n2, n13);
                 this.b(graphics, n, n2 - 32, n + n15, n2 + n16, this.var_short_arr_arr_b[n9][n7 + 3], n17);
             } else {
                 this.b(graphics, n, n2 - 32, n + n15, n2 + n16, this.var_short_arr_arr_b[n9][n7 + 3], n17);
-                this.a(graphics, n6, n, n2, n13);
+                this.drawTileSprite(graphics, n6, n, n2, n13);
             }
         } else {
-            if ((this.var_short_arr_a[n3] & 0x4000) != 0) {
+            if ((this.mapTiles[n3] & 0x4000) != 0) {
                 n13 = 2;
             }
-            this.a(graphics, n6, n, n2, n13);
+            this.drawTileSprite(graphics, n6, n, n2, n13);
         }
         if ((n10 & 0xFFFF0000) != 0 || (n10 & Integer.MIN_VALUE) != 0) {
             n7 = n6 << 1;
@@ -5562,18 +5562,18 @@ implements CommandListener {
     }
 
     final void a(Graphics graphics, int n, int n2, int n3) {
-        int n4 = 0 + (this.var_short_arr_a[n3] & 3);
-        if ((this.var_short_arr_a[n3] & 0x4000) != 0) {
-            this.a(graphics, n4, n, n2, 2);
+        int n4 = 0 + (this.mapTiles[n3] & 3);
+        if ((this.mapTiles[n3] & 0x4000) != 0) {
+            this.drawTileSprite(graphics, n4, n, n2, 2);
         } else {
-            this.a(graphics, n4, n, n2, 0);
+            this.drawTileSprite(graphics, n4, n, n2, 0);
         }
-        if ((this.var_short_arr_a[n3] & 0x80) != 0) {
+        if ((this.mapTiles[n3] & 0x80) != 0) {
             graphics.setColor(0);
             graphics.fillRect(n -= 8, n2 -= 4, 18, 4);
             graphics.setColor(0xDCDCDC);
             graphics.fillRect(n - 1, n2 - 1, 18, 4);
-            int n5 = ((this.var_short_arr_a[n3] & 0x7C) >> 2) + 1 >> 1;
+            int n5 = ((this.mapTiles[n3] & 0x7C) >> 2) + 1 >> 1;
             graphics.setColor(65280);
             graphics.fillRect(n, n2, n5, 2);
             graphics.setColor(0xFF0000);
@@ -5584,44 +5584,44 @@ implements CommandListener {
     public final boolean a(int n, int n2, int n3, int n4, boolean bl) {
         short s;
         int n5 = (n3 &= 0x3F) + ((n4 &= 0x3F) << 6);
-        if ((this.var_short_arr_a[n5] & 0xFFF) != 0) {
+        if ((this.mapTiles[n5] & 0xFFF) != 0) {
             return false;
         }
         if (bl) {
             this.c(n, 0, n2);
         }
         this.e(n, 2, n2);
-        int n6 = this.var_int_arr_arr_a[n][2];
+        int n6 = this.playerUnitHeaders[n][2];
         if (n6 >= 26) {
             return false;
         }
         int n7 = n5;
-        this.var_short_arr_a[n7] = (short)(this.var_short_arr_a[n7] | (short)(0x200 | n6 | n << 10 & 0xC00));
-        this.var_short_arr_arr_a[n][(n6 <<= 3) + 0] = s = (short)(n3 << 8 | n4);
-        this.var_short_arr_arr_a[n][n6 + 2] = s;
-        this.var_short_arr_arr_a[n][n6 + 1] = s;
-        this.var_short_arr_arr_a[n][n6 + 3] = (short)n2;
-        this.var_short_arr_arr_a[n][n6 + 4] = 255;
-        this.var_short_arr_arr_a[n][n6 + 6] = 0;
-        this.var_short_arr_arr_a[n][n6 + 7] = 0;
-        if (!(this.var_int_h != n2 && this.var_int_h != -1 || this.Y != 0 || this.aJ != -1 || n != 0 || this.var_int_h == -1 && n2 < 2)) {
-            short[] sArray = this.var_short_arr_arr_a[n];
+        this.mapTiles[n7] = (short)(this.mapTiles[n7] | (short)(0x200 | n6 | n << 10 & 0xC00));
+        this.playerUnitSlots[n][(n6 <<= 3) + 0] = s = (short)(n3 << 8 | n4);
+        this.playerUnitSlots[n][n6 + 2] = s;
+        this.playerUnitSlots[n][n6 + 1] = s;
+        this.playerUnitSlots[n][n6 + 3] = (short)n2;
+        this.playerUnitSlots[n][n6 + 4] = 255;
+        this.playerUnitSlots[n][n6 + 6] = 0;
+        this.playerUnitSlots[n][n6 + 7] = 0;
+        if (!(this.selectedType != n2 && this.selectedType != -1 || this.selectionPlayer != 0 || this.selectedSlot != -1 || n != 0 || this.selectedType == -1 && n2 < 2)) {
+            short[] sArray = this.playerUnitSlots[n];
             int n8 = n6 + 4;
             sArray[n8] = (short)(sArray[n8] | 0x8000);
         }
         if (n == 0) {
-            this.void_d(0, this.var_int_arr_arr_a[n][2]);
+            this.void_d(0, this.playerUnitHeaders[n][2]);
         }
-        int[] nArray = this.var_int_arr_arr_a[n];
-        nArray[55] = nArray[55] + (this.var_int_arr_arr_a[n][23 + n2] + this.var_int_arr_arr_a[n][13 + n2]);
-        int[] nArray2 = this.var_int_arr_arr_a[n];
+        int[] nArray = this.playerUnitHeaders[n];
+        nArray[55] = nArray[55] + (this.playerUnitHeaders[n][23 + n2] + this.playerUnitHeaders[n][13 + n2]);
+        int[] nArray2 = this.playerUnitHeaders[n];
         nArray2[2] = nArray2[2] + 1;
-        int[] nArray3 = this.var_int_arr_arr_a[n];
+        int[] nArray3 = this.playerUnitHeaders[n];
         nArray3[86] = nArray3[86] + 1;
         if (--n2 < 0) {
             n2 = 0;
         }
-        int[] nArray4 = this.var_int_arr_arr_a[n];
+        int[] nArray4 = this.playerUnitHeaders[n];
         int n9 = 57 + n2;
         nArray4[n9] = nArray4[n9] + 1;
         return true;
@@ -5661,7 +5661,7 @@ implements CommandListener {
             }
         }
         int n4 = 0;
-        for (int i = 0; i < this.var_int_arr_arr_a[n][4]; ++i) {
+        for (int i = 0; i < this.playerUnitHeaders[n][4]; ++i) {
             if ((this.var_int_arr_arr_b[n][n4 + 3] & 0xFF) == n3) {
                 if ((this.var_int_arr_arr_b[n][n4 + 2] & 0x40000000) != 0) {
                     return -1;
@@ -5669,13 +5669,13 @@ implements CommandListener {
                 int[] nArray = this.var_int_arr_arr_b[n];
                 int n5 = n4 + 2;
                 nArray[n5] = nArray[n5] + 65536;
-                int[] nArray2 = this.var_int_arr_arr_a[n];
+                int[] nArray2 = this.playerUnitHeaders[n];
                 nArray2[49] = nArray2[49] + 1;
                 int n6 = n2 - 1;
                 if (n6 < 0) {
                     n6 = 0;
                 }
-                int[] nArray3 = this.var_int_arr_arr_a[n];
+                int[] nArray3 = this.playerUnitHeaders[n];
                 int n7 = 66 + n6;
                 nArray3[n7] = nArray3[n7] + 1;
                 return n4;
@@ -5696,30 +5696,30 @@ implements CommandListener {
         }
         for (int i = 0; i < 2; ++i) {
             int n5 = 0;
-            int n6 = this.var_int_arr_arr_a[i][2];
+            int n6 = this.playerUnitHeaders[i][2];
             for (int j = 0; j < n6; ++j) {
-                if ((this.var_short_arr_arr_a[i][n5 + 3] & 0xFF) == n) {
-                    short[] sArray = this.var_short_arr_arr_a[i];
+                if ((this.playerUnitSlots[i][n5 + 3] & 0xFF) == n) {
+                    short[] sArray = this.playerUnitSlots[i];
                     int n7 = n5 + 3;
                     sArray[n7] = (short)(sArray[n7] & 0xFF00);
-                    short[] sArray2 = this.var_short_arr_arr_a[i];
+                    short[] sArray2 = this.playerUnitSlots[i];
                     int n8 = n5 + 3;
                     sArray2[n8] = (short)(sArray2[n8] | n2);
                 }
                 n5 += 8;
             }
-            this.var_int_arr_arr_a[i][57 + n3] = this.var_int_arr_arr_a[i][57 + n4];
-            this.var_int_arr_arr_a[i][57 + n4] = 0;
-            this.var_int_arr_arr_a[i][66 + n3] = this.var_int_arr_arr_a[i][66 + n4];
-            this.var_int_arr_arr_a[i][66 + n4] = 0;
+            this.playerUnitHeaders[i][57 + n3] = this.playerUnitHeaders[i][57 + n4];
+            this.playerUnitHeaders[i][57 + n4] = 0;
+            this.playerUnitHeaders[i][66 + n3] = this.playerUnitHeaders[i][66 + n4];
+            this.playerUnitHeaders[i][66 + n4] = 0;
         }
     }
 
     final void f(int n, int n2) {
-        short s = this.var_short_arr_arr_a[n][n2 + 6];
+        short s = this.playerUnitSlots[n][n2 + 6];
         if ((s & 0xF00) != 0) {
             int n3 = 0;
-            switch (this.var_short_arr_arr_a[n][n2 + 3] & 0xFF) {
+            switch (this.playerUnitSlots[n][n2 + 3] & 0xFF) {
                 case 0: 
                 case 1: {
                     n3 = 512;
@@ -5761,14 +5761,14 @@ implements CommandListener {
                     return;
                 }
             }
-            this.var_short_arr_arr_a[n][n2 + 6] = (short)(s - n3 & 0xF00 | s & 0xFF);
-            if (s < this.var_short_arr_arr_a[n][n2 + 6]) {
-                short[] sArray = this.var_short_arr_arr_a[n];
+            this.playerUnitSlots[n][n2 + 6] = (short)(s - n3 & 0xF00 | s & 0xFF);
+            if (s < this.playerUnitSlots[n][n2 + 6]) {
+                short[] sArray = this.playerUnitSlots[n];
                 int n4 = n2 + 6;
                 sArray[n4] = (short)(sArray[n4] & 0xFF);
                 return;
             }
-        } else if (this.var_short_arr_arr_a[n][n2 + 0] != this.var_short_arr_arr_a[n][n2 + 2]) {
+        } else if (this.playerUnitSlots[n][n2 + 0] != this.playerUnitSlots[n][n2 + 2]) {
             n2 >>= 3;
             if (n == 0) {
                 this.l(0, n2);
@@ -5786,38 +5786,38 @@ implements CommandListener {
 
     public final void g(int n, int n2) {
         this.l(0, n2);
-        int[] nArray = this.var_int_arr_arr_a[n];
+        int[] nArray = this.playerUnitHeaders[n];
         nArray[2] = nArray[2] - 1;
-        int n3 = this.var_int_arr_arr_a[n][2] << 3;
+        int n3 = this.playerUnitHeaders[n][2] << 3;
         int n4 = n2 << 3;
-        if (n == 0 && n3 == 0 && this.var_int_arr_arr_a[0][4] == 0) {
-            this.g(0, 98, 1);
+        if (n == 0 && n3 == 0 && this.playerUnitHeaders[0][4] == 0) {
+            this.startMissionBriefing(0, 98, 1);
         }
-        short s = this.var_short_arr_arr_a[n][n4 + 0];
+        short s = this.playerUnitSlots[n][n4 + 0];
         int n5 = (s >>> 8 & 0x3F) + ((s & 0x3F) << 6);
-        this.var_short_arr_a[n5] = 16384;
-        int n6 = this.var_short_arr_arr_a[n][n4 + 3] & 0xFF;
+        this.mapTiles[n5] = 16384;
+        int n6 = this.playerUnitSlots[n][n4 + 3] & 0xFF;
         this.e(n, 0, n6);
-        int[] nArray2 = this.var_int_arr_arr_a[n];
-        nArray2[55] = nArray2[55] - (this.var_int_arr_arr_a[n][23 + n6] + this.var_int_arr_arr_a[n][13 + n6]);
+        int[] nArray2 = this.playerUnitHeaders[n];
+        nArray2[55] = nArray2[55] - (this.playerUnitHeaders[n][23 + n6] + this.playerUnitHeaders[n][13 + n6]);
         if (--n6 < 0) {
             n6 = 0;
         }
-        int[] nArray3 = this.var_int_arr_arr_a[n];
+        int[] nArray3 = this.playerUnitHeaders[n];
         int n7 = 57 + n6;
         nArray3[n7] = nArray3[n7] - 1;
         if (n4 < n3) {
-            s = this.var_short_arr_arr_a[n][n3 + 0];
+            s = this.playerUnitSlots[n][n3 + 0];
             int n8 = n5 = (s >>> 8 & 0x3F) + ((s & 0x3F) << 6);
-            this.var_short_arr_a[n8] = (short)(this.var_short_arr_a[n8] & 0xFFFFFF00);
+            this.mapTiles[n8] = (short)(this.mapTiles[n8] & 0xFFFFFF00);
             int n9 = n5;
-            this.var_short_arr_a[n9] = (short)(this.var_short_arr_a[n9] | n2);
+            this.mapTiles[n9] = (short)(this.mapTiles[n9] | n2);
             for (int i = 0; i < 8; ++i) {
-                this.var_short_arr_arr_a[n][n4++] = this.var_short_arr_arr_a[n][n3];
-                this.var_short_arr_arr_a[n][n3++] = 0;
+                this.playerUnitSlots[n][n4++] = this.playerUnitSlots[n][n3];
+                this.playerUnitSlots[n][n3++] = 0;
             }
         }
-        int[] nArray4 = this.var_int_arr_arr_a[n];
+        int[] nArray4 = this.playerUnitHeaders[n];
         nArray4[87] = nArray4[87] + 1;
         if (n == 0) {
             this.var_boolean_l = true;
@@ -5825,16 +5825,16 @@ implements CommandListener {
     }
 
     final void g() {
-        int n = this.ar & 8;
+        int n = this.tickCount & 8;
         for (int i = 0; i < 2; ++i) {
             int n2 = 0;
             int n3 = 0;
-            while (n3 < this.var_int_arr_arr_a[i][2]) {
-                int n4 = this.var_short_arr_arr_a[i][n2 + 7] & 0xF;
+            while (n3 < this.playerUnitHeaders[i][2]) {
+                int n4 = this.playerUnitSlots[i][n2 + 7] & 0xF;
                 switch (n4) {
                     case 0: {
-                        if (n != 0 && this.var_short_arr_arr_a[i][n2 + 0] == this.var_short_arr_arr_a[i][n2 + 2] && (this.var_short_arr_arr_a[i][n2 + 4] & 0xFF) < 255) {
-                            short[] sArray = this.var_short_arr_arr_a[i];
+                        if (n != 0 && this.playerUnitSlots[i][n2 + 0] == this.playerUnitSlots[i][n2 + 2] && (this.playerUnitSlots[i][n2 + 4] & 0xFF) < 255) {
+                            short[] sArray = this.playerUnitSlots[i];
                             int n5 = n2 + 4;
                             sArray[n5] = (short)(sArray[n5] + 1);
                         }
@@ -5848,58 +5848,58 @@ implements CommandListener {
                         int n7;
                         int n8;
                         int n9;
-                        int n10 = this.var_short_arr_arr_a[i][n2 + 7] >>> 8;
+                        int n10 = this.playerUnitSlots[i][n2 + 7] >>> 8;
                         if (--n10 == 0) {
-                            this.var_short_arr_arr_a[i][n2 + 2] = (short)this.int_a(i, (int)this.var_short_arr_arr_a[i][n2 + 0], (int)this.var_short_arr_arr_a[i][n2 + 7]);
-                            short[] sArray = this.var_short_arr_arr_a[i];
+                            this.playerUnitSlots[i][n2 + 2] = (short)this.int_a(i, (int)this.playerUnitSlots[i][n2 + 0], (int)this.playerUnitSlots[i][n2 + 7]);
+                            short[] sArray = this.playerUnitSlots[i];
                             int n11 = n2 + 7;
                             sArray[n11] = (short)(sArray[n11] & 0xF0);
-                            short[] sArray2 = this.var_short_arr_arr_a[i];
+                            short[] sArray2 = this.playerUnitSlots[i];
                             int n12 = n2 + 7;
                             sArray2[n12] = (short)(sArray2[n12] | 3);
-                            n9 = this.var_short_arr_arr_a[i][n2 + 5] >>> 8 | (this.var_short_arr_arr_a[i][n2 + 5] & 0xFF) << 6;
-                            n8 = (this.var_short_arr_a[n9] & 0x7C) >> 2;
-                            if (--n8 == 0 || (this.var_short_arr_a[n9] & 0x300) != 768) {
-                                if ((this.var_short_arr_a[n9] & 0x300) == 768) {
+                            n9 = this.playerUnitSlots[i][n2 + 5] >>> 8 | (this.playerUnitSlots[i][n2 + 5] & 0xFF) << 6;
+                            n8 = (this.mapTiles[n9] & 0x7C) >> 2;
+                            if (--n8 == 0 || (this.mapTiles[n9] & 0x300) != 768) {
+                                if ((this.mapTiles[n9] & 0x300) == 768) {
                                     int n13 = n9;
-                                    this.var_short_arr_a[n13] = (short)(this.var_short_arr_a[n13] & 0xF000);
+                                    this.mapTiles[n13] = (short)(this.mapTiles[n13] & 0xF000);
                                 }
                                 for (n7 = 0; n7 < 8; ++n7) {
-                                    n6 = this.var_short_arr_arr_a[i][n2 + 5] >>> 8;
-                                    int n14 = this.var_short_arr_arr_a[i][n2 + 5] & 0xFF;
-                                    if ((((n6 += this.var_byte_arr_g[n7 << 1]) | (n14 += this.var_byte_arr_g[(n7 << 1) + 1])) & 0xFFFFFFC0) != 0 || (this.var_short_arr_a[n9 = n6 + (n14 << 6)] & 0x300) != 768 || (this.var_short_arr_arr_a[i][n2 + 7] & 0xF0) >> 4 != (this.var_short_arr_a[n9] & 3)) continue;
-                                    this.var_short_arr_arr_a[i][n2 + 5] = (short)(n6 << 8 | n14);
+                                    n6 = this.playerUnitSlots[i][n2 + 5] >>> 8;
+                                    int n14 = this.playerUnitSlots[i][n2 + 5] & 0xFF;
+                                    if ((((n6 += this.var_byte_arr_g[n7 << 1]) | (n14 += this.var_byte_arr_g[(n7 << 1) + 1])) & 0xFFFFFFC0) != 0 || (this.mapTiles[n9 = n6 + (n14 << 6)] & 0x300) != 768 || (this.playerUnitSlots[i][n2 + 7] & 0xF0) >> 4 != (this.mapTiles[n9] & 3)) continue;
+                                    this.playerUnitSlots[i][n2 + 5] = (short)(n6 << 8 | n14);
                                     n7 = 10;
                                 }
                                 break;
                             }
                             int n15 = n9;
-                            this.var_short_arr_a[n15] = (short)(this.var_short_arr_a[n15] & 0xFF83);
+                            this.mapTiles[n15] = (short)(this.mapTiles[n15] & 0xFF83);
                             int n16 = n9;
-                            this.var_short_arr_a[n16] = (short)(this.var_short_arr_a[n16] | n8 << 2);
+                            this.mapTiles[n16] = (short)(this.mapTiles[n16] | n8 << 2);
                             int n17 = n9;
-                            this.var_short_arr_a[n17] = (short)(this.var_short_arr_a[n17] | 0x80);
+                            this.mapTiles[n17] = (short)(this.mapTiles[n17] | 0x80);
                             break;
                         }
-                        short[] sArray = this.var_short_arr_arr_a[i];
+                        short[] sArray = this.playerUnitSlots[i];
                         int n18 = n2 + 7;
                         sArray[n18] = (short)(sArray[n18] & 0xFF);
-                        short[] sArray3 = this.var_short_arr_arr_a[i];
+                        short[] sArray3 = this.playerUnitSlots[i];
                         int n19 = n2 + 7;
                         sArray3[n19] = (short)(sArray3[n19] | (short)(n10 << 8));
                         break;
                     }
                     case 1: {
-                        int n10 = this.var_short_arr_arr_a[i][n2 + 7] & 0x7F00;
+                        int n10 = this.playerUnitSlots[i][n2 + 7] & 0x7F00;
                         n10 += 256;
-                        int n9 = this.var_short_arr_arr_a[i][n2 + 5] >>> 8;
-                        int n8 = (this.var_short_arr_a[n9 += (this.var_short_arr_arr_a[i][n2 + 5] & 0xFF) << 6] & 0xC00) >> 10;
-                        if (n8 == i || (this.var_short_arr_a[n9] & 0xFFF) == 0) {
-                            this.var_short_arr_arr_a[i][n2 + 7] = 0;
+                        int n9 = this.playerUnitSlots[i][n2 + 5] >>> 8;
+                        int n8 = (this.mapTiles[n9 += (this.playerUnitSlots[i][n2 + 5] & 0xFF) << 6] & 0xC00) >> 10;
+                        if (n8 == i || (this.mapTiles[n9] & 0xFFF) == 0) {
+                            this.playerUnitSlots[i][n2 + 7] = 0;
                             break;
                         }
                         int n7 = 0;
-                        int n6 = this.var_short_arr_arr_a[i][n2 + 3] & 0xFF;
+                        int n6 = this.playerUnitSlots[i][n2 + 3] & 0xFF;
                         if (n6 == 4 || n6 == 8) {
                             if (n10 >= 3840) {
                                 n7 = 1;
@@ -5908,28 +5908,28 @@ implements CommandListener {
                             n7 = 1;
                         }
                         if (n7 != 0) {
-                            short[] sArray = this.var_short_arr_arr_a[i];
+                            short[] sArray = this.playerUnitSlots[i];
                             int n20 = n2 + 7;
                             sArray[n20] = (short)(sArray[n20] & 0xFF);
                             this.d(i, n2, n9, n8);
                             break;
                         }
-                        short[] sArray = this.var_short_arr_arr_a[i];
+                        short[] sArray = this.playerUnitSlots[i];
                         int n21 = n2 + 7;
                         sArray[n21] = (short)(sArray[n21] & 0xFF);
-                        short[] sArray4 = this.var_short_arr_arr_a[i];
+                        short[] sArray4 = this.playerUnitSlots[i];
                         int n22 = n2 + 7;
                         sArray4[n22] = (short)(sArray4[n22] + (n10 & 0x7F00));
                         break;
                     }
                     case 4: {
-                        int n10 = this.var_short_arr_arr_a[i][n2 + 7] & 0x7F00;
+                        int n10 = this.playerUnitSlots[i][n2 + 7] & 0x7F00;
                         n10 += 256;
                         this.void_c(i, n2);
-                        short[] sArray = this.var_short_arr_arr_a[i];
+                        short[] sArray = this.playerUnitSlots[i];
                         int n23 = n2 + 7;
                         sArray[n23] = (short)(sArray[n23] & 0xFF);
-                        short[] sArray5 = this.var_short_arr_arr_a[i];
+                        short[] sArray5 = this.playerUnitSlots[i];
                         int n24 = n2 + 7;
                         sArray5[n24] = (short)(sArray5[n24] | (short)n10);
                     }
@@ -5943,110 +5943,110 @@ implements CommandListener {
     final void c(int n, int n2, int n3, int n4) {
         int n5 = 0;
         int n6 = n3 + (n4 << 6);
-        switch (this.var_short_arr_a[n6] & 0x300) {
+        switch (this.mapTiles[n6] & 0x300) {
             case 768: {
-                if ((this.var_short_arr_a[n6] & 3) == 0 || this.var_short_arr_arr_a[n][n2 + 3] > 1) break;
-                n5 = 0x6602 | (this.var_short_arr_a[n6] & 3) << 4;
-                this.var_short_arr_arr_a[n][n2 + 7] = (short)n5;
-                this.var_short_arr_arr_a[n][n2 + 5] = (short)(n3 << 8 | n4);
-                short[] sArray = this.var_short_arr_arr_a[n];
+                if ((this.mapTiles[n6] & 3) == 0 || this.playerUnitSlots[n][n2 + 3] > 1) break;
+                n5 = 0x6602 | (this.mapTiles[n6] & 3) << 4;
+                this.playerUnitSlots[n][n2 + 7] = (short)n5;
+                this.playerUnitSlots[n][n2 + 5] = (short)(n3 << 8 | n4);
+                short[] sArray = this.playerUnitSlots[n];
                 int n7 = n2 + 3;
                 sArray[n7] = (short)(sArray[n7] & 0xFF);
                 break;
             }
             case 256: {
-                int n8 = (this.var_short_arr_a[n6] & 0xC00) >> 10;
+                int n8 = (this.mapTiles[n6] & 0xC00) >> 10;
                 if (n8 == n) {
-                    int n9 = this.var_short_arr_arr_a[n][n2 + 3] & 0xFF;
+                    int n9 = this.playerUnitSlots[n][n2 + 3] & 0xFF;
                     if (n9 > 2) break;
-                    if ((this.var_short_arr_arr_a[n][n2 + 7] & 0xF) == 3) {
-                        int n10 = ((this.var_short_arr_arr_a[n][n2 + 7] & 0xF0) >> 4) - 1;
+                    if ((this.playerUnitSlots[n][n2 + 7] & 0xF) == 3) {
+                        int n10 = ((this.playerUnitSlots[n][n2 + 7] & 0xF0) >> 4) - 1;
                         n5 = 0;
-                        this.var_short_arr_arr_a[n][n2 + 7] = 0;
+                        this.playerUnitSlots[n][n2 + 7] = 0;
                         int n11 = 256;
                         if (n == 1) {
                             n11 = this.aM;
                         }
-                        int[] nArray = this.var_int_arr_arr_a[n];
+                        int[] nArray = this.playerUnitHeaders[n];
                         int n12 = 5 + n10;
-                        nArray[n12] = nArray[n12] + (this.var_int_arr_arr_a[n][50 + n10] * n11 >> 8);
-                        int[] nArray2 = this.var_int_arr_arr_a[n];
+                        nArray[n12] = nArray[n12] + (this.playerUnitHeaders[n][50 + n10] * n11 >> 8);
+                        int[] nArray2 = this.playerUnitHeaders[n];
                         nArray2[90] = nArray2[90] + (n11 >> 8);
                         this.var_boolean_l = true;
                         if (n == 0) {
-                            this.var_short_arr_arr_a[n][n2 + 2] = this.var_short_arr_arr_a[n][n2 + 5];
-                            short[] sArray = this.var_short_arr_arr_a[n];
+                            this.playerUnitSlots[n][n2 + 2] = this.playerUnitSlots[n][n2 + 5];
+                            short[] sArray = this.playerUnitSlots[n];
                             int n13 = n2 + 3;
                             sArray[n13] = (short)(sArray[n13] & 0xFF);
                             break;
                         }
-                        int n14 = this.var_short_arr_arr_a[n][n2 + 5];
+                        int n14 = this.playerUnitSlots[n][n2 + 5];
                         int n15 = n14 >>> 8;
                         int n16 = n15 + ((n14 &= 0xFF) << 6);
                         int n17 = this.int_b(n);
-                        if (n17 == (this.var_short_arr_a[n16] & 0x303)) {
-                            this.var_short_arr_arr_a[n][n2 + 2] = this.var_short_arr_arr_a[n][n2 + 5];
-                            short[] sArray = this.var_short_arr_arr_a[n];
+                        if (n17 == (this.mapTiles[n16] & 0x303)) {
+                            this.playerUnitSlots[n][n2 + 2] = this.playerUnitSlots[n][n2 + 5];
+                            short[] sArray = this.playerUnitSlots[n];
                             int n18 = n2 + 3;
                             sArray[n18] = (short)(sArray[n18] & 0xFF);
                             break;
                         }
-                        this.short_a((int)this.var_short_arr_arr_a[n][n2 + 0], n17);
+                        this.short_a((int)this.playerUnitSlots[n][n2 + 0], n17);
                         break;
                     }
-                    int n19 = (this.var_short_arr_a[n6] & 0xFF) << 2;
+                    int n19 = (this.mapTiles[n6] & 0xFF) << 2;
                     if ((this.var_int_arr_arr_b[n][n19 + 2] & 0xFF) >= 255) break;
                     n5 = 4;
-                    this.var_short_arr_arr_a[n][n2 + 7] = 4;
-                    this.var_short_arr_arr_a[n][n2 + 5] = (short)(n3 << 8 | n4);
+                    this.playerUnitSlots[n][n2 + 7] = 4;
+                    this.playerUnitSlots[n][n2 + 5] = (short)(n3 << 8 | n4);
                     break;
                 }
                 n5 = 1;
-                this.var_short_arr_arr_a[n][n2 + 7] = 1;
-                int n20 = (this.var_short_arr_a[n6] & 0xFF) << 2;
-                this.var_short_arr_arr_a[n][n2 + 5] = (short)(n3 << 8 | n4);
+                this.playerUnitSlots[n][n2 + 7] = 1;
+                int n20 = (this.mapTiles[n6] & 0xFF) << 2;
+                this.playerUnitSlots[n][n2 + 5] = (short)(n3 << 8 | n4);
                 int[] nArray = this.var_int_arr_arr_b[n8];
                 int n21 = n20 + 2;
                 nArray[n21] = nArray[n21] | Integer.MIN_VALUE;
                 break;
             }
             case 512: {
-                int n22 = (this.var_short_arr_a[n6] & 0xC00) >> 10;
+                int n22 = (this.mapTiles[n6] & 0xC00) >> 10;
                 if (n22 == n) {
                     n5 = 0;
-                    this.var_short_arr_arr_a[n][n2 + 7] = 0;
+                    this.playerUnitSlots[n][n2 + 7] = 0;
                     break;
                 }
                 n5 = 1;
-                this.var_short_arr_arr_a[n][n2 + 7] = 1;
-                int n23 = (this.var_short_arr_a[n6] & 0xFF) << 3;
-                this.var_short_arr_arr_a[n][n2 + 5] = (short)(n3 << 8 | n4);
-                int n24 = this.var_short_arr_arr_a[n][n2 + 0] >>> 8;
-                int n25 = this.var_short_arr_arr_a[n][n2 + 0] & 0xFF;
-                this.var_short_arr_arr_a[n22][n23 + 5] = (short)(n24 << 8 | n25);
-                short[] sArray = this.var_short_arr_arr_a[n22];
+                this.playerUnitSlots[n][n2 + 7] = 1;
+                int n23 = (this.mapTiles[n6] & 0xFF) << 3;
+                this.playerUnitSlots[n][n2 + 5] = (short)(n3 << 8 | n4);
+                int n24 = this.playerUnitSlots[n][n2 + 0] >>> 8;
+                int n25 = this.playerUnitSlots[n][n2 + 0] & 0xFF;
+                this.playerUnitSlots[n22][n23 + 5] = (short)(n24 << 8 | n25);
+                short[] sArray = this.playerUnitSlots[n22];
                 int n26 = n23 + 7;
                 sArray[n26] = (short)(sArray[n26] & 0xFFF0);
-                short[] sArray2 = this.var_short_arr_arr_a[n22];
+                short[] sArray2 = this.playerUnitSlots[n22];
                 int n27 = n23 + 7;
                 sArray2[n27] = (short)(sArray2[n27] | 1);
-                this.var_short_arr_arr_a[n22][n23 + 6] = (short)((this.var_short_arr_arr_a[n][n2 + 6] & 0xFF) + 4 & 7);
+                this.playerUnitSlots[n22][n23 + 6] = (short)((this.playerUnitSlots[n][n2 + 6] & 0xFF) + 4 & 7);
                 this.b(n22, n23, n24, n25);
             }
         }
-        this.var_short_arr_arr_a[n][n2 + 7] = (short)n5;
+        this.playerUnitSlots[n][n2 + 7] = (short)n5;
     }
 
     final void d(int n, int n2, int n3, int n4) {
-        int n5 = this.var_short_arr_arr_a[n][n2 + 3] & 0xFF;
-        int n6 = this.var_short_arr_a[n3] & 0x300;
+        int n5 = this.playerUnitSlots[n][n2 + 3] & 0xFF;
+        int n6 = this.mapTiles[n3] & 0x300;
         switch (n6) {
             case 256: {
-                int n7 = (this.var_short_arr_a[n3] & 0xFF) << 2;
+                int n7 = (this.mapTiles[n3] & 0xFF) << 2;
                 int n8 = this.var_int_arr_arr_b[n4][n7 + 2] & 0xFF;
                 int n9 = this.var_int_arr_arr_b[n4][n7 + 3] & 0xFF;
-                int n10 = this.var_int_arr_arr_a[n][13 + n5] << 4;
-                if ((n8 -= (n10 /= this.var_int_arr_arr_a[n4][33 + n9])) > 0) {
+                int n10 = this.playerUnitHeaders[n][13 + n5] << 4;
+                if ((n8 -= (n10 /= this.playerUnitHeaders[n4][33 + n9])) > 0) {
                     int[] nArray = this.var_int_arr_arr_b[n4];
                     int n11 = n7 + 2;
                     nArray[n11] = nArray[n11] & 0xFFFFFF00;
@@ -6054,37 +6054,37 @@ implements CommandListener {
                     int n12 = n7 + 2;
                     nArray2[n12] = nArray2[n12] | (n8 | Integer.MIN_VALUE | 0x10000000);
                 } else {
-                    this.i(n4, this.var_short_arr_a[n3] & 0xFF);
-                    this.var_short_arr_arr_a[n][n2 + 7] = 0;
+                    this.i(n4, this.mapTiles[n3] & 0xFF);
+                    this.playerUnitSlots[n][n2 + 7] = 0;
                 }
                 if (n4 != 0) break;
                 this.v();
                 return;
             }
             case 512: {
-                int n13 = (this.var_short_arr_a[n3] & 0xFF) << 3;
-                int n14 = this.var_short_arr_arr_a[n4][n13 + 4] & 0xFF;
-                int n15 = this.var_short_arr_arr_a[n4][n13 + 3] & 0xFF;
-                int n16 = this.var_int_arr_arr_a[n][13 + n5] << 4;
-                if ((n14 -= (n16 /= this.var_int_arr_arr_a[n4][23 + n15])) > 0) {
-                    short[] sArray = this.var_short_arr_arr_a[n4];
+                int n13 = (this.mapTiles[n3] & 0xFF) << 3;
+                int n14 = this.playerUnitSlots[n4][n13 + 4] & 0xFF;
+                int n15 = this.playerUnitSlots[n4][n13 + 3] & 0xFF;
+                int n16 = this.playerUnitHeaders[n][13 + n5] << 4;
+                if ((n14 -= (n16 /= this.playerUnitHeaders[n4][23 + n15])) > 0) {
+                    short[] sArray = this.playerUnitSlots[n4];
                     int n17 = n13 + 4;
                     sArray[n17] = (short)(sArray[n17] & 0xFF00);
-                    short[] sArray2 = this.var_short_arr_arr_a[n4];
+                    short[] sArray2 = this.playerUnitSlots[n4];
                     int n18 = n13 + 4;
                     sArray2[n18] = (short)(sArray2[n18] | (n14 | 0x1000));
-                    this.var_short_arr_arr_a[n4][n13 + 2] = this.var_short_arr_arr_a[n][n2 + 0];
+                    this.playerUnitSlots[n4][n13 + 2] = this.playerUnitSlots[n][n2 + 0];
                     return;
                 }
-                this.g(n4, this.var_short_arr_a[n3] & 0xFF);
-                this.var_short_arr_arr_a[n][n2 + 7] = 0;
+                this.g(n4, this.mapTiles[n3] & 0xFF);
+                this.playerUnitSlots[n][n2 + 7] = 0;
             }
         }
     }
 
     final void void_c(int n, int n2) {
-        int n3 = this.var_short_arr_arr_a[n][n2 + 5] >>> 8;
-        int n4 = (this.var_short_arr_a[n3 += (this.var_short_arr_arr_a[n][n2 + 5] & 0xFF) << 6] & 0xFF) << 2;
+        int n3 = this.playerUnitSlots[n][n2 + 5] >>> 8;
+        int n4 = (this.mapTiles[n3 += (this.playerUnitSlots[n][n2 + 5] & 0xFF) << 6] & 0xFF) << 2;
         int n5 = this.var_int_arr_arr_b[n][n4 + 2] & 0xFF;
         if ((AgeOfEmpires.c.int_a() & 1) == 0) {
             ++n5;
@@ -6098,52 +6098,52 @@ implements CommandListener {
             nArray2[n7] = nArray2[n7] | (n5 | Integer.MIN_VALUE);
             return;
         }
-        this.var_short_arr_arr_a[n][n2 + 7] = 0;
+        this.playerUnitSlots[n][n2 + 7] = 0;
     }
 
     public final int a(int n, int n2, int n3, int n4, int n5, boolean bl) {
         int n6;
         int n7;
-        int n8 = this.var_int_arr_arr_a[n][4];
+        int n8 = this.playerUnitHeaders[n][4];
         if (n8 >= 22) {
             return -1;
         }
-        int[] nArray = this.var_int_arr_arr_a[n];
+        int[] nArray = this.playerUnitHeaders[n];
         nArray[88] = nArray[88] + 1;
         this.e(n, 3, n2);
         int n9 = n7 = (n3 &= 0x3F) + ((n4 &= 0x3F) << 6);
-        this.var_short_arr_a[n9] = (short)(this.var_short_arr_a[n9] | (short)(0x100 | n << 10 & 0xC00 | n8 & 0xFF));
+        this.mapTiles[n9] = (short)(this.mapTiles[n9] | (short)(0x100 | n << 10 & 0xC00 | n8 & 0xFF));
         n8 <<= 2;
         if (n == 0 && (n5 & 0x40000000) == 0) {
             this.void_a(n3, n4, 3);
         }
         switch (n2) {
             case 0: {
-                this.var_int_arr_arr_a[n][9] = n3 << 8 | n4;
+                this.playerUnitHeaders[n][9] = n3 << 8 | n4;
                 break;
             }
             case 9: {
-                this.var_int_arr_arr_a[n][8] = n3 << 8 | n4;
+                this.playerUnitHeaders[n][8] = n3 << 8 | n4;
                 if ((n5 & 0x40000000) != 0) break;
-                int[] nArray2 = this.var_int_arr_arr_a[n];
+                int[] nArray2 = this.playerUnitHeaders[n];
                 nArray2[3] = nArray2[3] + 5;
                 break;
             }
             case 11: {
                 if ((n5 & 0x40000000) != 0) break;
-                int[] nArray3 = this.var_int_arr_arr_a[n];
+                int[] nArray3 = this.playerUnitHeaders[n];
                 nArray3[3] = nArray3[3] + 5;
                 break;
             }
             case 12: {
                 if ((n5 & 0x40000000) != 0) break;
-                n6 = this.var_int_arr_arr_a[n][48] << 2;
+                n6 = this.playerUnitHeaders[n][48] << 2;
                 this.var_short_arr_arr_b[n][n6 + 0] = (short)n8;
                 this.var_short_arr_arr_b[n][n6 + 1] = 1000;
                 this.var_short_arr_arr_b[n][n6 + 2] = (short)((n3 << 8) + n4);
                 this.var_short_arr_arr_b[n][n6 + 3] = 0;
                 n2 |= n6 << 24;
-                int[] nArray4 = this.var_int_arr_arr_a[n];
+                int[] nArray4 = this.playerUnitHeaders[n];
                 nArray4[48] = nArray4[48] + 1;
             }
         }
@@ -6152,7 +6152,7 @@ implements CommandListener {
         this.var_int_arr_arr_b[n][n8 + 2] = n5;
         this.var_int_arr_arr_b[n][n8 + 3] = n2;
         n2 &= 0xFF;
-        int[] nArray5 = this.var_int_arr_arr_a[n];
+        int[] nArray5 = this.playerUnitHeaders[n];
         nArray5[4] = nArray5[4] + 1;
         if (bl) {
             n6 = 0;
@@ -6172,7 +6172,7 @@ implements CommandListener {
     final int a(int n, int n2, boolean bl) {
         int n3 = 0;
         int n4 = 0;
-        int n5 = this.var_int_arr_arr_a[n][4];
+        int n5 = this.playerUnitHeaders[n][4];
         int n6 = 0;
         while (n6 < n5) {
             if ((this.var_int_arr_arr_b[n][n4 + 3] & 0xFF) == n2) {
@@ -6191,14 +6191,14 @@ implements CommandListener {
     }
 
     public final void i(int n, int n2) {
-        int n3 = this.var_int_arr_arr_a[n][4] - 1;
-        int[] nArray = this.var_int_arr_arr_a[n];
+        int n3 = this.playerUnitHeaders[n][4] - 1;
+        int[] nArray = this.playerUnitHeaders[n];
         nArray[89] = nArray[89] + 1;
         int n4 = n2 << 2;
         int n5 = n3 << 2;
         int n6 = this.var_int_arr_arr_b[n][n4 + 0];
         int n7 = (n6 >>> 8 & 0x3F) + ((n6 & 0x3F) << 6);
-        this.var_short_arr_a[n7] = 0;
+        this.mapTiles[n7] = 0;
         int n8 = this.var_int_arr_arr_b[n][n4 + 3] & 0xFF;
         if (n == 0) {
             this.var_byte_arr_c[10 + n8] = 1;
@@ -6207,38 +6207,38 @@ implements CommandListener {
         switch (n8) {
             case 9: {
                 if (n == 0) {
-                    this.g(0, 98, 1);
+                    this.startMissionBriefing(0, 98, 1);
                     break;
                 }
-                if (this.ac == 32 && this.aC != 0) break;
-                this.g(0, 98, 0);
+                if (this.gameMode == 32 && this.missionIndex != 0) break;
+                this.startMissionBriefing(0, 98, 0);
                 break;
             }
             case 11: {
                 if ((this.var_int_arr_arr_b[n][n4 + 2] & 0x40000000) == 0) {
-                    int[] nArray2 = this.var_int_arr_arr_a[n];
+                    int[] nArray2 = this.playerUnitHeaders[n];
                     nArray2[3] = nArray2[3] - 5;
                 }
                 this.var_boolean_l = true;
                 break;
             }
             case 0: {
-                this.var_int_arr_arr_a[n][9] = -1;
+                this.playerUnitHeaders[n][9] = -1;
                 break;
             }
             case 1: {
                 int n9 = this.var_int_arr_arr_b[n][n4 + 0];
-                if (n9 == this.var_int_arr_arr_a[n][10]) {
-                    this.var_int_arr_arr_a[n][10] = -1;
+                if (n9 == this.playerUnitHeaders[n][10]) {
+                    this.playerUnitHeaders[n][10] = -1;
                     break;
                 }
-                if (n9 != this.var_int_arr_arr_a[n][11]) break;
-                this.var_int_arr_arr_a[n][11] = -1;
+                if (n9 != this.playerUnitHeaders[n][11]) break;
+                this.playerUnitHeaders[n][11] = -1;
                 break;
             }
             case 12: {
                 if ((this.var_int_arr_arr_b[n][n4 + 2] & 0x40000000) != 0) break;
-                int n10 = this.var_int_arr_arr_a[n][48];
+                int n10 = this.playerUnitHeaders[n][48];
                 int n11 = n10 - 1 << 2;
                 int n12 = this.var_int_arr_arr_b[n][n4 + 3] >>> 24 & 0xFF;
                 if (n11 != n12) {
@@ -6250,7 +6250,7 @@ implements CommandListener {
                     int n14 = this.var_short_arr_arr_b[n][n12 + 2] & 0xFFFF;
                     this.var_int_arr_arr_b[n][n13 + 3] = n12 << 24 | n14 << 8 | 0xC;
                 }
-                int[] nArray3 = this.var_int_arr_arr_a[n];
+                int[] nArray3 = this.playerUnitHeaders[n];
                 nArray3[48] = nArray3[48] - 1;
             }
         }
@@ -6258,9 +6258,9 @@ implements CommandListener {
             n6 = this.var_int_arr_arr_b[n][n5];
             ++n5;
             int n15 = n7 = (n6 >>> 8 & 0x3F) + ((n6 & 0x3F) << 6);
-            this.var_short_arr_a[n15] = (short)(this.var_short_arr_a[n15] & 0xFFFFFF00);
+            this.mapTiles[n15] = (short)(this.mapTiles[n15] & 0xFFFFFF00);
             int n16 = n7;
-            this.var_short_arr_a[n16] = (short)(this.var_short_arr_a[n16] | n2);
+            this.mapTiles[n16] = (short)(this.mapTiles[n16] | n2);
             this.var_int_arr_arr_b[n][n4] = n6;
             this.var_int_arr_arr_b[n][++n4] = this.var_int_arr_arr_b[n][n5];
             this.var_int_arr_arr_b[n][n5] = 0;
@@ -6274,19 +6274,19 @@ implements CommandListener {
             this.var_int_arr_arr_b[n][n4++] = 0;
             this.var_int_arr_arr_b[n][n4] = 0;
         }
-        int[] nArray4 = this.var_int_arr_arr_a[n];
+        int[] nArray4 = this.playerUnitHeaders[n];
         nArray4[4] = nArray4[4] - 1;
     }
 
     final boolean boolean_b(int n, int n2) {
         int n3;
-        int n4 = this.var_short_arr_arr_a[n][(n2 <<= 3) + 2];
-        if (n4 == (n3 = this.var_short_arr_arr_a[n][n2 + 0])) {
+        int n4 = this.playerUnitSlots[n][(n2 <<= 3) + 2];
+        if (n4 == (n3 = this.playerUnitSlots[n][n2 + 0])) {
             return false;
         }
-        short s = this.var_short_arr_arr_a[n][n2 + 1];
+        short s = this.playerUnitSlots[n][n2 + 1];
         int n5 = n3 & 0xFF;
-        short s2 = (short)(this.var_short_arr_a[(n3 >>>= 8) + (n5 << 6)] & 0xFFF);
+        short s2 = (short)(this.mapTiles[(n3 >>>= 8) + (n5 << 6)] & 0xFFF);
         int n6 = n3;
         int n7 = n5;
         int n8 = n4 & 0xFF;
@@ -6306,7 +6306,7 @@ implements CommandListener {
             n12 = -1;
             n11 = -n11;
         }
-        int n13 = this.var_short_arr_arr_a[n][n2 + 3] >> 8;
+        int n13 = this.playerUnitSlots[n][n2 + 3] >> 8;
         if (n9 > n11) {
             if ((n13 += n11) << 1 >= n9) {
                 n5 += n12;
@@ -6326,67 +6326,67 @@ implements CommandListener {
         if ((n5 & 0xFF) > 63) {
             n7 = n5;
         }
-        short[] sArray = this.var_short_arr_arr_a[n];
+        short[] sArray = this.playerUnitSlots[n];
         int n14 = n2 + 3;
         sArray[n14] = (short)(sArray[n14] & 0xFF);
-        short[] sArray2 = this.var_short_arr_arr_a[n];
+        short[] sArray2 = this.playerUnitSlots[n];
         int n15 = n2 + 3;
         sArray2[n15] = (short)(sArray2[n15] | (short)n13 << 8);
         int n16 = (n3 << 8) + n5;
-        if ((this.var_short_arr_a[n3 + (n5 << 6)] & 0xFFF) != 0 || n16 == s) {
+        if ((this.mapTiles[n3 + (n5 << 6)] & 0xFFF) != 0 || n16 == s) {
             int n17;
-            short[] sArray3 = this.var_short_arr_arr_a[n];
+            short[] sArray3 = this.playerUnitSlots[n];
             int n18 = n2 + 3;
             sArray3[n18] = (short)(sArray3[n18] & 0xFF);
-            if (n16 == this.var_short_arr_arr_a[n][n2 + 2]) {
+            if (n16 == this.playerUnitSlots[n][n2 + 2]) {
                 short s3;
-                this.var_short_arr_arr_a[n][n2 + 1] = s3 = this.var_short_arr_arr_a[n][n2 + 0];
-                this.var_short_arr_arr_a[n][n2 + 0] = (short)n16;
+                this.playerUnitSlots[n][n2 + 1] = s3 = this.playerUnitSlots[n][n2 + 0];
+                this.playerUnitSlots[n][n2 + 0] = (short)n16;
                 this.void_a(n, n2 >> 3);
-                short[] sArray4 = this.var_short_arr_arr_a[n];
+                short[] sArray4 = this.playerUnitSlots[n];
                 int n19 = n2 + 6;
                 sArray4[n19] = (short)(sArray4[n19] & 0xFF);
-                this.var_short_arr_arr_a[n][n2 + 2] = s3;
-                this.var_short_arr_arr_a[n][n2 + 0] = s3;
+                this.playerUnitSlots[n][n2 + 2] = s3;
+                this.playerUnitSlots[n][n2 + 0] = s3;
                 this.c(n, n2, n3, n5);
                 return false;
             }
-            int n20 = ((this.var_short_arr_arr_a[n][n2 + 6] & 0xFF) << 3) + 16;
+            int n20 = ((this.playerUnitSlots[n][n2 + 6] & 0xFF) << 3) + 16;
             n3 = n6;
             n5 = n7;
             for (n17 = 0; n17 < 7; ++n17) {
                 int n21;
                 byte by = this.var_byte_arr_g[n20++];
                 int n22 = n5 + this.var_byte_arr_g[by + 1];
-                if ((((n21 = n3 + this.var_byte_arr_g[by]) | n22) & 0xFFFFFFC0) != 0 || (this.var_short_arr_a[n21 + (n22 << 6)] & 0xFFF) != 0 || (n21 << 8 | n22) == s) continue;
+                if ((((n21 = n3 + this.var_byte_arr_g[by]) | n22) & 0xFFFFFFC0) != 0 || (this.mapTiles[n21 + (n22 << 6)] & 0xFFF) != 0 || (n21 << 8 | n22) == s) continue;
                 n3 = n21;
                 n5 = n22;
-                short[] sArray5 = this.var_short_arr_arr_a[n];
+                short[] sArray5 = this.playerUnitSlots[n];
                 int n23 = n2 + 3;
                 sArray5[n23] = (short)(sArray5[n23] & 0xFF);
                 n17 = 10;
             }
             if (n17 == 7) {
-                short[] sArray6 = this.var_short_arr_arr_a[n];
+                short[] sArray6 = this.playerUnitSlots[n];
                 int n24 = n2 + 6;
                 sArray6[n24] = (short)(sArray6[n24] & 0xFF);
                 return false;
             }
         }
         int n25 = n6 + (n7 << 6);
-        this.var_short_arr_a[n25] = (short)(this.var_short_arr_a[n25] & 0xFFFFF000);
-        this.var_short_arr_a[(n3 &= 0x3F) + ((n5 &= 0x3F) << 6)] = (short)(this.var_short_arr_a[n3 + (n5 << 6)] & 0xFFFFF000 | s2);
-        this.var_short_arr_arr_a[n][n2 + 1] = this.var_short_arr_arr_a[n][n2 + 0];
-        this.var_short_arr_arr_a[n][n2 + 0] = (short)(n3 << 8 | n5);
+        this.mapTiles[n25] = (short)(this.mapTiles[n25] & 0xFFFFF000);
+        this.mapTiles[(n3 &= 0x3F) + ((n5 &= 0x3F) << 6)] = (short)(this.mapTiles[n3 + (n5 << 6)] & 0xFFFFF000 | s2);
+        this.playerUnitSlots[n][n2 + 1] = this.playerUnitSlots[n][n2 + 0];
+        this.playerUnitSlots[n][n2 + 0] = (short)(n3 << 8 | n5);
         return true;
     }
 
     final void void_a(int n, int n2) {
         int n3 = n2 << 3;
-        int n4 = (this.var_short_arr_arr_a[n][n3 + 0] & 0xFF00) >>> 8;
-        int n5 = this.var_short_arr_arr_a[n][n3 + 0] & 0xFF;
-        int n6 = (this.var_short_arr_arr_a[n][n3 + 1] & 0xFF00) >>> 8;
-        int n7 = this.var_short_arr_arr_a[n][n3 + 1] & 0xFF;
+        int n4 = (this.playerUnitSlots[n][n3 + 0] & 0xFF00) >>> 8;
+        int n5 = this.playerUnitSlots[n][n3 + 0] & 0xFF;
+        int n6 = (this.playerUnitSlots[n][n3 + 1] & 0xFF00) >>> 8;
+        int n7 = this.playerUnitSlots[n][n3 + 1] & 0xFF;
         int n8 = n6 - n4;
         int n9 = n7 - n5;
         int n10 = n8 << 8 & 0xFF00 | n9 & 0xFF;
@@ -6394,99 +6394,99 @@ implements CommandListener {
         switch (n10) {
             case 256: {
                 n11 = 0;
-                short[] sArray = this.var_short_arr_arr_a[n];
+                short[] sArray = this.playerUnitSlots[n];
                 int n12 = n3 + 4;
                 sArray[n12] = (short)(sArray[n12] | 0x2000);
-                short[] sArray2 = this.var_short_arr_arr_a[n];
+                short[] sArray2 = this.playerUnitSlots[n];
                 int n13 = n3 + 4;
                 sArray2[n13] = (short)(sArray2[n13] & 0xBFFF);
                 break;
             }
             case 257: {
                 n11 = 1;
-                short[] sArray = this.var_short_arr_arr_a[n];
+                short[] sArray = this.playerUnitSlots[n];
                 int n14 = n3 + 4;
                 sArray[n14] = (short)(sArray[n14] | 0x2000);
                 break;
             }
             case 1: {
                 n11 = 2;
-                short[] sArray = this.var_short_arr_arr_a[n];
+                short[] sArray = this.playerUnitSlots[n];
                 int n15 = n3 + 4;
                 sArray[n15] = (short)(sArray[n15] | 0x2000);
-                short[] sArray3 = this.var_short_arr_arr_a[n];
+                short[] sArray3 = this.playerUnitSlots[n];
                 int n16 = n3 + 4;
                 sArray3[n16] = (short)(sArray3[n16] | 0x4000);
                 break;
             }
             case 65281: {
                 n11 = 3;
-                short[] sArray = this.var_short_arr_arr_a[n];
+                short[] sArray = this.playerUnitSlots[n];
                 int n17 = n3 + 4;
                 sArray[n17] = (short)(sArray[n17] | 0x4000);
                 break;
             }
             case 65280: {
                 n11 = 4;
-                short[] sArray = this.var_short_arr_arr_a[n];
+                short[] sArray = this.playerUnitSlots[n];
                 int n18 = n3 + 4;
                 sArray[n18] = (short)(sArray[n18] & 0xDFFF);
-                short[] sArray4 = this.var_short_arr_arr_a[n];
+                short[] sArray4 = this.playerUnitSlots[n];
                 int n19 = n3 + 4;
                 sArray4[n19] = (short)(sArray4[n19] | 0x4000);
                 break;
             }
             case 65535: {
                 n11 = 5;
-                short[] sArray = this.var_short_arr_arr_a[n];
+                short[] sArray = this.playerUnitSlots[n];
                 int n20 = n3 + 4;
                 sArray[n20] = (short)(sArray[n20] & 0xDFFF);
                 break;
             }
             case 255: {
                 n11 = 6;
-                short[] sArray = this.var_short_arr_arr_a[n];
+                short[] sArray = this.playerUnitSlots[n];
                 int n21 = n3 + 4;
                 sArray[n21] = (short)(sArray[n21] & 0xDFFF);
-                short[] sArray5 = this.var_short_arr_arr_a[n];
+                short[] sArray5 = this.playerUnitSlots[n];
                 int n22 = n3 + 4;
                 sArray5[n22] = (short)(sArray5[n22] & 0xBFFF);
                 break;
             }
             case 511: {
                 n11 = 7;
-                short[] sArray = this.var_short_arr_arr_a[n];
+                short[] sArray = this.playerUnitSlots[n];
                 int n23 = n3 + 4;
                 sArray[n23] = (short)(sArray[n23] & 0xBFFF);
             }
         }
-        this.var_short_arr_arr_a[n][n3 + 6] = (short)(n11 | 0xF00);
+        this.playerUnitSlots[n][n3 + 6] = (short)(n11 | 0xF00);
     }
 
     final void b(int n, int n2, int n3, int n4) {
-        int n5 = (this.var_short_arr_arr_a[n][n2 + 0] & 0xFF00) >>> 8;
-        int n6 = this.var_short_arr_arr_a[n][n2 + 0] & 0xFF;
+        int n5 = (this.playerUnitSlots[n][n2 + 0] & 0xFF00) >>> 8;
+        int n6 = this.playerUnitSlots[n][n2 + 0] & 0xFF;
         n5 = (n3 - n5) * 181;
         n6 = (n4 - n6) * 181;
         int n7 = n5 - n6;
         int n8 = n6 + n5;
         if (n7 > 0) {
-            short[] sArray = this.var_short_arr_arr_a[n];
+            short[] sArray = this.playerUnitSlots[n];
             int n9 = n2 + 4;
             sArray[n9] = (short)(sArray[n9] | 0x4000);
         } else if (n7 < 0) {
-            short[] sArray = this.var_short_arr_arr_a[n];
+            short[] sArray = this.playerUnitSlots[n];
             int n10 = n2 + 4;
             sArray[n10] = (short)(sArray[n10] & 0xBFFF);
         }
         if (n8 < 0) {
-            short[] sArray = this.var_short_arr_arr_a[n];
+            short[] sArray = this.playerUnitSlots[n];
             int n11 = n2 + 4;
             sArray[n11] = (short)(sArray[n11] | 0x2000);
             return;
         }
         if (n8 > 0) {
-            short[] sArray = this.var_short_arr_arr_a[n];
+            short[] sArray = this.playerUnitSlots[n];
             int n12 = n2 + 4;
             sArray[n12] = (short)(sArray[n12] & 0xDFFF);
         }
@@ -6494,9 +6494,9 @@ implements CommandListener {
 
     final void G() {
         for (int i = 0; i < 2; ++i) {
-            int n = this.var_int_arr_arr_a[i][48];
+            int n = this.playerUnitHeaders[i][48];
             if (n == 0) continue;
-            int n2 = this.ar % n << 2;
+            int n2 = this.tickCount % n << 2;
             int n3 = n;
             int n4 = n3 << 2;
             while (this.var_short_arr_arr_b[i][n2 + 1] != 1000) {
@@ -6506,22 +6506,22 @@ implements CommandListener {
                 if (--n3 > 0) continue;
             }
             if (n3 <= 0) continue;
-            int n5 = this.var_int_arr_arr_a[i][12];
+            int n5 = this.playerUnitHeaders[i][12];
             short s = this.var_short_arr_arr_b[i][n2 + 0];
             int n6 = this.var_int_arr_arr_b[i][s + 0];
             int n7 = n6 >>> 8 & 0x3F;
             n6 &= 0x3F;
             int n8 = i ^ 1;
             int n9 = 0;
-            int n10 = this.var_int_arr_arr_a[n8][2];
+            int n10 = this.playerUnitHeaders[n8][2];
             int n11 = 0;
             while (n11 < n10) {
-                int n12 = this.var_short_arr_arr_a[n8][n9 + 0];
+                int n12 = this.playerUnitSlots[n8][n9 + 0];
                 int n13 = (n12 >>> 8 & 0x3F) - n7;
                 if (n13 * n13 + (n12 = (n12 & 0x3F) - n6) * n12 <= n5) {
                     this.var_short_arr_arr_b[i][n2 + 3] = 0;
                     this.var_short_arr_arr_b[i][n2 + 1] = (short)n9;
-                    this.var_short_arr_arr_b[i][n2 + 2] = this.var_short_arr_arr_a[n8][n9 + 0];
+                    this.var_short_arr_arr_b[i][n2 + 2] = this.playerUnitSlots[n8][n9 + 0];
                     int[] nArray = this.var_int_arr_arr_b[i];
                     int n14 = s + 3;
                     nArray[n14] = nArray[n14] & 0xFF0000FF;
@@ -6539,7 +6539,7 @@ implements CommandListener {
     final void J() {
         for (int i = 0; i < 2; ++i) {
             int n = 0;
-            int n2 = this.var_int_arr_arr_a[i][48];
+            int n2 = this.playerUnitHeaders[i][48];
             int n3 = 0;
             while (n3 < n2) {
                 short s = this.var_short_arr_arr_b[i][n + 1];
@@ -6550,34 +6550,34 @@ implements CommandListener {
                         int n5 = this.var_short_arr_arr_b[i][n + 2];
                         int n6 = n5 >>> 8 & 0x3F;
                         int n7 = n6 + ((n5 &= 0x3F) << 6);
-                        int n8 = (this.var_short_arr_a[n7] & 0xC00) >> 10;
-                        if (n8 == i || (this.var_short_arr_a[n7] & 0xFFF) == 0) {
+                        int n8 = (this.mapTiles[n7] & 0xC00) >> 10;
+                        if (n8 == i || (this.mapTiles[n7] & 0xFFF) == 0) {
                             this.var_short_arr_arr_b[i][n + 1] = 1000;
                             int[] nArray = this.var_int_arr_arr_b[i];
                             int n9 = this.var_short_arr_arr_b[i][n + 0] + 3;
                             nArray[n9] = nArray[n9] & 0xFF0000FF;
-                        } else if ((this.var_short_arr_a[n7] & 0x300) == 512) {
-                            int n10 = this.var_short_arr_arr_a[n8][s + 4] & 0xFF;
-                            int n11 = (this.var_int_arr_arr_a[i][46] << 4) / this.var_int_arr_arr_a[n8][23 + (this.var_short_arr_arr_a[n8][s + 3] & 0xFF)];
+                        } else if ((this.mapTiles[n7] & 0x300) == 512) {
+                            int n10 = this.playerUnitSlots[n8][s + 4] & 0xFF;
+                            int n11 = (this.playerUnitHeaders[i][46] << 4) / this.playerUnitHeaders[n8][23 + (this.playerUnitSlots[n8][s + 3] & 0xFF)];
                             if ((n10 -= n11) <= 0) {
-                                this.g(n8, this.var_short_arr_a[n7] & 0xFF);
+                                this.g(n8, this.mapTiles[n7] & 0xFF);
                                 this.var_short_arr_arr_b[i][n + 1] = 1000;
                                 int[] nArray = this.var_int_arr_arr_b[i];
                                 int n12 = this.var_short_arr_arr_b[i][n + 0] + 3;
                                 nArray[n12] = nArray[n12] & 0xFF0000FF;
                             } else {
-                                short[] sArray = this.var_short_arr_arr_a[n8];
+                                short[] sArray = this.playerUnitSlots[n8];
                                 int n13 = s + 4;
                                 sArray[n13] = (short)(sArray[n13] & 0xFF00);
-                                short[] sArray2 = this.var_short_arr_arr_a[n8];
+                                short[] sArray2 = this.playerUnitSlots[n8];
                                 int n14 = s + 4;
                                 sArray2[n14] = (short)(sArray2[n14] | (n10 | 0x1000));
                                 if (n8 == 0) {
-                                    if (this.var_short_arr_arr_a[n8][s + 2] == this.var_short_arr_arr_a[n8][s + 0] && (this.var_short_arr_arr_a[n8][s + 7] & 0xFF) != 1) {
-                                        this.var_short_arr_arr_a[n8][s + 2] = (short)this.var_int_arr_arr_b[i][this.var_short_arr_arr_b[i][n + 0] + 0];
+                                    if (this.playerUnitSlots[n8][s + 2] == this.playerUnitSlots[n8][s + 0] && (this.playerUnitSlots[n8][s + 7] & 0xFF) != 1) {
+                                        this.playerUnitSlots[n8][s + 2] = (short)this.var_int_arr_arr_b[i][this.var_short_arr_arr_b[i][n + 0] + 0];
                                     }
-                                } else if ((this.var_short_arr_arr_a[n8][s + 7] & 0xFF) != 1) {
-                                    this.var_short_arr_arr_a[n8][s + 2] = (short)this.var_int_arr_arr_b[i][this.var_short_arr_arr_b[i][n + 0] + 0];
+                                } else if ((this.playerUnitSlots[n8][s + 7] & 0xFF) != 1) {
+                                    this.playerUnitSlots[n8][s + 2] = (short)this.var_int_arr_arr_b[i][this.var_short_arr_arr_b[i][n + 0] + 0];
                                 }
                             }
                         } else {
@@ -6597,14 +6597,14 @@ implements CommandListener {
     final void B() {
         for (int i = 0; i < 2; ++i) {
             boolean bl = false;
-            int n = this.ar;
-            int n2 = this.var_int_arr_arr_a[i][2];
+            int n = this.tickCount;
+            int n2 = this.playerUnitHeaders[i][2];
             if (n2 == 0) continue;
             int n3 = 0;
             while (n3 < n2) {
                 int n4;
                 ++n3;
-                if ((this.var_short_arr_arr_a[i][(n4 = n++ % n2 << 3) + 7] & 0xF) != 1 && (this.var_short_arr_arr_a[i][n4 + 6] & 0xFF00) == 0 && (this.var_short_arr_arr_a[i][n4 + 3] & 0xFF) >= 2 && (i != 0 || this.var_short_arr_arr_a[i][n4 + 0] == this.var_short_arr_arr_a[i][n4 + 2])) {
+                if ((this.playerUnitSlots[i][(n4 = n++ % n2 << 3) + 7] & 0xF) != 1 && (this.playerUnitSlots[i][n4 + 6] & 0xFF00) == 0 && (this.playerUnitSlots[i][n4 + 3] & 0xFF) >= 2 && (i != 0 || this.playerUnitSlots[i][n4 + 0] == this.playerUnitSlots[i][n4 + 2])) {
                     if (!this.boolean_a(i, n4)) {
                         this.void_b(i, n4);
                     }
@@ -6616,8 +6616,8 @@ implements CommandListener {
     }
 
     final boolean boolean_a(int n, int n2) {
-        int n3 = this.var_short_arr_arr_a[n][n2 + 3] & 0xFF;
-        int n4 = this.var_short_arr_arr_a[n][n2 + 0];
+        int n3 = this.playerUnitSlots[n][n2 + 3] & 0xFF;
+        int n4 = this.playerUnitSlots[n][n2 + 0];
         int n5 = n4 >>> 8;
         n4 &= 0xFF;
         int n6 = 0;
@@ -6656,33 +6656,33 @@ implements CommandListener {
         }
         int n7 = n ^ 1;
         int n8 = 0;
-        int n9 = this.var_int_arr_arr_a[n7][2];
+        int n9 = this.playerUnitHeaders[n7][2];
         int n10 = 0;
         while (n10 < n9) {
-            int n11 = this.var_short_arr_arr_a[n7][n8 + 0];
+            int n11 = this.playerUnitSlots[n7][n8 + 0];
             int n12 = (n11 >>> 8) - n5;
             int n13 = n12 * n12 + (n11 = (n11 & 0xFF) - n4) * n11;
             if (n13 <= 1) {
-                short[] sArray = this.var_short_arr_arr_a[n];
+                short[] sArray = this.playerUnitSlots[n];
                 int n14 = n2 + 7;
                 sArray[n14] = (short)(sArray[n14] & 0xFFF0);
-                short[] sArray2 = this.var_short_arr_arr_a[n];
+                short[] sArray2 = this.playerUnitSlots[n];
                 int n15 = n2 + 7;
                 sArray2[n15] = (short)(sArray2[n15] | 1);
-                this.var_short_arr_arr_a[n][n2 + 5] = this.var_short_arr_arr_a[n7][n8 + 0];
-                this.var_short_arr_arr_a[n][n2 + 2] = this.var_short_arr_arr_a[n][n2 + 0];
-                this.b(n, n2, this.var_short_arr_arr_a[n7][n8 + 0] >>> 8, this.var_short_arr_arr_a[n7][n8 + 0] & 0xFF);
-                if ((this.var_short_arr_arr_a[n7][n8 + 7] & 0xF) == 1) {
+                this.playerUnitSlots[n][n2 + 5] = this.playerUnitSlots[n7][n8 + 0];
+                this.playerUnitSlots[n][n2 + 2] = this.playerUnitSlots[n][n2 + 0];
+                this.b(n, n2, this.playerUnitSlots[n7][n8 + 0] >>> 8, this.playerUnitSlots[n7][n8 + 0] & 0xFF);
+                if ((this.playerUnitSlots[n7][n8 + 7] & 0xF) == 1) {
                     return true;
                 }
-                short[] sArray3 = this.var_short_arr_arr_a[n7];
+                short[] sArray3 = this.playerUnitSlots[n7];
                 int n16 = n8 + 7;
                 sArray3[n16] = (short)(sArray3[n16] & 0xFFF0);
-                short[] sArray4 = this.var_short_arr_arr_a[n7];
+                short[] sArray4 = this.playerUnitSlots[n7];
                 int n17 = n8 + 7;
                 sArray4[n17] = (short)(sArray4[n17] | 1);
-                this.var_short_arr_arr_a[n7][n8 + 5] = this.var_short_arr_arr_a[n][n2 + 0];
-                this.var_short_arr_arr_a[n7][n8 + 2] = this.var_short_arr_arr_a[n7][n8 + 0];
+                this.playerUnitSlots[n7][n8 + 5] = this.playerUnitSlots[n][n2 + 0];
+                this.playerUnitSlots[n7][n8 + 2] = this.playerUnitSlots[n7][n8 + 0];
                 this.b(n7, n8, n5, n4);
                 return true;
             }
@@ -6690,24 +6690,24 @@ implements CommandListener {
                 switch (n3) {
                     case 4: 
                     case 8: {
-                        short[] sArray = this.var_short_arr_arr_a[n];
+                        short[] sArray = this.playerUnitSlots[n];
                         int n18 = n2 + 7;
                         sArray[n18] = (short)(sArray[n18] & 0xFFF0);
-                        short[] sArray5 = this.var_short_arr_arr_a[n];
+                        short[] sArray5 = this.playerUnitSlots[n];
                         int n19 = n2 + 7;
                         sArray5[n19] = (short)(sArray5[n19] | 1);
-                        this.var_short_arr_arr_a[n][n2 + 5] = this.var_short_arr_arr_a[n7][n8 + 0];
-                        this.var_short_arr_arr_a[n][n2 + 2] = this.var_short_arr_arr_a[n][n2 + 0];
-                        this.b(n, n2, this.var_short_arr_arr_a[n7][n8 + 0] >>> 8, this.var_short_arr_arr_a[n7][n8 + 0] & 0xFF);
-                        if ((this.var_short_arr_arr_a[n7][n8 + 7] & 0xF) == 1) {
+                        this.playerUnitSlots[n][n2 + 5] = this.playerUnitSlots[n7][n8 + 0];
+                        this.playerUnitSlots[n][n2 + 2] = this.playerUnitSlots[n][n2 + 0];
+                        this.b(n, n2, this.playerUnitSlots[n7][n8 + 0] >>> 8, this.playerUnitSlots[n7][n8 + 0] & 0xFF);
+                        if ((this.playerUnitSlots[n7][n8 + 7] & 0xF) == 1) {
                             return true;
                         }
-                        this.var_short_arr_arr_a[n7][n8 + 2] = this.var_short_arr_arr_a[n][n2 + 0];
+                        this.playerUnitSlots[n7][n8 + 2] = this.playerUnitSlots[n][n2 + 0];
                         this.b(n7, n8, n5, n4);
                         return true;
                     }
                 }
-                this.var_short_arr_arr_a[n][n2 + 2] = this.var_short_arr_arr_a[n7][n8 + 0];
+                this.playerUnitSlots[n][n2 + 2] = this.playerUnitSlots[n7][n8 + 0];
                 return true;
             }
             ++n10;
@@ -6717,10 +6717,10 @@ implements CommandListener {
     }
 
     final void void_b(int n, int n2) {
-        int n3 = this.var_short_arr_arr_a[n][n2 + 0];
+        int n3 = this.playerUnitSlots[n][n2 + 0];
         int n4 = n3 >>> 8 & 0x3F;
         n3 &= 0x3F;
-        int n5 = this.var_short_arr_arr_a[n][n2 + 3] & 0xFF;
+        int n5 = this.playerUnitSlots[n][n2 + 3] & 0xFF;
         int n6 = 0;
         switch (n5) {
             case 4: {
@@ -6759,7 +6759,7 @@ implements CommandListener {
         int n8 = -1;
         int n9 = n ^ 1;
         int n10 = 0;
-        int n11 = this.var_int_arr_arr_a[n9][4];
+        int n11 = this.playerUnitHeaders[n9][4];
         int n12 = 0;
         while (n12 < n11) {
             int n13;
@@ -6783,19 +6783,19 @@ implements CommandListener {
             switch (n5) {
                 case 4: 
                 case 8: {
-                    short[] sArray = this.var_short_arr_arr_a[n];
+                    short[] sArray = this.playerUnitSlots[n];
                     int n16 = n2 + 7;
                     sArray[n16] = (short)(sArray[n16] & 0xFFF0);
-                    short[] sArray2 = this.var_short_arr_arr_a[n];
+                    short[] sArray2 = this.playerUnitSlots[n];
                     int n17 = n2 + 7;
                     sArray2[n17] = (short)(sArray2[n17] | 1);
-                    this.var_short_arr_arr_a[n][n2 + 5] = (short)this.var_int_arr_arr_b[n9][n8 + 0];
+                    this.playerUnitSlots[n][n2 + 5] = (short)this.var_int_arr_arr_b[n9][n8 + 0];
                     this.b(n, n2, this.var_int_arr_arr_b[n9][n8 + 0] >>> 8, this.var_int_arr_arr_b[n9][n8 + 0] & 0xFF);
-                    this.var_short_arr_arr_a[n][n2 + 2] = this.var_short_arr_arr_a[n][n2 + 0];
+                    this.playerUnitSlots[n][n2 + 2] = this.playerUnitSlots[n][n2 + 0];
                     return;
                 }
             }
-            this.var_short_arr_arr_a[n][n2 + 2] = (short)this.var_int_arr_arr_b[n9][n8 + 0];
+            this.playerUnitSlots[n][n2 + 2] = (short)this.var_int_arr_arr_b[n9][n8 + 0];
         }
     }
 
@@ -6806,11 +6806,11 @@ implements CommandListener {
         int n4;
         int n5;
         int n6 = 0;
-        int n7 = this.var_int_arr_arr_a[0][2];
+        int n7 = this.playerUnitHeaders[0][2];
         if (n7 != 0) {
-            n5 = this.var_int_arr_arr_a[1][54];
-            n4 = this.var_int_arr_arr_a[1][55];
-            n3 = this.var_int_arr_arr_a[0][55];
+            n5 = this.playerUnitHeaders[1][54];
+            n4 = this.playerUnitHeaders[1][55];
+            n3 = this.playerUnitHeaders[0][55];
             n2 = (n5 & 0x7F000000) >> 24;
             n5 &= 0xFFFFFF;
             if (n2 >= n7) {
@@ -6820,31 +6820,31 @@ implements CommandListener {
                 } else if (n5 <= this.var_int_l) {
                     this.var_int_i = 1;
                 }
-                this.var_int_arr_arr_a[1][54] = 0xFFFFFF;
+                this.playerUnitHeaders[1][54] = 0xFFFFFF;
             } else {
-                n = this.var_int_arr_arr_a[1][8];
+                n = this.playerUnitHeaders[1][8];
                 if (n >= 0) {
                     int n8;
                     int n9 = n >>> 8;
                     n &= 0xFF;
-                    int n10 = this.var_short_arr_arr_a[0][(++n2 << 3) + 0];
+                    int n10 = this.playerUnitSlots[0][(++n2 << 3) + 0];
                     int n11 = n10 >>> 8;
                     if ((n8 = (n9 -= n11) * n9 + (n -= (n10 &= 0xFF)) * n) < n5) {
                         n5 = n8;
-                        this.var_int_arr_arr_a[1][53] = this.var_short_arr_arr_a[0][(n2 << 3) + 0];
+                        this.playerUnitHeaders[1][53] = this.playerUnitSlots[0][(n2 << 3) + 0];
                     }
-                    this.var_int_arr_arr_a[1][54] = n5 & 0xFFFFFF | n2 << 24;
+                    this.playerUnitHeaders[1][54] = n5 & 0xFFFFFF | n2 << 24;
                 }
             }
         }
         if (this.var_boolean_i) {
             if (this.w++ >= this.aw) {
-                int[] nArray = this.var_int_arr_arr_a[1];
-                nArray[5] = nArray[5] + this.var_int_arr_arr_a[1][57];
-                int[] nArray2 = this.var_int_arr_arr_a[1];
-                nArray2[6] = nArray2[6] + this.var_int_arr_arr_a[1][57];
-                int[] nArray3 = this.var_int_arr_arr_a[1];
-                nArray3[7] = nArray3[7] + this.var_int_arr_arr_a[1][57];
+                int[] nArray = this.playerUnitHeaders[1];
+                nArray[5] = nArray[5] + this.playerUnitHeaders[1][57];
+                int[] nArray2 = this.playerUnitHeaders[1];
+                nArray2[6] = nArray2[6] + this.playerUnitHeaders[1][57];
+                int[] nArray3 = this.playerUnitHeaders[1];
+                nArray3[7] = nArray3[7] + this.playerUnitHeaders[1][57];
                 this.w = 0;
             }
             if (this.E++ >= this.an) {
@@ -6853,18 +6853,18 @@ implements CommandListener {
                     this.E = 0;
                 }
             }
-            if (this.aq++ >= this.C && this.boolean_b(this.ar % 10)) {
+            if (this.aq++ >= this.C && this.boolean_b(this.tickCount % 10)) {
                 this.aq = 0;
             }
         }
         n6 = 0;
-        n7 = this.var_int_arr_arr_a[1][2];
+        n7 = this.playerUnitHeaders[1][2];
         if (n7 == 0) {
             return;
         }
         do {
-            if ((this.var_short_arr_arr_a[1][n6 + 3] & 0xFF) < 2 && (this.var_short_arr_arr_a[1][n6 + 7] & 0xFF) == 0 && (this.var_short_arr_arr_a[1][n6 + 2] == this.var_short_arr_arr_a[1][n6 + 0] || this.var_short_arr_arr_a[1][n6 + 1] == this.var_short_arr_arr_a[1][n6 + 0])) {
-                this.var_short_arr_arr_a[1][n6 + 2] = this.short_a((int)this.var_short_arr_arr_a[1][n6 + 0], this.int_b(1));
+            if ((this.playerUnitSlots[1][n6 + 3] & 0xFF) < 2 && (this.playerUnitSlots[1][n6 + 7] & 0xFF) == 0 && (this.playerUnitSlots[1][n6 + 2] == this.playerUnitSlots[1][n6 + 0] || this.playerUnitSlots[1][n6 + 1] == this.playerUnitSlots[1][n6 + 0])) {
+                this.playerUnitSlots[1][n6 + 2] = this.short_a((int)this.playerUnitSlots[1][n6 + 0], this.int_b(1));
             }
             n6 += 8;
         } while (--n7 > 0);
@@ -6873,20 +6873,20 @@ implements CommandListener {
         }
         n5 = n7;
         n4 = 0;
-        n7 = this.var_int_arr_arr_a[1][2];
+        n7 = this.playerUnitHeaders[1][2];
         n3 = -1;
         n2 = -1;
         switch (this.var_int_i) {
             case 2: {
-                if (this.var_int_arr_arr_a[0][8] == -1) break;
-                n3 = (short)(this.var_int_arr_arr_a[0][8] + (this.ar & 1) + ((this.ar & 3) - 2 << 8));
+                if (this.playerUnitHeaders[0][8] == -1) break;
+                n3 = (short)(this.playerUnitHeaders[0][8] + (this.tickCount & 1) + ((this.tickCount & 3) - 2 << 8));
                 n4 = n7 - (n5 >>= 2);
                 break;
             }
             case 1: {
-                if (this.var_int_arr_arr_a[1][8] == -1) break;
-                n3 = (short)(this.var_int_arr_arr_a[0][8] + (this.ar & 1) + ((this.ar & 3) - 2 << 8));
-                n2 = (short)this.var_int_arr_arr_a[1][53];
+                if (this.playerUnitHeaders[1][8] == -1) break;
+                n3 = (short)(this.playerUnitHeaders[0][8] + (this.tickCount & 1) + ((this.tickCount & 3) - 2 << 8));
+                n2 = (short)this.playerUnitHeaders[1][53];
                 n4 = n7 - (n5 >>= 3);
             }
         }
@@ -6895,8 +6895,8 @@ implements CommandListener {
             if (n3 >= 0) {
                 n = 0;
                 while (n < n4) {
-                    if ((this.var_short_arr_arr_a[1][n6 + 3] & 0xFF) >= 2 && (this.var_short_arr_arr_a[1][n6 + 7] & 0xF) != 1) {
-                        this.var_short_arr_arr_a[1][n6 + 2] = (short)n3;
+                    if ((this.playerUnitSlots[1][n6 + 3] & 0xFF) >= 2 && (this.playerUnitSlots[1][n6 + 7] & 0xF) != 1) {
+                        this.playerUnitSlots[1][n6 + 2] = (short)n3;
                     }
                     ++n;
                     n6 += 8;
@@ -6905,8 +6905,8 @@ implements CommandListener {
             if (n2 >= 0) {
                 n = n4;
                 while (n < n5) {
-                    if ((this.var_short_arr_arr_a[1][n6 + 3] & 0xFF) >= 2 && (this.var_short_arr_arr_a[1][n6 + 7] & 0xF) != 1) {
-                        this.var_short_arr_arr_a[1][n6 + 2] = (short)n2;
+                    if ((this.playerUnitSlots[1][n6 + 3] & 0xFF) >= 2 && (this.playerUnitSlots[1][n6 + 7] & 0xF) != 1) {
+                        this.playerUnitSlots[1][n6 + 2] = (short)n2;
                     }
                     ++n;
                     n6 += 8;
@@ -6923,7 +6923,7 @@ implements CommandListener {
         if (!this.boolean_a(1, 1, this.M)) {
             return false;
         }
-        int n = this.var_int_arr_arr_a[1][8];
+        int n = this.playerUnitHeaders[1][8];
         if (n == -1) {
             return true;
         }
@@ -6961,7 +6961,7 @@ implements CommandListener {
                     int n7;
                     int n8 = n6 + i;
                     int n9 = n + j;
-                    if ((n8 | n9) < 0 || n8 >= 64 || n9 >= 64 || (this.var_short_arr_a[n7 = n8 + (n9 << 6)] & 0x300) != 0 || (this.var_short_arr_a[n7] & 0xFFF) != 0) continue;
+                    if ((n8 | n9) < 0 || n8 >= 64 || n9 >= 64 || (this.mapTiles[n7 = n8 + (n9 << 6)] & 0x300) != 0 || (this.mapTiles[n7] & 0xFFF) != 0) continue;
                     return n8 << 8 | n9;
                 }
             }
@@ -6998,11 +6998,11 @@ implements CommandListener {
                 s = this.var_short_b;
             }
         }
-        if (s >= 0 && (this.var_short_arr_a[n3 = (n10 = s >>> 8 & 0x3F) + ((n11 = s & 0x3F) << 6)] & Short.MAX_VALUE) != 0) {
+        if (s >= 0 && (this.mapTiles[n3 = (n10 = s >>> 8 & 0x3F) + ((n11 = s & 0x3F) << 6)] & Short.MAX_VALUE) != 0) {
             return s;
         }
         do {
-            if (((n10 | n11) & 0xFFFFFFC0) == 0 && (this.var_short_arr_a[n3 = n10 | n11 << 6] & 0x300) == 768 && (this.var_short_arr_a[n3] & 3) == n2) {
+            if (((n10 | n11) & 0xFFFFFFC0) == 0 && (this.mapTiles[n3 = n10 | n11 << 6] & 0x300) == 768 && (this.mapTiles[n3] & 3) == n2) {
                 s = (short)(n10 << 8 | n11);
                 switch (n2) {
                     case 1: {
@@ -7047,9 +7047,9 @@ implements CommandListener {
     }
 
     final int int_b(int n) {
-        int n2 = this.var_int_arr_arr_a[n][5];
-        int n3 = this.var_int_arr_arr_a[n][7];
-        int n4 = this.var_int_arr_arr_a[n][6];
+        int n2 = this.playerUnitHeaders[n][5];
+        int n3 = this.playerUnitHeaders[n][7];
+        int n4 = this.playerUnitHeaders[n][6];
         int n5 = n2 + n3 + n4;
         if ((n2 << 16) / n5 < 21845) {
             return 769;
@@ -7062,8 +7062,8 @@ implements CommandListener {
 
     final boolean boolean_b(int n) {
         int n2;
-        int n3 = this.var_int_arr_arr_a[1][2] + this.var_int_arr_arr_a[1][49];
-        if (n3 >= this.var_int_arr_arr_a[1][3]) {
+        int n3 = this.playerUnitHeaders[1][2] + this.playerUnitHeaders[1][49];
+        if (n3 >= this.playerUnitHeaders[1][3]) {
             return false;
         }
         if (n3 >= 26) {
@@ -7072,7 +7072,7 @@ implements CommandListener {
         if (!this.boolean_a(1, 0, n)) {
             return false;
         }
-        int n4 = this.var_int_arr_arr_a[0][0];
+        int n4 = this.playerUnitHeaders[0][0];
         if (n4 != 0 && n == 2) {
             n = 3;
         }
@@ -7092,7 +7092,7 @@ implements CommandListener {
         if (n5 < 0) {
             n5 = 0;
         }
-        if ((n2 = this.var_int_arr_arr_a[1][57 + n5] + this.var_int_arr_arr_a[1][66 + n5]) >= this.var_int_arr_arr_a[1][75 + n5]) {
+        if ((n2 = this.playerUnitHeaders[1][57 + n5] + this.playerUnitHeaders[1][66 + n5]) >= this.playerUnitHeaders[1][75 + n5]) {
             return false;
         }
         this.int_c(1, n);
@@ -7100,7 +7100,7 @@ implements CommandListener {
     }
 
     final int int_a(int n, int n2, int n3) {
-        int n4 = this.var_int_arr_arr_a[n][8];
+        int n4 = this.playerUnitHeaders[n][8];
         if (n4 == -1) {
             return n2;
         }
@@ -7114,7 +7114,7 @@ implements CommandListener {
                 int n10;
                 int n11;
                 int n12;
-                int n13 = this.var_int_arr_arr_a[n][9];
+                int n13 = this.playerUnitHeaders[n][9];
                 if (n13 > 0 && (n12 = (n11 = (n13 >>> 8) - (n10 = n2 >>> 8)) * n11 + (n9 = (n13 & 0xFF) - (n8 = n2 & 0xFF)) * n9) <= (n7 = (n6 = (n4 >>> 8) - n10) * n6 + (n5 = (n4 & 0xFF) - n8) * n5)) {
                     return n13;
                 }
@@ -7132,7 +7132,7 @@ implements CommandListener {
                     int n20;
                     int n21;
                     int n22;
-                    int n23 = this.var_int_arr_arr_a[n][10 + i];
+                    int n23 = this.playerUnitHeaders[n][10 + i];
                     if (n23 <= 0 || (n22 = (n21 = (n23 >>> 8) - n15) * n21 + (n20 = (n23 & 0xFF) - n16) * n20) > n19) continue;
                     n19 = n22;
                     n14 = n23;
@@ -7144,8 +7144,8 @@ implements CommandListener {
     }
 
     final void m(Graphics graphics) {
-        int n = this.var_int_d - this.y;
-        int n2 = this.S - this.N;
+        int n = this.var_int_d - this.cameraPxX;
+        int n2 = this.S - this.cameraPxY;
         int n3 = 0xFFFFFF;
         int n4 = 0x7F007F;
         int n5 = this.au;
@@ -7206,10 +7206,10 @@ implements CommandListener {
                 if (n3 == 1) {
                     n = -n;
                 }
-                if ((this.var_short_arr_arr_a[n4][(n2 = n5 << 3) + 6] & 0xFF00) != 0) {
+                if ((this.playerUnitSlots[n4][(n2 = n5 << 3) + 6] & 0xFF00) != 0) {
                     return -n;
                 }
-                int n10 = this.var_short_arr_arr_a[n4][n2 + 0];
+                int n10 = this.playerUnitSlots[n4][n2 + 0];
                 int n11 = n10 >>> 8;
                 n10 &= 0xFF;
                 if (n11 < n6) {
@@ -7242,7 +7242,7 @@ implements CommandListener {
                 int n15 = this.var_byte_arr_a[n++] & 0xFF;
                 int n16 = this.var_byte_arr_a[n++] & 0xFF;
                 int n17 = this.var_byte_arr_a[n++] & 0xFF;
-                if (!(n16 == 0 ? this.var_int_arr_arr_a[n14][n15] == n17 : (n16 == 1 ? this.var_int_arr_arr_a[n14][n15] > n17 : n16 == 2 && this.var_int_arr_arr_a[n14][n15] < n17))) break;
+                if (!(n16 == 0 ? this.playerUnitHeaders[n14][n15] == n17 : (n16 == 1 ? this.playerUnitHeaders[n14][n15] > n17 : n16 == 2 && this.playerUnitHeaders[n14][n15] < n17))) break;
                 return n;
             }
             case 5: {
@@ -7262,7 +7262,7 @@ implements CommandListener {
                 return -n;
             }
             case 3: {
-                if (this.var_byte_arr_a[n++] != this.aA) break;
+                if (this.var_byte_arr_a[n++] != this.screenState) break;
                 return n;
             }
             case 4: {
@@ -7274,16 +7274,16 @@ implements CommandListener {
                 if (n21 == 1) {
                     n = -n;
                 }
-                if (this.Y != n22) {
+                if (this.selectionPlayer != n22) {
                     return -n;
                 }
-                if (this.aJ != by2) {
+                if (this.selectedSlot != by2) {
                     return -n;
                 }
-                if (this.aE != n23) {
+                if (this.selectionMark != n23) {
                     return -n;
                 }
-                if (by != -1 && this.var_int_h != by) {
+                if (by != -1 && this.selectedType != by) {
                     return -n;
                 }
                 return n;
@@ -7305,11 +7305,11 @@ implements CommandListener {
                     }
                     if (n4 == -1) {
                         for (n3 = 0; n3 < 2; ++n3) {
-                            this.var_int_arr_arr_a[n3][n5] = n6;
+                            this.playerUnitHeaders[n3][n5] = n6;
                         }
                         continue block13;
                     }
-                    this.var_int_arr_arr_a[n4][n5] = n6;
+                    this.playerUnitHeaders[n4][n5] = n6;
                     continue block13;
                 }
                 case 9: {
@@ -7336,9 +7336,9 @@ implements CommandListener {
                     int n8 = 0;
                     if (n5 == -1) {
                         n7 = 0;
-                        while (n7 < this.var_int_arr_arr_a[n4][2]) {
-                            if ((this.var_short_arr_arr_a[n4][n8 + 3] & 0xFF) < 2) {
-                                this.var_short_arr_arr_a[n4][n8 + 2] = (short)((n6 << 8 | n3) & 0xFFFF);
+                        while (n7 < this.playerUnitHeaders[n4][2]) {
+                            if ((this.playerUnitSlots[n4][n8 + 3] & 0xFF) < 2) {
+                                this.playerUnitSlots[n4][n8 + 2] = (short)((n6 << 8 | n3) & 0xFFFF);
                             }
                             ++n7;
                             n8 += 8;
@@ -7348,9 +7348,9 @@ implements CommandListener {
                     if (n5 < 0) {
                         n5 = -n5;
                         n7 = 0;
-                        while (n7 < this.var_int_arr_arr_a[n4][2]) {
-                            if ((this.var_short_arr_arr_a[n4][n8 + 3] & 0xFF) == n5) {
-                                this.var_short_arr_arr_a[n4][n8 + 2] = (short)((n6 << 8 | n3) & 0xFFFF);
+                        while (n7 < this.playerUnitHeaders[n4][2]) {
+                            if ((this.playerUnitSlots[n4][n8 + 3] & 0xFF) == n5) {
+                                this.playerUnitSlots[n4][n8 + 2] = (short)((n6 << 8 | n3) & 0xFFFF);
                             }
                             ++n7;
                             n8 += 8;
@@ -7363,7 +7363,7 @@ implements CommandListener {
                 case 0: {
                     int n4 = this.var_byte_arr_a[n++] & 0xFF;
                     int n5 = this.var_byte_arr_a[n++] & 0xFF;
-                    this.g(n4, this.I, n5);
+                    this.startMissionBriefing(n4, this.I, n5);
                     break;
                 }
                 case 1: {
@@ -7375,12 +7375,12 @@ implements CommandListener {
                 }
                 case 4: {
                     ++n;
-                    this.g(0, 98, 0);
+                    this.startMissionBriefing(0, 98, 0);
                     break;
                 }
                 case 5: {
                     ++n;
-                    this.g(0, 98, 1);
+                    this.startMissionBriefing(0, 98, 1);
                     break;
                 }
                 case 2: {
@@ -7501,15 +7501,15 @@ implements CommandListener {
     }
 
     public final boolean n(int n) {
-        if (this.aO <= 128) {
-            this.F = 4;
-            this.B = this.aO - 4;
+        if (this.screenW <= 128) {
+            this.clipLeft = 4;
+            this.clipRight = this.screenW - 4;
         } else {
-            this.F = 8;
-            this.B = this.aO - 16;
+            this.clipLeft = 8;
+            this.clipRight = this.screenW - 16;
         }
         if (n == 0) {
-            this.aN = this.aA;
+            this.overlayPrevState = this.screenState;
         }
         this.void_c(this.V);
         this.aQ = 0;
@@ -7629,7 +7629,7 @@ implements CommandListener {
                 this.av = n7;
                 continue;
             }
-            if (this.var_javax_microedition_lcdui_Font_a.substringWidth(string, n5, n4 - n5) >= this.B - this.F) {
+            if (this.var_javax_microedition_lcdui_Font_a.substringWidth(string, n5, n4 - n5) >= this.clipRight - this.clipLeft) {
                 if (n6 < 1) {
                     n5 = n4;
                     n6 = 0;
@@ -7655,43 +7655,43 @@ implements CommandListener {
             break;
         }
         this.var_int_e = 0;
-        this.D = this.aT - (this.P - this.O) + 16 + (this.ah << 1);
-        this.ab = 0;
-        this.ax = 0;
+        this.D = this.aT - (this.clipBottom - this.clipTop) + 16 + (this.ah << 1);
+        this.keyActionHeld = 0;
+        this.keyActionPulse = 0;
     }
 
     public final void A() {
-        this.ab = 0;
-        this.ax = 0;
+        this.keyActionHeld = 0;
+        this.keyActionPulse = 0;
         AgeOfEmpires.c.a(this.var_java_lang_String_arr_a);
         this.var_boolean_f = true;
         this.var_boolean_b = true;
-        this.F = 0;
-        this.B = this.aO;
+        this.clipLeft = 0;
+        this.clipRight = this.screenW;
     }
 
-    public final void g(Graphics graphics) {
+    public final void renderDialog(Graphics graphics) {
         int n;
-        int n2 = (this.aO - this.av >> 1) - 8;
-        int n3 = (this.P - this.O - this.aT >> 1) + this.O - 8;
+        int n2 = (this.screenW - this.av >> 1) - 8;
+        int n3 = (this.clipBottom - this.clipTop - this.aT >> 1) + this.clipTop - 8;
         int n4 = this.av + 16;
         int n5 = this.aT + 24;
         int n6 = n3 + n5 - 8;
         if (n2 < 0) {
             n2 = 0;
         }
-        if (n4 > this.aO) {
-            n4 = this.aO;
+        if (n4 > this.screenW) {
+            n4 = this.screenW;
         }
-        if (n3 < this.O) {
-            n3 = this.O;
+        if (n3 < this.clipTop) {
+            n3 = this.clipTop;
         }
-        if (n5 > this.P - this.O) {
-            n5 = this.P - this.O;
+        if (n5 > this.clipBottom - this.clipTop) {
+            n5 = this.clipBottom - this.clipTop;
         }
         boolean bl = false;
         boolean bl2 = false;
-        graphics.setClip(0, 0, this.aO, this.var_int_j);
+        graphics.setClip(0, 0, this.screenW, this.screenH);
         this.e(graphics, n2, n3, n4, n5);
         int n7 = n2;
         graphics.setClip(n2 += 2, n3 += 6, n4 -= 4, n5 -= 12);
@@ -7701,7 +7701,7 @@ implements CommandListener {
         n3 -= this.var_int_e;
         for (int i = 1; i < this.aW; ++i) {
             if (this.var_java_lang_String_arr_a[i] == null) {
-                n = this.aO >> 1;
+                n = this.screenW >> 1;
                 int n8 = n - 32;
                 int n9 = n8 + 64;
                 int n10 = (n3 += this.ah) + 16;
@@ -7718,11 +7718,11 @@ implements CommandListener {
                 n3 = n11;
                 continue;
             }
-            n2 = this.aO - this.a(this.var_java_lang_String_arr_a[i]) >> 1;
+            n2 = this.screenW - this.a(this.var_java_lang_String_arr_a[i]) >> 1;
             this.a(graphics, this.var_java_lang_String_arr_a[i], n2, n3, this.aQ - i);
             n3 += this.ah + this.ay + 2;
         }
-        graphics.setClip(0, 0, this.aO, this.var_int_j);
+        graphics.setClip(0, 0, this.screenW, this.screenH);
         n4 = this.a(this.var_java_lang_String_arr_a[0]) + 12;
         n2 = n7 - (n4 >> 1);
         n5 = this.ah + 12;
@@ -7730,8 +7730,8 @@ implements CommandListener {
         if (n2 < 0) {
             n2 = 0;
         }
-        if (n3 + n5 > this.P) {
-            n3 = this.P - n5;
+        if (n3 + n5 > this.clipBottom) {
+            n3 = this.clipBottom - n5;
         }
         this.e(graphics, n2, n3, n4, n5);
         n = (AgeOfEmpires.b.int_b((this.aQ << 6) + 512) >> 10) + 128;
@@ -7740,14 +7740,14 @@ implements CommandListener {
         graphics.setColor((n << 16 | n << 4) & 0xFFFF00);
         graphics.drawString(this.var_java_lang_String_arr_a[0], n2, n3, 20);
         if (this.aQ++ > 10) {
-            switch (this.ab) {
+            switch (this.keyActionHeld) {
                 case 6: 
                 case 22: 
                 case 38: 
                 case 47: {
-                    this.am = this.aN;
-                    this.ab = 0;
-                    this.ax = 0;
+                    this.pendingScreenState = this.overlayPrevState;
+                    this.keyActionHeld = 0;
+                    this.keyActionPulse = 0;
                     break;
                 }
                 case 9: 
@@ -7761,7 +7761,7 @@ implements CommandListener {
                 }
             }
         }
-        this.a(graphics, this.aO - 6 >> 1, n3);
+        this.a(graphics, this.screenW - 6 >> 1, n3);
     }
 
     public final void a(Graphics graphics, int n, int n2) {
@@ -7771,82 +7771,82 @@ implements CommandListener {
         if (this.var_int_e < 0) {
             this.var_int_e = 0;
         }
-        if ((this.ar & 1) == 0) {
+        if ((this.tickCount & 1) == 0) {
             return;
         }
         if (this.D > 0) {
             if (this.var_int_e > 0) {
-                n2 = this.O + 2;
+                n2 = this.clipTop + 2;
                 this.a(graphics, 21, n, n2, 0, 0, 7, 6, 0, 0);
             }
             if (this.var_int_e < this.D) {
-                n2 = this.P - 8;
+                n2 = this.clipBottom - 8;
                 this.a(graphics, 21, n, n2, 7, 0, 7, 6, 0, 0);
             }
         }
     }
 
     /** 任务结束结算（g(0, 98, n3)，n3==0 为胜利）：推进解锁计数 aj/aG、
-     *  写每关高分（var_int_arr_d）并持久化 .nfo 字节 28。 */
-    final void g(int n, int n2, int n3) {
+     *  写每关高分（nfoHighScores）并持久化 .nfo 字节 28。 */
+    final void startMissionBriefing(int n, int n2, int n3) {
         if (System.getProperty("aoe.debug") != null) {
-            System.out.println("[trace] g(" + n + "," + n2 + "," + n3 + ") ac=" + this.ac);
+            System.out.println("[trace] g(" + n + "," + n2 + "," + n3 + ") ac=" + this.gameMode);
         }
-        if (this.boolean_g(2)) {
+        if (this.requestStateSwitch(2)) {
             this.as = n;
             this.z = n2;
             this.V = n3;
             if (n2 == 98) {
-                this.O = 0;
-                this.F = 0;
-                this.P = this.var_int_j;
-                this.B = this.aO;
+                this.clipTop = 0;
+                this.clipLeft = 0;
+                this.clipBottom = this.screenH;
+                this.clipRight = this.screenW;
                 this.a(132 + n3, false);
-                this.m();
-                switch (this.ac) {
+                this.loadNfo();
+                switch (this.gameMode) {
                     case 0: {
-                        this.h(31, 2, r << 8 | var_int_k);
-                        this.aA = 12;
-                        this.H = 1;
+                        this.nfoWriteInt(31, 2, r << 8 | var_int_k);
+                        this.screenState = 12;
+                        this.menuScreenId = 1;
                         break;
                     }
                     case 16: {
-                        if (n3 == 0 && this.aG == this.aC) {
+                        if (n3 == 0 && this.aG == this.missionIndex) {
                             if (this.aG < 2) {
                                 ++this.aG;
-                                this.H = 11;
+                                this.menuScreenId = 11;
                             } else {
                                 this.V = 2;
-                                this.H = 1;
+                                this.menuScreenId = 1;
                             }
                         }
-                        this.aA = 4;
+                        this.screenState = 4;
                         break;
                     }
                     case 32: {
                         if (this.aj < 6) {
-                            if (n3 == 0 && this.aj < this.aC + 1) {
-                                this.aj = this.aC + 1;
+                            if (n3 == 0 && this.aj < this.missionIndex + 1) {
+                                this.aj = this.missionIndex + 1;
                             }
-                            this.H = 12;
+                            this.menuScreenId = 12;
                         } else {
-                            this.H = 1;
+                            this.menuScreenId = 1;
                         }
-                        int n4 = this.var_int_arr_arr_a[0][90] * 3;
-                        n4 += this.var_int_arr_arr_a[1][87] * 124;
-                        n4 += this.var_int_arr_arr_a[0][86] * 421;
-                        n4 -= this.var_int_arr_arr_a[0][87] * 9;
-                        if (this.var_int_arr_d[this.aC] < (n4 -= this.var_int_arr_arr_a[1][86] * 12)) {
-                            this.var_int_arr_d[this.aC] = n4;
-                            this.h(0 + (this.aC << 2), 4, n4);
-                            this.I();
+                        int n4 = this.playerUnitHeaders[0][90] * 3;
+                        n4 += this.playerUnitHeaders[1][87] * 124;
+                        n4 += this.playerUnitHeaders[0][86] * 421;
+                        n4 -= this.playerUnitHeaders[0][87] * 9;
+                        if (this.nfoHighScores[this.missionIndex] < (n4 -= this.playerUnitHeaders[1][86] * 12)) {
+                            this.nfoHighScores[this.missionIndex] = n4;
+                            this.nfoWriteInt(0 + (this.missionIndex << 2), 4, n4);
+                            this.saveNfo();
                         }
-                        this.aA = 12;
+                        this.screenState = 12;
                     }
                 }
                 if (n3 == 0) {
-                    this.h(28, 1, this.aG << 4 | this.aj);
-                    this.I();
+                    this.nfoWriteInt(28, 1, this.aG << 4 | this.aj);
+                    this.saveNfo();
                 }
             }
         }

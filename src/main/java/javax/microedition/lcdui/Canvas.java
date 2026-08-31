@@ -190,7 +190,7 @@ public abstract class Canvas extends Displayable {
         framebuffer = new java.awt.image.BufferedImage(pw, ph,
                 java.awt.image.BufferedImage.TYPE_INT_RGB);
         framebufferDeviceScale = deviceScale;
-        // 新缓冲是空的：showNotify → 游戏 k() 置位全量重绘标志，下一帧补全画面
+        // 新缓冲是空的：showNotify → 游戏 onShown() 置位全量重绘标志，下一帧补全画面
         notifyShown();
     }
 

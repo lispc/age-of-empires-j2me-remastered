@@ -56,7 +56,7 @@ extends MIDlet {
     public final void pauseApp() {
         if (var_boolean_a) {
             b.c();
-            this.var_AgeOfEmpires_c_a.af = 0;
+            this.var_AgeOfEmpires_c_a.mapThumbStampRow = 0;
             this.var_AgeOfEmpires_c_a.s();
             b.var_boolean_a = true;
         }

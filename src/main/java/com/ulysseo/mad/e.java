@@ -25,7 +25,7 @@ extends TimerTask {
             b.com_ulysseo_mad_a_a(this.a).w();
             if (System.getProperty("aoe.debug") != null && ++this.dbg % 25 == 0) {
                 AgeOfEmpires.c game = (AgeOfEmpires.c)(Object)b.com_ulysseo_mad_a_a(this.a);
-                System.out.println("[dbg] ar=" + game.ar + " am=" + game.am + " aA=" + game.aA + " aH=" + game.aH
+                System.out.println("[dbg] ar=" + game.tickCount + " am=" + game.pendingScreenState + " aA=" + game.screenState + " aH=" + game.aH
                         + " l=" + game.var_boolean_l + " j=" + game.var_boolean_j
                         + " fullRedraw=" + AgeOfEmpires.b.var_boolean_a);
             }

@@ -21,7 +21,7 @@ public final class SaveState {
     private SaveState() {
     }
 
-    /** 捕获任务内状态。必须在 aA==6（任务主视图稳定）时调用。 */
+    /** 捕获任务内状态。必须在 screenState==6（任务主视图稳定）时调用。 */
     public static byte[] capture(c g) throws IOException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream(1 << 16);
         DataOutputStream out = new DataOutputStream(bos);
@@ -29,55 +29,55 @@ public final class SaveState {
         out.writeInt(VERSION);
         writeString(out, g.devLastNavSpec);     // dev 导航 spec（null=窗口会话），放头部便于 O(1) 读取
         // —— 任务标识 ——
-        out.writeInt(g.ac);
-        out.writeInt(g.aC);
-        out.writeInt(g.aF);
+        out.writeInt(g.gameMode);
+        out.writeInt(g.missionIndex);
+        out.writeInt(g.missionResId);
         out.writeBoolean(g.var_boolean_k);
         // —— 设置/进度（.nfo 镜像 + 解锁位）——
-        writeBytes(out, g.var_byte_arr_f);
+        writeBytes(out, g.nfoData);
         out.writeInt(g.aj);
         out.writeInt(g.aG);
         // —— 脚本树与引擎指针（任务内目标/对话推进状态）——
-        writeBytes(out, g.var_byte_arr_i);
+        writeBytes(out, g.menuTree);
         // 任务数据镜像（res aF）：脚本解释器会就地写"已执行"标记，读档必须一并还原
         writeBytes(out, g.var_byte_arr_a);
-        out.writeInt(g.aR);
-        out.writeInt(g.ao);
-        out.writeInt(g.Z);
-        out.writeInt(g.H);
-        out.writeInt(g.v);
+        out.writeInt(g.menuNode);
+        out.writeInt(g.menuNodeCount);
+        out.writeInt(g.menuHighlight);
+        out.writeInt(g.menuScreenId);
+        out.writeInt(g.pendingPanelSwitch);
         out.writeInt(g.ap);
         // —— 地图格（地形+迷雾+占位）——
-        writeShorts(out, g.var_short_arr_a);
+        writeShorts(out, g.mapTiles);
         // —— 计数/资源/杂项 int 数组 ——
         writeInts(out, g.var_int_arr_a);
         writeInts(out, g.var_int_arr_c);
-        writeInts(out, g.var_int_arr_d);
+        writeInts(out, g.nfoHighScores);
         writeInts(out, g.var_int_arr_e);
         // —— 每玩家单位/建筑槽位 ——
-        int players = g.var_int_arr_arr_a.length;
+        int players = g.playerUnitHeaders.length;
         out.writeInt(players);
         for (int i = 0; i < players; ++i) {
-            writeInts(out, g.var_int_arr_arr_a[i]);
-            writeShorts(out, g.var_short_arr_arr_a[i]);
+            writeInts(out, g.playerUnitHeaders[i]);
+            writeShorts(out, g.playerUnitSlots[i]);
             writeInts(out, g.var_int_arr_arr_b[i]);
             writeShorts(out, g.var_short_arr_arr_b[i]);
         }
         // —— 相机/光标/选中 ——
-        out.writeInt(g.y);
-        out.writeInt(g.N);
-        out.writeInt(g.aa);
-        out.writeInt(g.aV);
-        out.writeInt(g.Q);
-        out.writeInt(g.aU);
-        out.writeInt(g.A);
-        out.writeInt(g.at);
-        out.writeInt(g.n);
-        out.writeInt(g.var_int_b);
-        out.writeInt(g.aE);
-        out.writeInt(g.Y);
-        out.writeInt(g.var_int_h);
-        out.writeInt(g.aJ);
+        out.writeInt(g.cameraPxX);
+        out.writeInt(g.cameraPxY);
+        out.writeInt(g.cursorTileX);
+        out.writeInt(g.cursorTileY);
+        out.writeInt(g.cursorTileIdx);
+        out.writeInt(g.mapViewSavedCamX);
+        out.writeInt(g.mapViewSavedCamY);
+        out.writeInt(g.mapViewSavedCursorX);
+        out.writeInt(g.mapViewSavedCursorY);
+        out.writeInt(g.selectionMode);
+        out.writeInt(g.selectionMark);
+        out.writeInt(g.selectionPlayer);
+        out.writeInt(g.selectedType);
+        out.writeInt(g.selectedSlot);
         out.writeInt(g.p);
         out.writeByte(g.var_byte_a);
         out.flush();
@@ -95,55 +95,55 @@ public final class SaveState {
             throw new IOException("bad version " + version);
         }
         g.devLastNavSpec = readString(in);
-        g.ac = in.readInt();
-        g.aC = in.readInt();
-        g.aF = in.readInt();
+        g.gameMode = in.readInt();
+        g.missionIndex = in.readInt();
+        g.missionResId = in.readInt();
         g.var_boolean_k = in.readBoolean();
-        readBytes(in, g.var_byte_arr_f);
+        readBytes(in, g.nfoData);
         g.aj = in.readInt();
         g.aG = in.readInt();
-        readBytes(in, g.var_byte_arr_i);
+        readBytes(in, g.menuTree);
         readBytes(in, g.var_byte_arr_a);
-        g.aR = in.readInt();
-        g.ao = in.readInt();
-        g.Z = in.readInt();
-        g.H = in.readInt();
-        g.v = in.readInt();
+        g.menuNode = in.readInt();
+        g.menuNodeCount = in.readInt();
+        g.menuHighlight = in.readInt();
+        g.menuScreenId = in.readInt();
+        g.pendingPanelSwitch = in.readInt();
         g.ap = in.readInt();
-        readShorts(in, g.var_short_arr_a);
+        readShorts(in, g.mapTiles);
         readInts(in, g.var_int_arr_a);
         readInts(in, g.var_int_arr_c);
-        readInts(in, g.var_int_arr_d);
+        readInts(in, g.nfoHighScores);
         readInts(in, g.var_int_arr_e);
         int players = in.readInt();
-        if (players != g.var_int_arr_arr_a.length) {
+        if (players != g.playerUnitHeaders.length) {
             throw new IOException("player count mismatch " + players);
         }
         for (int i = 0; i < players; ++i) {
-            readInts(in, g.var_int_arr_arr_a[i]);
-            readShorts(in, g.var_short_arr_arr_a[i]);
+            readInts(in, g.playerUnitHeaders[i]);
+            readShorts(in, g.playerUnitSlots[i]);
             readInts(in, g.var_int_arr_arr_b[i]);
             readShorts(in, g.var_short_arr_arr_b[i]);
         }
-        g.y = in.readInt();
-        g.N = in.readInt();
-        g.aa = in.readInt();
-        g.aV = in.readInt();
-        g.Q = in.readInt();
-        g.aU = in.readInt();
-        g.A = in.readInt();
-        g.at = in.readInt();
-        g.n = in.readInt();
-        g.var_int_b = in.readInt();
-        g.aE = in.readInt();
-        g.Y = in.readInt();
-        g.var_int_h = in.readInt();
-        g.aJ = in.readInt();
+        g.cameraPxX = in.readInt();
+        g.cameraPxY = in.readInt();
+        g.cursorTileX = in.readInt();
+        g.cursorTileY = in.readInt();
+        g.cursorTileIdx = in.readInt();
+        g.mapViewSavedCamX = in.readInt();
+        g.mapViewSavedCamY = in.readInt();
+        g.mapViewSavedCursorX = in.readInt();
+        g.mapViewSavedCursorY = in.readInt();
+        g.selectionMode = in.readInt();
+        g.selectionMark = in.readInt();
+        g.selectionPlayer = in.readInt();
+        g.selectedType = in.readInt();
+        g.selectedSlot = in.readInt();
         g.p = in.readInt();
         g.var_byte_a = in.readByte();
         // 强制下一帧全量重画 + 小地图重新盖章（探索可能有变化）
-        g.af = 0;
-        g.k();
+        g.mapThumbStampRow = 0;
+        g.onShown();
     }
 
     /** 只解头部（identity + spec），不解析全量字段段。 */

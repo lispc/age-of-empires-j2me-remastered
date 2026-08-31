@@ -51,15 +51,15 @@ extends GameCanvas {
             return;
         }
         if (this.isDoubleBuffered()) {
-            this.var_com_ulysseo_mad_a_a.p(graphics);
+            this.var_com_ulysseo_mad_a_a.onPaint(graphics);
             return;
         }
-        this.var_com_ulysseo_mad_a_a.p(this.var_javax_microedition_lcdui_Graphics_a);
+        this.var_com_ulysseo_mad_a_a.onPaint(this.var_javax_microedition_lcdui_Graphics_a);
         graphics.drawImage(this.var_javax_microedition_lcdui_Image_a, 0, 0, 20);
     }
 
     protected final void keyPressed(int n) {
-        this.var_com_ulysseo_mad_a_a.void_a(n);
+        this.var_com_ulysseo_mad_a_a.onKeyPress(n);
         this.getGameAction(n);
     }
 
@@ -67,7 +67,7 @@ extends GameCanvas {
     }
 
     protected final void keyReleased(int n) {
-        this.var_com_ulysseo_mad_a_a.void_e(n);
+        this.var_com_ulysseo_mad_a_a.onKeyRelease(n);
         this.getGameAction(n);
     }
 
@@ -91,11 +91,11 @@ extends GameCanvas {
     }
 
     protected final void hideNotify() {
-        this.var_com_ulysseo_mad_a_a.q();
+        this.var_com_ulysseo_mad_a_a.onHidden();
     }
 
     protected final void showNotify() {
-        this.var_com_ulysseo_mad_a_a.k();
+        this.var_com_ulysseo_mad_a_a.onShown();
     }
 
     protected final void sizeChanged(int n, int n2) {

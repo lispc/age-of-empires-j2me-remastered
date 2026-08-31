@@ -24,13 +24,13 @@ public final class DevHarness {
         boolean inMission = false;
         int stable = 0;
         while (System.currentTimeMillis() < deadline) {
-            if (game.aA == 6) {
+            if (game.screenState == 6) {
                 inMission = true;
             }
-            if (inMission && game.aA == 2) {
-                game.void_a(-6);        // 推任务内的教程对话框（F1 = 左软键）
+            if (inMission && game.screenState == 2) {
+                game.onKeyPress(-6);        // 推任务内的教程对话框（F1 = 左软键）
                 stable = 0;
-            } else if (inMission && game.aA == 6 && ++stable >= 8) {
+            } else if (inMission && game.screenState == 6 && ++stable >= 8) {
                 break;                  // 主视图稳定 ~2.4s：对话框已推完
             }
             Thread.sleep(300);
@@ -41,8 +41,8 @@ public final class DevHarness {
             a.var_com_ulysseo_mad_b_a.dumpFramebuffer(args[0]);
             System.out.println("[harness] dumped " + args[0]);
         }
-        System.out.println("[harness] done aA=" + game.aA + " units="
-            + game.var_int_arr_arr_a[0][2]);
+        System.out.println("[harness] done aA=" + game.screenState + " units="
+            + game.playerUnitHeaders[0][2]);
         System.exit(0);
     }
 }

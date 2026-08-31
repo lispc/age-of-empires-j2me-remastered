@@ -1,14 +1,14 @@
 # fields-diff 的良性噪声字段（每行一个顶层字段名；改名时同步更新）
 # 这些是帧计数/动画计数/按键重复/toast/音频对象——两次 dump 间合法漂移
-ar
+tickCount
 E
 aq
 av
 R
 V
-s
-L
-ab
+keyRepeatFrames
+keyRepeatLast
+keyActionHeld
 m
 devToast
 devToastUntil
@@ -18,8 +18,8 @@ var_javax_microedition_lcdui_Image_arr_a
 static.var_int_a
 static.var_javax_microedition_media_Player_a
 # —— 2026-08-31 补：悬停拾取/右键挂起/按键结算/相机目标（对话窗口暂停 tick 的合法漂移）——
-ae
-ax
+keyActionEvent
+keyActionPulse
 al
 az
 mouseAppliedSeq

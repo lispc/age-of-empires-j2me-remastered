@@ -25,17 +25,17 @@ public abstract class a {
         Display.getDisplay((MIDlet)var_javax_microedition_midlet_MIDlet_a).setCurrent((Displayable)var_com_ulysseo_mad_b_a);
     }
 
-    public abstract void void_a(int var1);
+    public abstract void onKeyPress(int var1);
 
-    public abstract void void_e(int var1);
+    public abstract void onKeyRelease(int var1);
 
-    public abstract void k();
+    public abstract void onShown();
 
-    public abstract void q();
+    public abstract void onHidden();
 
     public abstract void j(int var1, int var2);
 
-    public abstract void p(Graphics var1);
+    public abstract void onPaint(Graphics var1);
 
     public abstract void w();
 
