@@ -1,0 +1,17 @@
+plugins {
+    id 'application'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+application {
+    mainClass = 'aoe.Main'
+}
+
+run {
+    // 游戏是 240x320 逻辑分辨率，放大倍数等参数以后从这里传
+}
