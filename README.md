@@ -4,7 +4,7 @@
 桌面 Swing 的版本。原始代码是混淆过的字节码，本仓库的源码由 CFR 反编译后人工修正，
 处于"能编译、能运行、可读性逐步改进"的状态。
 
-> **当前状态与已知问题见 `HANDOFF.md`（交接文档）。**
+> **开发状态与调试设施见 `DEVELOPMENT.md`；玩家操作见 `USER-GUIDE.md`。**
 
 ## 构建与运行
 
@@ -44,7 +44,8 @@ gradle installDist            # 生成 build/install/aoe-desktop/ 可分发目�
 - `src/main/resources/` — 游戏资源（data.res、MIDI、图标），原样取自 jar
 - `decompiled/` — CFR 的原始反编译输出，仅作参考；**以 src/ 为准**
 - `tools/cfr.jar` — 反编译器
-- `GAME_NOTES.md` — 游戏机制知识地图（主循环/按键模型/状态机/菜单模板/存档布局/资源索引），
+- `docs/game-mechanics.md` — 游戏机制知识地图（主循环/按键模型/状态机/菜单模板/存档布局/资源索引），
+- `docs/symbols.md` — 混淆名→可读名符号字典，
   读 `c.java` 前先看它；单点机制细节以代码现场注释为准
 
 ## 渲染模型

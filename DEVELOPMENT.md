@@ -1,7 +1,7 @@
-# 交接文档 — Age of Empires II (J2ME) macOS 桌面移植
+# 开发文档 — Age of Empires II (J2ME) macOS 桌面移植
 
-> 2026-08-31（二次更新） 。项目说明见 `README.md`，游戏机制见 `GAME_NOTES.md`，
-> 本文档是开发交接总纲：现状 / 目标 / 进行中工作 / 调试方法 / 坑。
+> 2026-08-31（三次更新）。项目说明见 `README.md`，游戏机制见 `docs/game-mechanics.md`，
+> 本文档是开发总纲：现状 / 目标 / 进行中工作 / 调试方法 / 重构工作流 / 坑。
 
 ## 一句话现状
 
@@ -33,16 +33,39 @@ QEZC/X 别名）、鼠标支持（悬停高亮/单击选中/拖动框选/右键�
 
 - `USER-GUIDE.md` — **面向玩家的使用手册**（键鼠操作/小地图/存读档），纯用户视角，
   开发者内容不要写进这里。
-- `GAME_NOTES.md` — **游戏机制知识地图**（主循环/按键模型/状态机/菜单模板树/
-  移动寻路/存档布局/data.res 资源索引）。读 `c.java` 前先看。
+- `docs/game-mechanics.md` — **游戏机制知识地图**（主循环/按键模型/状态机/菜单
+  模板树/移动寻路/存档布局/data.res 资源索引）。读 `c.java` 前先看。
+- `docs/symbols.md` — **符号字典**：混淆名→可读名的新旧对照 + 语义 + 考证分级；
+  未改名符号（半懂/未考证）也在其中列明。
 - `src/main/java/AgeOfEmpires/` — 游戏本体（CFR 反编译 + 人工修正清单见 README）。
   `c.java`（~7000 行）是状态机+渲染+逻辑全集；`AoeMidlet` 入口（有 `game()` 访问器）。
 - `src/main/java/com/ulysseo/mad/` — In-Fusio J2ME 框架（定时器主循环、菜单资源读取）。
 - `src/main/java/javax/microedition/` — 手写 Swing 适配层（lcdui/rms/media/midlet）。
 - `src/main/java/aoe/` — `Main`（启动器）+ `DevHarness`（headless 测试驱动）。
 - `decompiled/` — CFR 原始输出，仅参考；**以 src/ 为准**。
-- `tools/` — 调试辅助（shot.sh / winid.swift / cfr.jar / **aoectl**——FIFO 控制器
-  CLI，见"dev 鼠标驱动"节）。
+- `tools/` — 调试与重构辅助：
+  - **regress.sh** — 黄金回归网（重构安全网）：headless 教程关 + 固定场景，
+    静态指纹比对 + 存读 roundtrip fields diff。任何重构 commit 前必跑；
+    `--update` 重录基线（改名/刻意变更行为后）。噪声清单 regress-noise.txt。
+  - **renamer/** — AST 改名器（javac Tree API 符号解析，非文本替换）：
+    `apply <srcRoot> <map.tsv> [--dry-run]` / `check`。改名映射 wave1.tsv，
+    后续 wave 只补 map 行（前提：语义已考证）。
+  - aoectl — FIFO 控制器 CLI（见"dev 鼠标驱动"节）。
+  - shot.sh / winid.swift / cfr.jar。
+
+## 重构工作流（2026-08-31 起生效）
+
+原则：**零风险操作只有纯注释和编译器兜底的机械改名**；搬代码用回归网压到实际等效。
+每步一个 commit，commit 前必跑 `tools/regress.sh`（三连绿后才算过）。
+
+1. 回归网先行（已完成）：regress.sh + 静态指纹 + 存读 roundtrip fields diff。
+2. 注释分节 banner：c.java 按状态机/输入/菜单引擎/各画面渲染/任务装载分节（零风险）。
+3. 改名：只改"完全搞懂"的符号，走 renamer + wave.tsv；每个符号在 docs/symbols.md
+   登记语义。已完成的批次见 wave1.tsv（2026-08-31，~70 符号，1947 处编辑）。
+4. 搬代码（待做）：把桌面鼠标增强 + dev 工具搬出 c.java 到 hook 类（低风险，
+   只放宽我们自己加的字段可见性）。原版反编译逻辑不动。
+5. 不做：单字母 sed（用 renamer 可做但需先考证语义）、逻辑/结构改写、
+   渲染器按状态拆类（等改名全部完成后再议）、逻辑渲染解耦（见深调研一）。
 
 ## 当前进行中的工作（接手请先读）
 
@@ -228,7 +251,7 @@ Enter/Space/X/F1/Esc）退出；方向键/WASD/数字斜向键在全图上平移
   （`[1][3]`，硬上限 26）与兵种配额（`[1][57+i]/[66+i]/[75+i]`），再按**玩家当前
   时代**（`[0][0]`）切换克制兵种（n==2→3、5→6 之类），最后 `int_c(1, 兵种)` 扣
   资源入队。
-- 单位行为 = 移动步进器（贪心直线 + 7 邻格局部避障，见 GAME_NOTES"移动与寻路"）
+- 单位行为 = 移动步进器（贪心直线 + 7 邻格局部避障，见 docs/game-mechanics.md"移动与寻路"）
   + 攻击目标选择（`int_a(int,int,int)` 做距离平方比较选最近目标）。
 - 关卡脚本（敌方进攻波次等）在 `d.java`（地图/剧本对象）与菜单脚本里，未深入。
 

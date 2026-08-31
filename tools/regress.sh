@@ -13,6 +13,16 @@
 #   tools/regress.sh --update   # 重录基线（重构改名后、或刻意变更行为时）
 set -e
 cd "$(dirname "$0")/.."
+
+# 静态阶段的点击与教程对话窗口存在偶发竞态（实测 ~1/6 概率动作被吞导致指纹
+# 抖动）。失败自动整体重跑一次；仍失败才判定 FAIL。--update 不重试。
+if [ -z "$REGRESS_RETRY" ] && [ "$1" != "--update" ]; then
+    if ! REGRESS_RETRY=1 "$0" "$@"; then
+        echo "---- 重试一次 ----"
+        REGRESS_RETRY=1 "$0" "$@"
+    fi
+    exit $?
+fi
 JAVA=/opt/homebrew/opt/openjdk@17/bin/java
 [ -x "$JAVA" ] || JAVA=java
 
