@@ -1,28 +1,32 @@
 # 交接文档 — Age of Empires II (J2ME) macOS 桌面移植
 
-> 2026-08-31 更新。项目说明见 `README.md`，游戏机制见 `GAME_NOTES.md`，本文档是
-> 开发交接总纲：现状 / 目标 / 进行中工作 / 调试方法 / 坑。
+> 2026-08-31（二次更新） 。项目说明见 `README.md`，游戏机制见 `GAME_NOTES.md`，
+> 本文档是开发交接总纲：现状 / 目标 / 进行中工作 / 调试方法 / 坑。
 
 ## 一句话现状
 
 反编译移植完成度很高：渲染管线（v3 设备分辨率持久帧缓冲）、键盘映射（含 WASD/
-QEZC/X 别名）、鼠标支持（悬停高亮/单击选中/拖动框选/右键群移）均已完成并验证。
-**本轮进行中（WIP）**：悬停 UX 改造（点击直达 + 边缘滚动，代码完成待验证）、
-Dev 模式（headless ✓ 已验证、直进关卡 ✓ 可用、窗口模式下的自动导航有已知缺陷）。
-细节见"当前进行中的工作"。
+QEZC/X 别名）、鼠标支持（悬停高亮/单击选中/拖动框选/右键群移）均已完成。
+**悬停 UX 改造（WIP-1）已于 2026-08-31 全项验证通过**（含一个 UX 发现：点击
+选中认"占位格"不认精灵，见下）；**Dev 模式自动导航（WIP-2）已修复并稳定**
+（headless 冒烟 5/5 进关）。本轮机器重建过环境（JDK/wrapper/授权坑见下节）。
 
 ## 环境与构建
 
-- JDK：`/opt/homebrew/opt/openjdk@17`（brew）。**没有 Gradle wrapper**，用系统
-  gradle（9.x）。`gradle.properties` 固定了 `org.gradle.java.home`。
-- 构建：`gradle classes` / 运行：`./run.sh`（内部 `gradle run`）。
+- JDK：`/opt/homebrew/opt/openjdk@17`（brew，2026-08-31 重装）。**仓库已带
+  Gradle wrapper**（9.7.1，2026-08-31 提交），构建只依赖 JDK：`./gradlew classes`；
+  `run.sh` 优先用 wrapper，退回系统 gradle。`gradle.properties` 固定了
+  `org.gradle.java.home`。
 - 直接跑 java（可传 JVM 参数，gradle run 不透传 -D）：
   `java -Daoe.debug=1 -cp "build/classes/java/main:build/resources/main" aoe.Main`
-- 调试截图（只截游戏窗口，被遮挡也能截）：`tools/shot.sh /tmp/shot.png`
-  （内部用 `tools/winid.swift` 枚举窗口 ID + `screencapture -l`）。
-- 鼠标注入（无 pyobjc，用 Swift CGEvent）：`/tmp/mouse.swift` 的写法见 git 历史或
-  重写（move/click/rclick/drag 四个命令，`CGEvent.post(tap: .cghidEventTap)`）。
-  注意：osascript 打键盘、CGEvent 打鼠标都需要宿主终端的辅助功能/屏幕录制授权。
+- **本机 TCC 授权坑（2026-08-31）**：宿主终端/ZCode CUA 助手**没有**辅助功能与
+  屏幕录制授权 → `screencapture -l`、CGEvent 鼠标/键盘注入、computer-use 的
+  截图通道全部不可用。调试注入改走游戏内通道：
+  - 视觉验证：`-Daoe.dumpFrames=/tmp/frame.png`（每 ~5s）或 devMouse 的 `dump`
+    指令（同步、即时）。
+  - 鼠标/键盘注入：`-Daoe.devMouse=<fifo>`（见下"dev 鼠标驱动"）。
+  - 若要恢复真实 CGEvent 注入：系统设置 → 隐私与安全性 → 辅助功能/屏幕录制
+    给宿主 App 授权。
 - 屏幕休眠会锁死键盘注入路径；长时间操作前注意。
 
 ## 代码地图
@@ -39,44 +43,50 @@ Dev 模式（headless ✓ 已验证、直进关卡 ✓ 可用、窗口模式下�
 
 ## 当前进行中的工作（接手请先读）
 
-### WIP-1 悬停 UX 改造（代码完成，**未验证**）
+### WIP-1 悬停 UX 改造 —— ✅ 2026-08-31 全项验证通过
 
-需求：桌面惯例——悬停不平移镜头（只高亮），点击 = 光标/镜头直达该格并就地确认，
-镜头平移靠"鼠标贴窗口边缘滚动"或键盘。已实现于 `c.java` "桌面鼠标增强"段 +
-`a(Graphics)` 尾部的高亮绘制 + `j()` 里的高亮格坐标记录 + `Canvas` 的 kind=4
-（mouseExited）。**验证清单**（窗口模式跑起来试）：
-1. 鼠标在画面内移动：镜头不动，鼠标所指格出现黄色菱形高亮。
-2. 左键点村民：光标（红框）跳到该格并选中（教程目标应推进）。
-3. 鼠标贴窗口四边：镜头持续向该方向平移（半速，每 2 tick 1 格）；鼠标离窗停止。
-4. 拖动框选、右键群移回归正常。
+验证方式：窗口模式 + `-Daoe.devMouse` FIFO 注入 + 帧缓冲 dump（本机无 TCC 授权，
+无法注入真实 CGEvent；OS→Swing 的 `dispatchMouse` 换算层未变、此前已验证）。
+四项结论：
+1. **悬停**：黄菱形高亮跟随鼠标，镜头/红框不动 ✓（`[pick]` 锚点与画面吻合）。
+2. **点击直达**：红框跳到点击格 + 镜头缓动居中 + 选中（aE=512、单位 0x8000 置位）✓。
+   ⚠️ **UX 发现**：选中认**占位格**（单位脚下）不认精灵——点身体会选中身后空格
+   （身体精灵向上叠画 ~11px）。改进方向：像素拾取时对点击点附近格做单位占位优先。
+3. **边缘滚动**：贴边（14px）持续半速平移（~6 格/秒对角），到 0/63 正确钳制，
+   鼠标移开/离窗（kind=4）停止 ✓。
+4. **框选 + 群移**：拖框 rect 内 3 兵全选（绿色血条标识）+ 右键群移齐走 ✓。
 
-### WIP-2 Dev 模式（L2 已验证，L1 部分工作）
+### WIP-2 Dev 模式 —— ✅ 自动导航已修复（headless 冒烟 5/5）
 
-- **L2 headless ✓ 已验证**：`-Daoe.headless=1` 时 `Display.setCurrent` 不创建窗口，
-  游戏照常 tick、渲染进内存帧缓冲。配合 `-Daoe.mute=1`（MIDI 静音）、
-  `-Daoe.tickms=N`（tick 周期，默认 80，dev 建议 40 加速）。
-- **DevHarness**：`java -Daoe.headless=1 -Daoe.dev=tutorial:1 [-Daoe.tickms=40] -cp
-  build/classes/java/main:build/resources/main aoe.DevHarness out.png [额外等待秒]`
-  → 启动、自动导航进关卡、导出 PNG、打印状态、退出。
-- **L1 自动导航**：`c.devStartMission` 守护线程注入按键走真实菜单流。
-  **已知缺陷**：进入 Game Mode 之后的"循环器选模式/选关"步骤时序不稳，
-  campaign/random 可能卡在菜单（tutorial:1 大多正常，也不保证）。
-  **下一步建议**：两条路任选——(a) 继续打磨按键导航（重试 + 用菜单模板节点字节
-  `int_c(4)+9+2` 读循环器当前位置做验证，位置读法已写在 devCyclerValue 的历史
-  实现里，git 可查）；(b) 状态直跳：任务装配链已摸清（见下），照链直跳。
-- **任务装配链（已摸清，直跳用）**：选关界面 FIRE → 菜单脚本动作 73 设
-  `ac=32, aC=关卡-1` → 状态机进装载态 aA=11 → p() 的 full-redraw switch
-  case 11 调 `boolean_c(0)` 建图 → 敌方初始化 `g(1,71,x)` 顺带把 am 切到简报
-  （aA=2）→ F1 推简报 → aA=6 主视图。(ac,aC)→资源映射表在 `o(int)` 内
-  （campaign aC0..6 → aF=103..；random aC0..2 → aF=118..120；同时定简报模板/字符串表）。
-  直跳法上次尝试停在 aA=4，缺"装配后进入 aA=11/简报"的那几步状态切换，照上面链条补。
+- **L2 headless** ✓：`-Daoe.headless=1` 不建窗口照常 tick；配 `-Daoe.mute=1`、
+  `-Daoe.tickms=40` 加速。
+- **DevHarness** ✓：进关 → 自动推完任务内教程对话框（aA==2 时打 F1，直到主视图
+  稳定 ~2.4s）→ dump PNG → 打印状态 → 退出。
+- **L1 自动导航修复要点**（`devPress`/`devSig`/`devStartMission`）：
+  - 每次注入用**菜单指针快照**（aA/ao/Z/aR + 循环器位置字节）验证"被消费"，
+    未变化按帧重注——单次注入会被"帧末 ax=0 vs 激活判断"的竞态无痕吞掉。
+  - 注入前后等**指针静止**（~3 帧不变）；确认窗口 12 帧——面板切换是延迟生效
+    （v=H 由状态机后续帧消费），窗口太短会把"生效中"误判为"被吞"而重注，
+    造成一次按键两次消费、流程跳屏。
+  - 菜单链长度随模式不同（有的屏高亮项脚本是空操作），用**自适应 FIRE 循环**
+    直到 aA≠4，替代定长按键序列；选关循环只在"高亮项是 op=3 脚本的循环器"上切。
+
+### dev 鼠标驱动（-Daoe.devMouse=<fifo>，2026-08-31 新增）
+
+`mkfifo /tmp/aoe-mouse` 后启动游戏，`echo "指令" > /tmp/aoe-mouse` 注入。指令
+（**逻辑坐标 240x320**，别超界——x≥226/y≥306 会触发边缘滚动）：
+`move x y` / `press` / `release` / `click` / `rclick` / `drag x1 y1 x2 y2` /
+`key <J2ME键码>` / `dump <png>`（同步导帧，最方便的视觉验证）/ `state`（打印
+光标格、aE/Y 和每单位占位格+选中位）/ `exit`。配套调试打印：`[mouseA]`/`[pick]`/
+`[band]`/`[rcmd]`/`[k]`。
 
 ### 调试打印清单（全部 `-Daoe.debug=1` 门控，验证完可清）
 
 `[mouseA]/[pick]/[mtick]/[corner1]/[corner2]/[band]`（鼠标链路，c.java/Canvas.java）、
-`[fMenu]/[menuGate]/[fHead]`（菜单渲染与激活门，f(Graphics)）、`[void_a]`（键映射）、
-`[trace]`（boolean_c/g/boolean_g 状态转换）、`[dev]`（自动导航）。
-另有 `mad/e.java` 的 25 帧状态打印（ar/am/aA/aH）。
+`[rcmd]`（右键命令分支与 aE/Y 状态）、`[fMenu]/[menuGate]/[fHead]`（菜单渲染与
+激活门，f(Graphics)）、`[k]`（菜单项激活：节点/类型/脚本操作码，菜单流调试利器）、
+`[void_a]`（键映射）、`[trace]`（boolean_c/g/boolean_g 状态转换）、`[dev]`（自动
+导航）、`[devMouse]`（FIFO 驱动）。另有 `mad/e.java` 的 25 帧状态打印（ar/am/aA/aH）。
 
 ## 整体目标状态
 
@@ -165,7 +175,8 @@ Dev 模式（headless ✓ 已验证、直进关卡 ✓ 可用、窗口模式下�
   dev 导航在自起守护线程。游戏按单线程假设写，跨线程写入用 volatile/锁。
 - 鼠标事件是屏幕坐标命中：调试注入时游戏窗口不能被别的窗口盖住。
 - 改游戏逻辑代码（c.java 等）先怀疑反编译错误，对照 `decompiled/` 与
-  `javap -c`（原 jar 在仓库根目录）。
+  `javap -c`（原 jar：`~/Downloads/age_of_empires_ii_240x320-9174.jar`）。
 - **开发调试的黄金路径**：`-Daoe.headless=1 -Daoe.dev=tutorial:1 -Daoe.tickms=40
-  aoe.DevHarness out.png` 一条命令拿到"进关后的画面 PNG + 状态打印"，不用碰 GUI。
-  自动导航不稳时，回退窗口模式 + `tools/shot.sh` + osascript/CGEvent 注入。
+  aoe.DevHarness out.png` 一条命令拿到"进关后的画面 PNG + 状态打印"，不用碰 GUI
+  （2026-08-31 起稳定 5/5）。窗口模式下的鼠标/键盘交互验证用
+  `-Daoe.devMouse=<fifo>`（见上），自动导航不稳时回退窗口模式 + osascript。

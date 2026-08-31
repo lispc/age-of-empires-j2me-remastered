@@ -33,6 +33,10 @@ extends MIDlet {
             if (dev != null) {
                 this.var_AgeOfEmpires_c_a.devStartMission(dev);
             }
+            String devMouse = System.getProperty("aoe.devMouse");
+            if (devMouse != null) {
+                this.var_AgeOfEmpires_c_a.devStartMouseFifo(devMouse);
+            }
         }
     }
 

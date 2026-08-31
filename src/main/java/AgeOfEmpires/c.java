@@ -502,6 +502,118 @@ implements CommandListener {
             }
         }
     }
+
+    // ===== dev 鼠标驱动（-Daoe.devMouse=<fifo 路径>）=====
+    /** 从 FIFO 逐行读指令直接喂 mouseA/void_a（逻辑坐标 240x320）。宿主终端缺
+     *  辅助功能/屏幕录制授权、无法注入真实 CGEvent 时，用它在游戏层驱动和验证
+     *  鼠标逻辑；dump 指令同步导出帧缓冲（配合截图验证渲染结果）。
+     *  指令：move x y | press x y | release x y | click x y | rclick x y |
+     *        drag x1 y1 x2 y2 | key <J2ME键码> | dump <png路径> | exit
+     *  用法：mkfifo /tmp/aoe-mouse 后启动游戏，echo "move 120 160" > /tmp/aoe-mouse */
+    public void devStartMouseFifo(String path) {
+        Thread t = new Thread(() -> {
+            java.io.File fifo = new java.io.File(path);
+            if (!fifo.exists()) {
+                System.out.println("[devMouse] fifo missing: " + path);
+                return;
+            }
+            System.out.println("[devMouse] listening on " + path);
+            while (true) {
+                try (java.io.BufferedReader r = new java.io.BufferedReader(
+                        new java.io.InputStreamReader(new java.io.FileInputStream(fifo), "UTF-8"))) {
+                    String line;
+                    while ((line = r.readLine()) != null) {
+                        line = line.trim();
+                        if (line.isEmpty()) {
+                            continue;
+                        }
+                        if (!devMouseCmd(line)) {
+                            return;
+                        }
+                    }
+                } catch (Exception e) {
+                    System.out.println("[devMouse] io: " + e);
+                }
+                try {
+                    Thread.sleep(100);      // 写端关闭致 EOF：稍候重开等下一条
+                } catch (InterruptedException e) {
+                    return;
+                }
+            }
+        }, "dev-mouse");
+        t.setDaemon(true);
+        t.start();
+    }
+
+    /** 执行一条 FIFO 指令；返回 false 表示 exit。 */
+    private boolean devMouseCmd(String line) {
+        String[] p = line.split("\\s+");
+        try {
+            switch (p[0]) {
+                case "move":
+                    this.mouseA(0, Integer.parseInt(p[1]), Integer.parseInt(p[2]));
+                    break;
+                case "press":
+                    this.mouseA(1, Integer.parseInt(p[1]), Integer.parseInt(p[2]));
+                    break;
+                case "release":
+                    this.mouseA(2, Integer.parseInt(p[1]), Integer.parseInt(p[2]));
+                    break;
+                case "click": {
+                    int x = Integer.parseInt(p[1]), y = Integer.parseInt(p[2]);
+                    this.mouseA(1, x, y);
+                    Thread.sleep(200);      // 留 ≥1 帧让 j() 完成像素拾取
+                    this.mouseA(2, x, y);
+                    break;
+                }
+                case "rclick":
+                    this.mouseA(3, Integer.parseInt(p[1]), Integer.parseInt(p[2]));
+                    break;
+                case "drag": {
+                    int x1 = Integer.parseInt(p[1]), y1 = Integer.parseInt(p[2]);
+                    int x2 = Integer.parseInt(p[3]), y2 = Integer.parseInt(p[4]);
+                    this.mouseA(1, x1, y1);
+                    for (int i = 1; i <= 8; ++i) {
+                        Thread.sleep(60);
+                        this.mouseA(0, x1 + (x2 - x1) * i / 8, y1 + (y2 - y1) * i / 8);
+                    }
+                    Thread.sleep(200);
+                    this.mouseA(2, x2, y2);
+                    break;
+                }
+                case "key":
+                    this.void_a(Integer.parseInt(p[1]));
+                    break;
+                case "state": {
+                    System.out.println("[devMouse] cursor=(" + this.aa + "," + this.aV + ") Q="
+                        + this.Q + " aE=" + this.aE + " Y=" + this.Y + " sel=" + this.var_int_b);
+                    int cnt = this.var_int_arr_arr_a[0][2];
+                    for (int i = 0; i < cnt && i < 16; ++i) {
+                        int off = i * 8;
+                        System.out.println("[devMouse] unit " + i
+                            + " tile=(" + (this.var_short_arr_arr_a[0][off] >>> 8)
+                            + "," + (this.var_short_arr_arr_a[0][off] & 0xFF) + ")"
+                            + " type=" + (this.var_short_arr_arr_a[0][off + 3] & 0xFF)
+                            + " sel=" + ((this.var_short_arr_arr_a[0][off + 4] & 0x8000) != 0));
+                    }
+                    break;
+                }
+                case "dump":
+                    var_com_ulysseo_mad_b_a.dumpFramebuffer(p[1]);
+                    System.out.println("[devMouse] dumped " + p[1]);
+                    break;
+                case "exit":
+                    return false;
+                default:
+                    System.out.println("[devMouse] unknown: " + line);
+            }
+        } catch (Exception e) {
+            System.out.println("[devMouse] cmd '" + line + "': " + e);
+        }
+        System.out.flush();     // 重定向到文件时 println 不是行缓冲，保证指令打印立即可见
+        return true;
+    }
+    // ===== dev 鼠标驱动结束 =====
     // ===== dev 模式结束 =====
 
     public final void void_b(int n) {
@@ -731,6 +843,10 @@ implements CommandListener {
     /** 右键：有本方选中单位 → 全体移动到鼠标格（与游戏命令路径一致，含落点标记）；
      *  无选中 → 清除选择（等价游戏自身的取消）。 */
     private void mouseCommand() {
+        if (System.getProperty("aoe.debug") != null) {
+            System.out.println("[rcmd] Y=" + this.Y + " aE=" + this.aE
+                + " lastTile=" + this.mouseLastTile + " sel=" + this.var_int_b);
+        }
         if (this.Y == 0 && this.aE == 512 && this.mouseLastTile >= 0) {
             int tx = this.mouseLastTile & 63;
             int ty = this.mouseLastTile >> 6;
