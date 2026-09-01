@@ -1459,9 +1459,11 @@ implements CommandListener {
             return;
         }
         catch (Exception exception) {
-            if (System.getProperty("aoe.debug") != null) {
-                exception.printStackTrace();
-            }
+            // 画面帧内异常绝不能静默：静默吞掉的表现就是"画面冻在最后一帧/全蓝、
+            // 按键全无响应"而日志毫无线索。始终带上状态上下文打印。
+            System.out.println("[paint] exception aA=" + this.screenState + "/" + this.pendingScreenState
+                + " ar=" + this.tickCount + " sel=" + this.selectionMode);
+            exception.printStackTrace();
             return;
         }
     }
@@ -2585,6 +2587,10 @@ implements CommandListener {
         this.mapViewSavedCursorX = this.cursorTileX;
         this.mapViewSavedCursorY = this.cursorTileY;
         this.mapThumbStampRow = 0;
+        if (System.getProperty("aoe.debug") != null) {
+            System.out.println("[view] enter map: cursor=(" + this.cursorTileX + "," + this.cursorTileY
+                + ") cam=(" + this.cameraPxX + "," + this.cameraPxY + ")");
+        }
         int n2 = this.az + this.ad;
         int n3 = (this.al << 1) + this.J;
         int n4 = n2 + n3 >> 5;
@@ -2703,6 +2709,11 @@ implements CommandListener {
                     this.mapViewSavedCursorY = this.cursorTileY;
                 }
                 case 47: {
+                    if (System.getProperty("aoe.debug") != null) {
+                        System.out.println("[view] exit map -> 8: cursor=(" + this.cursorTileX + "," + this.cursorTileY
+                            + ") cam=(" + this.cameraPxX + "," + this.cameraPxY + ") clipTop=" + this.clipTop
+                            + " row=" + this.mapThumbStampRow);
+                    }
                     this.clipTop = 0;
                     this.clipBottom = this.screenH;
                     this.var_boolean_h = true;
@@ -2908,6 +2919,9 @@ implements CommandListener {
         this.clipRight = this.screenW;
         this.pendingPanelSwitch = -1;
         if (this.clipTop == 0) {
+            if (System.getProperty("aoe.debug") != null) {
+                System.out.println("[view] world rebuild with clipTop=0 -> var_boolean_l=true");
+            }
             this.var_boolean_l = true;
         }
         this.var_boolean_f = true;
@@ -7512,7 +7526,14 @@ implements CommandListener {
             this.clipRight = this.screenW - 16;
         }
         if (n == 0) {
-            this.overlayPrevState = this.screenState;
+            // 任务脚本/结算对话框可能在小地图视图（aA=1）里弹出。若如实记 1，
+            // 关闭对话框会把用户扔回全蓝小地图（教程/战役对话框连锁时=反复弹回
+            // 蓝屏"退不出去"；原版真机节奏下几乎不触发）。统一记世界视图链 8，
+            // 小地图随时可再按 0 进。
+            this.overlayPrevState = this.screenState == 1 ? 8 : this.screenState;
+            if (System.getProperty("aoe.debug") != null) {
+                System.out.println("[view] dialog open z=" + this.z + " overlayPrevState=" + this.overlayPrevState);
+            }
         }
         this.void_c(this.V);
         this.aQ = 0;

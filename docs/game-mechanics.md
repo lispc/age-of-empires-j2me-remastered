@@ -74,6 +74,12 @@
   - 操作码 2 = 导航到指定屏；5 = 改写模板字节；8 = 高分屏。
 - 【已验证】选关上限只有一处生效点：`activateMenuScreen` 的 menuScreenId-case 11/12
   模板补丁（原版按 `tutorialProgress+1`/`campaignProgress+1` 门控，移植已改为固定 3/7 全解锁）。启动任务时无二次校验。
+- 【已验证】**对话框（screenState=2）的背后画面**由 `overlayPrevState` 决定
+  （`n()` 打开时记录、关闭时 `pendingScreenState = overlayPrevState`；渲染分发
+  1→renderMapView / 4→renderMenu / 其余→renderWorld）。任务脚本的 update 链在
+  小地图（1）下也跑，所以**对话框可能从小地图里弹出**；原版会把关闭动作弹回
+  小地图（连锁对话框=反复弹回蓝屏）。移植版 `n()` 改为记录 1→8（回世界视图，
+  2026-09-01）。debug 日志 `[view] dialog open` 打印每次记录值。
 
 ## AI（敌方玩家，player 1）
 

@@ -13,5 +13,9 @@ application {
 }
 
 run {
-    // 游戏是 240x320 逻辑分辨率，放大倍数等参数以后从这里传
+    // 默认开调试状态行（[dbg]/[trace]/[view] 等；run.sh 会把输出留成日志文件）。
+    // 想要安静窗口：AOE_QUIET=1 ./run.sh
+    if (!System.getenv('AOE_QUIET')) {
+        jvmArgs '-Daoe.debug=1'
+    }
 }
