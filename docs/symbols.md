@@ -21,8 +21,8 @@
 | mapThumbStampRow | af | 全图缩略图的逐行盖章进度，onShown 复位 |
 | screenW / screenH | aO / var_int_j | 逻辑屏幕尺寸 240×320 |
 | clipLeft / clipRight / clipTop / clipBottom | F / B / O / P | 渲染裁剪矩形 |
-| gameMode | ac | 0=教程 16=随机地图 32=战役（菜单脚本动作 65/71/73 设置） |
-| missionIndex | aC | 当前任务序号（战役 0..6，随机 0..2） |
+| gameMode | ac | **0=随机地图(遭遇战) 16=教学 Mission 1..3 32=战役 1..7**（曾长期搞反，2026-09-01 以简报文本+运行时 dump 实证纠正；菜单动作 65/66/71/73 设置） |
+| missionIndex | aC | 当前任务序号（教学/随机难度 0..2，战役 0..6） |
 | missionResId | aF | 任务资源 id（data.res 资源号） |
 | keyActionPulse | ax | 本帧按键动作（volatile，帧末清零） |
 | keyActionHeld | ab | 按住中的动作（松开事件清零） |
@@ -41,7 +41,7 @@
 | selectionMode | var_int_b | 0=无选中 6=有选中/光标就位 |
 | menuTree | var_byte_arr_i | 当前菜单/对话框模板树字节 |
 | menuNode / menuNodeCount / menuHighlight | aR / ao / Z | 树遍历指针 / 项数 / 高亮项 |
-| menuScreenId | H | 子画面选择器（11=随机选关 12=战役选关 1=主菜单） |
+| menuScreenId | H | 子画面选择器（10=随机图难度选择 11=教学选关 12=战役选关 1=Game Mode 屏） |
 | pendingPanelSwitch | v | 延迟生效的面板切换 |
 | mapTiles | var_short_arr_a | 地图格 short[4096]：地形+迷雾(0x8000)+占位 |
 | playerUnitSlots | var_short_arr_arr_a | 每玩家单位槽（8 short/单位：格位/目标/类型/朝向/选中位…） |
@@ -81,11 +81,48 @@
 | loadNfo / saveNfo | m / I | .nfo 记录读/写 |
 | nfoReadInt / nfoWriteInt | int_a(int,int) / h(int,int,int) | .nfo 大端读/写助手 |
 
+## 已考证（wave2 改名候选，2026-09-01 AI/DSL 考古产出）
+
+本次查 random 模式 AI 时闭环考证的一批符号，语义均有代码+动态证据
+（详见 `docs/game-mechanics.md` "AI"与"任务事件脚本 DSL"两节），
+下一波改名直接补 map 行即可：
+
+| 现名 | 语义 |
+|---|---|
+| `z()` | AI 大脑：威胁扫描 → 攻/防模式判定 → 军队指令 + 村民自动采集 |
+| `var_boolean_i` | AI 开关（字段默认 true；战役 m0..3,5,6 关；只在 o(int) 赋值且从不清除） |
+| `an` | AI 建造步进周期（tick）：Easy 250 / Medium 150 / Expert 100 |
+| `q` | AI 进攻所需军队价值：50/60/100（随机图默认 0 = 常态侵略） |
+| `C` | AI 训练尝试周期（tick）：20/20/1 |
+| `var_int_l` | AI 基地警戒半径²：49/36/25 |
+| `aw` | AI "定时白送资源"周期——**死代码**（白送量 hdr[57] 恒 0） |
+| `aM` | AI 采集产量倍率（256=1×）：512/786/2048 |
+| `var_byte_arr_j` | AI 硬编码建造顺序表（`类型,数量` 对，-1 分阶段，-2 结束） |
+| `M` | AI 当前建造目标（建筑类型；void_a() 选取，boolean_b() 落位） |
+| `ai` | AI 建造顺序的阶段游标（var_byte_arr_j 下标） |
+| `w` / `E` / `aq` | AI 三个节流计时器（白送资源/建造/训练；aq 随 C 清零） |
+| `o(int)` | 任务环境装配/拆除（n=0 拆 1 装）：难度参数、资源装载都在这 |
+| `F()` | 任务事件脚本解释器（每帧扫块：条件→动作，块头负=已触发） |
+| `int_g(int)` / `int_a(int)` / `int_f(int)` | 脚本"跳过一个条件 / 跳到块尾 / 走 N 个块头" |
+| `int_d(int)` / `int_d(int,int)` | 脚本条件求值 / 动作执行（操作码见 game-mechanics） |
+| `boolean_b(int)` | AI 训练器：兵种=参数轮换，受人口/上限/价格约束，int_c(1,n) 入队 |
+| `int_c(int,int)` | 把某类型单位的训练排队到对应生产建筑 |
+| `boolean_a(int,int,int)` | 价格检查（玩家,类别,类型） |
+| `int_h(int)` | AI 建筑落位：以基地为中心螺旋找空格 |
+| `short_a(int,int)` | 村民采集目标：就近资源格 |
+| `var_int_k` / `r` | 随机地图生成参数（教学/战役取任务资源头 2 字节；随机图取 nfo[31,32]） |
+| `aG` / `aj` | 教学关进度(0..2) / 战役进度(0..6)（曾按反编译注释猜反；nfo[28]=aG<<4\|aj） |
+| `hdr[53]/[54]` | AI 记录的最近入侵者格 / 扫描指针+最近距离²（每帧扫一个玩家单位） |
+| `hdr[55]` | 军队价值（训练时累加单位成本，攻防判定用） |
+| `hdr[56]` | 生产速度（定点数，<<8；研究/模板可改） |
+| `var_byte_arr_e/c/g` | res#122 单位属性 / res#127 科技旗标 / res#123 避障方向表 |
+| `G()` / `J()` | 投射物目标获取 / 投射物飞行与伤害（箭塔与远程） |
+
 ## 半懂（保留旧名，先补注释）
 
 aH（转场计时/激活参数双职责）、ap（返回节点）、var_int_arr_e（当局资源拷贝，
-与 nfoHighScores 的关系待证）、var_int_arr_a[4]（[1..3] 疑似动画计数、[0] 未知）、
-var_byte_arr_a（任务数据镜像，脚本会写执行标记——快照已包含）、var_boolean_k、
+与 nfoHighScores 的关系待证）、var_int_arr_a[4]（脚本帧计数器，DSL 条件 2 用，
+每帧 +1、动作 3 清零——已并入 AI/DSL 考证）、var_byte_arr_a（任务数据镜像，脚本会写执行标记——快照已包含）、var_boolean_k、
 aI/aB 中的 aB、E/G/x/T/aD 等零散 int。
 
 ## 未考证（保留旧名）

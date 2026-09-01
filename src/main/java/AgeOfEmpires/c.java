@@ -442,7 +442,10 @@ implements CommandListener {
             devWaitStable();
             devPress(-5);                       // 主菜单：Play
             if (campaign || random) {
-                devPress(-4);                   // 循环器右切（Tutorial→Campaign→Random）
+                devPress(-4);                   // Game Mode 循环器右切 1：Tutorial→Campaign
+            }
+            if (random) {
+                devPress(-4);                   // 右切 2：Campaign→Random Map（进 Difficulty 屏）
             }
             // Game Mode → （选关等中间屏）→ 任务装载：菜单链长度随模式/版本
             // 有差异（有的屏高亮项脚本是空操作），连按 FIRE 直到离开菜单态。

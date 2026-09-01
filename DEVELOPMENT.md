@@ -74,6 +74,13 @@ QEZC/X 别名）、鼠标支持（悬停高亮/单击选中/拖动框选/右键�
 1. **dev 效率工具**落地：autoDismiss / devHud / FIFO 状态 JSON+until/probe/script/
    fields / aoectl / DevFields diff——"调试会话先开 autoDismiss、机制测试用
    random:1（无教程脚本）、快照直启代替菜单爬行"是新工作流。
+   ⚠️ 2026-09-01 修正：`random:N` 的导航此前只右切一次循环器，实际进的是**战役**
+   （菜单 Game Mode 顺序 Tutorial→Campaign→Random Map）；已补第二次右切，
+   现在 `random:N` 才是真正的随机图（gameMode=0 遭遇战，难度 Easy）。
+   菜单导航验证技巧：`[fMenu] aR=` 打印屏根节点偏移（Game Mode=116 难度=739
+   教学选关=810 战役选关=881），循环器旋转会打 `[k] node=<n> mode=0`——都比
+   截图比对可靠。另外 modes 的真实映射是 **gameMode 0=随机 16=教学 32=战役**
+   （此前文档写反了），详见 `docs/game-mechanics.md`。
 2. **快照存档 v1** 落地并验收（F5/F9 + 自动 checkpoint + devBoot 直启）。
 3. **常驻小地图**方案已评审定稿，用户拍板暂缓——见"常驻小地图"节。
 4. 玩家手册 `USER-GUIDE.md` 新建（键鼠/小地图迷雾/存读档）。
