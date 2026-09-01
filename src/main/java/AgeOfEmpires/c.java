@@ -6041,6 +6041,14 @@ implements CommandListener {
     }
 
     public final void g(int n, int n2) {
+        // 战斗日志(调试基建,第11轮:战斗在日志里完全是黑箱,只能靠 state 前后对比)。
+        // g = 单位死亡/移除唯一入口:含阵营/类型/位置/剩余数,一次战场推演可完整回放。
+        if (System.getProperty("aoe.debug") != null) {
+            short sPos = this.playerUnitSlots[n][n2 << 3];
+            System.out.println("[combat] p" + n + " type" + (this.playerUnitSlots[n][(n2 << 3) + 3] & 0xFF)
+                + " died at (" + (sPos >>> 8) + "," + (sPos & 0xFF) + ") ar=" + this.tickCount
+                + " remaining=" + (this.playerUnitHeaders[n][2] - 1));
+        }
         this.l(0, n2);
         int[] nArray = this.playerUnitHeaders[n];
         nArray[2] = nArray[2] - 1;
