@@ -1,5 +1,15 @@
 /*
  * Decompiled with CFR 0.152.
+ *
+ * 地图生成器（"随机地图"模式）：c.setupMissionEnv 装载任务时，若任务资源
+ * 字节[0..1]（地图 RNG 种子）为零 → c.randomMap=true → c 以 d.a(9, 20, mapTiles,
+ * randomMap) 进入本类（9/20 = 正/负两张种源表的容量，推断——表按 4 int/项分配）。
+ * 全图先铺 768（虚空）；boolean_a() 是相位驱动（Runnable，q: 0=g() 布源 →
+ * 1=e() 影响扩散 → 2 收尾）。e() 双计数器 k/g 扫 64×64 全格，对种源表 b[]（正
+ * 影响 +m/距离²）与 a[]（负影响 -l/距离²）求和，过阈值 f 的格按 p（目标地形）
+ * 写 mapTiles 低 12 位（768=虚空特殊处理，强度 n4>>8 钳 31 后 <<2 入 0x300 位段）。
+ * c.t() 随后给出生点补城镇中心与村民。种子来源见 c.setupMissionEnv（资源字节
+ * 或全局 RNG，二者已随确定性回放改造收敛，见 docs/game-mechanics.md「确定性模型」）。
  */
 package AgeOfEmpires;
 

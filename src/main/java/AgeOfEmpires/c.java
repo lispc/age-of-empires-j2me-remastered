@@ -70,7 +70,10 @@ implements CommandListener {
     public int screenState;
     public int pendingScreenState;
     public int aH;
-    public boolean var_boolean_k;
+    // 本局是否走随机图生成：任务资源字节[0..1] 是地图 RNG 种子，全零 = 无固定地图
+    // → randomMap=true，d.a(9,20,mapTiles,this) 用生成器铺地形，t() 再补城镇中心；
+    // 非零则该种子喂 rngStateLo/Hi 走脚本固定地图。快照 v2 已随档保存。
+    public boolean randomMap;
     public int R;
     // ac: 游戏模式（由菜单脚本动作 65/71/73 设置）：0=教程，16=随机地图，32=战役。
     // aC: 当前选中的任务序号（0 起；战役 0..6，随机地图 0..2）。
@@ -122,7 +125,7 @@ implements CommandListener {
     public byte[] var_byte_arr_b;
     public byte[] var_byte_arr_h;
     public boolean var_boolean_e = false;
-    // .nfo 存档原始字节（314B，m() 读写 RecordStore——注意是另一个无参 m()，nfoReadInt(...)/h(...) 存取）：
+    // .nfo 存档原始字节（314B，无参 m() 读写 RecordStore——与字段 bgmFramesLeft 无关，nfoReadInt(...)/h(...) 存取）：
     // [0..27) = 7 个 4 字节大端战役高分（nfoHighScores）；[28] = aG<<4|aj；
     // [29] = 音效开关；[30] = 另一开关（AgeOfEmpires.b.payCost，含义未考证）。
     public byte[] nfoData;
@@ -210,7 +213,11 @@ implements CommandListener {
     public int mapViewSavedCamY;
     public int mapViewSavedCursorX;
     public int mapViewSavedCursorY;
-    public int m = 100000;
+    // 距下次 BGM 换曲的帧数：世界模拟块里 --，到 0 调 playNextBgm()（写 曲长ms/80，
+    // 选曲走化妆品 RNG nextBgmRandomInt）。菜单 v() 刷 510 拉长间隔；任务装载清 0
+    // 立即开曲；boot 初始化 100000（开机先沉默）。换曲时机随 tickms 变速（见
+    // docs/game-mechanics.md「主循环与时序」），但不再消耗模拟 RNG。
+    public int bgmFramesLeft = 100000;
     public int mediaRequestId;
     public boolean var_boolean_c;
     public byte[] dirTable;
@@ -222,7 +229,7 @@ implements CommandListener {
         this.var_AoeMidlet_a = ageOfEmpires;
         this.var_java_lang_String_d = "V" + ageOfEmpires.getAppProperty("MIDlet-Version");
         com.ulysseo.mad.c.void_a(0);
-        this.m = 100000;
+        this.bgmFramesLeft = 100000;
     }
 
     public final void w() {
@@ -317,7 +324,7 @@ implements CommandListener {
     public final void v() {
         if (this.tickCount - this.u >= 50) {
             this.u = this.tickCount;
-            this.m = 510;
+            this.bgmFramesLeft = 510;
         }
         this.ag = 20;
         this.var_java_lang_String_a = null;
@@ -337,14 +344,14 @@ implements CommandListener {
     }
 
     public final void playNextBgm() {
-        // 背景音乐换曲：曲长毫秒按"80ms/帧"折成帧数倒计时（写入字段 m，在 onPaint 模拟块里每帧 --）。
+        // 背景音乐换曲：曲长毫秒按"80ms/帧"折成帧数倒计时（写入字段 bgmFramesLeft，在 onPaint 模拟块里每帧 --）。
         // 硬编码了原版帧率——改 aoe.tickms 会按比例 skew 换曲时机（详见 docs/game-mechanics.md「主循环与时序」）。
         // 选曲走独立的"化妆品 RNG"（nextBgmRandomInt），不消耗模拟用全局 nextRandomInt——
         // 这是模拟轨迹"纯任务+输入决定"（确定性回放，tools/replaycheck.sh）的前提：
         // 换曲时机随墙钟漂移，若与模拟共用一条流，战斗掷骰等结果会随听了几首曲子而变。
         int n = nextBgmRandomInt() % 6;
         int[] nArray = new int[]{204000, 123000, 233000, 180000, 188000, 190000, 143000, 197000, 184000, 175000};
-        this.m = nArray[n] / 80;
+        this.bgmFramesLeft = nArray[n] / 80;
         this.requestMedia(n + 3 + 131, false);
     }
 
@@ -1500,7 +1507,7 @@ implements CommandListener {
                         break;
                     }
                     default: {
-                        if (this.m-- <= 0) {
+                        if (this.bgmFramesLeft-- <= 0) {
                             this.playNextBgm();
                         }
                         this.g();
@@ -2580,17 +2587,17 @@ implements CommandListener {
         }
         if (this.missionResId != 0) {
             byte[] var_byte_arr_t = com.ulysseo.mad.c.byte_arr_a(this.missionResId);
-            this.var_boolean_k = false;
+            this.randomMap = false;
             int n2 = var_byte_arr_t[0] & 0xFF;
             int n3 = var_byte_arr_t[1] & 0xFF;
             if ((n2 | n3) != 0) {
                 rngStateLo = n2;
                 rngStateHi = n3;
             } else {
-                this.var_boolean_k = true;
+                this.randomMap = true;
             }
         }
-        this.var_AgeOfEmpires_d_a.a(9, 20, this.mapTiles, this.var_boolean_k);
+        this.var_AgeOfEmpires_d_a.a(9, 20, this.mapTiles, this.randomMap);
         this.aQ = 0;
         object = new a(99);
         this.var_java_lang_String_a = ((a)object).a(0);
@@ -2598,7 +2605,7 @@ implements CommandListener {
     }
 
     public final void t() {
-        if (this.var_boolean_k) {
+        if (this.randomMap) {
             this.mapTiles[this.var_AgeOfEmpires_d_a.var_int_arr_a[0] + 1 + (this.var_AgeOfEmpires_d_a.var_int_arr_a[1] + 1 << 6)] = 0;
             this.mapTiles[this.var_AgeOfEmpires_d_a.var_int_arr_a[0] - 1 + (this.var_AgeOfEmpires_d_a.var_int_arr_a[1] + 1 << 6)] = 0;
             this.mapTiles[this.var_AgeOfEmpires_d_a.var_int_arr_a[0] + 1 + (this.var_AgeOfEmpires_d_a.var_int_arr_a[1] << 6)] = 0;
@@ -3092,7 +3099,7 @@ implements CommandListener {
 
     public final boolean setupMissionEnv(int n) {
         int n2;
-        this.m = 0;
+        this.bgmFramesLeft = 0;
         this.clipLeft = 0;
         this.clipRight = this.screenW;
         this.clipTop = 0;
@@ -3275,7 +3282,7 @@ implements CommandListener {
                 break;
             }
             default: {
-                this.var_boolean_k = true;
+                this.randomMap = true;
                 this.var_boolean_l = true;
             }
         }
@@ -4767,7 +4774,7 @@ implements CommandListener {
             rngStateLo = n3;
             rngStateHi = n4;
         } else {
-            this.var_boolean_k = true;
+            this.randomMap = true;
         }
         for (n2 = 0; n2 < 4; ++n2) {
             this.var_int_arr_a[n2] = 0;

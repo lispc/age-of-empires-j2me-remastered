@@ -35,7 +35,7 @@ public final class SaveState {
         out.writeInt(g.gameMode);
         out.writeInt(g.missionIndex);
         out.writeInt(g.missionResId);
-        out.writeBoolean(g.var_boolean_k);
+        out.writeBoolean(g.randomMap);
         // —— 设置/进度（.nfo 镜像 + 解锁位）——
         writeBytes(out, g.nfoData);
         out.writeInt(g.campaignProgress);
@@ -106,7 +106,7 @@ public final class SaveState {
         g.gameMode = in.readInt();
         g.missionIndex = in.readInt();
         g.missionResId = in.readInt();
-        g.var_boolean_k = in.readBoolean();
+        g.randomMap = in.readBoolean();
         readBytes(in, g.nfoData);
         g.campaignProgress = in.readInt();
         g.tutorialProgress = in.readInt();

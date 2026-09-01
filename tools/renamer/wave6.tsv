@@ -1,0 +1,10 @@
+# wave6：随机地图标志 + BGM 倒计时（2026-09-01 深夜，文档拆分会话）
+# 只收录已完全读懂语义的符号。
+# - var_boolean_k：任务资源字节[0..1]（RNG 种子）为零 → 无固定地图 → 随机图生成；
+#   d.a(9,20,mapTiles,k) 按它决定走脚本地图还是生成器；t() 给随机图补城镇中心。
+# - m：距下次 BGM 换曲的帧数（playNextBgm 写 曲长ms/80；菜单 v() 刷 510 拉长间隔；
+#   setupMissionEnv 清 0 立即开曲；世界模拟块 m--<=0 触发）。两态写入点同一职责。
+# 注意：m 是单字母——renamer 的注释同步有过误伤史（wave4），apply 后逐条过 diff。
+# 格式：kind<TAB>owner<TAB>oldName<TAB>params<TAB>newName
+F	AgeOfEmpires.c	var_boolean_k	-	randomMap
+F	AgeOfEmpires.c	m	-	bgmFramesLeft

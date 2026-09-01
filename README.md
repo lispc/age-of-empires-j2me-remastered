@@ -4,7 +4,7 @@
 桌面 Swing 的版本。原始代码是混淆过的字节码，本仓库的源码由 CFR 反编译后人工修正，
 处于"能编译、能运行、可读性逐步改进"的状态。
 
-> **开发状态与调试设施见 `DEVELOPMENT.md`；玩家操作见 `USER-GUIDE.md`。**
+> **开发手册见 `DEVELOPMENT.md`，工作日志见 `WORKLOG.md`；玩家操作见 `USER-GUIDE.md`。**
 
 ## 构建与运行
 

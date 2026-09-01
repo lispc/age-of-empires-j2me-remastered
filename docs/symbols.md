@@ -144,7 +144,7 @@
 
 ## 已改名：wave4（2026-09-01，主循环/逻辑分辨率/相机/全图视图/音乐考证）
 
-宽视野落地会话的产出（证据与语义见 DEVELOPMENT.md「宽屏视野落地」+ 现场注释）。
+宽视野落地会话的产出（证据与语义见 WORKLOG.md「宽屏视野落地」+ 现场注释）。
 注意 `j(int,int)` 是框架基类 `com.ulysseo.mad.a` 抽象方法的 override，两侧同名一起改。
 字段（AgeOfEmpires.c）：
 
@@ -179,15 +179,30 @@
 注意：AgeOfEmpires.b 里另有同名旧静态 var_byte_arr_a（媒体缓冲，未读懂未改名），
 与 c.missionScript 无关。
 
+
+## 已改名：wave6（2026-09-01 深夜，随机地图/音乐倒计时 + 文档拆分会话）
+
+字段（AgeOfEmpires.c）：
+
+| 新名 | 旧名 | 语义 |
+|---|---|---|
+| randomMap | var_boolean_k | 本局走随机图生成：任务资源字节[0..1]（地图种子）为零时置位；d.a 据此走生成器，t() 补城镇中心 |
+| bgmFramesLeft | m | 距下次 BGM 换曲帧数（playNextBgm 写 曲长ms/80；v() 刷 510；装载清 0；模拟块 -- 触发） |
+
+注意：AgeOfEmpires.c 另有**无参方法 m()**（.nfo RecordStore 读写），与字段无关；
+单字母改名后注释同步曾误伤该方法注释，已人工修复（wave4 教训再现）。
+
 ## 半懂（保留旧名，先补注释）
 
 aH（转场计时/激活参数双职责）、ap（返回节点）、var_int_arr_e（当局资源拷贝，
 与 nfoHighScores 的关系待证）、var_int_arr_a[4]（脚本帧计数器，DSL 条件 2 用，
-每帧 +1、动作 3 清零——已并入 AI/DSL 考证）、var_boolean_k、
+每帧 +1、动作 3 清零——已并入 AI/DSL 考证）、
 aI/aB 中的 aB、E/G/x/T/aD 等零散 int、
 ad/J（相机半屏居中偏移，2:1 菱形投影精确推导未考证——只当"半屏修正"用）、
-m（int 字段：BGM 曲长帧倒计时，但菜单/世界两态都有写入点，双职责未全证）、
 l(int,int)（在单位周围 3×3 置/清迷雾位 0x4000，重标时机与用途未证）。
+
+（2026-09-01 晚移出：var_boolean_k → randomMap、m → bgmFramesLeft，见 wave6——
+后者"菜单/世界双写入点"经核实是同一职责的两处赋值，非双职责。）
 
 迷雾位考证（2026-09-01，曾被字面 grep 误导后由 regress golden 纠正）：
 mapTiles 的 0x8000 = 未探索（装载大面积置位、随探索清除；short 置位后变负，
