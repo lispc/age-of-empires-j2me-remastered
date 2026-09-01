@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.zip.CRC32;
 
 /**
- * dev 验证基建：把游戏对象图里"AgeOfEmpires.* 声明的字段"（含 AgeOfEmpires.c/b 的
+ * dev 验证基建：把游戏对象图里"AgeOfEmpires.* 声明的字段"（含 AgeOfEmpires.payCost/b 的
  * 静态字段）导出成可 diff 的文本。存档工具 SaveState 的完整性就靠它验收：
  * 存→立刻载→两次 dump 逐行 diff，多出的差异行 = 快照漏字段。
  *

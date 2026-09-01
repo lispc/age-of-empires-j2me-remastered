@@ -12,7 +12,7 @@ import java.io.IOException;
  * 字段完整性由 DevFields 存→载→diff 验收。
  *
  * 格式：int magic "AOE1" | int version | 定长顺序字段段（见 capture）。
- * 覆写点只在 EDT 帧首（c.p() 里消费 pending 字节），避免和渲染遍历打架。
+ * 覆写点只在 EDT 帧首（payCost.p() 里消费 pending 字节），避免和渲染遍历打架。
  */
 public final class SaveState {
     static final int MAGIC = 0x414F4531;    // "AOE1"

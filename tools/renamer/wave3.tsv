@@ -1,0 +1,13 @@
+# wave3：兵种/建筑属性与菜单考证后的改名（2026-09-01）
+# 只收录已完全读懂语义的方法。格式：kind<TAB>owner<TAB>oldName<TAB>params<TAB>newName
+# 资源经济
+M	AgeOfEmpires.c	c	(int,int,int)	payCost
+M	AgeOfEmpires.c	b	(int,int,int)	refundCost
+# 训练/建造菜单三件套
+M	AgeOfEmpires.c	l	(int)	openBuildingMenu
+M	AgeOfEmpires.c	m	(int)	buildActionMenu
+M	AgeOfEmpires.c	n	()	clearActionMenu
+# 单位行为
+M	AgeOfEmpires.c	f	(int,int)	tickMoveTimer
+M	AgeOfEmpires.c	void_c	(int,int)	tickConstruction
+M	AgeOfEmpires.c	e	(int,int)	convertUnitType

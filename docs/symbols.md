@@ -122,9 +122,24 @@
 | tryTrainAiUnit | boolean_b(int) | AI 训练器：兵种=参数轮换，受人口/上限/价格约束 |
 | findAiBuildSpot | int_h(int) | AI 建筑落位：以基地为中心螺旋找空格 |
 | findNearbyResource | short_a(int,int) | 村民采集目标：就近资源格 |
-| canAfford | boolean_a(int,int,int) | 价格检查（玩家, 类别 0=单位/1=建筑/2=科技, 类型） |
+| canAfford | boolean_a(int,int,int) | 价格检查（玩家, 类别 0=单位/1=科技/2=建筑, 类型；costTable 行 = 类别×10/26 偏移 + id） |
 | queueUnitTraining | int_c(int,int) | 把某类型单位的训练排队到对应生产建筑 |
 | nextRandomInt | int_a() 静态 | 全局 RNG 一步，返回低 8 位 |
+
+## 已改名：wave3（2026-09-01，兵种/建筑属性 + 菜单考证）
+
+考证产出见 docs/unit-stats.md。方法（AgeOfEmpires.c）：
+
+| 新名 | 旧名 | 语义 |
+|---|---|---|
+| payCost | c(int,int,int) | 购买扣款（玩家, 类别 0=单位/1=科技/2=建筑, 类型；负数钳 0） |
+| refundCost | b(int,int,int) | 取消退款（对称加回） |
+| openBuildingMenu | l(int) | 选中生产/经济建筑后开 训练/研究/建造 菜单（按建筑类型分派 + 科技门控） |
+| buildActionMenu | m(int) | 菜单构建：按 var_int_g 组装条目表 var_int_arr_c + 文本对 |
+| clearActionMenu | n() | 菜单清理（条目表/文本置空） |
+| tickMoveTimer | f(int,int) | 单位移动节流：按兵种装填值递减 slot[6]，到点走一步（兵种移速差全在这） |
+| tickConstruction | void_c(int,int) | 村民施工：目标建筑每 tick +1~2 HP 至 255 |
+| convertUnitType | e(int,int) | 兵种整体换形（升时代 2↔3、5↔6）：改全员类型并搬移计数 |
 
 ## 半懂（保留旧名，先补注释）
 
