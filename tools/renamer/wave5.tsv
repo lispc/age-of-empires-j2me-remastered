@@ -1,0 +1,12 @@
+# wave5：投射物池考证（2026-09-01 卡死修复会话）后的改名
+# 只收录已完全读懂语义的符号。字节码考证结论：aimProjectiles(G) 的待瞄准扫描在原版
+# 字节码里带正确的"扫满一圈放弃"边界（ifgt false 分支直接落到循环出口），CFR 把它
+# 错误渲染成 while 体末尾的裸 continue 而丢失出口——死循环是移植伪影，原版无此 bug。
+# 修复（c.java aimProjectiles）即按原版语义补回 break，现场注释引用本考证。
+# 格式：kind<TAB>owner<TAB>oldName<TAB>params<TAB>newName
+# ---- 投射物记录池（var_short_arr_arr_b[2][20]：每玩家 5 条记录×4 short，紧凑存放，
+#      活跃数在 headers[48]；字段布局 +1=状态字(1000=待瞄准) 见 game-mechanics）----
+F	AgeOfEmpires.c	var_short_arr_arr_b	-	projectileTable
+# ---- 任务脚本字节码（55 处全部是脚本读/写：装载/条件求值/动作执行/跳过/执行标记；
+#      注意 AgeOfEmpires.b 里另有同名无关的静态媒体缓冲，owner 限定不互扰）----
+F	AgeOfEmpires.c	var_byte_arr_a	-	missionScript

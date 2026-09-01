@@ -54,7 +54,14 @@ implements CommandListener {
     public short var_short_b;
     public short var_short_c;
     public int[][] var_int_arr_arr_b;
-    public short[][] var_short_arr_arr_b;
+    // 投射物记录池：[玩家][20]，每玩家 5 条记录 × 4 short，紧凑存放——活跃记录恒占
+    // 0 .. playerUnitHeaders[玩家][48]-1（[48]=活跃数；发射追加在 [48]<<2 并 +1，
+    // 移除走尾部交换 + [48]-1）。记录字段：[+0] 射手单位 id；[+1] 状态字，
+    // 1000=待瞄准（发射/落地后的静止态），否则=已瞄准（值为目标敌单位槽位下标）；
+    // [+2] 目标格 tx<<8|ty；[+3] 飞行计时（0-15，16 tick 判命中）。
+    // aim/tick 两阶段见 aimProjectiles/tickProjectiles；机制与卡死考证见
+    // docs/game-mechanics.md 投射物节。
+    public short[][] projectileTable;
     public short[] mapTiles;
     public int[][] playerUnitHeaders;
     // —— 状态机（速查见 GAME_NOTES.md，完整语义未完全考证，改动前对照 p() 的分发）——
@@ -153,7 +160,10 @@ implements CommandListener {
     public int var_int_g;
     public int var_int_c;
     public int[] var_int_arr_b;
-    public byte[] var_byte_arr_a;
+    // 任务脚本字节码（data.res 资源装载；解释器 = tickMissionScript → evalScriptCondition
+    // → runScriptActions/skipScriptActions/skipScriptBlock；解释器会在块首字节写"已执行"
+    // 标记 = 翻转符号位）。快照存档整体携带。字节 127 = 脚本区结束标记。
+    public byte[] missionScript;
     public int[] var_int_arr_a;
     public int var_int_d;
     public int S;
@@ -256,7 +266,7 @@ implements CommandListener {
         this.playerUnitHeaders = new int[2][91];
         this.playerUnitSlots = new short[2][208];
         this.var_int_arr_arr_b = new int[2][88];
-        this.var_short_arr_arr_b = new short[2][20];
+        this.projectileTable = new short[2][20];
         this.mapTiles = new short[4096];
         this.var_javax_microedition_lcdui_Font_a = Font.getDefaultFont();
         this.ah = 19;
@@ -3008,7 +3018,7 @@ implements CommandListener {
             this.var_int_arr_a[3] = 0;
             this.costTable = null;
             this.techFlags = null;
-            this.var_byte_arr_a = null;
+            this.missionScript = null;
             this.dirTable = null;
             return false;
         }
@@ -3170,7 +3180,7 @@ implements CommandListener {
             this.aiBuildPhase = 0;
             this.void_a();
         }
-        this.var_byte_arr_a = com.ulysseo.mad.c.byte_arr_a(n2);
+        this.missionScript = com.ulysseo.mad.c.byte_arr_a(n2);
         return true;
     }
 
@@ -4789,9 +4799,9 @@ implements CommandListener {
                                 int[] nArray = this.playerUnitHeaders[i];
                                 nArray[55] = nArray[55] + (this.playerUnitHeaders[i][45] + this.playerUnitHeaders[i][46]);
                                 int n6 = this.playerUnitHeaders[i][48] << 2;
-                                this.var_short_arr_arr_b[i][n6 + 0] = (short)n;
-                                this.var_short_arr_arr_b[i][n6 + 1] = 1000;
-                                this.var_short_arr_arr_b[i][n6 + 3] = 0;
+                                this.projectileTable[i][n6 + 0] = (short)n;
+                                this.projectileTable[i][n6 + 1] = 1000;
+                                this.projectileTable[i][n6 + 3] = 0;
                                 int[] nArray2 = this.playerUnitHeaders[i];
                                 nArray2[48] = nArray2[48] + 1;
                                 int[] nArray3 = this.var_int_arr_arr_b[i];
@@ -5554,7 +5564,7 @@ implements CommandListener {
         }
         if ((n11 & 0xFFFFFF00) != 0 && n6 != 32) {
             n7 = n11 >>> 24;
-            n5 = this.var_short_arr_arr_b[n9][n7 + 2];
+            n5 = this.projectileTable[n9][n7 + 2];
             n4 = n5 >>> 8;
             n5 &= 0xFF;
             int n15 = ((n4 -= this.var_int_arr_arr_b[n9][n8 + 0] >>> 8) - (n5 -= this.var_int_arr_arr_b[n9][n8 + 0] & 0xFF)) * 26;
@@ -5562,9 +5572,9 @@ implements CommandListener {
             int n17 = this.playerUnitHeaders[n9][47];
             if (n16 >= -10) {
                 this.drawTileSprite(graphics, n6, n, n2, n13);
-                this.b(graphics, n, n2 - 32, n + n15, n2 + n16, this.var_short_arr_arr_b[n9][n7 + 3], n17);
+                this.b(graphics, n, n2 - 32, n + n15, n2 + n16, this.projectileTable[n9][n7 + 3], n17);
             } else {
-                this.b(graphics, n, n2 - 32, n + n15, n2 + n16, this.var_short_arr_arr_b[n9][n7 + 3], n17);
+                this.b(graphics, n, n2 - 32, n + n15, n2 + n16, this.projectileTable[n9][n7 + 3], n17);
                 this.drawTileSprite(graphics, n6, n, n2, n13);
             }
         } else {
@@ -6182,10 +6192,10 @@ implements CommandListener {
             case 12: {
                 if ((n5 & 0x40000000) != 0) break;
                 n6 = this.playerUnitHeaders[n][48] << 2;
-                this.var_short_arr_arr_b[n][n6 + 0] = (short)n8;
-                this.var_short_arr_arr_b[n][n6 + 1] = 1000;
-                this.var_short_arr_arr_b[n][n6 + 2] = (short)((n3 << 8) + n4);
-                this.var_short_arr_arr_b[n][n6 + 3] = 0;
+                this.projectileTable[n][n6 + 0] = (short)n8;
+                this.projectileTable[n][n6 + 1] = 1000;
+                this.projectileTable[n][n6 + 2] = (short)((n3 << 8) + n4);
+                this.projectileTable[n][n6 + 3] = 0;
                 n2 |= n6 << 24;
                 int[] nArray4 = this.playerUnitHeaders[n];
                 nArray4[48] = nArray4[48] + 1;
@@ -6288,10 +6298,10 @@ implements CommandListener {
                 if (n11 != n12) {
                     int n13;
                     for (n13 = 0; n13 < 4; ++n13) {
-                        this.var_short_arr_arr_b[n][n12 + n13] = this.var_short_arr_arr_b[n][n11 + n13];
+                        this.projectileTable[n][n12 + n13] = this.projectileTable[n][n11 + n13];
                     }
-                    n13 = this.var_short_arr_arr_b[n][n11 + 0];
-                    int n14 = this.var_short_arr_arr_b[n][n12 + 2] & 0xFFFF;
+                    n13 = this.projectileTable[n][n11 + 0];
+                    int n14 = this.projectileTable[n][n12 + 2] & 0xFFFF;
                     this.var_int_arr_arr_b[n][n13 + 3] = n12 << 24 | n14 << 8 | 0xC;
                 }
                 int[] nArray3 = this.playerUnitHeaders[n];
@@ -6543,11 +6553,14 @@ implements CommandListener {
             int n2 = this.tickCount % n << 2;
             int n3 = n;
             int n4 = n3 << 2;
-            // 找一条"待瞄准"记录(+1==1000,发射/落地后回到该态)。原版反编译体丢了
-            // 扫满一圈的退出分支:窗口内全是飞行中(已瞄准)记录时,--n3 归零后循环
-            // 条件依旧成立 → Timer 线程死旋(画面冻结、EDT 键鼠仍在收,无异常栈)。
-            // 这里补回原意:最多扫 n 条,找不到就本 tick 跳过该玩家。
-            while (this.var_short_arr_arr_b[i][n2 + 1] != 1000) {
+            // 找一条"待瞄准"记录(+1==1000,发射/落地后回到该态)。原版字节码(方法 G)
+            // 自带正确边界:--n3>0 才回循环头(ifgt),≤0 落到循环出口——与"找到 1000"
+            // 同一入口。CFR 把该出口错渲染成 while 体末尾的裸 continue(= 回头再判
+            // 条件)而丢失,窗口内全是飞行中(已瞄准)记录时即永久自旋:模拟+渲染整体
+            // 跑在 Timer 线程 serviceRepaints 里,表现为画面冻结、EDT 键鼠仍收、无
+            // 异常栈(2026-09-01 战役首战卡死,字节码考证=移植伪影,原版无此 bug)。
+            // 此处按原版语义补回:最多扫 n 条,找不到就本 tick 跳过该玩家。
+            while (this.projectileTable[i][n2 + 1] != 1000) {
                 if ((n2 += 4) >= n4) {
                     n2 = 0;
                 }
@@ -6561,7 +6574,7 @@ implements CommandListener {
             }
             if (n3 <= 0) continue;
             int n5 = this.playerUnitHeaders[i][12];
-            short s = this.var_short_arr_arr_b[i][n2 + 0];
+            short s = this.projectileTable[i][n2 + 0];
             int n6 = this.var_int_arr_arr_b[i][s + 0];
             int n7 = n6 >>> 8 & 0x3F;
             n6 &= 0x3F;
@@ -6573,15 +6586,15 @@ implements CommandListener {
                 int n12 = this.playerUnitSlots[n8][n9 + 0];
                 int n13 = (n12 >>> 8 & 0x3F) - n7;
                 if (n13 * n13 + (n12 = (n12 & 0x3F) - n6) * n12 <= n5) {
-                    this.var_short_arr_arr_b[i][n2 + 3] = 0;
-                    this.var_short_arr_arr_b[i][n2 + 1] = (short)n9;
-                    this.var_short_arr_arr_b[i][n2 + 2] = this.playerUnitSlots[n8][n9 + 0];
+                    this.projectileTable[i][n2 + 3] = 0;
+                    this.projectileTable[i][n2 + 1] = (short)n9;
+                    this.projectileTable[i][n2 + 2] = this.playerUnitSlots[n8][n9 + 0];
                     int[] nArray = this.var_int_arr_arr_b[i];
                     int n14 = s + 3;
                     nArray[n14] = nArray[n14] & 0xFF0000FF;
                     int[] nArray2 = this.var_int_arr_arr_b[i];
                     int n15 = s + 3;
-                    nArray2[n15] = nArray2[n15] | (this.var_short_arr_arr_b[i][n2 + 2] & 0xFFFF) << 8;
+                    nArray2[n15] = nArray2[n15] | (this.projectileTable[i][n2 + 2] & 0xFFFF) << 8;
                     n11 = 1000;
                 }
                 ++n11;
@@ -6596,28 +6609,28 @@ implements CommandListener {
             int n2 = this.playerUnitHeaders[i][48];
             int n3 = 0;
             while (n3 < n2) {
-                short s = this.var_short_arr_arr_b[i][n + 1];
+                short s = this.projectileTable[i][n + 1];
                 if (s != 1000) {
-                    int n4 = this.var_short_arr_arr_b[i][n + 3] + 1;
-                    this.var_short_arr_arr_b[i][n + 3] = (short)(n4 & 0xF);
+                    int n4 = this.projectileTable[i][n + 3] + 1;
+                    this.projectileTable[i][n + 3] = (short)(n4 & 0xF);
                     if (n4 >= 16) {
-                        int n5 = this.var_short_arr_arr_b[i][n + 2];
+                        int n5 = this.projectileTable[i][n + 2];
                         int n6 = n5 >>> 8 & 0x3F;
                         int n7 = n6 + ((n5 &= 0x3F) << 6);
                         int n8 = (this.mapTiles[n7] & 0xC00) >> 10;
                         if (n8 == i || (this.mapTiles[n7] & 0xFFF) == 0) {
-                            this.var_short_arr_arr_b[i][n + 1] = 1000;
+                            this.projectileTable[i][n + 1] = 1000;
                             int[] nArray = this.var_int_arr_arr_b[i];
-                            int n9 = this.var_short_arr_arr_b[i][n + 0] + 3;
+                            int n9 = this.projectileTable[i][n + 0] + 3;
                             nArray[n9] = nArray[n9] & 0xFF0000FF;
                         } else if ((this.mapTiles[n7] & 0x300) == 512) {
                             int n10 = this.playerUnitSlots[n8][s + 4] & 0xFF;
                             int n11 = (this.playerUnitHeaders[i][46] << 4) / this.playerUnitHeaders[n8][23 + (this.playerUnitSlots[n8][s + 3] & 0xFF)];
                             if ((n10 -= n11) <= 0) {
                                 this.g(n8, this.mapTiles[n7] & 0xFF);
-                                this.var_short_arr_arr_b[i][n + 1] = 1000;
+                                this.projectileTable[i][n + 1] = 1000;
                                 int[] nArray = this.var_int_arr_arr_b[i];
-                                int n12 = this.var_short_arr_arr_b[i][n + 0] + 3;
+                                int n12 = this.projectileTable[i][n + 0] + 3;
                                 nArray[n12] = nArray[n12] & 0xFF0000FF;
                             } else {
                                 short[] sArray = this.playerUnitSlots[n8];
@@ -6628,16 +6641,16 @@ implements CommandListener {
                                 sArray2[n14] = (short)(sArray2[n14] | (n10 | 0x1000));
                                 if (n8 == 0) {
                                     if (this.playerUnitSlots[n8][s + 2] == this.playerUnitSlots[n8][s + 0] && (this.playerUnitSlots[n8][s + 7] & 0xFF) != 1) {
-                                        this.playerUnitSlots[n8][s + 2] = (short)this.var_int_arr_arr_b[i][this.var_short_arr_arr_b[i][n + 0] + 0];
+                                        this.playerUnitSlots[n8][s + 2] = (short)this.var_int_arr_arr_b[i][this.projectileTable[i][n + 0] + 0];
                                     }
                                 } else if ((this.playerUnitSlots[n8][s + 7] & 0xFF) != 1) {
-                                    this.playerUnitSlots[n8][s + 2] = (short)this.var_int_arr_arr_b[i][this.var_short_arr_arr_b[i][n + 0] + 0];
+                                    this.playerUnitSlots[n8][s + 2] = (short)this.var_int_arr_arr_b[i][this.projectileTable[i][n + 0] + 0];
                                 }
                             }
                         } else {
-                            this.var_short_arr_arr_b[i][n + 1] = 1000;
+                            this.projectileTable[i][n + 1] = 1000;
                             int[] nArray = this.var_int_arr_arr_b[i];
-                            int n15 = this.var_short_arr_arr_b[i][n + 0] + 3;
+                            int n15 = this.projectileTable[i][n + 0] + 3;
                             nArray[n15] = nArray[n15] & 0xFF0000FF;
                         }
                     }
@@ -7226,9 +7239,9 @@ implements CommandListener {
     public final void tickMissionScript() {
         int n;
         int n2 = 0;
-        while (this.var_byte_arr_a[n2] != 127) {
+        while (this.missionScript[n2] != 127) {
             n = n2;
-            if (this.var_byte_arr_a[n2] < 0) {
+            if (this.missionScript[n2] < 0) {
                 n2 = this.skipScriptBlock(n2);
                 continue;
             }
@@ -7247,16 +7260,16 @@ implements CommandListener {
     }
 
     public final int evalScriptCondition(int n) {
-        switch (this.var_byte_arr_a[n++]) {
+        switch (this.missionScript[n++]) {
             case 1: {
                 int n2;
-                int n3 = this.var_byte_arr_a[n++] & 0xFF;
-                int n4 = this.var_byte_arr_a[n++] & 0xFF;
-                int n5 = this.var_byte_arr_a[n++] & 0xFF;
-                int n6 = this.var_byte_arr_a[n++] & 0xFF;
-                int n7 = this.var_byte_arr_a[n++] & 0xFF;
-                int n8 = this.var_byte_arr_a[n++] & 0xFF;
-                int n9 = this.var_byte_arr_a[n++] & 0xFF;
+                int n3 = this.missionScript[n++] & 0xFF;
+                int n4 = this.missionScript[n++] & 0xFF;
+                int n5 = this.missionScript[n++] & 0xFF;
+                int n6 = this.missionScript[n++] & 0xFF;
+                int n7 = this.missionScript[n++] & 0xFF;
+                int n8 = this.missionScript[n++] & 0xFF;
+                int n9 = this.missionScript[n++] & 0xFF;
                 if (n3 == 1) {
                     n = -n;
                 }
@@ -7281,28 +7294,28 @@ implements CommandListener {
                 return n;
             }
             case 2: {
-                byte by = this.var_byte_arr_a[n++];
-                if ((this.var_byte_arr_a[n++] & 0xFF) * 10 > this.var_int_arr_a[by]) break;
+                byte by = this.missionScript[n++];
+                if ((this.missionScript[n++] & 0xFF) * 10 > this.var_int_arr_a[by]) break;
                 return n;
             }
             case 6: {
-                int n12 = this.var_byte_arr_a[n++] & 0xFF;
-                int n13 = this.var_byte_arr_a[n++] & 0xFF;
+                int n12 = this.missionScript[n++] & 0xFF;
+                int n13 = this.missionScript[n++] & 0xFF;
                 if (this.techFlags[n12] != n13) break;
                 return n;
             }
             case 7: {
-                int n14 = this.var_byte_arr_a[n++] & 0xFF;
-                int n15 = this.var_byte_arr_a[n++] & 0xFF;
-                int n16 = this.var_byte_arr_a[n++] & 0xFF;
-                int n17 = this.var_byte_arr_a[n++] & 0xFF;
+                int n14 = this.missionScript[n++] & 0xFF;
+                int n15 = this.missionScript[n++] & 0xFF;
+                int n16 = this.missionScript[n++] & 0xFF;
+                int n17 = this.missionScript[n++] & 0xFF;
                 if (!(n16 == 0 ? this.playerUnitHeaders[n14][n15] == n17 : (n16 == 1 ? this.playerUnitHeaders[n14][n15] > n17 : n16 == 2 && this.playerUnitHeaders[n14][n15] < n17))) break;
                 return n;
             }
             case 5: {
-                int n18 = this.var_byte_arr_a[n++] & 0xFF;
-                int n19 = this.var_byte_arr_a[n++] & 0xFF;
-                byte by = this.var_byte_arr_a[n++];
+                int n18 = this.missionScript[n++] & 0xFF;
+                int n19 = this.missionScript[n++] & 0xFF;
+                byte by = this.missionScript[n++];
                 int n20 = this.int_b(n18, n19);
                 if (n20 < 0) {
                     return -n;
@@ -7316,15 +7329,15 @@ implements CommandListener {
                 return -n;
             }
             case 3: {
-                if (this.var_byte_arr_a[n++] != this.screenState) break;
+                if (this.missionScript[n++] != this.screenState) break;
                 return n;
             }
             case 4: {
-                int n21 = this.var_byte_arr_a[n++] & 0xFF;
-                int n22 = this.var_byte_arr_a[n++] & 0xFF;
-                int n23 = (this.var_byte_arr_a[n++] & 0xFF) << 8;
-                byte by = this.var_byte_arr_a[n++];
-                byte by2 = this.var_byte_arr_a[n++];
+                int n21 = this.missionScript[n++] & 0xFF;
+                int n22 = this.missionScript[n++] & 0xFF;
+                int n23 = (this.missionScript[n++] & 0xFF) << 8;
+                byte by = this.missionScript[n++];
+                byte by2 = this.missionScript[n++];
                 if (n21 == 1) {
                     n = -n;
                 }
@@ -7348,12 +7361,12 @@ implements CommandListener {
 
     public final int runScriptActions(int n, int n2) {
         block13: while (true) {
-            switch (this.var_byte_arr_a[n++]) {
+            switch (this.missionScript[n++]) {
                 case 8: {
                     int n3;
-                    int n4 = this.var_byte_arr_a[n++];
-                    int n5 = this.var_byte_arr_a[n++] & 0xFF;
-                    int n6 = this.var_byte_arr_a[n++];
+                    int n4 = this.missionScript[n++];
+                    int n5 = this.missionScript[n++] & 0xFF;
+                    int n6 = this.missionScript[n++];
                     if (n5 >= 5 && n5 <= 7) {
                         this.var_boolean_l = true;
                     }
@@ -7367,25 +7380,25 @@ implements CommandListener {
                     continue block13;
                 }
                 case 9: {
-                    int n4 = this.var_byte_arr_a[n++] & 0xFF;
-                    int n5 = this.var_byte_arr_a[n++] & 0xFF;
+                    int n4 = this.missionScript[n++] & 0xFF;
+                    int n5 = this.missionScript[n++] & 0xFF;
                     this.techFlags[n4] = (byte)n5;
                     break;
                 }
                 case 6: {
-                    int n4 = this.var_byte_arr_a[n++] & 0xFF;
-                    int n5 = this.var_byte_arr_a[n++] & 0xFF;
-                    int n6 = this.var_byte_arr_a[n++] & 0xFF;
-                    int n3 = this.var_byte_arr_a[n++] & 0xFF;
+                    int n4 = this.missionScript[n++] & 0xFF;
+                    int n5 = this.missionScript[n++] & 0xFF;
+                    int n6 = this.missionScript[n++] & 0xFF;
+                    int n3 = this.missionScript[n++] & 0xFF;
                     this.a(n4, n5, n6, n3, false);
                     break;
                 }
                 case 7: {
                     int n7;
-                    int n4 = this.var_byte_arr_a[n] & 0xFF;
-                    int n5 = this.var_byte_arr_a[++n];
-                    int n6 = this.var_byte_arr_a[++n] & 0xFF;
-                    int n3 = this.var_byte_arr_a[++n] & 0xFF;
+                    int n4 = this.missionScript[n] & 0xFF;
+                    int n5 = this.missionScript[++n];
+                    int n6 = this.missionScript[++n] & 0xFF;
+                    int n3 = this.missionScript[++n] & 0xFF;
                     ++n;
                     int n8 = 0;
                     if (n5 == -1) {
@@ -7415,16 +7428,16 @@ implements CommandListener {
                     continue block13;
                 }
                 case 0: {
-                    int n4 = this.var_byte_arr_a[n++] & 0xFF;
-                    int n5 = this.var_byte_arr_a[n++] & 0xFF;
+                    int n4 = this.missionScript[n++] & 0xFF;
+                    int n5 = this.missionScript[n++] & 0xFF;
                     this.startMissionBriefing(n4, this.I, n5);
                     break;
                 }
                 case 1: {
-                    int n4 = this.var_byte_arr_a[n++] & 0xFF;
+                    int n4 = this.missionScript[n++] & 0xFF;
                     int n5 = this.scriptBlockOffset(n4);
-                    if (this.var_byte_arr_a[n5] >= 0) break;
-                    this.var_byte_arr_a[n5] = (byte)(-this.var_byte_arr_a[n5]);
+                    if (this.missionScript[n5] >= 0) break;
+                    this.missionScript[n5] = (byte)(-this.missionScript[n5]);
                     break;
                 }
                 case 4: {
@@ -7438,17 +7451,17 @@ implements CommandListener {
                     break;
                 }
                 case 2: {
-                    int n4 = this.var_byte_arr_a[n++];
+                    int n4 = this.missionScript[n++];
                     int n5 = n2;
                     if (n4 >= 0) {
                         n5 = this.scriptBlockOffset(n4);
                     }
-                    if (this.var_byte_arr_a[n5] <= 0) break;
-                    this.var_byte_arr_a[n5] = (byte)(-this.var_byte_arr_a[n5]);
+                    if (this.missionScript[n5] <= 0) break;
+                    this.missionScript[n5] = (byte)(-this.missionScript[n5]);
                     break;
                 }
                 case 3: {
-                    int n4 = this.var_byte_arr_a[n++];
+                    int n4 = this.missionScript[n++];
                     this.var_int_arr_a[n4] = 0;
                     break;
                 }
@@ -7470,7 +7483,7 @@ implements CommandListener {
 
     public final int skipScriptBlock(int n) {
         byte by;
-        if ((by = this.var_byte_arr_a[n++]) < 0) {
+        if ((by = this.missionScript[n++]) < 0) {
             by = (byte)(-by);
         }
         switch (by) {
@@ -7504,7 +7517,7 @@ implements CommandListener {
 
     public final int skipScriptActions(int n) {
         while (true) {
-            switch (this.var_byte_arr_a[n++]) {
+            switch (this.missionScript[n++]) {
                 case 6: 
                 case 7: {
                     n += 4;

@@ -111,7 +111,7 @@
 |---|---|---|
 | tickAi | z | AI 大脑：威胁扫描 → 攻/防模式判定 → 军队指令 + 村民自动采集 |
 | setupMissionEnv | o(int) | 任务环境装配/拆除（n=0 拆 1 装）：难度参数、资源装载都在这 |
-| aimProjectiles / tickProjectiles | G / J | 投射物目标获取 / 飞行与伤害（箭塔与远程） |
+| aimProjectiles / tickProjectiles | G / J | 投射物目标获取 / 飞行与伤害（箭塔与远程）；G 的扫描边界经原 jar 字节码考证，2026-09-01 修复的卡死系 CFR 伪影（见 game-mechanics 投射物节） |
 | tickMissionScript | F | 任务事件脚本解释器（每帧扫块：条件→动作，块头负=已触发） |
 | skipScriptBlock | int_g(int) | 跳过一个完整脚本块（条件+动作） |
 | skipScriptActions | int_a(int) | 从条件尾跳到块尾 |
@@ -166,11 +166,23 @@
 | requestMedia | a(int,boolean) | 请求播放媒体资源（同 id 幂等） |
 | stampThumbTile | b(Graphics,int,int) | 全图缩略图上钉一格（1px/格，迷雾格画深色） |
 
+## 已改名：wave5（2026-09-01 晚，投射物池考证 + 卡死修复）
+
+考证产出见 docs/game-mechanics.md 投射物节。字段（AgeOfEmpires.c）：
+
+| 新名 | 旧名 | 语义 |
+|---|---|---|
+| projectileTable | var_short_arr_arr_b | 投射物记录池 [2][20]：每玩家 5 条×4 short 紧凑存放，布局 +1 状态字(1000=待瞄准)/+2 目标格/+3 飞行计时，活跃数在 headers[48] |
+| missionScript | var_byte_arr_a | 任务脚本字节码缓冲（res 装载；tickMissionScript 解释器读，写"已执行"标记；127=区结束） |
+
+注意：AgeOfEmpires.b 里另有同名旧静态 var_byte_arr_a（媒体缓冲，未读懂未改名），
+与 c.missionScript 无关。
+
 ## 半懂（保留旧名，先补注释）
 
 aH（转场计时/激活参数双职责）、ap（返回节点）、var_int_arr_e（当局资源拷贝，
 与 nfoHighScores 的关系待证）、var_int_arr_a[4]（脚本帧计数器，DSL 条件 2 用，
-每帧 +1、动作 3 清零——已并入 AI/DSL 考证）、var_byte_arr_a（任务数据镜像，脚本会写执行标记——快照已包含）、var_boolean_k、
+每帧 +1、动作 3 清零——已并入 AI/DSL 考证）、var_boolean_k、
 aI/aB 中的 aB、E/G/x/T/aD 等零散 int、
 ad/J（相机半屏居中偏移，2:1 菱形投影精确推导未考证——只当"半屏修正"用）、
 m（int 字段：BGM 曲长帧倒计时，但菜单/世界两态都有写入点，双职责未全证）、

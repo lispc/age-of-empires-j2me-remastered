@@ -88,6 +88,19 @@ EDT 活着 + tickCount 冻结 = **Timer 线程在 paint(模拟/渲染) 内死旋
 `[proj] aim scan exhausted` 观测线；健康路径逐条等价，REGRESS PASS。
 修复版 campaign:1 浸没 12525 in-mission tick 无冻结。
 
+**字节码考证（追问"原版 jar 也有这个 bug 吗"）**：对原 jar
+`~/Downloads/age_of_empires_ii_240x320-9174.jar` 的 `AgeOfEmpires/c.class` 方法 G 做
+`javap -c`：`82: iinc 7,-1; 85: iload 7; ifgt 48`——**ifgt 的 false 分支（n3≤0）直接
+落到循环出口 90，与"找到 1000"（66→goto 90）汇合**，即原版自带"n3 耗尽即退出"边界，
+随后 `90-95` 就是 `if (n3<=0) continue`。**原版没有这个 bug；是 CFR 把 ifgt false
+分支（退出循环）错渲染成 while 体末尾的裸 continue（= 回头再判条件）而静默丢失**，
+pristine CFR 输出 `decompiled/AgeOfEmpires/c.java` 同样带病可证伪影来自 CFR 而非手工
+改动。本修复即逐字恢复原版语义。**同类伪影审计**：按"while 体末尾语句是 continue"
+扫出 11 处，逐一判定（3 处手写 dev 代码除外）：for 有界 / n5·n3·n4·i 严格推进 /
+脚本解释器 n2 由自身赋值推进且有 AIOOBE 兜底——唯一真伪影即本处。审计方法（javap
+对照原 jar 逐条读分支）对任何"反编译输出可疑"的控制流可复用；CFR 在简单形状上也会
+静默丢出口，**这是比"反编译错"更危险的"反编译漏"**。
+
 **复现未果的教训**：先按日志回放用户输入（691 事件 ar 锚定）+ 5 实例×25k tick 模糊
 测试均未命中。原因是 **BGM 随机选曲消耗全局 RNG**（种子虽来自任务资源字节，但任务内
 选曲次数/曲目随时长与墙钟漂移），7000 tick 混沌系统必然发散——对这类游戏做逐帧对齐
@@ -438,6 +451,55 @@ B 完成后上分支试吃战场观感，再决定是否投入 C。注意输入�
 3. **高成本·真 AI**：行为树/效用 AI + 地图连通性分析（BFS 可达 + 预算路径）——
    需要先做逻辑/渲染解耦才值得，且 64x64 地图 + 原版关卡设计下收益存疑。
 4. **结论**：先做 1（调参，几乎零风险）；2 做成可选开关（`-Daoe.ai=1`）；3 不建议。
+
+## 深调研三：调试基础设施评估与路线图（2026-09-01，用户问"够用吗、值不值得升级"）
+
+**现状盘点**（这次卡死排查实际用到/用到的上限）：
+- `aoe.debug=1`（build.gradle 常开）日志族：`[dbg]` 25-tick 心跳（tickCount/画面态）、
+  `[void_a]`/`[mouse]` 输入流、`[trace]`/`[view]`/`[pick]` 状态机与拾取、
+  `[save]`/`[load]`、`[proj]` 投射物观测线、`[watchdog]` 卡死栈（新增）。
+- DevHarness + FIFO 指令：key/tapk/move/press/click/rclick/drag/state(+JSON 快照)/
+  until/probe/script/save/load/dump/fields/exit。
+- tools/regress.sh 金标准指纹；SaveState 全量快照；run.sh 日志留存 10 份。
+- 本次排查证明：这套东西**足够定位"哪类线程在哪种循环里停了"**，但不足以**复现
+  特定一局的轨迹**（见下）。
+
+**核心缺口：事件回放(replay-by-events)当前不可用**。逐帧对齐回放 691 个事件 + 
+5 实例×25k tick 模糊测试都没命中卡死点（最后靠静态审计找到）。根因三层：
+1. **RNG 被选曲消耗**（致命层）：全局 `nextRandomInt`（LCG，种子来自任务资源字节）
+   同时服务战斗掷骰与 BGM 选曲；选曲次数随墙钟漂移（曲长 ms/80 折帧的倒计时不受
+   tickms 影响，但一首曲子几点开始取决于真实播放时刻链）→ 7000 tick 混沌系统必然
+   发散。种子本身是确定性的，问题纯粹在"模拟外的消费源"。
+2. **输入无 tick 戳**：`[void_a]`/`[mouse]` 日志只有出现顺序，回放只能按 [dbg] 心跳
+   做 ±25 tick 插值。
+3. **注入时刻不贴帧**：FIFO 指令在 dev-mouse 线程即时生效，与"用户在第 N tick 按下"
+   不是同一语义。
+
+**路线图**（按价值/成本排序，均未实施，等用户点头）：
+- **P1 确定性回放三件套**（合计 ~2 小时，是"回放成为调试工具"的充分条件）：
+  a) **RNG 分流**：BGM 选曲改用独立 LCG（或 java.util.Random 固定种子），全局
+     nextRandomInt 从此只服务模拟——模拟变纯输入决定。代价：RNG 消耗序列变化 →
+     regress golden 需重录一次（regress 有重录模式，一次性成本）。
+  b) **输入 trace**：输入日志加 tick 戳（`[input] t=7098 key=-5`）；FIFO 加
+     `replaytrace <file>` 按 tick 精确注入（内部 wait-until-tick 循环）。
+  c) **确定性自检**：regress 扩展一个模式——同 trace 跑两遍，指纹必须逐字节一致，
+     把"回放可用"本身变成被测试守护的性质。
+- **P2 飞行记录仪**（~1 小时）：环形缓冲最近 256 tick 的关键状态摘要（资源/双方
+  单位数/投射物池概要([48] 与各记录状态字)/RNG 态/脚本游标），O(1) 摊销零 I/O；
+  `[watchdog]` 触发时自动随栈打印，FIFO `dumpstate` 手动可取。卡死现场从"只有栈"
+  升级为"栈 + 前 256 tick 状态轨迹"。
+- **P3 tick 不变式**（~1 小时，aoe.debug 下每帧）：projectileTable 紧凑性
+  （[48]≤5、窗口内布局合法）、单位槽 HP≤255、格坐标 <64、占位表与实际格一致（抽样）。
+  早把"数据悄悄坏了"变成"当场报哪条不变式"。
+- **P4 暂停/步进**（~1 小时）：FIFO `pause` / `step N`（挂起/限步 Timer），配合
+  P1b 在精确 tick 停下验尸。
+- **P5 全局异常兜底**（~15 分钟）：Thread.setDefaultUncaughtExceptionHandler →
+  栈 + 飞行记录仪 dump + 非零退出。EDT 异常目前会静默杀事件线程（表现为"全输入
+  失灵但进程活着"），这条能把它变成一条可 grep 的日志。
+- **明确不做**：逐帧全量日志（噪声/收益比差，P2 的环形缓冲是它的正确替代）；
+  time-travel 调试器（工程量与收益不成比例）；跨版本回放（golden 已覆盖）。
+- **一个有利事实**：模拟全程整数运算、无浮点、无 HashMap 迭代——只要 P1a 分流掉
+  选曲消费源，跨机器逐 tick 一致是现实可期的，回放调试的地基比一般 Swing 程序好。
 
 ## 注意事项与坑
 

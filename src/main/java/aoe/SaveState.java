@@ -40,7 +40,7 @@ public final class SaveState {
         // —— 脚本树与引擎指针（任务内目标/对话推进状态）——
         writeBytes(out, g.menuTree);
         // 任务数据镜像（res aF）：脚本解释器会就地写"已执行"标记，读档必须一并还原
-        writeBytes(out, g.var_byte_arr_a);
+        writeBytes(out, g.missionScript);
         out.writeInt(g.menuNode);
         out.writeInt(g.menuNodeCount);
         out.writeInt(g.menuHighlight);
@@ -61,7 +61,7 @@ public final class SaveState {
             writeInts(out, g.playerUnitHeaders[i]);
             writeShorts(out, g.playerUnitSlots[i]);
             writeInts(out, g.var_int_arr_arr_b[i]);
-            writeShorts(out, g.var_short_arr_arr_b[i]);
+            writeShorts(out, g.projectileTable[i]);
         }
         // —— 相机/光标/选中 ——
         out.writeInt(g.cameraPxX);
@@ -103,7 +103,7 @@ public final class SaveState {
         g.campaignProgress = in.readInt();
         g.tutorialProgress = in.readInt();
         readBytes(in, g.menuTree);
-        readBytes(in, g.var_byte_arr_a);
+        readBytes(in, g.missionScript);
         g.menuNode = in.readInt();
         g.menuNodeCount = in.readInt();
         g.menuHighlight = in.readInt();
@@ -123,7 +123,7 @@ public final class SaveState {
             readInts(in, g.playerUnitHeaders[i]);
             readShorts(in, g.playerUnitSlots[i]);
             readInts(in, g.var_int_arr_arr_b[i]);
-            readShorts(in, g.var_short_arr_arr_b[i]);
+            readShorts(in, g.projectileTable[i]);
         }
         g.cameraPxX = in.readInt();
         g.cameraPxY = in.readInt();
