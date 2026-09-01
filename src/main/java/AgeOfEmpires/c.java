@@ -845,6 +845,13 @@ implements CommandListener {
                     }
                     Thread.sleep(200);
                     this.mouseA(2, x2, y2);
+                    // 防楔死(第9轮):终点在贴边滚动区时,合成鼠标永远停留在那里,
+                    // 边缘滚动每帧钉死光标/probe 全 -2,只能重启。回屏中心解除。
+                    if (x2 >= this.screenW - 14 || y2 >= this.screenH - 14
+                            || x2 < 14 || y2 < 14) {
+                        this.mouseA(0, this.screenW / 2, this.screenH / 2);
+                        System.out.println("[devMouse] drag ended in edge-scroll zone, mouse re-centered");
+                    }
                     break;
                 }
                 case "key": {
@@ -896,17 +903,24 @@ implements CommandListener {
                             .append(",\"tiles\":").append(this.mapTiles.length);
                     }
                     json.append(",\"units\":[");
-                    int cnt = this.playerUnitHeaders[0][2];
-                    for (int i = 0; i < cnt && i < 16; ++i) {
-                        int off = i * 8;
-                        if (i > 0) {
-                            json.append(',');
+                    // 双方单位都列出，带 "p" 阵营列——第9轮教训：只列 P0 时，AI 单位
+                    // 位置被误读成"我方单位瞬移/乱走"（死亡后槽位压缩又放大了错觉）
+                    int unitTotal = 0;
+                    for (int pl = 0; pl < 2 && unitTotal < 32; ++pl) {
+                        int ucnt = this.playerUnitHeaders[pl][2];
+                        for (int i = 0; i < ucnt && unitTotal < 32; ++i) {
+                            int off = i * 8;
+                            if (unitTotal > 0) {
+                                json.append(',');
+                            }
+                            json.append("{\"p\":").append(pl)
+                                .append(",\"tile\":[").append(this.playerUnitSlots[pl][off] >>> 8)
+                                .append(',').append(this.playerUnitSlots[pl][off] & 0xFF)
+                                .append("],\"type\":").append(this.playerUnitSlots[pl][off + 3] & 0xFF)
+                                .append(",\"sel\":").append((this.playerUnitSlots[pl][off + 4] & 0x8000) != 0)
+                                .append('}');
+                            ++unitTotal;
                         }
-                        json.append("{\"tile\":[").append(this.playerUnitSlots[0][off] >>> 8)
-                            .append(',').append(this.playerUnitSlots[0][off] & 0xFF)
-                            .append("],\"type\":").append(this.playerUnitSlots[0][off + 3] & 0xFF)
-                            .append(",\"sel\":").append((this.playerUnitSlots[0][off + 4] & 0x8000) != 0)
-                            .append('}');
                     }
                     json.append("]}\n");
                     if (this.devFifoPath != null) {
@@ -917,13 +931,16 @@ implements CommandListener {
                             System.out.println("[devMouse] json: " + e);
                         }
                     }
-                    for (int i = 0; i < cnt && i < 16; ++i) {
-                        int off = i * 8;
-                        System.out.println("[devMouse] unit " + i
-                            + " tile=(" + (this.playerUnitSlots[0][off] >>> 8)
-                            + "," + (this.playerUnitSlots[0][off] & 0xFF) + ")"
-                            + " type=" + (this.playerUnitSlots[0][off + 3] & 0xFF)
-                            + " sel=" + ((this.playerUnitSlots[0][off + 4] & 0x8000) != 0));
+                    for (int pl = 0; pl < 2; ++pl) {
+                        int ucnt = Math.min(this.playerUnitHeaders[pl][2], 8);
+                        for (int i = 0; i < ucnt; ++i) {
+                            int off = i * 8;
+                            System.out.println("[devMouse] p" + pl + " unit " + i
+                                + " tile=(" + (this.playerUnitSlots[pl][off] >>> 8)
+                                + "," + (this.playerUnitSlots[pl][off] & 0xFF) + ")"
+                                + " type=" + (this.playerUnitSlots[pl][off + 3] & 0xFF)
+                                + " sel=" + ((this.playerUnitSlots[pl][off + 4] & 0x8000) != 0));
+                        }
                     }
                     break;
                 }

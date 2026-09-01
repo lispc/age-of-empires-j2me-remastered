@@ -55,7 +55,7 @@ while [ $i -lt 45 ]; do
     sleep 2
     i=$((i+1))
     echo "state" > "$FIFO" 2>/dev/null || true
-    if grep -q "devMouse. unit 0" "$LOG" 2>/dev/null; then ready=1; break; fi
+    if grep -q "devMouse. p0 unit 0" "$LOG" 2>/dev/null; then ready=1; break; fi
     kill -0 $PID 2>/dev/null || break
 done
 if [ $ready -ne 1 ]; then
@@ -124,7 +124,7 @@ fp = {
     "cursor": state["cursor"],
     "sel": state["sel"],
     "explored": state.get("explored", -1),
-    "units": [[u["tile"], u["type"]] for u in state["units"]],
+    "units": [[u["tile"], u["type"]] for u in state["units"] if u.get("p", 0) == 0],
 }
 if mode == "--update":
     json.dump(fp, open(sys.argv[2], "w"), indent=1)
