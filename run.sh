@@ -1,13 +1,19 @@
 #!/bin/sh
 # Age of Empires II 桌面版启动脚本。
 # 修正环境里可能失效的 JAVA_HOME 后启动游戏。
-# 用法: ./run.sh [放大倍数]（默认 3，即 720x960 窗口）
+# 用法: ./run.sh [gradle 参数]
+#
+# 视野：默认宽屏（逻辑 720x320，约 3 倍于原版的战场视野）。
+# 想用原版竖屏视野：AOE_WIDTH=240 ./run.sh（或先 export AOE_WIDTH=240）。
 #
 # 每次运行的完整输出（含调试状态行、按键、异常栈）都会留一份在
 # ~/Library/Application Support/AoeJ2ME/logs/ 下（保留最近 10 份），
 # 出问题时把对应 run-*.log 交给开发者即可定位。
 
 cd "$(dirname "$0")"
+
+# 宽屏视野（经 build.gradle run 块转成 -Daoe.width）。外部已设置则尊重外部值。
+export AOE_WIDTH="${AOE_WIDTH:-720}"
 
 JDK=/opt/homebrew/opt/openjdk@17
 if [ ! -x "$JDK/bin/java" ]; then

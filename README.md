@@ -19,6 +19,8 @@ gradle installDist            # 生成 build/install/aoe-desktop/ 可分发目�
 
 - `-Daoe.scale=N`：窗口放大倍数（不指定时按屏幕可用区域自适应，取能完整显示的
   最大倍数、上限 3；这台 MacBook 上自动选 2）
+- `-Daoe.width=N` / `-Daoe.height=N`：逻辑分辨率（默认 240x320 原版尺寸；
+  `run.sh` 默认传 720 宽 = 宽视野。游戏渲染/镜头/UI 全部按该尺寸自适应）
 - `-Daoe.debug=1`：打印游戏状态机、被吞掉的异常
 - `-Daoe.dumpFrames=/tmp/frame.png`：每 ~5 秒把当前画面导出为 PNG
 
@@ -50,11 +52,12 @@ gradle installDist            # 生成 build/install/aoe-desktop/ 可分发目�
 
 ## 渲染模型
 
-游戏以 240x320 逻辑分辨率画进一块**设备分辨率的持久帧缓冲**（240×320 × `aoe.scale`
-× Retina 倍数）。持久缓冲是游戏的硬性依赖：它按脏矩形局部重绘（比如主菜单背景只在
-进入时画一次），没有持久缓冲就会丢内容。绘制在游戏主循环线程完成（80ms/帧，`mad.b`
-里的 `java.util.Timer`），Swing 只负责把缓冲 1:1 贴上窗口。文字按矢量渲染落到物理
-像素上，始终清晰；图片素材经 `Image.ASSET_SCALE` 预放大后 1:1 上屏，保持像素风。
+游戏以逻辑分辨率（默认 240x320，`run.sh` 传 `-Daoe.width=720` 宽视野）画进一块
+**设备分辨率的持久帧缓冲**（逻辑尺寸 × `aoe.scale` × Retina 倍数）。持久缓冲是
+游戏的硬性依赖：它按脏矩形局部重绘（比如主菜单背景只在进入时画一次），没有持久
+缓冲就会丢内容。绘制在游戏主循环线程完成（80ms/帧，`mad.b` 里的 `java.util.Timer`），
+Swing 只负责把缓冲 1:1 贴上窗口。文字按矢量渲染落到物理像素上，始终清晰；图片
+素材经 `Image.ASSET_SCALE` 预放大后 1:1 上屏，保持像素风。
 
 ## 键位（macOS 桌面 ↔ J2ME 手机）
 

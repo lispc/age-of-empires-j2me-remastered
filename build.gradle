@@ -18,4 +18,12 @@ run {
     if (!System.getenv('AOE_QUIET')) {
         jvmArgs '-Daoe.debug=1'
     }
+    // 宽屏视野：AOE_WIDTH/AOE_HEIGHT 环境变量 → -Daoe.width/height（run.sh 默认 720）。
+    // 不设置 = 原版 240x320（回归测试走这条路径，golden 基线才有稳定性）。
+    if (System.getenv('AOE_WIDTH')) {
+        jvmArgs "-Daoe.width=" + System.getenv('AOE_WIDTH')
+    }
+    if (System.getenv('AOE_HEIGHT')) {
+        jvmArgs "-Daoe.height=" + System.getenv('AOE_HEIGHT')
+    }
 }

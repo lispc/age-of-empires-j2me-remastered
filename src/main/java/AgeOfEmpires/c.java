@@ -1287,16 +1287,16 @@ implements CommandListener {
         graphics.drawString(line2, 2, 40, 20);
     }
 
-    /** 存/读档结果提示（居中，2s）。 */
+    /** 存/读档结果提示（居中，2s）。按逻辑屏宽居中，宽屏（aoe.width）下同样适用。 */
     private void devDrawToast(Graphics graphics) {
         if (this.devToast == null || System.currentTimeMillis() >= this.devToastUntil) {
             return;
         }
         graphics.setClip(0, 0, this.screenW, this.screenH);
         graphics.setColor(0);
-        graphics.fillRect(50, 46, 140, 16);
+        graphics.fillRect(this.screenW - 140 >> 1, 46, 140, 16);
         graphics.setColor(0xFFFFFF);
-        graphics.drawString(this.devToast, 120, 49, 17);    // TOP|HCENTER
+        graphics.drawString(this.devToast, this.screenW >> 1, 49, 17);    // TOP|HCENTER
     }
 
     public final void onPaint(Graphics graphics) {
@@ -2648,9 +2648,13 @@ implements CommandListener {
                     int n10 = this.playerUnitSlots[n5][n7 + 1];
                     int n11 = n10 >>> 8;
                     n = this.playerUnitSlots[n5][n7 + 6] & 0xF0;
-                    if (((n11 != n2 || (n10 &= 0xFF) != (n3 &= 0xFF)) && n == 0 || n4 == this.tickCount % n6) && (this.mapTiles[n2 + (n3 << 6)] & 0x8000) == 0) {
-                        this.b(this.var_javax_microedition_lcdui_Graphics_a, n11, n10);
-                        this.b(this.var_javax_microedition_lcdui_Graphics_a, n2, n3);
+                    // 反编译原样的 (n10 &= 0xFF) != (n3 &= 0xFF) 写在 || 短路第二支上：
+                    // tx 相等时被跳过、n3/n10 保持 tx<<8|ty 全值，mapTiles[n2 + (n3<<6)]
+                    // 会越界（原版即有的暗雷，全图视图偶发掉帧/卡退出）。改为用点处掩码，
+                    // 对原已掩码路径数值完全一致。
+                    if (((n11 != n2 || (n10 & 0xFF) != (n3 & 0xFF)) && n == 0 || n4 == this.tickCount % n6) && (this.mapTiles[n2 + ((n3 & 0xFF) << 6)] & 0x8000) == 0) {
+                        this.b(this.var_javax_microedition_lcdui_Graphics_a, n11, n10 & 0xFF);
+                        this.b(this.var_javax_microedition_lcdui_Graphics_a, n2, n3 & 0xFF);
                     }
                     ++n4;
                     n7 += 8;
