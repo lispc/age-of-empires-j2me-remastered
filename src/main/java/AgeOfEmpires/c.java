@@ -6543,11 +6543,21 @@ implements CommandListener {
             int n2 = this.tickCount % n << 2;
             int n3 = n;
             int n4 = n3 << 2;
+            // 找一条"待瞄准"记录(+1==1000,发射/落地后回到该态)。原版反编译体丢了
+            // 扫满一圈的退出分支:窗口内全是飞行中(已瞄准)记录时,--n3 归零后循环
+            // 条件依旧成立 → Timer 线程死旋(画面冻结、EDT 键鼠仍在收,无异常栈)。
+            // 这里补回原意:最多扫 n 条,找不到就本 tick 跳过该玩家。
             while (this.var_short_arr_arr_b[i][n2 + 1] != 1000) {
                 if ((n2 += 4) >= n4) {
                     n2 = 0;
                 }
-                if (--n3 > 0) continue;
+                if (--n3 <= 0) {
+                    if (System.getProperty("aoe.debug") != null) {
+                        System.out.println("[proj] aim scan exhausted p=" + i
+                            + " active=" + n + " tick=" + this.tickCount);
+                    }
+                    break;
+                }
             }
             if (n3 <= 0) continue;
             int n5 = this.playerUnitHeaders[i][12];

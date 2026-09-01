@@ -117,9 +117,70 @@ extends GameCanvas {
         this.var_java_util_Timer_a = new Timer();
         if (n2 == 1) {
             this.var_java_util_Timer_a.schedule(this.var_java_util_TimerTask_b, 0L, (long)n);
-            return;
+        } else {
+            this.var_java_util_Timer_a.scheduleAtFixedRate(this.var_java_util_TimerTask_b, 0L, (long)n);
         }
-        this.var_java_util_Timer_a.scheduleAtFixedRate(this.var_java_util_TimerTask_b, 0L, (long)n);
+        startPaintWatchdog();
+    }
+
+    /**
+     * 卡死看门狗：模拟+渲染整体跑在 Timer 线程的 serviceRepaints 里，单帧预算只有
+     * 一个 tick（80ms）。这里每 2s 采样该线程，若它连续 ~6s 停在同一游戏任务帧
+     * （而非调度器空闲等待），按"疑似卡死"把完整线程栈打进日志——任何一次真卡死
+     * 都能事后从 run.sh 日志直接看到死循环位置（aoe.debug=1 由 build.gradle 常开）。
+     */
+    private static void startPaintWatchdog() {
+        Thread wd = new Thread(() -> {
+            String lastSig = null;
+            StackTraceElement[] lastStack = null;
+            int repeats = 0;
+            boolean reported = false;
+            while (true) {
+                try {
+                    Thread.sleep(2000L);
+                } catch (InterruptedException e) {
+                    return;
+                }
+                String sig = null;
+                StackTraceElement[] stack = null;
+                for (Thread t : Thread.getAllStackTraces().keySet()) {
+                    if (!t.getName().startsWith("Timer-")) continue;
+                    StackTraceElement[] st = t.getStackTrace();
+                    // 只把"正在执行游戏任务"判为占用：栈里出现游戏代码帧才算
+                    // （空闲时栈是 Object.wait ← TimerThread.mainLoop ← run，无游戏帧）。
+                    boolean inGame = false;
+                    for (StackTraceElement f : st) {
+                        String cn = f.getClassName();
+                        if (cn.startsWith("AgeOfEmpires.") || cn.startsWith("com.ulysseo.")
+                                || cn.startsWith("aoe.") || cn.startsWith("javax.microedition.")) {
+                            inGame = true;
+                            break;
+                        }
+                    }
+                    if (inGame) {
+                        sig = st[0] + "|" + st[Math.min(1, st.length - 1)] + "|" + st[Math.min(2, st.length - 1)];
+                        stack = st;
+                    }
+                    break;
+                }
+                if (sig != null && sig.equals(lastSig)) {
+                    if (++repeats >= 3 && !reported) {
+                        reported = true;
+                        System.out.println("[watchdog] Timer 线程疑似卡死：同一任务帧已持续 " + (repeats * 2) + "s+");
+                        for (StackTraceElement f : lastStack) {
+                            System.out.println("[watchdog]   at " + f);
+                        }
+                    }
+                } else {
+                    lastSig = sig;
+                    lastStack = stack;
+                    repeats = 0;
+                    reported = false;
+                }
+            }
+        }, "paint-watchdog");
+        wd.setDaemon(true);
+        wd.start();
     }
 
     public final void a() {

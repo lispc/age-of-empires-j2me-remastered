@@ -71,6 +71,44 @@ QEZC/X 别名）、鼠标支持（悬停高亮/单击选中/拖动框选/右键�
 
 ## 当前进行中的工作（接手请先读）
 
+### 卡死修复：aimProjectiles 待瞄准扫描死旋 + 通用卡死看门狗（2026-09-01，用户报告"玩着玩着卡死"）
+
+**现象**（run-20260901-150628.log，战役任务 in-mission ~6800 tick 处）：`[dbg] ar=7098`
+之后再无帧心跳，其后 ~240 行全是 EDT 收键/鼠标的日志，无任何异常栈。判定：模拟+渲染
+整体跑在 mad/b 80ms Timer 线程的 `serviceRepaints()` 里（shim 特有，EDT 只做贴图），
+EDT 活着 + tickCount 冻结 = **Timer 线程在 paint(模拟/渲染) 内死旋**；Timer 线程若因
+异常死亡会往 stderr 打栈（日志无）→ 排除，锁定真死循环。
+
+**定位**：静态审计全部 while 循环。`aimProjectiles()` 找"待瞄准"投射物记录（+1==1000）
+的扫描循环，反编译体把"扫满一圈放弃"的退出分支弄丢了：`if (--n3 > 0) continue;` 只在
+>0 时 continue，≤0 时落回 while 再判，而循环条件不含 n3 → 窗口内全是飞行中记录时
+永久自旋。**任何一发投射物在飞行期间就满足条件**（发射后 aim 置为已瞄准，下一帧扫描
+窗口即无 1000）——用户的卡死点即战役第一场接战。机制详情见 docs/game-mechanics.md
+投射物节。修复：循环体内补回 `if (--n3 <= 0) break;`，aoe.debug 下留
+`[proj] aim scan exhausted` 观测线；健康路径逐条等价，REGRESS PASS。
+修复版 campaign:1 浸没 12525 in-mission tick 无冻结。
+
+**复现未果的教训**：先按日志回放用户输入（691 事件 ar 锚定）+ 5 实例×25k tick 模糊
+测试均未命中。原因是 **BGM 随机选曲消耗全局 RNG**（种子虽来自任务资源字节，但任务内
+选曲次数/曲目随时长与墙钟漂移），7000 tick 混沌系统必然发散——对这类游戏做逐帧对齐
+回放前先查 RNG 消耗源。
+
+**新增通用安全网：paint 看门狗**（mad/b.startPaintWatchdog，随主循环 Timer 启动）：
+每 2s 采样 Timer 线程，栈含游戏代码帧（正在执行任务）且栈顶 3 帧签名连续 6s 不变 →
+`[watchdog] Timer 线程疑似卡死` + 完整栈打进日志。空闲态（栈=wait←mainLoop←run，无
+游戏帧）不报。实弹验证：忙转线程 6s 即报、栈顶直指死循环行；健康运行 40s 零误报。
+今后再遇卡死：`grep watchdog ~/Library/Application\ Support/AoeJ2ME/logs/run-*.log`。
+
+**事故记录（存档丢失，我的操作失误）**：复现调试期间，v1/v2 脚本用了同一个
+/tmp/freeze-repro.sh 文件且在 v2 shell 仍在运行时原地 Edit 该脚本——bash 按字节偏移
+增量读脚本，旧 shell 从错位处读到新内容、额外拉起了一个 campaign:2 会话；多个 headless
+会话的 DEV_AUTO_CHECKPOINT 把用户真实 auto.aoesave（卡死前 ~150 tick 的现场，
+mission aF=104）覆盖掉，且 /tmp 备份也被二次覆盖。已确认无法恢复（无 TM/快照），
+脏档已删除。**用户实际损失有限**：战役进度存 `~/.aoe-desktop/.nfo.rms`（RMS）未受影响，
+丢的只是那次任务的中途存档；但这是我的失误，规程改为：① 调试会话一律显式
+`-Daoe.saveDir=/tmp/...`（v3 起）；② 绝不编辑正在运行的脚本文件，新任务用新文件名；
+③ 动用户目录下的任何文件前先备份到独立路径。
+
 ### wave4 改名：屏幕度量/相机/全图视图/音乐一族（2026-09-01 深夜，紧接宽视野落地）
 
 宽视野考证中读懂的 12 个符号经 AST renamer 改名（对照表见 docs/symbols.md wave4 节）：
