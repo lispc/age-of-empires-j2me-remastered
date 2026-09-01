@@ -327,6 +327,8 @@ implements CommandListener {
     }
 
     public final void c() {
+        // 背景音乐换曲：曲长毫秒按"80ms/帧"折成帧数倒计时（m 在 onPaint 模拟块里每帧 --）。
+        // 硬编码了原版帧率——改 aoe.tickms 会按比例 skew 换曲时机（详见 docs/game-mechanics.md「主循环与时序」）。
         int n = AgeOfEmpires.c.nextRandomInt() % 6;
         int[] nArray = new int[]{204000, 123000, 233000, 180000, 188000, 190000, 143000, 197000, 184000, 175000};
         this.m = nArray[n] / 80;

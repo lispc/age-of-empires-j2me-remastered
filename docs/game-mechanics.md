@@ -10,13 +10,29 @@
 
 ## 主循环与时序
 
-- 【已验证】80ms 一帧（12.5fps），游戏本体写死：`c.java` 构造流程里
-  `var_com_ulysseo_mad_b_a.a(80, 1)`（`c.java:266` 附近）启动框架定时器
-  （`mad/b.java`，`java.util.Timer`）。
+- 【已验证】80ms 一帧（12.5fps）：`void_b()` 里
+  `var_com_ulysseo_mad_b_a.a(Integer.getInteger("aoe.tickms", 80), 1)`（`c.java:295`）启动
+  框架定时器（`mad/b.java`，`java.util.Timer` 固定周期）。`aoe.tickms` 是 dev 旋钮，
+  但**改它 = 整个游戏等比变速**（逻辑/动画/音乐全按比例加快），不是"更顺滑"，见下。
 - 【已验证】每帧流程：`mad/e.java` 的 `run()` → `c.w()`（仅检查退出标志）→
   `repaint()+serviceRepaints()` → `mad/b.java` 的 `paint()` → `c.onPaint(Graphics)`。
-  **`p()` 是真正的主循环体（paint-driven）**：先推进游戏逻辑再渲染。
+  **`onPaint` 是真正的主循环体（paint-driven）**：`++tickCount` 后先推进游戏逻辑再渲染；
+  世界模拟集中在 onPaint 的 default 分支（`c.java:1397-1426`：建造/移动/战斗/投射物/AI/任务脚本）。
   `tickCount` = 帧计数（`-Daoe.debug=1` 日志里的 `ar=` 标签就是它——日志字面量未随改名更新，每帧 +1）。
+- 【已验证】**帧率与逻辑深度耦合**——"提帧率"不是改一个数字的事（2026-09-01 为
+  "要不要上 30/60fps"做的考证）：
+  - 帧 = 逻辑 tick = 渲染，三者同频。所有游戏常数以 tick 计：移速累加器
+    （`tickMoveTimer` 每 tick 减 256~1536）、远程攻击冷却 15 tick（其余 8）、AI 三周期
+    （`aiBuildInterval` 等）、采集节奏、任务脚本帧计数、对话按键门（`aQ > 10`）、
+    底部跑马灯滚动（`R++`）。
+  - 渲染路径里嵌着逻辑：任务主视图 `a(Graphics)` 在画世界前跑 `mouseTick()` /
+    `tickCursor()` / `updateCamera()`（`c.java:2932-2942`）——镜头与光标按"帧"推进，
+    单独提高渲染帧率，镜头/光标速度会跟着翻倍。
+  - 帧率硬编码进内容时序：背景音乐换曲 `c()`（`c.java:329`）按 `曲长毫秒 / 80`
+    折成帧数倒计时——改 tickms 音乐换曲会按比例 skew。
+  - 按键每帧才被逻辑采样一次：80ms 输入延迟是 12.5Hz 逻辑的固有属性。
+  - 改造路线论证（变速 / 解耦渲染 / 解耦+插值 / 逻辑提速+常数对半）与结论见
+    `DEVELOPMENT.md`「深调研一」2026-09-01 补充（用户拍板：记录，先不做）。
 
 ## 按键输入模型
 
@@ -45,7 +61,7 @@
 
 ## 状态机速查（未完全考证）
 
-- `screenState` = 顶层画面状态，`p()` 内按它分发渲染/更新；`beginStateTransition()` 在 `screenState` 变化时调
+- `screenState` = 顶层画面状态，`onPaint` 内按它分发渲染/更新；`beginStateTransition()` 在 `screenState` 变化时调
   对应构建器（`t()`/`d()`/`A()`/`r()`/`n()`/`C()`/`u()`…）。
   `pendingScreenState` = 配套"当前"值（`requestStateSwitch(n)` 设置），`pendingScreenState == screenState` 表示画面稳定。
 - 【已验证】`pendingScreenState = 4` 出现在所有列表菜单屏（主菜单 / Game Mode / 选关 / 设置），
