@@ -99,7 +99,7 @@ extends GameCanvas {
     }
 
     protected final void sizeChanged(int n, int n2) {
-        this.var_com_ulysseo_mad_a_a.j(n, n2);
+        this.var_com_ulysseo_mad_a_a.onScreenSizeChanged(n, n2);
     }
 
     public final void b() {

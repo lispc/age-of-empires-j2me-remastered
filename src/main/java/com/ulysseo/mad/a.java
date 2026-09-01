@@ -33,7 +33,7 @@ public abstract class a {
 
     public abstract void onHidden();
 
-    public abstract void j(int var1, int var2);
+    public abstract void onScreenSizeChanged(int var1, int var2);
 
     public abstract void onPaint(Graphics var1);
 

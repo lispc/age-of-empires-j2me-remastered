@@ -25,9 +25,9 @@ extends MIDlet {
             b.var_javax_microedition_midlet_MIDlet_a = this;
             this.var_AgeOfEmpires_c_a = new c(this);
             b.var_boolean_a = false;
-            this.var_AgeOfEmpires_c_a.o = -1;
+            this.var_AgeOfEmpires_c_a.mediaRequestId = -1;
             this.var_AgeOfEmpires_c_a.int_b();
-            this.var_AgeOfEmpires_c_a.void_b();
+            this.var_AgeOfEmpires_c_a.startGameCanvas();
             var_boolean_a = true;
             String dev = System.getProperty("aoe.dev");
             if (dev != null) {

@@ -71,6 +71,27 @@ QEZC/X 别名）、鼠标支持（悬停高亮/单击选中/拖动框选/右键�
 
 ## 当前进行中的工作（接手请先读）
 
+### wave4 改名：屏幕度量/相机/全图视图/音乐一族（2026-09-01 深夜，紧接宽视野落地）
+
+宽视野考证中读懂的 12 个符号经 AST renamer 改名（对照表见 docs/symbols.md wave4 节）：
+setupScreenMetrics/onScreenSizeChanged/viewTileRows/bottomBarY/camTargetX·Y/mediaRequestId/
+startGameCanvas/loadKeymap/playNextBgm/requestMedia/stampThumbTile。
+要点与坑：
+
+- `j(int,int)` 是框架基类 `com.ulysseo.mad.a` 的抽象方法 override——**owner 侧改名会
+  断 override 契约**，需把 `mad.a` 声明与 `mad.b` 调用点一并改（renamer 的 owner 限定
+  不跨类继承，此步手工补的，已记入 wave4.tsv）。
+- renamer 会按词边界同步注释里的旧名引用：单字母旧名（m/o/c/b/j）在注释里大量撞名
+  （无参 m() 的 nfo 刷写、字段 m、类名 b/c），本次误伤 3 处已人工改回。**单字母符号
+  改名后必须逐条过 diff 看注释**。
+- 改名器对单字母旧名的 check 模式噪声极大（撞类名/重载/局部变量），验证以
+  编译 + regress 为准。
+- **regress 再立一功**：顺手"修"state JSON explored 统计位（0x8000→0x4000）被 golden
+  当场拦下（got 4096 vs golden 298）——0x8000 才是真迷雾位，其置位走矩形填充助手的
+  参数间接传入，字面 grep 找不到 setter；已回退并把正确语义写进现场注释与
+  symbols.md 半懂节。教训与"autoDismiss 惨案"同类：**动机制前先找齐间接写入口**。
+- 结果：REGRESS PASS，golden 无需重录（纯改名零行为变化）。
+
 ### 宽屏视野落地：run.sh 默认 720x320（2026-09-01 深夜，用户拍板"720；Java 默认不改；run.sh 改"）
 
 决策：逻辑宽 720（约 3 倍原版视野）；**Java 层默认仍 240x320**（回归/测试走默认路径，

@@ -3,7 +3,7 @@ package javax.microedition.lcdui;
 /**
  * 桌面移植层内部常量：J2ME 逻辑屏幕尺寸与桌面缩放倍数。
  * 原游戏是 240x320 竖屏（Nokia 240x320 机型）。
- * 逻辑尺寸可用 -Daoe.width / -Daoe.height 覆盖：游戏本体（m(int,int) 派生可视格数、
+ * 逻辑尺寸可用 -Daoe.width / -Daoe.height 覆盖：游戏本体（setupScreenMetrics(int,int) 派生可视格数、
  * 镜头偏移等）与渲染循环都按 screenW/H 自适应，加宽 = 看到更多战场。
  * run.sh 默认传 720x320 宽屏；不带参数（如回归测试）保持 240x320 原味。
  */

@@ -35,8 +35,8 @@ implements CommandListener {
     public int ad;
     public int J;
     public int viewTileCols;
-    public int aB;
-    public int aL;
+    public int viewTileRows;
+    public int bottomBarY;
     public int var_int_f;
     public int mapThumbStampRow;
     public int u;
@@ -86,8 +86,8 @@ implements CommandListener {
     public byte[] techFlags;
     public int cameraPxX;
     public int cameraPxY;
-    public int az;
-    public int al;
+    public int camTargetX;
+    public int camTargetY;
     public int cursorTileIdx;
     public int t;
     public int cursorTileX;
@@ -115,11 +115,11 @@ implements CommandListener {
     public byte[] var_byte_arr_b;
     public byte[] var_byte_arr_h;
     public boolean var_boolean_e = false;
-    // .nfo 存档原始字节（314B，m() 读写 RecordStore，nfoReadInt(...)/h(...) 存取）：
+    // .nfo 存档原始字节（314B，m() 读写 RecordStore——注意是另一个无参 m()，nfoReadInt(...)/h(...) 存取）：
     // [0..27) = 7 个 4 字节大端战役高分（nfoHighScores）；[28] = aG<<4|aj；
     // [29] = 音效开关；[30] = 另一开关（AgeOfEmpires.b.payCost，含义未考证）。
     public byte[] nfoData;
-    // —— 按键输入状态（键位表 void_b(129) 从 data.res #129 加载）——
+    // —— 按键输入状态（键位表 loadKeymap(129) 从 data.res #129 加载）——
     // keymap: 键码→动作码映射表，ak = 表长/2。onKeyPress（按下）查表置
     // ae（瞬时值）和 ab=ax（持续值）；游戏逻辑以 "ab != 0" 为"有键按住"
     // （如 o() 开头 if (ab == 0) return），自身从不清 ab，依赖松开事件
@@ -201,7 +201,7 @@ implements CommandListener {
     public int mapViewSavedCursorX;
     public int mapViewSavedCursorY;
     public int m = 100000;
-    public int o;
+    public int mediaRequestId;
     public boolean var_boolean_c;
     public byte[] dirTable;
     public short[][] playerUnitSlots;
@@ -248,7 +248,7 @@ implements CommandListener {
     public final int int_b() {
         AgeOfEmpires.b.void_a();
         this.keyActionEvent = 0;
-        this.void_b(129);
+        this.loadKeymap(129);
         this.nfoData = null;
         this.nfoData = new byte[314];
         this.loadNfo();
@@ -262,7 +262,7 @@ implements CommandListener {
         this.ah = 19;
         this.ay = -2;
         this.var_int_f = 19;
-        this.m(var_com_ulysseo_mad_b_a.getWidth(), var_com_ulysseo_mad_b_a.getHeight());
+        this.setupScreenMetrics(var_com_ulysseo_mad_b_a.getWidth(), var_com_ulysseo_mad_b_a.getHeight());
         this.menuTree = com.ulysseo.mad.c.byte_arr_a(117);
         this.pendingScreenState = 4;
         this.menuScreenId = 2;
@@ -283,7 +283,7 @@ implements CommandListener {
         return -1;
     }
 
-    public final void void_b() {
+    public final void startGameCanvas() {
         var_com_ulysseo_mad_b_a.b();
         var_com_ulysseo_mad_b_a.setFullScreenMode(true);
         while (!var_com_ulysseo_mad_b_a.isShown()) {
@@ -317,22 +317,22 @@ implements CommandListener {
         this.var_java_lang_String_c = a2.a(4);
     }
 
-    public final void a(int n, boolean bl) {
-        if (this.o == n) {
+    public final void requestMedia(int n, boolean bl) {
+        if (this.mediaRequestId == n) {
             return;
         }
         AgeOfEmpires.b.var_boolean_b = true;
-        this.o = n;
+        this.mediaRequestId = n;
         this.var_boolean_c = bl;
     }
 
-    public final void c() {
-        // 背景音乐换曲：曲长毫秒按"80ms/帧"折成帧数倒计时（m 在 onPaint 模拟块里每帧 --）。
+    public final void playNextBgm() {
+        // 背景音乐换曲：曲长毫秒按"80ms/帧"折成帧数倒计时（写入字段 m，在 onPaint 模拟块里每帧 --）。
         // 硬编码了原版帧率——改 aoe.tickms 会按比例 skew 换曲时机（详见 docs/game-mechanics.md「主循环与时序」）。
         int n = AgeOfEmpires.c.nextRandomInt() % 6;
         int[] nArray = new int[]{204000, 123000, 233000, 180000, 188000, 190000, 143000, 197000, 184000, 175000};
         this.m = nArray[n] / 80;
-        this.a(n + 3 + 131, false);
+        this.requestMedia(n + 3 + 131, false);
     }
 
     public final void onKeyPress(int n) {
@@ -816,6 +816,11 @@ implements CommandListener {
                         .append(",\"cam\":[").append(this.cameraPxX).append(',').append(this.cameraPxY).append(']')
                         .append(",\"sel\":").append(this.selectionMode).append(",\"aE\":").append(this.selectionMark);
                     if (this.mapTiles != null) {
+                        // explored = 无 0x8000 迷雾位的格子数（装载时大面积置位、随探索
+                        // 经矩形填充助手清除；regress golden 开局值 298）。另一迷雾位
+                        // 0x4000 由 l(int,int) 每帧在单位周围置位、渲染走暗化分支——
+                        // 疑为"当前可见/已探明"二级标记，语义未完全考证，勿据字面 grep
+                        // 下结论：0x8000 的置位走参数间接传入（a(int,int,int,int,int)）。
                         int explored = 0;
                         for (int i = 0; i < this.mapTiles.length; ++i) {
                             if ((this.mapTiles[i] & 0x8000) == 0) {
@@ -945,7 +950,7 @@ implements CommandListener {
     // ===== dev 鼠标驱动结束 =====
     // ===== dev 模式结束 =====
 
-    public final void void_b(int n) {
+    public final void loadKeymap(int n) {
         this.keymap = com.ulysseo.mad.c.byte_arr_a(n);
         this.keymapCount = this.keymap.length >> 1;
     }
@@ -1398,7 +1403,7 @@ implements CommandListener {
                     }
                     default: {
                         if (this.m-- <= 0) {
-                            this.c();
+                            this.playNextBgm();
                         }
                         this.g();
                         this.p();
@@ -1429,7 +1434,7 @@ implements CommandListener {
                 }
                 if (this.clipBottom != this.screenH && this.screenState == 6 || this.screenState == 7 && this.W != 0) {
                     int n = 0;
-                    int n2 = this.aL;
+                    int n2 = this.bottomBarY;
                     int n3 = this.screenW - 41;
                     int n4 = this.a(this.var_java_lang_String_b);
                     graphics.setClip(41, n2, n3, this.var_int_f);
@@ -1446,10 +1451,10 @@ implements CommandListener {
                     AgeOfEmpires.b.var_boolean_b = false;
                     return;
                 }
-                if (this.o < 0) {
+                if (this.mediaRequestId < 0) {
                     return;
                 }
-                if (Runtime.getRuntime().freeMemory() >= 30000L && AgeOfEmpires.b.a(this.o, this.var_boolean_c)) {
+                if (Runtime.getRuntime().freeMemory() >= 30000L && AgeOfEmpires.b.a(this.mediaRequestId, this.var_boolean_c)) {
                     AgeOfEmpires.b.var_boolean_b = false;
                 }
             }
@@ -1660,7 +1665,7 @@ implements CommandListener {
             this.var_boolean_b = true;
             switch (this.menuScreenId) {
                 case 3: {
-                    this.a(131, true);
+                    this.requestMedia(131, true);
                 }
                 case 2: 
                 case 4: {
@@ -1678,7 +1683,7 @@ implements CommandListener {
                     // 移植修改：随机地图 3 档全部解锁（原版 = aG + 1，按通关进度开放）
                     this.menuTree[n2 + 1] = 3;
                     this.menuTree[n2 + 2] = (byte)this.tutorialProgress;
-                    this.a(131, true);
+                    this.requestMedia(131, true);
                     break;
                 }
                 case 12: {
@@ -1686,7 +1691,7 @@ implements CommandListener {
                     // 移植修改：战役 7 关全部解锁（原版 = aj + 1，按通关进度开放）
                     this.menuTree[n3 + 1] = 7;
                     this.menuTree[n3 + 2] = (byte)this.campaignProgress;
-                    this.a(131, true);
+                    this.requestMedia(131, true);
                     break;
                 }
                 case 7: {
@@ -1711,7 +1716,7 @@ implements CommandListener {
                 }
                 case 0: 
                 case 10: {
-                    this.a(131, true);
+                    this.requestMedia(131, true);
                 }
             }
             return false;
@@ -2593,8 +2598,8 @@ implements CommandListener {
             System.out.println("[view] enter map: cursor=(" + this.cursorTileX + "," + this.cursorTileY
                 + ") cam=(" + this.cameraPxX + "," + this.cameraPxY + ")");
         }
-        int n2 = this.az + this.ad;
-        int n3 = (this.al << 1) + this.J;
+        int n2 = this.camTargetX + this.ad;
+        int n3 = (this.camTargetY << 1) + this.J;
         int n4 = n2 + n3 >> 5;
         int n5 = n3 - n2 >> 5;
         this.cameraPxX = n4 - n5 << 1;
@@ -2613,6 +2618,9 @@ implements CommandListener {
         this.keyActionHeld = 0;
     }
 
+    /** 全图视图（键 0 开关）：蓝底满幅 + 240x120 整图缩略图（按镜头位置摆放）+
+     *  白色四角框标出当前视野范围 + 光标/软键导航（含原版连发节奏）。
+     *  mapThumbStampRow：进图时逐行盖章地形（>=10 即可操作，64 盖完后开始逐帧叠单位）。 */
     public final void renderMapView(Graphics graphics) {
         int n;
         int n2;
@@ -2633,7 +2641,7 @@ implements CommandListener {
         if (this.mapThumbStampRow < 64) {
             for (n7 = 0; n7 <= 64 && this.mapThumbStampRow < 64; ++n7) {
                 for (n6 = 0; n6 < 64; ++n6) {
-                    this.b(this.var_javax_microedition_lcdui_Graphics_a, n6, this.mapThumbStampRow);
+                    this.stampThumbTile(this.var_javax_microedition_lcdui_Graphics_a, n6, this.mapThumbStampRow);
                 }
                 ++this.mapThumbStampRow;
             }
@@ -2653,8 +2661,8 @@ implements CommandListener {
                     // 会越界（原版即有的暗雷，全图视图偶发掉帧/卡退出）。改为用点处掩码，
                     // 对原已掩码路径数值完全一致。
                     if (((n11 != n2 || (n10 & 0xFF) != (n3 & 0xFF)) && n == 0 || n4 == this.tickCount % n6) && (this.mapTiles[n2 + ((n3 & 0xFF) << 6)] & 0x8000) == 0) {
-                        this.b(this.var_javax_microedition_lcdui_Graphics_a, n11, n10 & 0xFF);
-                        this.b(this.var_javax_microedition_lcdui_Graphics_a, n2, n3 & 0xFF);
+                        this.stampThumbTile(this.var_javax_microedition_lcdui_Graphics_a, n11, n10 & 0xFF);
+                        this.stampThumbTile(this.var_javax_microedition_lcdui_Graphics_a, n2, n3 & 0xFF);
                     }
                     ++n4;
                     n7 += 8;
@@ -2666,7 +2674,7 @@ implements CommandListener {
                 }
                 n3 = this.var_int_arr_arr_b[n5][n7 + 0];
                 n2 = n3 >>> 8;
-                this.b(this.var_javax_microedition_lcdui_Graphics_a, n2, n3 &= 0xFF);
+                this.stampThumbTile(this.var_javax_microedition_lcdui_Graphics_a, n2, n3 &= 0xFF);
             }
         }
         n7 = n8 - this.cameraPxX - 120;
@@ -2676,7 +2684,7 @@ implements CommandListener {
         graphics.setColor(0xFFFFFF);
         this.aQ = (this.tickCount & 3) >= 2 ? 4 - (this.tickCount & 3) : this.tickCount & 3;
         n2 = (this.viewTileCols >> 1) + this.aQ;
-        n3 = (this.aB >> 2) + this.aQ;
+        n3 = (this.viewTileRows >> 2) + this.aQ;
         n = this.viewTileCols / 3 + 1;
         n5 = n8 - n2;
         n4 = n9 - n3;
@@ -2793,7 +2801,11 @@ implements CommandListener {
         }
     }
 
-    public final void b(Graphics graphics, int n, int n2) {
+    /** 全图缩略图上钉一格：(tx,ty) → 1 像素（iso：x-y+120, (x+y)/2），颜色取自
+     *  mapTiles 低 12 位地形/覆盖位；空地形 768 → 海蓝（与底色同）。迷雾格（0x8000
+     *  置位使 short 变负）不走地形 switch 而画深色——"黑迷雾"。位语义详见
+     *  devMouseCmd state JSON explored 处的注释。 */
+    public final void stampThumbTile(Graphics graphics, int n, int n2) {
         int n3 = 0;
         int n4 = 0;
         int n5 = 0;
@@ -3216,7 +3228,7 @@ implements CommandListener {
             this.pendingScreenState = 6;
             return;
         }
-        this.clipBottom = this.aL;
+        this.clipBottom = this.bottomBarY;
         graphics.setClip(0, 0, this.screenW, this.screenH);
         graphics.setColor(0);
         graphics.fillRect(0, this.clipBottom, this.screenW, this.screenH - this.clipBottom);
@@ -3604,7 +3616,7 @@ implements CommandListener {
             n5 = 4;
         }
         int n6 = this.screenH - 19 + 2;
-        this.a(graphics, n4, n2, this.aL + (this.screenH - this.aL - 36 >> 1), n * 36, 0, 36, 36, 0, n5);
+        this.a(graphics, n4, n2, this.bottomBarY + (this.screenH - this.bottomBarY - 36 >> 1), n * 36, 0, 36, 36, 0, n5);
         this.a(graphics, 16, 41, n6, 1, 1, 27, 17, 0, 0);
         this.b(graphics, this.costTable[n3++], 67, n6, 2);
         this.a(graphics, 16, 99, n6, 58, 1, 27, 17, 0, 0);
@@ -3614,11 +3626,13 @@ implements CommandListener {
         this.var_java_lang_String_b = string + " " + string2;
     }
 
+    /** 相机缓动：目标 = 光标格的 iso 坐标减半屏偏移（ad/J），1/3 逐帧趋近。
+     *  最后两行维护 cursorTileIdx（光标格的 mapTiles 下标；越界或空地形 768 时置 -1）。 */
     public final void updateCamera() {
-        this.az = (this.cursorTileX - this.cursorTileY << 4) - this.ad;
-        this.al = (this.cursorTileX + this.cursorTileY << 3) - (this.J >> 1) + 8;
-        this.cameraPxX = ((this.az << 1) + this.cameraPxX + 1) / 3;
-        this.cameraPxY = ((this.al << 1) + this.cameraPxY + 1) / 3;
+        this.camTargetX = (this.cursorTileX - this.cursorTileY << 4) - this.ad;
+        this.camTargetY = (this.cursorTileX + this.cursorTileY << 3) - (this.J >> 1) + 8;
+        this.cameraPxX = ((this.camTargetX << 1) + this.cameraPxX + 1) / 3;
+        this.cameraPxY = ((this.camTargetY << 1) + this.cameraPxY + 1) / 3;
         this.cursorTileIdx = this.cursorTileX + (this.cursorTileY << 6) & 0xFFF;
         if ((this.cursorTileIdx & 0xFFFFF000) != 0) {
             this.cursorTileIdx = -1;
@@ -3629,22 +3643,29 @@ implements CommandListener {
         }
     }
 
-    public final void m(int n, int n2) {
+    /** 由逻辑分辨率派生全部屏幕度量——原游戏按多分辨率 J2ME 机型设计，加宽逻辑屏
+     * （-Daoe.width，run.sh 默认 720）即经此自动适配：可视格数、镜头居中偏移、底栏。
+     * 注意 viewTileCols 以 64px/列、viewTileRows 以 16px/行为步长（iso 菱形 32x16 的
+     * 遍历步进），不是"每屏格数"。 */
+    public final void setupScreenMetrics(int n, int n2) {
         this.screenW = n;
         this.screenH = n2;
         this.viewTileCols = (this.screenW >> 6) + 3;
-        this.aB = (this.screenH >> 4) + 5;
+        this.viewTileRows = (this.screenH >> 4) + 5;
+        // ad/J：把光标格挪到屏幕中心的 iso 空间偏移（updateCamera 用；2:1 菱形投影
+        // 的精确推导未考证，只动渲染/镜头时把它们当"半屏修正"对待即可）。
         this.ad = (this.screenW >> 1) + 64 >> 1;
         this.J = this.screenH + 48 >> 1;
-        this.aL = this.var_int_f + 19 + 2;
-        if (this.aL < 36) {
-            this.aL = 36;
+        // 底栏（消息/跑马灯条）上缘的 y：高度 = 字体高 + 顶栏高，下限 36。
+        this.bottomBarY = this.var_int_f + 19 + 2;
+        if (this.bottomBarY < 36) {
+            this.bottomBarY = 36;
         }
-        this.aL = this.screenH - this.aL;
+        this.bottomBarY = this.screenH - this.bottomBarY;
     }
 
-    public final void j(int n, int n2) {
-        this.m(n, n2);
+    public final void onScreenSizeChanged(int n, int n2) {
+        this.setupScreenMetrics(n, n2);
     }
 
     public final void e() {
@@ -5131,7 +5152,7 @@ implements CommandListener {
         }
         graphics.setColor(0);
         graphics.fillRect(0, 0, this.screenW, this.screenH);
-        int n5 = this.aB;
+        int n5 = this.viewTileRows;
         int n6 = this.cameraPxX + (this.cameraPxY << 1);
         int n7 = (this.cameraPxY << 1) - this.cameraPxX;
         int n8 = -(n6 & 0x1F) + (n7 & 0x1F);
@@ -5217,7 +5238,7 @@ implements CommandListener {
         n6 = n15;
         n7 = n16;
         n12 = 32;
-        n5 = this.aB;
+        n5 = this.viewTileRows;
         while (n5-- > 0) {
             n3 = n10 - n12;
             n2 = this.viewTileCols;
@@ -7831,7 +7852,7 @@ implements CommandListener {
                 this.clipLeft = 0;
                 this.clipBottom = this.screenH;
                 this.clipRight = this.screenW;
-                this.a(132 + n3, false);
+                this.requestMedia(132 + n3, false);
                 this.loadNfo();
                 switch (this.gameMode) {
                     case 0: {

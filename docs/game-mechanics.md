@@ -34,9 +34,9 @@
   - 改造路线论证（变速 / 解耦渲染 / 解耦+插值 / 逻辑提速+常数对半）与结论见
     `DEVELOPMENT.md`「深调研一」2026-09-01 补充（用户拍板：记录，先不做）。
 - 【已验证】**逻辑分辨率是自适配的**（2026-09-01 宽视野落地时的考证）：
-  240x320 只是设计基准，本体没有任何定宽假设——`m(int,int)`（`c.java:3628`）从
-  screenW/H 现算可视格数 `viewTileCols = (screenW>>6)+3`、`aB = (screenH>>4)+5`、
-  镜头居中偏移 `ad`/`J`、底栏边界 `aL`；`renderWorld` 按 viewTileCols 遍历；菜单
+  240x320 只是设计基准，本体没有任何定宽假设——`setupScreenMetrics(int,int)` 从
+  screenW/H 现算可视格数 `viewTileCols = (screenW>>6)+3`、`viewTileRows = (screenH>>4)+5`、
+  镜头居中偏移 `ad`/`J`、底栏边界 `bottomBarY`；`renderWorld` 按 viewTileCols 遍历；菜单
   中心锚定（`screenW>>1` + menuTree 数据偏移）；全图视图的缩略图定位/视野框/镜头
   全部屏幕相对；顶栏对 240 宽素材做居中（`screenW-240>>1`）。桌面层尺寸单点在
   `lcdui/Screen`（`-Daoe.width/height` 可覆盖，run.sh 默认传 720 宽）。

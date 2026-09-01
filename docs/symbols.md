@@ -141,12 +141,47 @@
 | tickConstruction | void_c(int,int) | 村民施工：目标建筑每 tick +1~2 HP 至 255 |
 | convertUnitType | e(int,int) | 兵种整体换形（升时代 2↔3、5↔6）：改全员类型并搬移计数 |
 
+## 已改名：wave4（2026-09-01，主循环/逻辑分辨率/相机/全图视图/音乐考证）
+
+宽视野落地会话的产出（证据与语义见 DEVELOPMENT.md「宽屏视野落地」+ 现场注释）。
+注意 `j(int,int)` 是框架基类 `com.ulysseo.mad.a` 抽象方法的 override，两侧同名一起改。
+字段（AgeOfEmpires.c）：
+
+| 新名 | 旧名 | 语义 |
+|---|---|---|
+| viewTileRows | aB | 可视格行数（`(screenH>>4)+5`，iso 16px/行步长） |
+| bottomBarY | aL | 底栏（消息/跑马灯条）上缘 y |
+| camTargetX / camTargetY | az / al | 相机缓动目标 = 光标格 iso 坐标 - 半屏偏移（ad/J） |
+| mediaRequestId | o | 当前请求的媒体资源 id（-1 无；requestMedia 置，onPaint 异步装） |
+
+方法（AgeOfEmpires.c）：
+
+| 新名 | 旧名 | 语义 |
+|---|---|---|
+| setupScreenMetrics | m(int,int) | 由逻辑分辨率派生全部屏幕度量（宽视野 -Daoe.width 经此生效） |
+| onScreenSizeChanged | j(int,int) | 框架 sizeChanged 回调（= setupScreenMetrics） |
+| startGameCanvas | void_b() | 显示 Canvas + 启动 80ms 主循环定时器（aoe.tickms） |
+| loadKeymap | void_b(int) | 键位表加载（data.res #129 → keymap） |
+| playNextBgm | c() | 随机选下一首 BGM（曲长 ms/80 折帧倒计时，硬编码原版帧率） |
+| requestMedia | a(int,boolean) | 请求播放媒体资源（同 id 幂等） |
+| stampThumbTile | b(Graphics,int,int) | 全图缩略图上钉一格（1px/格，迷雾格画深色） |
+
 ## 半懂（保留旧名，先补注释）
 
 aH（转场计时/激活参数双职责）、ap（返回节点）、var_int_arr_e（当局资源拷贝，
 与 nfoHighScores 的关系待证）、var_int_arr_a[4]（脚本帧计数器，DSL 条件 2 用，
 每帧 +1、动作 3 清零——已并入 AI/DSL 考证）、var_byte_arr_a（任务数据镜像，脚本会写执行标记——快照已包含）、var_boolean_k、
-aI/aB 中的 aB、E/G/x/T/aD 等零散 int。
+aI/aB 中的 aB、E/G/x/T/aD 等零散 int、
+ad/J（相机半屏居中偏移，2:1 菱形投影精确推导未考证——只当"半屏修正"用）、
+m（int 字段：BGM 曲长帧倒计时，但菜单/世界两态都有写入点，双职责未全证）、
+l(int,int)（在单位周围 3×3 置/清迷雾位 0x4000，重标时机与用途未证）。
+
+迷雾位考证（2026-09-01，曾被字面 grep 误导后由 regress golden 纠正）：
+mapTiles 的 0x8000 = 未探索（装载大面积置位、随探索清除；short 置位后变负，
+stampThumbTile 据此走深色分支 = 黑迷雾）；0x4000 = 二级暗化位（l(int,int) 每帧
+在单位周围置位；世界地块渲染走暗化变体——疑为"当前可见/已探明"两级迷雾，
+细节未证）。0x8000 的置位走 `a(int,int,int,int,int)` 矩形填充的参数间接传入，
+字面 grep "0x8000" 找不到 setter。
 
 ## 未考证（保留旧名）
 

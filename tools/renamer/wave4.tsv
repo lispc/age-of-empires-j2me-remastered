@@ -1,0 +1,23 @@
+# wave4：主循环/逻辑分辨率/相机/全图视图考证后的改名（2026-09-01 宽视野落地会话）
+# 只收录已完全读懂语义的符号。ad/J（相机居中偏移的精确投影公式）、m（BGM 倒计时/菜单
+# 计时双职责）、l(int,int)（雾重标用途存疑）仍属半懂，只加注释不改名。
+# 格式：kind<TAB>owner<TAB>oldName<TAB>params<TAB>newName
+# ---- 屏幕度量（setupScreenMetrics 从 screenW/H 派生；宽视野 -Daoe.width 即经此生效）----
+M	AgeOfEmpires.c	m	(int,int)	setupScreenMetrics
+M	AgeOfEmpires.c	j	(int,int)	onScreenSizeChanged
+F	AgeOfEmpires.c	aB	-	viewTileRows
+F	AgeOfEmpires.c	aL	-	bottomBarY
+# ---- 相机（updateCamera 的缓动目标 = 光标格 iso 坐标 - 居中偏移）----
+F	AgeOfEmpires.c	az	-	camTargetX
+F	AgeOfEmpires.c	al	-	camTargetY
+# ---- 全图视图（240x120 整图缩略图，1px/格图钉地形；0x4000=未探索画深色）----
+M	AgeOfEmpires.c	b	(Graphics,int,int)	stampThumbTile
+# ---- 媒体/背景音乐 ----
+F	AgeOfEmpires.c	o	-	mediaRequestId
+M	AgeOfEmpires.c	a	(int,boolean)	requestMedia
+# ---- 启动/键表 ----
+M	AgeOfEmpires.c	void_b	()	startGameCanvas
+M	AgeOfEmpires.c	void_b	(int)	loadKeymap
+# ---- BGM 换曲（m 倒计时到 0 时选下一曲，见 c() 现场注释的 /80 硬编码）----
+M	AgeOfEmpires.c	c	()	playNextBgm
+M	com.ulysseo.mad.a	j	(int,int)	onScreenSizeChanged
