@@ -315,6 +315,8 @@ public abstract class Canvas extends Displayable {
     /** Swing 呈现组件：固定整数倍尺寸，把帧缓冲 1:1 贴窗，键盘/鼠标事件转成游戏输入。 */
     private static final class CanvasPanel extends JComponent implements KeyListener, java.awt.event.MouseListener, java.awt.event.MouseMotionListener {
         private final Canvas canvas;
+        /** 当前按住（已收到 keyDown、还没收到 keyUp）的键码，用于识别 OS 自动重复。 */
+        private final java.util.HashSet<Integer> pressedCodes = new java.util.HashSet<>();
 
         CanvasPanel(Canvas canvas) {
             this.canvas = canvas;
@@ -323,6 +325,13 @@ public abstract class Canvas extends Displayable {
             addKeyListener(this);
             addMouseListener(this);
             addMouseMotionListener(this);
+            // 失焦时按住的键不会再有 keyUp，清空按下表，避免回来后首次按键被误判为自动重复
+            addFocusListener(new java.awt.event.FocusAdapter() {
+                @Override
+                public void focusLost(java.awt.event.FocusEvent e) {
+                    pressedCodes.clear();
+                }
+            });
         }
 
         @Override
@@ -357,8 +366,16 @@ public abstract class Canvas extends Displayable {
             }
             int code = mapKeyCode(e);
             if (code != 0) {
-                // 同一键的新按下使还未投递的松开失效（快速连点场景）
                 synchronized (canvas.pendingKeyReleases) {
+                    // 物理键还按着（keyUp 未到）又来的同一键码 keyDown 是 OS 自动重复。
+                    // MIDP 语义里它应走 keyRepeated 回调（游戏未实现 = 忽略）；
+                    // 若当作新按下投递，脉冲型按键（如 0 开关全图）会被连发打成
+                    // "退出又立刻重进"的死循环。
+                    if (!pressedCodes.add(code)) {
+                        canvas.keyRepeated(code);   // MIDP 语义：重复键走 keyRepeated（游戏未实现 = 忽略）
+                        return;
+                    }
+                    // 同一键的新按下使还未投递的松开失效（快速连点场景）
                     canvas.pendingKeyReleases.remove(Integer.valueOf(code));
                 }
                 canvas.keyPressed(code);
@@ -369,6 +386,7 @@ public abstract class Canvas extends Displayable {
         public void keyReleased(KeyEvent e) {
             int code = mapKeyCode(e);
             if (code != 0) {
+                pressedCodes.remove(Integer.valueOf(code));
                 // 不立即投递：排队，等本次 paint 之后 flushPendingKeyReleases 再送达
                 synchronized (canvas.pendingKeyReleases) {
                     canvas.pendingKeyReleases.add(code);
