@@ -87,9 +87,12 @@ tick 戳输入 trace + tools/replaycheck.sh 双跑对拍）、**卡死看门狗*
 
 `mkfifo /tmp/aoe-mouse` 后 `echo "指令" > /tmp/aoe-mouse`；CLI 包装 `tools/aoectl`。
 
-- 输入：`move x y` / `press` / `release` / `click` / `rclick` / `drag x1 y1 x2 y2` /
+- 输入：`move x y` / `press` / `release` / `click x y` / `rclick` / `drag x1 y1 x2 y2` /
+  `ctile <tx> <ty>`（tile 直点：实时相机换算，无 click 的镜头缓动漂移；240x320 标定）/
   `key <键码>`（单发；合成松开要求"再完整过一帧"防 paint 中段吞键——2026-09-01 修）/
   `tapk <键码> <期望aA> [重试]`（带验证重注）
+  ⚠️ 坐标 = 当前屏幕逻辑分辨率（默认 240x320；设 aoe.width=480 则为 480x535）。
+  x≥宽-14/y≥高-14 的贴边区域会触发边缘滚动。
 - 观测：`state`（写 `<fifo>.json` 快照：aA/am/ar/光标/相机/选中/迷雾/单位表）/
   `until <aA> [秒]` / `probe x y`（只拾取）/ `dump <png>`（同步导帧）/ `fields <txt>`
 - 编排：`script <文件>`（批量，支持 `sleep 毫秒`、#注释）

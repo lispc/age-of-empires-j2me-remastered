@@ -819,6 +819,22 @@ implements CommandListener {
                 case "rclick":
                     this.mouseA(3, Integer.parseInt(p[1]), Integer.parseInt(p[2]));
                     break;
+                case "ctile": {
+                    // tile 直点：用当前相机把 tile 中心换算回屏幕坐标再走 click 链路。
+                    // 普通 click 的屏幕坐标→tile 映射随镜头缓动漂移（鼠标拾取用的是
+                    // 拾取那一刻的相机），远距精确点击不可行；ctile 用实时 cameraPx
+                    // 计算，无漂移。换算式 240x320 实测标定（第8轮玩家推导验证）：
+                    //   sx=(tx-ty)*16-camX+28  sy=(tx+ty)*8-camY+76
+                    int tx = Integer.parseInt(p[1]), ty = Integer.parseInt(p[2]);
+                    int sx = (tx - ty) * 16 - this.cameraPxX + 28;
+                    int sy = (tx + ty) * 8 - this.cameraPxY + 76;
+                    this.mouseA(1, sx, sy);
+                    Thread.sleep(200);
+                    this.mouseA(2, sx, sy);
+                    System.out.println("[devMouse] ctile " + tx + "," + ty + " -> screen "
+                        + sx + "," + sy + " (cam " + this.cameraPxX + "," + this.cameraPxY + ")");
+                    break;
+                }
                 case "drag": {
                     int x1 = Integer.parseInt(p[1]), y1 = Integer.parseInt(p[2]);
                     int x2 = Integer.parseInt(p[3]), y2 = Integer.parseInt(p[4]);
