@@ -8,7 +8,8 @@
 
 反编译移植完成度很高：渲染管线（v3 设备分辨率持久帧缓冲）、键鼠双全（悬停高亮/
 单击选中/拖框选/右键群移）、宽视野（run.sh 默认 720x320 逻辑宽，原版 240 可退回）、
-快照存档 v2（F5/F9 + 自动 checkpoint + devBoot 直启）、**确定性回放**（RNG 分流 +
+快照存档 v3（F5/F9 + 自动 checkpoint + devBoot 直启；v3=techFlags 解锁位持久化，
+v2 旧档可读）、**确定性回放**（RNG 分流 +
 tick 戳输入 trace + tools/replaycheck.sh 双跑对拍）、**卡死看门狗**（Timer 线程停跳
 自动打栈进日志）。反编译血统是 CFR，已采信 Vineflower 为对照 oracle（见「不变量与坑」）。
 

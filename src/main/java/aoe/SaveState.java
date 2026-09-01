@@ -15,11 +15,15 @@ import java.io.IOException;
  * v2（2026-09-01）：末尾新增 tickCount——确定性回放（tools/replaycheck.sh）的锚：
  * 模拟里有 tick 奇偶/取模逻辑（回血 tickCount&8、投射物旋转起点、BGM 倒计时），
  * 只恢复世界状态不恢复 tick 的话，同一份输入也会走出不同轨迹。
+ * v3（2026-09-01）：末尾新增 techFlags——科技/建造解锁位（建筑建成与研究完成
+ * 会就地置位，如 House 建成 techFlags[0]=1 解锁村民训练）。不持久化的话，
+ * 读档后所有已解锁的生产/研究槽回退到资源模板（玩家第6轮实report：读档局
+ * '*' 生产菜单空，无法出兵）。
  * 覆写点只在 EDT 帧首（payCost.p() 里消费 pending 字节），避免和渲染遍历打架。
  */
 public final class SaveState {
     static final int MAGIC = 0x414F4531;    // "AOE1"
-    static final int VERSION = 2;
+    static final int VERSION = 3;
 
     private SaveState() {
     }
@@ -88,6 +92,8 @@ public final class SaveState {
         out.writeInt(g.tickCount);
         out.writeInt(c.rngStateHi);
         out.writeInt(c.rngStateLo);
+        // v3：科技/建造解锁位（建筑建成/研究完成就地置位，见类注释）
+        writeBytes(out, g.techFlags);
         out.flush();
         return bos.toByteArray();
     }
@@ -99,7 +105,7 @@ public final class SaveState {
             throw new IOException("bad magic");
         }
         int version = in.readInt();
-        if (version != VERSION) {
+        if (version < 2 || version > VERSION) {
             throw new IOException("bad version " + version);
         }
         g.devLastNavSpec = readString(in);
@@ -153,6 +159,11 @@ public final class SaveState {
         g.tickCount = in.readInt();
         c.rngStateHi = in.readInt();
         c.rngStateLo = in.readInt();
+        if (version >= 3) {
+            // v3：科技/建造解锁位。v2 旧档没有此段——保持装载模板不动（旧档
+            // 读回来与当年行为一致，只是那时还没有发现这个回退问题）。
+            readBytes(in, g.techFlags);
+        }
         // 强制下一帧全量重画 + 小地图重新盖章（探索可能有变化）
         g.mapThumbStampRow = 0;
         g.onShown();
@@ -184,7 +195,7 @@ public final class SaveState {
             throw new IOException("bad magic");
         }
         int version = in.readInt();
-        if (version != VERSION) {
+        if (version < 2 || version > VERSION) {
             throw new IOException("bad version " + version);
         }
     }
