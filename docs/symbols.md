@@ -124,7 +124,8 @@
 | findNearbyResource | short_a(int,int) | 村民采集目标：就近资源格 |
 | canAfford | boolean_a(int,int,int) | 价格检查（玩家, 类别 0=单位/1=科技/2=建筑, 类型；costTable 行 = 类别×10/26 偏移 + id） |
 | queueUnitTraining | int_c(int,int) | 把某类型单位的训练排队到对应生产建筑 |
-| nextRandomInt | int_a() 静态 | 全局 RNG 一步，返回低 8 位 |
+| nextRandomInt | int_a() 静态 | 全局 RNG 一步，返回低 8 位。**只许模拟消费**（2026-09-01 起）：剩余消费点仅 tickConstruction 掷骰；BGM 选曲已分流到 nextBgmRandomInt（同 LCG 独立状态），确定性回放的前提 |
+| nextBgmRandomInt | （新增，非原名） | 化妆品 RNG：只服务 playNextBgm 选曲。新增非模拟随机需求一律走这里 |
 
 ## 已改名：wave3（2026-09-01，兵种/建筑属性 + 菜单考证）
 

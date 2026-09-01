@@ -71,6 +71,90 @@ QEZC/X 别名）、鼠标支持（悬停高亮/单击选中/拖动框选/右键�
 
 ## 当前进行中的工作（接手请先读）
 
+### 反编译器交叉对比：采纳 Vineflower 1.10.1 为基准 oracle（2026-09-01 晚，用户追问"CFR 还有别的问题吗"）
+
+对原 jar 用三家引擎各反编译一遍并逐方法对比控制流关键字计数
+（对比脚本思路 + 结果全记录于此）：
+
+| 引擎 | 已知伪影点(aimProjectiles/G) | body 末尾 continue(c.java) | 备注 |
+|---|---|---|---|
+| CFR 0.152（现用） | **错**——丢失循环出口 | 9 处（1 处致命） | MIT，tools/cfr.jar |
+| **Vineflower 1.10.1** | **对**——`if (--n<=0) break;` | **0 处** | GPL+Classpath例外，tools/vineflower-1.10.1.jar |
+| Procyon 0.6.0 | 对（带标签 continue） | 24 处 | Apache-2.0，不著.unpack 噪声多 |
+
+方法级控制流计数对比（CFR↔VF）：207 个方法中 70 个有差异，抽样仲裁
+（地图生成 d.e 的 6 个 continue = for 计数循环内纯风格；脚本解释器大 switch 的
+case 15↔38 = 表渲染方式）均为等价渲染。**结论**：CFR 在本 jar 上至少有一类
+"静默丢失循环出口"伪影，Vineflower 渲染最忠实。规程：
+
+- **对照 oracle**：`decompiled-vf/`（Vineflower 全套输出已入库，重生成命令见其
+  README）。src 里控制流可疑时，先查本树同方法的 VF 渲染，再 `javap -c` 对照
+  原 jar 仲裁（原 jar 路径见"注意事项与坑"）。
+- src 工作树不迁移到 VF 输出（改名/注释投入太大）；仅当新考证大块逻辑时可用
+  VF 输出做底稿对照。
+- 在手的 all-clear：全部 11 处 body 末尾 continue 已逐一审计（见卡死条目），
+  无已知未修伪影；残余风险主要在"计数对比法覆盖不到的等价改写"，交给
+  看门狗 + replaycheck 兜底。
+
+### 确定性回放落地（2026-09-01 晚，深调研三 P1 实施，用户拍板"做了吧"）
+
+模拟轨迹自此**纯"任务 + 输入序列"决定**，事件回放成为可用调试工具：
+
+- **RNG 分流**：`playNextBgm` 选曲改走独立 LCG `nextBgmRandomInt`（化妆品流），
+  全局 `nextRandomInt` 只剩模拟消费（tickConstruction 掷骰）。这是回放的前提：
+  换曲时机随墙钟漂移，共用一条流会让战斗掷骰随"听了几首曲子"发散。
+  **golden 已重录**（--update）：模拟 RNG 消耗序列变化 → 建造掷骰结果变化。
+  新增非模拟随机需求一律走化妆品流，勿动 nextRandomInt。
+- **快照 v2**：SaveState 末尾新增 tickCount（旧 v1 档不再可读，版本校验拦截）。
+  模拟含 tick 奇偶/取模逻辑（回血 &8、投射物旋转起点、BGM 倒计时），不钉 tick
+  的读档走不出可复现轨迹。v1 档均为 dev 临时产物，无迁移价值。
+- **输入 trace**：`[void_a]` 行追加 `ar=<tick>`；`mouseA` 新增
+  `[input] ar=<tick> move x y`；onKeyPress 新增 `[input] ar=<tick> key <键码>`。
+  trace 文件格式（`#` 注释）：
+  `t <相对tick> key <键码>` / `t <相对tick> move <x> <y>`。
+- **FIFO `replaytrace <file> [baseTick]`**：到点注入（等 tickCount≥目标后在
+  dev-mouse 线程直呼 onKeyPress/mouseA，与真实输入同路径）。相对 tick 原点 =
+  最近一次 load 落地的 tickCount（快照 v2 钉住）；未 load 则为指令执行瞬间；
+  双跑对拍必须显式传同一 baseTick。
+- **FIFO `stopat <tick>`**：确定性停表（等 tickCount≥目标后取消主循环 Timer）。
+  对拍取态必须停表——回放结束后任由墙钟推进，ar 抖 ±几 tick，tile 级比较假失败。
+- **tools/replaycheck.sh**：自检工具——合成固定 trace，A 跑（存基准档→回放→
+  stopat 定点）与 B 跑（读基准档→回放→stopat 同一 tick）的最终 state JSON 与
+  [input] 轨迹必须逐字节一致。这是"回放可用"本身的回归测试，工具链任何动
+  时钟/线程的改动后应重跑。
+- **实机卡死→回放复现工作流**（这套工具的最终目的）：
+  1. 用户窗口会话的日志里已有带 tick 戳的输入流（`[input] ar=…`）+ 自动
+     checkpoint（v2 快照，含 tickCount）。
+  2. 提取现场：从卡死前最后一次 `[load]`/开局起，把 `[input]` 行转成 trace
+     文件（`[input] ar=482 key 48` → `t 482 key 48`，减去基准 tick 偏移），
+     存档取 auto.aoesave。
+  3. 复现：`-Daoe.dev=campaign:N`（或 tutorial）headless/窗口 + FIFO
+     `load auto.aoesave` → `replaytrace trace.txt <基准tick>` → 复现后
+     `stopat <tick>` 冻结现场，`fields`/`state`/`dump` 随意验尸；
+     配合 `[watchdog]` 栈直接定位死循环行。
+  4. 单调收敛调试：trace 可以截短二分（回放前半段 + 1 个可疑事件），迭代定位
+     最小触发输入。
+
+**replaycheck 八轮排雷记录**（每一轮都是一类真实的非确定性源，后人加输入/定时器
+相关功能前先读这页）：
+1. 回放结束后由墙钟决定多走几 tick → 对拍 ar 抖 ±几 tick，tile 级比较假失败。
+   → 加 FIFO `stopat`（到点取消 Timer，冻在精确 tick 再取态）。
+2. 基准 tick 取"存档后的 state ar"错——`save` 只是指令排队，真正捕获在帧首，
+   两者可差十几 tick → `[save]` 行补 `ar=`（捕获时刻），基准以它为准。
+3. load→replaytrace 的启动延迟让首个事件"已被越过"→ trace 留 ≥300 tick lead-in
+   （并用确定性 -6 前奏关掉 load 弹的对话框）。
+4. **DevHarness 看门狗是墙钟驱动的输入源**：载入后弹对话框时它按 300ms 节奏乱按
+   -6（stable 判定被打断导致它一直不退出）→ `-Daoe.harnessQuiet=1` 静音，
+   对话框交给 trace 前奏。
+5. `save` 被拒（对话框开着 aA=2）→ 脚本重试并在 aA=2 时补 -6——这些按键发生在
+   基准存档之前，B 的 load 会整体丢弃，不破坏确定性。
+6. 脚本重复行导致 replaytrace 跑两遍（第二轮 blast 到同一 tick）——"回放做了两次"
+   表现为 input 数翻倍、全部挤在同一 ar。
+7. 快照必须钉 tickCount + RNG 静态（见上）；A 流程也要"读自己的档再回放"，
+   让 load 副作用（onShown 强制重建等）在 A/B 两侧同样发生。
+8. 终局判定必须双通道：state JSON 一致 + [input] 轨迹一致（后者验证注入时刻，
+   前者验证注入效果）。
+
 ### 卡死修复：aimProjectiles 待瞄准扫描死旋 + 通用卡死看门狗（2026-09-01，用户报告"玩着玩着卡死"）
 
 **现象**（run-20260901-150628.log，战役任务 in-mission ~6800 tick 处）：`[dbg] ar=7098`
@@ -475,8 +559,8 @@ B 完成后上分支试吃战场观感，再决定是否投入 C。注意输入�
 3. **注入时刻不贴帧**：FIFO 指令在 dev-mouse 线程即时生效，与"用户在第 N tick 按下"
    不是同一语义。
 
-**路线图**（按价值/成本排序，均未实施，等用户点头）：
-- **P1 确定性回放三件套**（合计 ~2 小时，是"回放成为调试工具"的充分条件）：
+**路线图**（P1 已于 2026-09-01 晚实施，见"确定性回放落地"条目；P2~P5 未做）：
+- **P1 确定性回放三件套**（合计 ~2 小时，是"回放成为调试工具"的充分条件）✅：
   a) **RNG 分流**：BGM 选曲改用独立 LCG（或 java.util.Random 固定种子），全局
      nextRandomInt 从此只服务模拟——模拟变纯输入决定。代价：RNG 消耗序列变化 →
      regress golden 需重录一次（regress 有重录模式，一次性成本）。

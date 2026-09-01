@@ -33,6 +33,13 @@
   - 按键每帧才被逻辑采样一次：80ms 输入延迟是 12.5Hz 逻辑的固有属性。
   - 改造路线论证（变速 / 解耦渲染 / 解耦+插值 / 逻辑提速+常数对半）与结论见
     `DEVELOPMENT.md`「深调研一」2026-09-01 补充（用户拍板：记录，先不做）。
+- 【已验证】**确定性模型（2026-09-01 起）**：模拟 = 纯"任务 + 输入序列 + tick"决定。
+  全局 `nextRandomInt`（LCG，种子来自任务资源字节）**只许模拟消费**（现存唯一消费点
+  `tickConstruction` 的 +1 掷骰；地图生成器 `AgeOfEmpires.d` 不用全局 RNG）；BGM 选曲
+  走独立化妆品流 `nextBgmRandomInt`（此前选曲混用全局流，回放轨迹随"听了几首曲子"
+  发散）。快照 v2 把 tickCount 一并钉住（模拟含 `tickCount&8` 回血、投射物旋转起点等
+  tick 奇偶逻辑）。工具链：`[input] ar=<tick>` 输入 trace、FIFO `replaytrace`、
+  双跑对拍自检 `tools/replaycheck.sh`——详见 DEVELOPMENT.md「确定性回放落地」。
 - 【已验证】**逻辑分辨率是自适配的**（2026-09-01 宽视野落地时的考证）：
   240x320 只是设计基准，本体没有任何定宽假设——`setupScreenMetrics(int,int)` 从
   screenW/H 现算可视格数 `viewTileCols = (screenW>>6)+3`、`viewTileRows = (screenH>>4)+5`、

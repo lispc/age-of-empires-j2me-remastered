@@ -7,16 +7,19 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 /**
- * 任务内快照存档（v1）。设计：不重建世界，恢复 = 先让原版管线把同一个任务
+ * 任务内快照存档（v2）。设计：不重建世界，恢复 = 先让原版管线把同一个任务
  * （同 ac/aF）装载完，再把快照里的状态数组/指针覆写回去（"同任务重载+覆写"）。
  * 字段完整性由 DevFields 存→载→diff 验收。
  *
  * 格式：int magic "AOE1" | int version | 定长顺序字段段（见 capture）。
+ * v2（2026-09-01）：末尾新增 tickCount——确定性回放（tools/replaycheck.sh）的锚：
+ * 模拟里有 tick 奇偶/取模逻辑（回血 tickCount&8、投射物旋转起点、BGM 倒计时），
+ * 只恢复世界状态不恢复 tick 的话，同一份输入也会走出不同轨迹。
  * 覆写点只在 EDT 帧首（payCost.p() 里消费 pending 字节），避免和渲染遍历打架。
  */
 public final class SaveState {
     static final int MAGIC = 0x414F4531;    // "AOE1"
-    static final int VERSION = 1;
+    static final int VERSION = 2;
 
     private SaveState() {
     }
@@ -80,6 +83,11 @@ public final class SaveState {
         out.writeInt(g.selectedSlot);
         out.writeInt(g.p);
         out.writeByte(g.var_byte_a);
+        // v2：tickCount + 全局 RNG 静态（确定性回放锚，见类注释）。RNG 不钉住的话，
+        // 读档后的建造掷骰等模拟消费随"读档前听了多少菜单音乐/走了多少 tick"发散。
+        out.writeInt(g.tickCount);
+        out.writeInt(c.rngStateHi);
+        out.writeInt(c.rngStateLo);
         out.flush();
         return bos.toByteArray();
     }
@@ -141,6 +149,10 @@ public final class SaveState {
         g.selectedSlot = in.readInt();
         g.p = in.readInt();
         g.var_byte_a = in.readByte();
+        // v2：tickCount + 全局 RNG 静态（确定性回放锚，见类注释）
+        g.tickCount = in.readInt();
+        c.rngStateHi = in.readInt();
+        c.rngStateLo = in.readInt();
         // 强制下一帧全量重画 + 小地图重新盖章（探索可能有变化）
         g.mapThumbStampRow = 0;
         g.onShown();

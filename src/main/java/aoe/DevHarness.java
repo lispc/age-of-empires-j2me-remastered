@@ -20,6 +20,10 @@ public final class DevHarness {
         AoeMidlet midlet = new AoeMidlet();
         midlet.startApp();
         AgeOfEmpires.c game = midlet.game();
+        // aoe.harnessQuiet=1:进任务后不再自动按 -6 推对话框——300ms 墙钟节奏是
+        // 非确定输入源,会破坏确定性回放(tools/replaycheck.sh);对话框改由 trace
+        // 的确定性 -6 前奏负责。
+        boolean quiet = System.getProperty("aoe.harnessQuiet") != null;
         long deadline = System.currentTimeMillis() + 60000;
         boolean inMission = false;
         int stable = 0;
@@ -28,7 +32,9 @@ public final class DevHarness {
                 inMission = true;
             }
             if (inMission && game.screenState == 2) {
-                game.onKeyPress(-6);        // 推任务内的教程对话框（F1 = 左软键）
+                if (!quiet) {
+                    game.onKeyPress(-6);        // 推任务内的教程对话框（F1 = 左软键）
+                }
                 stable = 0;
             } else if (inMission && game.screenState == 6 && ++stable >= 8) {
                 break;                  // 主视图稳定 ~2.4s：对话框已推完

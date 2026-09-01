@@ -339,7 +339,10 @@ implements CommandListener {
     public final void playNextBgm() {
         // 背景音乐换曲：曲长毫秒按"80ms/帧"折成帧数倒计时（写入字段 m，在 onPaint 模拟块里每帧 --）。
         // 硬编码了原版帧率——改 aoe.tickms 会按比例 skew 换曲时机（详见 docs/game-mechanics.md「主循环与时序」）。
-        int n = AgeOfEmpires.c.nextRandomInt() % 6;
+        // 选曲走独立的"化妆品 RNG"（nextBgmRandomInt），不消耗模拟用全局 nextRandomInt——
+        // 这是模拟轨迹"纯任务+输入决定"（确定性回放，tools/replaycheck.sh）的前提：
+        // 换曲时机随墙钟漂移，若与模拟共用一条流，战斗掷骰等结果会随听了几首曲子而变。
+        int n = nextBgmRandomInt() % 6;
         int[] nArray = new int[]{204000, 123000, 233000, 180000, 188000, 190000, 143000, 197000, 184000, 175000};
         this.m = nArray[n] / 80;
         this.requestMedia(n + 3 + 131, false);
@@ -357,7 +360,9 @@ implements CommandListener {
             break;
         }
         if (System.getProperty("aoe.debug") != null) {
-            System.out.println("[void_a] key=" + n + " ae=" + this.keyActionEvent + " ak=" + this.keymapCount);
+            System.out.println("[void_a] key=" + n + " ae=" + this.keyActionEvent + " ak=" + this.keymapCount + " ar=" + this.tickCount);
+            // 确定性回放 trace 行（tools/replaycheck.sh）：ar= 发生时的 tick
+            System.out.println("[input] ar=" + this.tickCount + " key " + n);
         }
         this.keyActionPulse = this.keyActionHeld = this.keyActionEvent;
     }
@@ -689,7 +694,9 @@ implements CommandListener {
                     java.nio.file.Files.createDirectories(p.getParent());
                 }
                 java.nio.file.Files.write(p, data);
-                System.out.println("[save] wrote " + path + " (" + data.length + "B)");
+                // ar= 是捕获时刻的 tick（确定性回放的基准，tools/replaycheck.sh 依赖）——
+                // devSaveTo 只是指令排队，真正捕获在帧首，与指令时刻可差十几 tick
+                System.out.println("[save] wrote " + path + " (" + data.length + "B) ar=" + this.tickCount);
                 this.devToast("Saved");
             } catch (Exception e) {
                 System.out.println("[save] " + path + ": " + e);
@@ -701,7 +708,9 @@ implements CommandListener {
             this.devPendingRestore = null;
             try {
                 aoe.SaveState.apply(this, data);
-                System.out.println("[load] applied (" + data.length + "B)");
+                // 回放锚：trace 的相对 tick 坐标从这里起算（快照 v2 已钉住 tickCount）
+                this.devTraceBaseTick = this.tickCount;
+                System.out.println("[load] applied (" + data.length + "B) traceBase=" + this.devTraceBaseTick);
                 this.devToast("Loaded");
             } catch (Exception e) {
                 System.out.println("[load] apply: " + e);
@@ -715,7 +724,11 @@ implements CommandListener {
      *  辅助功能/屏幕录制授权、无法注入真实 CGEvent 时，用它在游戏层驱动和验证
      *  鼠标逻辑；dump 指令同步导出帧缓冲（配合截图验证渲染结果）。
      *  指令：move x y | press x y | release x y | click x y | rclick x y |
-     *        drag x1 y1 x2 y2 | key <J2ME键码> | dump <png路径> | exit
+     *        drag x1 y1 x2 y2 | key <键码> | tapk <键码> <期望aA> [重试] |
+     *        state（写 <fifo>.json 快照）| until <aA> [超时s] | probe x y |
+     *        script <文件> | save [路径] | load <路径> | fields <输出> |
+     *        replaytrace <trace文件> [baseTick]（确定性回放，见 tools/replaycheck.sh）|
+     *        stopat <tick>（确定性停表，对拍取态用）| dump <png路径> | exit
      *  用法：mkfifo /tmp/aoe-mouse 后启动游戏，echo "move 120 160" > /tmp/aoe-mouse */
     public void devStartMouseFifo(String path) {
         this.devFifoPath = path;
@@ -754,6 +767,9 @@ implements CommandListener {
     }
 
     private String devFifoPath;
+    // 确定性回放锚：load 成功后的 tickCount；replaytrace 的相对 tick 以此为原点
+    // （无 load 时以指令执行瞬间为原点）。见 replaytrace 指令与 tools/replaycheck.sh。
+    private long devTraceBaseTick = -1;
     private boolean devInScript;
 
     /** 执行一条 FIFO 指令；返回 false 表示 exit。 */
@@ -946,6 +962,76 @@ implements CommandListener {
                     var_com_ulysseo_mad_b_a.dumpFramebuffer(p[1]);
                     System.out.println("[devMouse] dumped " + p[1]);
                     break;
+                case "replaytrace": {
+                    // 确定性回放：按 trace 文件逐行到点注入输入。行格式（# 注释）：
+                    //   t <相对tick> key <键码>
+                    //   t <相对tick> move <x> <y>
+                    // 相对 tick 的原点：先 load 存档 → 快照 v2 钉住的 tickCount；
+                    // 未 load 则为本指令执行瞬间。可选第三参显式指定原点（双跑对拍
+                    // 时两侧必须一致）。事件在 dev-mouse 线程等 tickCount>=目标再
+                    // 走 onKeyPress/mouseA——与真实输入同一条游戏内路径。
+                    String file = p[1];
+                    long base = this.devTraceBaseTick >= 0 ? this.devTraceBaseTick : this.tickCount;
+                    if (p.length > 2) {
+                        base = Long.parseLong(p[2]);
+                    }
+                    int played = 0;
+                    try (java.io.BufferedReader tr = new java.io.BufferedReader(
+                            new java.io.InputStreamReader(new java.io.FileInputStream(file), "UTF-8"))) {
+                        String tl;
+                        while ((tl = tr.readLine()) != null) {
+                            tl = tl.trim();
+                            if (tl.isEmpty() || tl.startsWith("#")) {
+                                continue;
+                            }
+                            String[] q = tl.split("\\s+");
+                            if (!"t".equals(q[0])) {
+                                System.out.println("[devMouse] replaytrace bad line: " + tl);
+                                continue;
+                            }
+                            long target = base + Long.parseLong(q[1]);
+                            long waitStart = System.currentTimeMillis();
+                            while (this.tickCount < target) {
+                                if (System.currentTimeMillis() - waitStart > 600_000L) {
+                                    System.out.println("[devMouse] replaytrace: tick 停滞，放弃剩余事件");
+                                    tl = null;
+                                    break;
+                                }
+                                Thread.sleep(1);
+                            }
+                            if (tl == null) {
+                                break;
+                            }
+                            if ("key".equals(q[2])) {
+                                int kc = Integer.parseInt(q[3]);
+                                this.onKeyPress(kc);
+                                var_com_ulysseo_mad_b_a.queueSyntheticKeyRelease(kc);
+                            } else if ("move".equals(q[2])) {
+                                this.mouseA(0, Integer.parseInt(q[3]), Integer.parseInt(q[4]));
+                            } else {
+                                System.out.println("[devMouse] replaytrace unknown op: " + tl);
+                                continue;
+                            }
+                            ++played;
+                        }
+                    }
+                    System.out.println("[devMouse] replaytrace done: " + played + " events, ar=" + this.tickCount);
+                    break;
+                }
+                case "stopat": {
+                    // 确定性停表：等到 tickCount>=目标后取消主循环 Timer。用于对拍
+                    // 时把两次运行冻在同一 tick 上再取 state（回放结束后若任由墙钟
+                    // 推进，ar 会抖 ±几 tick，tile 级比较会假失败）。1ms 轮询下
+                    // tickCount==目标必落在该帧 paint 窗口内，cancel 生效时下一帧
+                    // 尚未开始（固定周期下帧间隙 ≈30ms），停点是确定的。
+                    long target = Long.parseLong(p[1]);
+                    while (this.tickCount < target) {
+                        Thread.sleep(1);
+                    }
+                    this.h();
+                    System.out.println("[devMouse] stopped at ar=" + this.tickCount);
+                    break;
+                }
                 case "exit":
                     return false;
                 default:
@@ -1003,6 +1089,8 @@ implements CommandListener {
     public void mouseA(int kind, int mx, int my) {
         if (System.getProperty("aoe.debug") != null) {
             System.out.println("[mouseA] kind=" + kind + " aA=" + this.screenState);
+            // 确定性回放 trace 行（tools/replaycheck.sh）：ar= 发生时的 tick
+            System.out.println("[input] ar=" + this.tickCount + " move " + mx + " " + my);
         }
         if (this.screenState != 6 && this.screenState != 1) {
             return;
@@ -2582,6 +2670,21 @@ implements CommandListener {
         rngStateLo ^= rngStateHi;
         rngStateLo += (rngStateHi & 0xFF) >> 1;
         return rngStateHi & 0xFF;
+    }
+
+    // —— 化妆品 RNG：只服务 BGM 选曲（playNextBgm），与模拟流隔离 ——
+    // 同一条 LCG、独立状态。模拟外消费源若混用 nextRandomInt，模拟轨迹会随
+    // "听了几首曲子"发散，确定性回放（tools/replaycheck.sh）即失效。新加的非
+    // 模拟随机需求一律走这里，勿动 nextRandomInt。
+    private static int bgmRngStateHi = 12;
+    private static int bgmRngStateLo = 45;
+
+    static final int nextBgmRandomInt() {
+        bgmRngStateHi += bgmRngStateLo;
+        bgmRngStateHi += (bgmRngStateLo & 0xFF) >> 2;
+        bgmRngStateLo ^= bgmRngStateHi;
+        bgmRngStateLo += (bgmRngStateHi & 0xFF) >> 1;
+        return bgmRngStateHi & 0xFF;
     }
 
     public final void void_a(int n, int n2, int n3, int n4) {
