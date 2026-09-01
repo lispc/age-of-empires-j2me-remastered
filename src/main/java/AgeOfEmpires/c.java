@@ -4024,6 +4024,19 @@ implements CommandListener {
                 ++this.cursorTileX;
             }
         }
+        // 移植修正：钳回地图内。原版无钳制，光标可走出 [0,63]（cursorTileIdx 掩码
+        // 后指向错误格），confirmAtCursor 对出界格全部静默失效——行军途中连按
+        // 方向键走出边界后，FIRE 就"没反应"了（玩家第4轮实测）。
+        if (this.cursorTileX < 0) {
+            this.cursorTileX = 0;
+        } else if (this.cursorTileX > 63) {
+            this.cursorTileX = 63;
+        }
+        if (this.cursorTileY < 0) {
+            this.cursorTileY = 0;
+        } else if (this.cursorTileY > 63) {
+            this.cursorTileY = 63;
+        }
         switch (this.keyActionPulse) {
             case 6: 
             case 22: 
