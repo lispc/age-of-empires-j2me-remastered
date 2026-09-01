@@ -907,7 +907,7 @@ implements CommandListener {
                     // 位置被误读成"我方单位瞬移/乱走"（死亡后槽位压缩又放大了错觉）
                     int unitTotal = 0;
                     for (int pl = 0; pl < 2 && unitTotal < 32; ++pl) {
-                        int ucnt = this.playerUnitHeaders[pl][2];
+                        int ucnt = Math.min(this.playerUnitHeaders[pl][2], 16);
                         for (int i = 0; i < ucnt && unitTotal < 32; ++i) {
                             int off = i * 8;
                             if (unitTotal > 0) {
@@ -932,7 +932,7 @@ implements CommandListener {
                         }
                     }
                     for (int pl = 0; pl < 2; ++pl) {
-                        int ucnt = Math.min(this.playerUnitHeaders[pl][2], 8);
+                        int ucnt = Math.min(this.playerUnitHeaders[pl][2], 16);
                         for (int i = 0; i < ucnt; ++i) {
                             int off = i * 8;
                             System.out.println("[devMouse] p" + pl + " unit " + i
