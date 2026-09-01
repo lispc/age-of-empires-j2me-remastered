@@ -104,6 +104,7 @@ tick 戳输入 trace + tools/replaycheck.sh 双跑对拍）、**卡死看门狗*
 
 `[dbg]` 25-tick 心跳（ar/am/aA…）· `[void_a]` 按键 · `[input]` 带 tick 戳的输入
 trace（回放锚）· `[mouse]/[mouseA]/[pick]/[band]` 鼠标链路 · `[trace] g->` 状态切换 ·
+`[dlg-parse]` 对话框正文解析（z/v/串长，查空白弹窗）·
 `[view]` 地图进出/对话框/世界重建 · `[paint]` 帧内异常（**无条件**打印，画面冻住
 先看它）· `[save]/[load]` 快照（save 带 `ar=`）· `[proj]` 投射物扫描护栏触发 ·
 **`[watchdog]` Timer 线程疑似卡死 + 完整栈** · `[fMenu]/[k]/[menuGate]` 菜单流 ·

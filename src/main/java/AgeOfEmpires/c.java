@@ -7771,6 +7771,10 @@ implements CommandListener {
         a a2 = new a(this.z);
         String string = a2.a(n);
         int n2 = string.length() - 1;
+        if (System.getProperty("aoe.debug") != null) {
+            System.out.println("[dlg-parse] z=" + this.z + " v=" + n + " strLen=" + string.length()
+                + " str=" + string);
+        }
         this.var_java_lang_String_arr_a = new String[32];
         int n3 = 3;
         if (this.as == 1) {
@@ -8045,6 +8049,17 @@ implements CommandListener {
             this.as = n;
             this.z = n2;
             this.V = n3;
+            if (this.screenState == 2 && this.pendingScreenState == 2) {
+                // 链式弹窗修复(BUG-005 根因,2026-09-01 第5轮玩家定位):已在对话框态
+                // 时来新简报,pending==current 不触发 boolean_a() 的 n(aH) 重入,
+                // z/V 换了但正文仍是上一条对话框的解析结果(实测:dlg 70 9 空条目
+                // 开着时再发 70 12,画面维持空白)。重跑 n() 的解析段;不动
+                // overlayPrevState,关闭链仍应回世界视图。
+                this.void_c(this.V);
+                this.aQ = 0;
+                this.var_boolean_f = true;
+                this.var_boolean_b = true;
+            }
             if (n2 == 98) {
                 this.clipTop = 0;
                 this.clipLeft = 0;
