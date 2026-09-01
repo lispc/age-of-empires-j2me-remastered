@@ -616,6 +616,8 @@ implements CommandListener {
     private int devDismissFrames;
     /** 任务内连续帧计数：到 25（≈2s）做一次开局自动 checkpoint。 */
     private int devStableFrames;
+    /** 本任务是否已写过 auto checkpoint（setupMissionEnv 装载新任务时复位）。 */
+    private boolean devCheckpointedThisMission;
     private volatile String devPendingSavePath;
     private volatile byte[] devPendingRestore;
     /** 本次会话进入当前任务用的 nav spec（"-Daoe.dev" 语义）；窗口会话为 null。 */
@@ -696,10 +698,11 @@ implements CommandListener {
             this.devStableFrames = 0;
         } else if (this.devStableFrames < 25) {
             if (++this.devStableFrames == 25 && DEV_AUTO_CHECKPOINT
-                    && this.tickCount - this.devLastCheckpointTick >= 600) {
-                // 节流:每次离开主视图(开地图/弹窗)回来都会重新计满 25 帧,原实现
-                // 会连发 checkpoint(BUG-003);至少间隔 600 tick 再存一次。
-                this.devLastCheckpointTick = this.tickCount;
+                    && !this.devCheckpointedThisMission) {
+                // 每任务只存一次(BUG-003 终版):此前按"回主视图重数 25 帧 + 600 tick
+                // 节流"实现,一次会话仍会写 18 份;现改为 setupMissionEnv 装载时复位
+                // 的标志,弹窗/全图视图往返不再触发。
+                this.devCheckpointedThisMission = true;
                 this.devSaveTo(devSaveDir() + "/auto.aoesave");
             }
         }
@@ -790,7 +793,6 @@ implements CommandListener {
     // （无 load 时以指令执行瞬间为原点）。见 replaytrace 指令与 tools/replaycheck.sh。
     private long devTraceBaseTick = -1;
     // 上次自动 checkpoint 的 tick(节流用,见 devFrameHousekeeping)
-    private long devLastCheckpointTick = Integer.MIN_VALUE;
     private boolean devInScript;
 
     /** 执行一条 FIFO 指令；返回 false 表示 exit。 */
@@ -934,6 +936,32 @@ implements CommandListener {
                     }
                     System.out.println("[probe] " + this.mousePickX + "," + this.mousePickY
                         + " -> tile=" + (this.mousePickSeq == seqBefore ? -2 : this.mousePickTile));
+                    break;
+                }
+                case "strtbl": {
+                    // 字符串表考古：打印 data.res 字符串表条目。`strtbl <表> <条目>`
+                    // 打单条，`strtbl <表> all` 顺序打到末尾（文本考古/BUG-005 类排查用）
+                    int tbl = Integer.parseInt(p[1]);
+                    a table = new a(tbl);
+                    if (p.length > 2 && "all".equals(p[2])) {
+                        for (int i = 0; i < 64; ++i) {
+                            String s = table.a(i);
+                            if (s == null) {
+                                break;
+                            }
+                            System.out.println("[strtbl] " + tbl + "[" + i + "] = " + s);
+                        }
+                    } else {
+                        System.out.println("[strtbl] " + tbl + "[" + p[2] + "] = "
+                            + table.a(Integer.parseInt(p[2])));
+                    }
+                    break;
+                }
+                case "dlg": {
+                    // 强制打开结算/简报对话框（startMissionBriefing 0,z,v）复现渲染问题
+                    this.startMissionBriefing(0, Integer.parseInt(p[1]), Integer.parseInt(p[2]));
+                    System.out.println("[devMouse] dlg z=" + p[1] + " v=" + p[2]
+                        + " -> aA=" + this.screenState);
                     break;
                 }
                 case "script": {
@@ -3149,6 +3177,7 @@ implements CommandListener {
         this.costTable = com.ulysseo.mad.c.byte_arr_a(122);
         this.techFlags = com.ulysseo.mad.c.byte_arr_a(127);
         this.dirTable = com.ulysseo.mad.c.byte_arr_a(123);
+        this.devCheckpointedThisMission = false;    // 新任务环境装载,允许一次 auto checkpoint
         this.var_int_i = 0;
         for (n2 = 0; n2 < 4096; ++n2) {
             this.mapTiles[n2] = Short.MIN_VALUE;

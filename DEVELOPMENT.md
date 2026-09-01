@@ -76,7 +76,7 @@ tick 戳输入 trace + tools/replaycheck.sh 双跑对拍）、**卡死看门狗*
 | `aoe.saveDir=<dir>` | 快照存档目录（**调试会话一律重定向到 /tmp**，防覆盖用户档） |
 | `aoe.devBoot=<存档>` | 从快照直启（仅存档带 nav spec 时可用） |
 | `aoe.autoDismiss=1` | 教程对话框自动推进（调试会话常用；**回放时禁用**） |
-| `aoe.autoCheckpoint=1`（默认开） | 进关稳定后自动写 auto.aoesave |
+| `aoe.autoCheckpoint=1`（默认开） | 每任务稳定后自动写一次 auto.aoesave（setupMissionEnv 复位标志；弹窗/全图往返不再重触发） |
 | `aoe.devHud=1` | 画面顶部状态 HUD（截图自描述） |
 | `aoe.harnessQuiet=1` | DevHarness 进任务后不再自动按键（**回放时必开**，墙钟输入会破坏确定性） |
 | `aoe.dumpFrames=<png>` | 每 ~5s 导帧 |
@@ -87,10 +87,13 @@ tick 戳输入 trace + tools/replaycheck.sh 双跑对拍）、**卡死看门狗*
 `mkfifo /tmp/aoe-mouse` 后 `echo "指令" > /tmp/aoe-mouse`；CLI 包装 `tools/aoectl`。
 
 - 输入：`move x y` / `press` / `release` / `click` / `rclick` / `drag x1 y1 x2 y2` /
-  `key <键码>`（单发+延迟释放）/ `tapk <键码> <期望aA> [重试]`（带验证重注）
+  `key <键码>`（单发；合成松开要求"再完整过一帧"防 paint 中段吞键——2026-09-01 修）/
+  `tapk <键码> <期望aA> [重试]`（带验证重注）
 - 观测：`state`（写 `<fifo>.json` 快照：aA/am/ar/光标/相机/选中/迷雾/单位表）/
   `until <aA> [秒]` / `probe x y`（只拾取）/ `dump <png>`（同步导帧）/ `fields <txt>`
 - 编排：`script <文件>`（批量，支持 `sleep 毫秒`、#注释）
+- 考古：`strtbl <表> <条目|all>`（打印 data.res 字符串表条目）/
+  `dlg <z> <v>`（强制开结算/简报对话框复现渲染问题）
 - 存读：`save [路径]` / `load <路径>`（`[save]` 行带捕获时刻 `ar=`，回放锚）
 - **确定性回放**：`replaytrace <trace文件> [baseTick]`（到点注入，行格式
   `t <相对tick> key <键码>` / `t <相对tick> move <x> <y>`）；`stopat <tick>`
@@ -147,6 +150,10 @@ F5/F9 快存快读（quick.aoesave）；自动 checkpoint（auto.aoesave）；FI
 ### 现代化候选清单（按价值/成本分档，与用户讨论过）
 
 **第一梯队（小而实用）**
+- 任务内菜单安全化（2026-09-01 玩家实测定性：菜单树=原版资源 res#117 原样，
+  "无 Resume、高亮项即退出任务、-6=前进" 全是原版行为；改动属重制需拍板）：
+  ① 菜单首项加 Resume；② 退出任务前加确认对话框；③ 菜单取消键与对话框统一
+  （原版菜单 -6=前进、-7=取消，与直觉相反，实测一次误触弃掉 ar≈77000 成型局）。
 - ~~宽屏视野~~ → 已完成（2026-09-01；遗留：菜单/剧情 240 宽素材黑边，暂不适配）。
 - ~~战局快照~~ → 已完成（v2）；剩余：窗口档 boot 直启 + 任务内菜单多槽位 UI。
 - ~~确定性回放~~ → 已完成（2026-09-01，见 WORKLOG）；P2 飞行记录仪等见

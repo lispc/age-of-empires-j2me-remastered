@@ -58,6 +58,18 @@ public abstract class Canvas extends Displayable {
      * EDT 写、游戏线程读，需持锁。
      */
     private final java.util.ArrayList<Integer> pendingKeyReleases = new java.util.ArrayList<>();
+    /**
+     * 合成按键（FIFO key / replaytrace）的松开队列：[键码, 最小帧序号]。
+     * 按下可能落在某帧 paint 的中段（游戏本帧输入已经消费过），若只等"当前帧
+     * 结束"就投递松开，脉冲会在下一帧消费前被清零——键被无痕吞掉（FIFO key
+     * 实测 ~10-30% 丢失，且 [input] 日志在按下一刻就打，完全看不出丢）。
+     * 因此合成键的松开要求"再完整完成一帧"（minSeq = 已完成帧数 + 2）才投递，
+     * 保证按下必然被至少一个完整 tick 消费。落点在两帧之间时多held一帧，
+     * 脉冲只消费一次、held 重复计数仅 +1，不产生额外移动。
+     */
+    private final java.util.ArrayList<long[]> pendingSyntheticReleases = new java.util.ArrayList<>();
+    /** 已完整完成 paint 的帧数（flushPendingKeyReleases 里推进）。 */
+    private long paintCompletedSeq;
 
     protected Canvas() {
         this.panel = new CanvasPanel(this);
@@ -136,15 +148,40 @@ public abstract class Canvas extends Displayable {
     /** 在游戏消费完一帧（paint 返回）后，把排队的松开事件按序送达游戏。 */
     private void flushPendingKeyReleases() {
         Integer[] codes;
+        long[][] synthetic;
         synchronized (pendingKeyReleases) {
-            if (pendingKeyReleases.isEmpty()) {
-                return;
-            }
-            codes = pendingKeyReleases.toArray(new Integer[0]);
+            codes = pendingKeyReleases.isEmpty()
+                ? new Integer[0]
+                : pendingKeyReleases.toArray(new Integer[0]);
             pendingKeyReleases.clear();
+            // 帧计数先推进再筛合成松开：本帧 paint 已完成，此刻投递的松开
+            // 最早也要等下一帧消费完（minSeq 是"按下时已完成帧数 + 2"）
+            ++paintCompletedSeq;
+            if (pendingSyntheticReleases.isEmpty()) {
+                synthetic = new long[0][];
+            } else {
+                int due = 0;
+                for (long[] e : pendingSyntheticReleases) {
+                    if (e[1] <= paintCompletedSeq) {
+                        ++due;
+                    }
+                }
+                synthetic = new long[due][];
+                due = 0;
+                for (java.util.Iterator<long[]> it = pendingSyntheticReleases.iterator(); it.hasNext();) {
+                    long[] e = it.next();
+                    if (e[1] <= paintCompletedSeq) {
+                        synthetic[due++] = e;
+                        it.remove();
+                    }
+                }
+            }
         }
         for (int code : codes) {
             keyReleased(code);
+        }
+        for (long[] e : synthetic) {
+            keyReleased((int) e[0]);
         }
     }
 
@@ -159,10 +196,10 @@ public abstract class Canvas extends Displayable {
     protected void desktopCommand(int id) {
     }
 
-    /** 桌面鼠标增强：合成按键的延迟松开（复用 pendingKeyReleases 防吞点按机制）。 */
+    /** 桌面鼠标增强：合成按键的延迟松开（要求再完整过一帧后才投递，见队列注释）。 */
     public void queueSyntheticKeyRelease(int keyCode) {
         synchronized (pendingKeyReleases) {
-            pendingKeyReleases.add(keyCode);
+            pendingSyntheticReleases.add(new long[]{keyCode, paintCompletedSeq + 2});
         }
     }
 
