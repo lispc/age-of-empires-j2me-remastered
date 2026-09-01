@@ -174,10 +174,12 @@ F5/F9 快存快读（quick.aoesave）；自动 checkpoint（auto.aoesave）；FI
 
 ## 不变量与已知坑
 
-- **反编译伪影防线**：src 派生自 CFR（已知会静默丢循环出口，case 见
-  WORKLOG 2026-09-01 卡死修复）。控制流可疑时：① 查 `decompiled-vf/` 同方法的
-  Vineflower 渲染；② `javap -c` 对照原 jar（`~/Downloads/age_of_empires_ii_240x320-9174.jar`）
-  仲裁；③ 对照 `decompiled/`（CFR 原始输出）。
+- **反编译伪影防线**：src 派生自 CFR，全量重编译字节码对拍已证实 CFR 至少
+  3 处静默语义伪影（G() 循环出口、B() 出口+极性、继承静态字段误解析——前两者
+  已修复，见 WORKLOG 2026-09-01），Vineflower 零静默伪影：报告
+  `docs/research/decompiler-fidelity.md`，工具 `tools/decomp-study/`。控制流可疑时：
+  ① 查 `decompiled-vf/` 同方法的 Vineflower 渲染；② `javap -c` 对照原 jar
+  （`~/Downloads/age_of_empires_ii_240x320-9174.jar`）仲裁；③ 对照 `decompiled/`。
 - **确定性纪律**：模拟外随机一律走 `nextBgmRandomInt`（化妆品流），勿动
   `nextRandomInt`；新模拟代码必须保持 tick 决定（别引入墙钟/线程序依赖）；
   动过输入路径/定时器/线程后跑 `tools/replaycheck.sh`。

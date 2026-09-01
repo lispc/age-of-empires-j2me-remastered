@@ -464,6 +464,14 @@ implements CommandListener {
         final boolean random = parts[0].startsWith("r");
         try {
             devWaitStable();
+            // 等到真·主菜单再按 Play:开屏闪屏页(屏根 menuNode=187/254/333,定时脚本
+            // 自动翻页)同样满足 aA=4 的"稳定",在其上按 -5 会被闪屏当确认吞掉,后续
+            // Game Mode 右切全部落空 → random:N 落进教学关(BUG-001,2026-09-01 玩家
+            // 会话实伤)。menuNode 即 [fMenu] 日志的 aR,主菜单 = 0。
+            long menuDeadline = System.currentTimeMillis() + 20000;
+            while (this.menuNode != 0 && System.currentTimeMillis() < menuDeadline) {
+                Thread.sleep(200);
+            }
             devPress(-5);                       // 主菜单：Play
             if (campaign || random) {
                 devPress(-4);                   // Game Mode 循环器右切 1：Tutorial→Campaign
@@ -6787,7 +6795,13 @@ implements CommandListener {
                     }
                     bl = true;
                 }
-                if (!bl) continue;
+                // 原版字节码(方法 B,175: iload_2; 176: ifeq 34; 179: iinc 1,1):
+                // bl 置位即 break——每玩家每次调用只处理一个单位。CFR 把该出口
+                // 渲染成 `if (!bl) continue;`(两分支都继续循环),行为变成"每 tick
+                // 全部处理"。2026-09-01 重编译字节码对拍发现,按原版语义修复。
+                if (bl) {
+                    break;
+                }
             }
         }
     }

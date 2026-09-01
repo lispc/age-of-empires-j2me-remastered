@@ -13,7 +13,7 @@
 cd "$(dirname "$0")"
 
 # 宽屏视野（经 build.gradle run 块转成 -Daoe.width）。外部已设置则尊重外部值。
-export AOE_WIDTH="${AOE_WIDTH:-720}"
+export AOE_WIDTH="${AOE_WIDTH:-480}"
 
 JDK=/opt/homebrew/opt/openjdk@17
 if [ ! -x "$JDK/bin/java" ]; then

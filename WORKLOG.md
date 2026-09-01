@@ -7,6 +7,23 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
+### 反编译器全量对拍(Phase 2):CFR 再挖出 B() 伪影并修复;random:N 导航修复(2026-09-01 深夜,玩家子代理会话)
+
+- **Phase 2 字节码对拍**(子代理执行,报告 `docs/research/decompiler-fidelity.md`,
+  工具 `tools/decomp-study/`):反编译→重编译(--release 8 + shim)→ javap 归一化
+  四级对拍(226 方法)。**CFR 0.152 确认 3 处静默语义伪影**:已知 G() 循环出口、
+  **B() 出口+极性反转(新)**、继承静态字段误解析(10 点,已在 src 修复);
+  **Vineflower 零静默伪影**(问题全是响亮的编译阻断)。G() 锚点按预期判定,流水线可信。
+- **B() 修复**:原版字节码 `bl 置位即 break`(每玩家每次调用只处理一个单位,179:
+  iinc 1,1 进下一玩家),CFR 渲染成 `if (!bl) continue;` 两分支都续循环 → repo 行为
+  变成"每 tick 处理全部闲置单位"。已按原版语义改 `if (bl) break;`。回归 PASS
+  (golden 不含该路径的指纹差)。
+- **BUG-001(玩家代理报)修复**:`-Daoe.dev=random:1` 落进教学关——开屏闪屏页
+  (menuNode=187/254/333,定时脚本自动翻页)同样满足 aA=4"稳定",Play 被闪屏吞掉,
+  后续 Game Mode 右切全落空。修复:devNavToMission 按 Play 前先等真主菜单
+  (menuNode==0,20s 超时)。
+- 分工纪律:玩家子代理继续游玩找 bug(BUGS.md),本会话负责修复+回归+推送。
+### 文档拆分：DEVELOPMENT.md → 手册 + 本日志 + docs/research/；wave6 改名（2026-09-01 深夜，用户提议"日志归档与活跃手册分开"）
 ### 文档拆分：DEVELOPMENT.md → 手册 + 本日志 + docs/research/；wave6 改名（2026-09-01 深夜，用户提议"日志归档与活跃手册分开"）
 
 - **拆分**（用户拍板的"日志/手册"两层 + 研究档）：
