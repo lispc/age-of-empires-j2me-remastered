@@ -81,42 +81,50 @@
 | loadNfo / saveNfo | m / I | .nfo 记录读/写 |
 | nfoReadInt / nfoWriteInt | int_a(int,int) / h(int,int,int) | .nfo 大端读/写助手 |
 
-## 已考证（wave2 改名候选，2026-09-01 AI/DSL 考古产出）
+## 已改名：wave2（2026-09-01，AI / 任务脚本 DSL / RNG）
 
-本次查 random 模式 AI 时闭环考证的一批符号，语义均有代码+动态证据
-（详见 `docs/game-mechanics.md` "AI"与"任务事件脚本 DSL"两节），
-下一波改名直接补 map 行即可：
+字段（AgeOfEmpires.c）：
 
-| 现名 | 语义 |
-|---|---|
-| `z()` | AI 大脑：威胁扫描 → 攻/防模式判定 → 军队指令 + 村民自动采集 |
-| `var_boolean_i` | AI 开关（字段默认 true；战役 m0..3,5,6 关；只在 o(int) 赋值且从不清除） |
-| `an` | AI 建造步进周期（tick）：Easy 250 / Medium 150 / Expert 100 |
-| `q` | AI 进攻所需军队价值：50/60/100（随机图默认 0 = 常态侵略） |
-| `C` | AI 训练尝试周期（tick）：20/20/1 |
-| `var_int_l` | AI 基地警戒半径²：49/36/25 |
-| `aw` | AI "定时白送资源"周期——**死代码**（白送量 hdr[57] 恒 0） |
-| `aM` | AI 采集产量倍率（256=1×）：512/786/2048 |
-| `var_byte_arr_j` | AI 硬编码建造顺序表（`类型,数量` 对，-1 分阶段，-2 结束） |
-| `M` | AI 当前建造目标（建筑类型；void_a() 选取，boolean_b() 落位） |
-| `ai` | AI 建造顺序的阶段游标（var_byte_arr_j 下标） |
-| `w` / `E` / `aq` | AI 三个节流计时器（白送资源/建造/训练；aq 随 C 清零） |
-| `o(int)` | 任务环境装配/拆除（n=0 拆 1 装）：难度参数、资源装载都在这 |
-| `F()` | 任务事件脚本解释器（每帧扫块：条件→动作，块头负=已触发） |
-| `int_g(int)` / `int_a(int)` / `int_f(int)` | 脚本"跳过一个条件 / 跳到块尾 / 走 N 个块头" |
-| `int_d(int)` / `int_d(int,int)` | 脚本条件求值 / 动作执行（操作码见 game-mechanics） |
-| `boolean_b(int)` | AI 训练器：兵种=参数轮换，受人口/上限/价格约束，int_c(1,n) 入队 |
-| `int_c(int,int)` | 把某类型单位的训练排队到对应生产建筑 |
-| `boolean_a(int,int,int)` | 价格检查（玩家,类别,类型） |
-| `int_h(int)` | AI 建筑落位：以基地为中心螺旋找空格 |
-| `short_a(int,int)` | 村民采集目标：就近资源格 |
-| `var_int_k` / `r` | 随机地图生成参数（教学/战役取任务资源头 2 字节；随机图取 nfo[31,32]） |
-| `aG` / `aj` | 教学关进度(0..2) / 战役进度(0..6)（曾按反编译注释猜反；nfo[28]=aG<<4\|aj） |
-| `hdr[53]/[54]` | AI 记录的最近入侵者格 / 扫描指针+最近距离²（每帧扫一个玩家单位） |
-| `hdr[55]` | 军队价值（训练时累加单位成本，攻防判定用） |
-| `hdr[56]` | 生产速度（定点数，<<8；研究/模板可改） |
-| `var_byte_arr_e/c/g` | res#122 单位属性 / res#127 科技旗标 / res#123 避障方向表 |
-| `G()` / `J()` | 投射物目标获取 / 投射物飞行与伤害（箭塔与远程） |
+| 新名 | 旧名 | 语义 |
+|---|---|---|
+| aiEnabled | var_boolean_i | AI 开关（默认 true；战役 m0..3,5,6 关；只在 setupMissionEnv 赋值且从不清除） |
+| aiBuildInterval | an | AI 建造步进周期：Easy 250 / Medium 150 / Expert 100 |
+| aiAttackThreshold | q | AI 进攻所需军队价值：50/60/100 |
+| aiTrainInterval | C | AI 训练尝试周期：20/20/1 |
+| aiGuardRadiusSq | var_int_l | AI 基地警戒半径²：49/36/25 |
+| aiFreeResInterval | aw | "定时白送资源"周期——**死代码**（白送量 hdr[57] 恒 0） |
+| aiGatherMultiplier | aM | AI 采集产量倍率（256=1×）：512/786/2048 |
+| aiBuildOrder | var_byte_arr_j | AI 硬编码建造顺序表（`类型,数量` 对，-1 分阶段，-2 结束） |
+| aiBuildTarget | M | AI 当前建造目标（void_a() 选取，tryPlaceAiBuilding 落位） |
+| aiBuildPhase | ai | AI 建造顺序的阶段游标（aiBuildOrder 下标） |
+| aiFreeResTimer / aiBuildTimer / aiTrainTimer | w / E / aq | AI 三个节流计时器（白送资源/建造/训练） |
+| tutorialProgress | aG | 教学关进度 0..2（曾按反编译注释猜反；nfo[28] 高半字节） |
+| campaignProgress | aj | 战役进度 0..6（nfo[28] 低半字节） |
+| rngStateHi / rngStateLo | r / var_int_k | 全局随机数状态对（xorshift 变体；生成器当种子，nfo[31,32] 持久化） |
+| techFlags | var_byte_arr_c | 科技旗标（res#127 初值；研究完成/DSL 动作 9 写，build 菜单门控读） |
+| costTable | var_byte_arr_e | 造价表 res#122（每项 3 字节，canAfford 查、购买时扣） |
+| dirTable | var_byte_arr_g | 移动避障方向扇形表 res#123（AI 落位螺旋也用） |
+
+方法（AgeOfEmpires.c）：
+
+| 新名 | 旧名 | 语义 |
+|---|---|---|
+| tickAi | z | AI 大脑：威胁扫描 → 攻/防模式判定 → 军队指令 + 村民自动采集 |
+| setupMissionEnv | o(int) | 任务环境装配/拆除（n=0 拆 1 装）：难度参数、资源装载都在这 |
+| aimProjectiles / tickProjectiles | G / J | 投射物目标获取 / 飞行与伤害（箭塔与远程） |
+| tickMissionScript | F | 任务事件脚本解释器（每帧扫块：条件→动作，块头负=已触发） |
+| skipScriptBlock | int_g(int) | 跳过一个完整脚本块（条件+动作） |
+| skipScriptActions | int_a(int) | 从条件尾跳到块尾 |
+| scriptBlockOffset | int_f(int) | 走 N 个块头，返回目标块偏移（ARM/解锁用） |
+| evalScriptCondition | int_d(int) | 脚本条件求值（≥0 真 / 负 假） |
+| runScriptActions | int_d(int,int) | 脚本动作执行（操作码见 game-mechanics） |
+| tryPlaceAiBuilding | boolean_b() | AI 建造一步：买得起就在基地旁落位当前目标 |
+| tryTrainAiUnit | boolean_b(int) | AI 训练器：兵种=参数轮换，受人口/上限/价格约束 |
+| findAiBuildSpot | int_h(int) | AI 建筑落位：以基地为中心螺旋找空格 |
+| findNearbyResource | short_a(int,int) | 村民采集目标：就近资源格 |
+| canAfford | boolean_a(int,int,int) | 价格检查（玩家, 类别 0=单位/1=建筑/2=科技, 类型） |
+| queueUnitTraining | int_c(int,int) | 把某类型单位的训练排队到对应生产建筑 |
+| nextRandomInt | int_a() 静态 | 全局 RNG 一步，返回低 8 位 |
 
 ## 半懂（保留旧名，先补注释）
 
@@ -127,12 +135,12 @@ aI/aB 中的 aB、E/G/x/T/aD 等零散 int。
 
 ## 未考证（保留旧名）
 
- AgeOfEmpires.b 的多数静态位、var_byte_arr_c/e/g 的部分字段语义、
+ AgeOfEmpires.b 的多数静态位、
 `j(int,int)`（框架抽象，无调用方可观察行为）、`w()`（仅转发退出标志）。
 
 ## 单字母名说明
 
-字段 `t`、`u`、`w`、`z`、`K`、`M`、`q`、`ai`、`an`、`aw` 等与一批单字母方法
-（含 `a`/`b`/`c` 的大量重载）尚未改名：要么语义未考证，要么重载族需要逐签名
-分析。改名器（tools/renamer）已支持按"名字+参数表"精确定位重载，后续 wave
-只需在 map.tsv 里补行——前提是先把语义搞懂。
+字段 `t`、`u`、`K` 等与一批单字母方法（含 `a`/`b`/`c`/`int_b`/`int_e` 的重载）
+尚未改名：要么语义未考证，要么重载族需要逐签名分析。wave2 已验证改名器可
+以"名字+参数表"精确定位重载（`boolean_b` 三兄弟改二留一、`int_a`/`int_d` 各
+按签名拆分），后续 wave 只需在 map.tsv 里补行——前提是先把语义搞懂。

@@ -49,7 +49,7 @@ implements CommandListener {
     public int ah;
     public int ay;
     public Font var_javax_microedition_lcdui_Font_a;
-    public int aM = 256;
+    public int aiGatherMultiplier = 256;
     public short var_short_a;
     public short var_short_b;
     public short var_short_c;
@@ -77,13 +77,13 @@ implements CommandListener {
     // 解锁进度：战役可选上限 = aj+1（通关后 aj = aC+1，上限 6，共 7 关）；
     // 随机地图可选上限 = aG+1（上限 2，共 3 档）。打包存进 .nfo 字节 28 = aG<<4|aj。
     // （移植已改：选关屏上限固定全解锁，见 boolean_d 的 H-case 11/12。）
-    public int aj;
-    public int aG;
+    public int campaignProgress;
+    public int tutorialProgress;
     // ar: tick 计数（每帧 +1，80ms 一帧；调试日志里的 ar 就是它）。
     public int tickCount;
     public boolean var_boolean_h;
     public boolean var_boolean_j;
-    public byte[] var_byte_arr_c;
+    public byte[] techFlags;
     public int cameraPxX;
     public int cameraPxY;
     public int az;
@@ -149,7 +149,7 @@ implements CommandListener {
     public int[] var_int_arr_c;
     public int T;
     public int aD;
-    public byte[] var_byte_arr_e;
+    public byte[] costTable;
     public int var_int_g;
     public int var_int_c;
     public int[] var_int_arr_b;
@@ -161,8 +161,8 @@ implements CommandListener {
     public int U;
     public int cursorScreenPxX;
     public int cursorScreenPxY;
-    public static int r = 12;
-    public static int var_int_k;
+    public static int rngStateHi = 12;
+    public static int rngStateLo;
     d var_AgeOfEmpires_d_a;
     public int missionResId;
     // 菜单/对话框模板字节：a(n, true) 加载 data.res 对话框资源（131=选关）。
@@ -181,17 +181,17 @@ implements CommandListener {
     public int menuHighlight;
     public int var_int_a;
     public int K;
-    public boolean var_boolean_i = true;
-    public int an;
-    public int E = 0;
-    public int ai;
-    public int M;
-    public int q;
-    public int var_int_l;
-    public int aq;
-    public int C;
-    public int w;
-    public int aw;
+    public boolean aiEnabled = true;
+    public int aiBuildInterval;
+    public int aiBuildTimer = 0;
+    public int aiBuildPhase;
+    public int aiBuildTarget;
+    public int aiAttackThreshold;
+    public int aiGuardRadiusSq;
+    public int aiTrainTimer;
+    public int aiTrainInterval;
+    public int aiFreeResTimer;
+    public int aiFreeResInterval;
     public Image[] var_javax_microedition_lcdui_Image_arr_a;
     // 自动重复：ab==L 视为"按住未换键"，s 每 tick +1，s>=5 后动作持续生效。
     public int keyRepeatFrames;
@@ -203,9 +203,9 @@ implements CommandListener {
     public int m = 100000;
     public int o;
     public boolean var_boolean_c;
-    public byte[] var_byte_arr_g;
+    public byte[] dirTable;
     public short[][] playerUnitSlots;
-    public byte[] var_byte_arr_j = new byte[]{11, 2, 10, 1, 12, 2, -1, 11, 3, 12, 5, 6, 1, 7, 1, 5, 1, 10, 1, -1, 11, 5, 12, 5, 8, 1, 7, 1, 10, 1, 2, 1, -1, 11, 5, 8, 1, 12, 5, 7, 1, 3, 1, 2, 1, 10, 1, 10, 1, -2};
+    public byte[] aiBuildOrder = new byte[]{11, 2, 10, 1, 12, 2, -1, 11, 3, 12, 5, 6, 1, 7, 1, 5, 1, 10, 1, -1, 11, 5, 12, 5, 8, 1, 7, 1, 10, 1, 2, 1, -1, 11, 5, 8, 1, 12, 5, 7, 1, 3, 1, 2, 1, 10, 1, 10, 1, -2};
 
     c(AoeMidlet ageOfEmpires) {
         super(ageOfEmpires, 134, 0);
@@ -272,8 +272,8 @@ implements CommandListener {
         this.var_int_arr_a = new int[4];
         this.loadNfo();
         int n = this.nfoReadInt(28, 1);
-        this.aG = n >> 4;
-        this.aj = n & 0xF;
+        this.tutorialProgress = n >> 4;
+        this.campaignProgress = n & 0xF;
         this.var_boolean_d = this.nfoData[29] == 0;
         AgeOfEmpires.b.c = this.nfoData[30] == 0;
         for (int i = 0; i < 7; ++i) {
@@ -327,7 +327,7 @@ implements CommandListener {
     }
 
     public final void c() {
-        int n = AgeOfEmpires.c.int_a() % 6;
+        int n = AgeOfEmpires.c.nextRandomInt() % 6;
         int[] nArray = new int[]{204000, 123000, 233000, 180000, 188000, 190000, 143000, 197000, 184000, 175000};
         this.m = nArray[n] / 80;
         this.a(n + 3 + 131, false);
@@ -1380,7 +1380,7 @@ implements CommandListener {
                 }
                 switch (this.screenState) {
                     case 7: {
-                        this.F();
+                        this.tickMissionScript();
                         break;
                     }
                     case 2: 
@@ -1401,11 +1401,11 @@ implements CommandListener {
                         this.g();
                         this.p();
                         this.B();
-                        this.G();
-                        this.J();
-                        this.z();
+                        this.aimProjectiles();
+                        this.tickProjectiles();
+                        this.tickAi();
                         this.j();
-                        this.F();
+                        this.tickMissionScript();
                         if (this.ag <= 0) break;
                         if (this.var_java_lang_String_a != null) {
                             graphics.setColor(0);
@@ -1489,7 +1489,7 @@ implements CommandListener {
                 break;
             }
             case 5: {
-                bl = this.o(this.aH);
+                bl = this.setupMissionEnv(this.aH);
                 break;
             }
             case 6: {
@@ -1673,7 +1673,7 @@ implements CommandListener {
                     int n2 = this.int_c(4) + 9;
                     // 移植修改：随机地图 3 档全部解锁（原版 = aG + 1，按通关进度开放）
                     this.menuTree[n2 + 1] = 3;
-                    this.menuTree[n2 + 2] = (byte)this.aG;
+                    this.menuTree[n2 + 2] = (byte)this.tutorialProgress;
                     this.a(131, true);
                     break;
                 }
@@ -1681,7 +1681,7 @@ implements CommandListener {
                     int n3 = this.int_c(4) + 9;
                     // 移植修改：战役 7 关全部解锁（原版 = aj + 1，按通关进度开放）
                     this.menuTree[n3 + 1] = 7;
-                    this.menuTree[n3 + 2] = (byte)this.aj;
+                    this.menuTree[n3 + 2] = (byte)this.campaignProgress;
                     this.a(131, true);
                     break;
                 }
@@ -2468,8 +2468,8 @@ implements CommandListener {
             if (this.var_AgeOfEmpires_d_a.o == 0) {
                 this.var_AgeOfEmpires_d_a.o = 8224;
             }
-            var_int_k = (byte)(this.var_AgeOfEmpires_d_a.o >>> 8) & 0xFF;
-            r = (byte)(this.var_AgeOfEmpires_d_a.o & 0xFF);
+            rngStateLo = (byte)(this.var_AgeOfEmpires_d_a.o >>> 8) & 0xFF;
+            rngStateHi = (byte)(this.var_AgeOfEmpires_d_a.o & 0xFF);
         }
         if (this.missionResId != 0) {
             byte[] var_byte_arr_t = com.ulysseo.mad.c.byte_arr_a(this.missionResId);
@@ -2477,8 +2477,8 @@ implements CommandListener {
             int n2 = var_byte_arr_t[0] & 0xFF;
             int n3 = var_byte_arr_t[1] & 0xFF;
             if ((n2 | n3) != 0) {
-                var_int_k = n2;
-                r = n3;
+                rngStateLo = n2;
+                rngStateHi = n3;
             } else {
                 this.var_boolean_k = true;
             }
@@ -2557,12 +2557,12 @@ implements CommandListener {
         ++this.aQ;
     }
 
-    static final int int_a() {
-        r += var_int_k;
-        r += (var_int_k & 0xFF) >> 2;
-        var_int_k ^= r;
-        var_int_k += (r & 0xFF) >> 1;
-        return r & 0xFF;
+    static final int nextRandomInt() {
+        rngStateHi += rngStateLo;
+        rngStateHi += (rngStateLo & 0xFF) >> 2;
+        rngStateLo ^= rngStateHi;
+        rngStateLo += (rngStateHi & 0xFF) >> 1;
+        return rngStateHi & 0xFF;
     }
 
     public final void void_a(int n, int n2, int n3, int n4) {
@@ -2945,7 +2945,7 @@ implements CommandListener {
         }
     }
 
-    public final boolean o(int n) {
+    public final boolean setupMissionEnv(int n) {
         int n2;
         this.m = 0;
         this.clipLeft = 0;
@@ -2967,22 +2967,22 @@ implements CommandListener {
             this.var_short_a = (short)-1;
             this.var_short_c = (short)-1;
             this.var_short_b = (short)-1;
-            this.aq = 0;
-            this.E = 0;
+            this.aiTrainTimer = 0;
+            this.aiBuildTimer = 0;
             AgeOfEmpires.c.a(this.var_java_lang_String_arr_a);
             this.var_int_arr_a[0] = 0;
             this.var_int_arr_a[1] = 0;
             this.var_int_arr_a[2] = 0;
             this.var_int_arr_a[3] = 0;
-            this.var_byte_arr_e = null;
-            this.var_byte_arr_c = null;
+            this.costTable = null;
+            this.techFlags = null;
             this.var_byte_arr_a = null;
-            this.var_byte_arr_g = null;
+            this.dirTable = null;
             return false;
         }
-        this.var_byte_arr_e = com.ulysseo.mad.c.byte_arr_a(122);
-        this.var_byte_arr_c = com.ulysseo.mad.c.byte_arr_a(127);
-        this.var_byte_arr_g = com.ulysseo.mad.c.byte_arr_a(123);
+        this.costTable = com.ulysseo.mad.c.byte_arr_a(122);
+        this.techFlags = com.ulysseo.mad.c.byte_arr_a(127);
+        this.dirTable = com.ulysseo.mad.c.byte_arr_a(123);
         this.var_int_i = 0;
         for (n2 = 0; n2 < 4096; ++n2) {
             this.mapTiles[n2] = Short.MIN_VALUE;
@@ -2997,13 +2997,13 @@ implements CommandListener {
             this.playerUnitHeaders[n2][54] = 0xFFFFFF;
             this.playerUnitHeaders[n2][12] = 16;
         }
-        this.aM = 256;
-        this.q = 0;
-        this.w = 0;
-        this.aq = 0;
+        this.aiGatherMultiplier = 256;
+        this.aiAttackThreshold = 0;
+        this.aiFreeResTimer = 0;
+        this.aiTrainTimer = 0;
         this.var_int_i = 0;
         if (this.gameMode == 0) {
-            this.var_boolean_i = true;
+            this.aiEnabled = true;
             switch (this.var_byte_a) {
                 case 0: {
                     this.playerUnitHeaders[0][5] = 200;
@@ -3012,12 +3012,12 @@ implements CommandListener {
                     this.playerUnitHeaders[1][5] = 50;
                     this.playerUnitHeaders[1][6] = 15;
                     this.playerUnitHeaders[1][7] = 15;
-                    this.aM = 512;
-                    this.an = 250;
-                    this.q = 50;
-                    this.C = 20;
-                    this.var_int_l = 49;
-                    this.aw = Integer.MAX_VALUE;
+                    this.aiGatherMultiplier = 512;
+                    this.aiBuildInterval = 250;
+                    this.aiAttackThreshold = 50;
+                    this.aiTrainInterval = 20;
+                    this.aiGuardRadiusSq = 49;
+                    this.aiFreeResInterval = Integer.MAX_VALUE;
                     break;
                 }
                 case 1: {
@@ -3027,12 +3027,12 @@ implements CommandListener {
                     this.playerUnitHeaders[1][5] = 50;
                     this.playerUnitHeaders[1][6] = 50;
                     this.playerUnitHeaders[1][7] = 50;
-                    this.aM = 786;
-                    this.an = 150;
-                    this.q = 60;
-                    this.C = 20;
-                    this.var_int_l = 36;
-                    this.aw = 2500;
+                    this.aiGatherMultiplier = 786;
+                    this.aiBuildInterval = 150;
+                    this.aiAttackThreshold = 60;
+                    this.aiTrainInterval = 20;
+                    this.aiGuardRadiusSq = 36;
+                    this.aiFreeResInterval = 2500;
                     break;
                 }
                 case 2: {
@@ -3042,12 +3042,12 @@ implements CommandListener {
                     this.playerUnitHeaders[1][5] = 20;
                     this.playerUnitHeaders[1][6] = 20;
                     this.playerUnitHeaders[1][7] = 20;
-                    this.aM = 2048;
-                    this.an = 100;
-                    this.q = 100;
-                    this.C = 1;
-                    this.var_int_l = 25;
-                    this.aw = 1000;
+                    this.aiGatherMultiplier = 2048;
+                    this.aiBuildInterval = 100;
+                    this.aiAttackThreshold = 100;
+                    this.aiTrainInterval = 1;
+                    this.aiGuardRadiusSq = 25;
+                    this.aiFreeResInterval = 1000;
                 }
             }
         }
@@ -3074,7 +3074,7 @@ implements CommandListener {
                 break;
             }
             case 32: {
-                this.var_boolean_i = false;
+                this.aiEnabled = false;
                 switch (this.missionIndex) {
                     case 0: {
                         n2 = 110;
@@ -3104,21 +3104,21 @@ implements CommandListener {
                         n2 = 114;
                         this.I = 75;
                         this.missionResId = 107;
-                        this.var_boolean_i = true;
-                        this.an = 100;
-                        this.aM = 256;
-                        this.an = 200;
-                        this.q = 30;
-                        this.C = 200;
-                        this.var_int_l = 49;
-                        this.aw = 1000;
+                        this.aiEnabled = true;
+                        this.aiBuildInterval = 100;
+                        this.aiGatherMultiplier = 256;
+                        this.aiBuildInterval = 200;
+                        this.aiAttackThreshold = 30;
+                        this.aiTrainInterval = 200;
+                        this.aiGuardRadiusSq = 49;
+                        this.aiFreeResInterval = 1000;
                         break;
                     }
                     case 5: {
                         n2 = 115;
                         this.I = 76;
                         this.missionResId = 108;
-                        this.q = -1000;
+                        this.aiAttackThreshold = -1000;
                         break;
                     }
                     case 6: {
@@ -3134,8 +3134,8 @@ implements CommandListener {
                 this.var_boolean_l = true;
             }
         }
-        if (this.var_boolean_i) {
-            this.ai = 0;
+        if (this.aiEnabled) {
+            this.aiBuildPhase = 0;
             this.void_a();
         }
         this.var_byte_arr_a = com.ulysseo.mad.c.byte_arr_a(n2);
@@ -3172,11 +3172,11 @@ implements CommandListener {
             int n2 = i;
             this.var_int_arr_c[this.W] = i;
             if (this.var_int_g == 1 && n2 == 12) {
-                n2 += this.var_byte_arr_c[36];
-                n2 += this.var_byte_arr_c[40];
-                n2 += this.var_byte_arr_c[43];
+                n2 += this.techFlags[36];
+                n2 += this.techFlags[40];
+                n2 += this.techFlags[43];
                 int n3 = this.W;
-                this.var_int_arr_c[n3] = this.var_int_arr_c[n3] + this.var_byte_arr_c[36];
+                this.var_int_arr_c[n3] = this.var_int_arr_c[n3] + this.techFlags[36];
             }
             this.var_java_lang_String_arr_a[this.W << 1] = a3.a(n2 << 1);
             this.var_java_lang_String_arr_a[(this.W << 1) + 1] = a3.a((n2 << 1) + 1);
@@ -3228,7 +3228,7 @@ implements CommandListener {
                         }
                         if (n < this.W) {
                             int n6 = 0;
-                            n6 = this.var_int_g == 0 ? (this.playerUnitHeaders[0][3] > this.playerUnitHeaders[0][49] + this.playerUnitHeaders[0][2] ? (this.boolean_a(0, this.var_int_g, this.var_int_arr_c[n]) ? 0 : 4) : 4) : (this.boolean_a(0, this.var_int_g, this.var_int_arr_c[n]) ? 0 : 4);
+                            n6 = this.var_int_g == 0 ? (this.playerUnitHeaders[0][3] > this.playerUnitHeaders[0][49] + this.playerUnitHeaders[0][2] ? (this.canAfford(0, this.var_int_g, this.var_int_arr_c[n]) ? 0 : 4) : 4) : (this.canAfford(0, this.var_int_g, this.var_int_arr_c[n]) ? 0 : 4);
                             this.a(graphics, this.x, n4, n5, this.var_int_arr_c[n] * 36, 0, 36, 36, 0, n6);
                             graphics.setColor(0);
                             graphics.fillRect(n4 + 36 - 5, n5 + 36 - 7, 4, 6);
@@ -3242,7 +3242,7 @@ implements CommandListener {
                 }
             } else {
                 int n8 = 0;
-                boolean bl2 = this.boolean_a(0, 2, this.aK);
+                boolean bl2 = this.canAfford(0, 2, this.aK);
                 switch (this.keyActionPulse) {
                     case 5: 
                     case 21: {
@@ -3431,8 +3431,8 @@ implements CommandListener {
     final void y() {
         switch (this.var_int_g) {
             case 0: {
-                if (this.playerUnitHeaders[0][2] + this.playerUnitHeaders[0][49] >= this.playerUnitHeaders[0][3] || !this.boolean_a(0, 0, this.var_int_arr_c[this.aK])) break;
-                this.int_c(0, this.var_int_arr_c[this.aK]);
+                if (this.playerUnitHeaders[0][2] + this.playerUnitHeaders[0][49] >= this.playerUnitHeaders[0][3] || !this.canAfford(0, 0, this.var_int_arr_c[this.aK])) break;
+                this.queueUnitTraining(0, this.var_int_arr_c[this.aK]);
                 return;
             }
             case 1: {
@@ -3440,7 +3440,7 @@ implements CommandListener {
                 if (n > 12) {
                     n = 12;
                 }
-                if (!this.boolean_a(0, 1, this.var_int_arr_c[this.aK])) break;
+                if (!this.canAfford(0, 1, this.var_int_arr_c[this.aK])) break;
                 this.selectionMode = 1;
                 this.p = n;
                 this.var_int_d = this.cameraPxX + this.cursorScreenPxX;
@@ -3450,7 +3450,7 @@ implements CommandListener {
                 return;
             }
             case 2: {
-                if (!this.boolean_a(0, 2, this.var_int_arr_c[this.aK])) break;
+                if (!this.canAfford(0, 2, this.var_int_arr_c[this.aK])) break;
                 int[] nArray = this.var_int_arr_arr_b[0];
                 int n = this.aD + 2;
                 nArray[n] = nArray[n] | 0x20000000;
@@ -3471,14 +3471,14 @@ implements CommandListener {
         }
         switch (this.var_int_g) {
             case 0: {
-                if (this.var_byte_arr_c[0 + n] == 0) {
+                if (this.techFlags[0 + n] == 0) {
                     return false;
                 }
                 if (n != 9 || this.playerUnitHeaders[0][74] + this.playerUnitHeaders[0][65] <= 0) break;
                 return false;
             }
             case 1: {
-                if (this.var_byte_arr_c[10 + n] == 0) {
+                if (this.techFlags[10 + n] == 0) {
                     return false;
                 }
                 switch (n) {
@@ -3498,7 +3498,7 @@ implements CommandListener {
                 break;
             }
             case 2: {
-                if (this.var_byte_arr_c[23 + n] != 0) break;
+                if (this.techFlags[23 + n] != 0) break;
                 return false;
             }
         }
@@ -3580,17 +3580,17 @@ implements CommandListener {
             }
         }
         int n5 = 0;
-        if (this.var_boolean_a && (this.var_byte_arr_e[n3 *= 3] > this.playerUnitHeaders[0][5] || this.var_byte_arr_e[n3 + 1] > this.playerUnitHeaders[0][6] || this.var_byte_arr_e[n3 + 2] > this.playerUnitHeaders[0][7])) {
+        if (this.var_boolean_a && (this.costTable[n3 *= 3] > this.playerUnitHeaders[0][5] || this.costTable[n3 + 1] > this.playerUnitHeaders[0][6] || this.costTable[n3 + 2] > this.playerUnitHeaders[0][7])) {
             n5 = 4;
         }
         int n6 = this.screenH - 19 + 2;
         this.a(graphics, n4, n2, this.aL + (this.screenH - this.aL - 36 >> 1), n * 36, 0, 36, 36, 0, n5);
         this.a(graphics, 16, 41, n6, 1, 1, 27, 17, 0, 0);
-        this.b(graphics, this.var_byte_arr_e[n3++], 67, n6, 2);
+        this.b(graphics, this.costTable[n3++], 67, n6, 2);
         this.a(graphics, 16, 99, n6, 58, 1, 27, 17, 0, 0);
-        this.b(graphics, this.var_byte_arr_e[n3++], 125, n6, 2);
+        this.b(graphics, this.costTable[n3++], 125, n6, 2);
         this.a(graphics, 16, 157, n6, 115, 1, 27, 17, 0, 0);
-        this.b(graphics, this.var_byte_arr_e[n3], 183, n6, 2);
+        this.b(graphics, this.costTable[n3], 183, n6, 2);
         this.var_java_lang_String_b = string + " " + string2;
     }
 
@@ -4003,13 +4003,13 @@ implements CommandListener {
                 return false;
             }
             case 4: {
-                if (this.var_byte_arr_c[37] == 0 && n2 >= 2) {
+                if (this.techFlags[37] == 0 && n2 >= 2) {
                     this.aK = 14;
-                } else if (this.var_byte_arr_c[34] == 0 && n2 >= 2) {
+                } else if (this.techFlags[34] == 0 && n2 >= 2) {
                     this.aK = 11;
-                } else if (this.var_byte_arr_c[33] == 0 && n2 >= 3) {
+                } else if (this.techFlags[33] == 0 && n2 >= 3) {
                     this.aK = 10;
-                } else if (this.var_byte_arr_c[35] == 0 && n2 >= 3) {
+                } else if (this.techFlags[35] == 0 && n2 >= 3) {
                     this.aK = 12;
                 } else {
                     return false;
@@ -4018,9 +4018,9 @@ implements CommandListener {
                 break;
             }
             case 0: {
-                if (this.var_byte_arr_c[26] == 0 && n2 >= 1) {
+                if (this.techFlags[26] == 0 && n2 >= 1) {
                     this.aK = 3;
-                } else if (this.var_byte_arr_c[24] == 0 && n2 >= 2) {
+                } else if (this.techFlags[24] == 0 && n2 >= 2) {
                     this.aK = 1;
                 } else {
                     return false;
@@ -4029,13 +4029,13 @@ implements CommandListener {
                 break;
             }
             case 1: {
-                if (this.var_byte_arr_c[28] == 0 && n2 >= 1) {
+                if (this.techFlags[28] == 0 && n2 >= 1) {
                     this.aK = 5;
-                } else if (this.var_byte_arr_c[32] == 0 && n2 >= 1) {
+                } else if (this.techFlags[32] == 0 && n2 >= 1) {
                     this.aK = 9;
-                } else if (this.var_byte_arr_c[42] == 0 && n2 >= 2) {
+                } else if (this.techFlags[42] == 0 && n2 >= 2) {
                     this.aK = 19;
-                } else if (this.var_byte_arr_c[41] == 0 && n2 >= 2) {
+                } else if (this.techFlags[41] == 0 && n2 >= 2) {
                     this.aK = 18;
                 } else {
                     return false;
@@ -4044,7 +4044,7 @@ implements CommandListener {
                 break;
             }
             case 5: {
-                if (this.var_byte_arr_c[29] != 0) {
+                if (this.techFlags[29] != 0) {
                     return false;
                 }
                 this.aK = 6;
@@ -4052,17 +4052,17 @@ implements CommandListener {
                 break;
             }
             case 6: {
-                if (this.var_byte_arr_c[27] == 0 && n2 >= 1) {
+                if (this.techFlags[27] == 0 && n2 >= 1) {
                     this.aK = 4;
-                } else if (this.var_byte_arr_c[31] == 0 && n2 >= 1) {
+                } else if (this.techFlags[31] == 0 && n2 >= 1) {
                     this.aK = 8;
-                } else if (this.var_byte_arr_c[30] == 0 && n2 >= 2) {
+                } else if (this.techFlags[30] == 0 && n2 >= 2) {
                     this.aK = 7;
-                } else if (this.var_byte_arr_c[25] == 0 && n2 >= 2) {
+                } else if (this.techFlags[25] == 0 && n2 >= 2) {
                     this.aK = 2;
-                } else if (this.var_byte_arr_c[23] == 0 && n2 >= 3) {
+                } else if (this.techFlags[23] == 0 && n2 >= 3) {
                     this.aK = 0;
-                } else if (this.var_byte_arr_c[38] == 0 && n2 >= 3) {
+                } else if (this.techFlags[38] == 0 && n2 >= 3) {
                     this.aK = 15;
                 } else {
                     if (n2 < 3) {
@@ -4109,19 +4109,19 @@ implements CommandListener {
                 break;
             }
             case 12: {
-                if (this.var_byte_arr_c[43] == 1) {
+                if (this.techFlags[43] == 1) {
                     return false;
                 }
                 this.var_int_g = 2;
-                if (this.var_byte_arr_c[43] == 0 && this.var_byte_arr_c[40] != 0 && n2 >= 3) {
+                if (this.techFlags[43] == 0 && this.techFlags[40] != 0 && n2 >= 3) {
                     this.aK = 20;
                     break;
                 }
-                if (this.var_byte_arr_c[40] == 0 && this.var_byte_arr_c[36] != 0 && n2 >= 2) {
+                if (this.techFlags[40] == 0 && this.techFlags[36] != 0 && n2 >= 2) {
                     this.aK = 17;
                     break;
                 }
-                if (this.var_byte_arr_c[36] == 0 && n2 >= 1) {
+                if (this.techFlags[36] == 0 && n2 >= 1) {
                     this.aK = 13;
                     break;
                 }
@@ -4249,7 +4249,7 @@ implements CommandListener {
                 if (n2 != 0 || this.mapTiles[this.cursorTileIdx] < 0) {
                     return;
                 }
-                if (this.boolean_a(0, 1, this.p)) {
+                if (this.canAfford(0, 1, this.p)) {
                     this.a(0, this.p, this.cursorTileX, this.cursorTileY, 0x40000000, true);
                 }
                 this.clearSelection();
@@ -4406,11 +4406,11 @@ implements CommandListener {
         n3 += n4;
         n3 *= 3;
         int[] nArray = this.playerUnitHeaders[n];
-        nArray[5] = nArray[5] - this.var_byte_arr_e[n3++];
+        nArray[5] = nArray[5] - this.costTable[n3++];
         int[] nArray2 = this.playerUnitHeaders[n];
-        nArray2[6] = nArray2[6] - this.var_byte_arr_e[n3++];
+        nArray2[6] = nArray2[6] - this.costTable[n3++];
         int[] nArray3 = this.playerUnitHeaders[n];
-        nArray3[7] = nArray3[7] - this.var_byte_arr_e[n3];
+        nArray3[7] = nArray3[7] - this.costTable[n3];
         if (this.playerUnitHeaders[n][5] < 0) {
             this.playerUnitHeaders[n][5] = 0;
         }
@@ -4441,15 +4441,15 @@ implements CommandListener {
         n3 += n4;
         n3 *= 3;
         int[] nArray = this.playerUnitHeaders[n];
-        nArray[5] = nArray[5] + this.var_byte_arr_e[n3++];
+        nArray[5] = nArray[5] + this.costTable[n3++];
         int[] nArray2 = this.playerUnitHeaders[n];
-        nArray2[6] = nArray2[6] + this.var_byte_arr_e[n3++];
+        nArray2[6] = nArray2[6] + this.costTable[n3++];
         int[] nArray3 = this.playerUnitHeaders[n];
-        nArray3[7] = nArray3[7] + this.var_byte_arr_e[n3];
+        nArray3[7] = nArray3[7] + this.costTable[n3];
         this.var_boolean_l = true;
     }
 
-    public final boolean boolean_a(int n, int n2, int n3) {
+    public final boolean canAfford(int n, int n2, int n3) {
         int n4 = 0;
         switch (n2) {
             case 1: {
@@ -4466,13 +4466,13 @@ implements CommandListener {
         }
         n3 += n4;
         n3 *= 3;
-        if (this.playerUnitHeaders[n][5] < this.var_byte_arr_e[n3++]) {
+        if (this.playerUnitHeaders[n][5] < this.costTable[n3++]) {
             return false;
         }
-        if (this.playerUnitHeaders[n][6] < this.var_byte_arr_e[n3++]) {
+        if (this.playerUnitHeaders[n][6] < this.costTable[n3++]) {
             return false;
         }
-        return this.playerUnitHeaders[n][7] >= this.var_byte_arr_e[n3];
+        return this.playerUnitHeaders[n][7] >= this.costTable[n3];
     }
 
     final void p() {
@@ -4610,8 +4610,8 @@ implements CommandListener {
         int n3 = byArray[0] & 0xFF;
         int n4 = byArray[1] & 0xFF;
         if ((n3 | n4) != 0) {
-            var_int_k = n3;
-            r = n4;
+            rngStateLo = n3;
+            rngStateHi = n4;
         } else {
             this.var_boolean_k = true;
         }
@@ -4683,9 +4683,9 @@ implements CommandListener {
                             a a2 = new a(69);
                             n3 = n4;
                             if (n4 == 12) {
-                                n3 += this.var_byte_arr_c[36];
-                                n3 += this.var_byte_arr_c[40];
-                                n3 += this.var_byte_arr_c[43];
+                                n3 += this.techFlags[36];
+                                n3 += this.techFlags[40];
+                                n3 += this.techFlags[43];
                             }
                             this.var_java_lang_String_c = a2.a(n3);
                             this.var_java_lang_String_a = a2.a(16);
@@ -4703,7 +4703,7 @@ implements CommandListener {
                             }
                             case 11: {
                                 if (i == 0) {
-                                    this.var_byte_arr_c[0] = 1;
+                                    this.techFlags[0] = 1;
                                     this.var_boolean_l = true;
                                 }
                                 int[] nArray = this.playerUnitHeaders[i];
@@ -4712,31 +4712,31 @@ implements CommandListener {
                             }
                             case 10: {
                                 if (i != 0) break;
-                                this.var_byte_arr_c[2] = 1;
+                                this.techFlags[2] = 1;
                                 break;
                             }
                             case 7: {
                                 if (i != 0) break;
-                                this.var_byte_arr_c[4] = 1;
+                                this.techFlags[4] = 1;
                                 break;
                             }
                             case 2: {
                                 if (i != 0) break;
-                                this.var_byte_arr_c[7] = 1;
+                                this.techFlags[7] = 1;
                                 break;
                             }
                             case 8: {
                                 if (i != 0) break;
                                 if (this.playerUnitHeaders[0][0] >= 2) {
-                                    this.var_byte_arr_c[6] = 1;
+                                    this.techFlags[6] = 1;
                                     break;
                                 }
-                                this.var_byte_arr_c[5] = 1;
+                                this.techFlags[5] = 1;
                                 break;
                             }
                             case 3: {
                                 if (i != 0) break;
-                                this.var_byte_arr_c[9] = 1;
+                                this.techFlags[9] = 1;
                                 break;
                             }
                             case 5: {
@@ -4770,7 +4770,7 @@ implements CommandListener {
                                     this.playerUnitHeaders[i][11] = this.var_int_arr_arr_b[i][n + 0];
                                 }
                                 if (i != 0) break;
-                                this.var_byte_arr_c[10 + n4] = 0;
+                                this.techFlags[10 + n4] = 0;
                             }
                         }
                     } else {
@@ -4791,19 +4791,19 @@ implements CommandListener {
                                             int[] nArray = this.playerUnitHeaders[0];
                                             nArray[0] = nArray[0] + 1;
                                             if (this.playerUnitHeaders[0][0] == 1) {
-                                                this.var_byte_arr_c[15] = 1;
-                                                this.var_byte_arr_c[16] = 1;
-                                                this.var_byte_arr_c[17] = 1;
-                                                this.var_byte_arr_c[18] = 1;
-                                                this.var_byte_arr_c[2] = 0;
-                                                this.var_byte_arr_c[3] = 1;
+                                                this.techFlags[15] = 1;
+                                                this.techFlags[16] = 1;
+                                                this.techFlags[17] = 1;
+                                                this.techFlags[18] = 1;
+                                                this.techFlags[2] = 0;
+                                                this.techFlags[3] = 1;
                                                 this.e(2, 3);
                                             } else if (this.playerUnitHeaders[0][0] == 2) {
-                                                this.var_byte_arr_c[12] = 1;
-                                                this.var_byte_arr_c[14] = 1;
-                                                this.var_byte_arr_c[13] = 1;
-                                                this.var_byte_arr_c[6] = this.var_byte_arr_c[5];
-                                                this.var_byte_arr_c[5] = 0;
+                                                this.techFlags[12] = 1;
+                                                this.techFlags[14] = 1;
+                                                this.techFlags[13] = 1;
+                                                this.techFlags[6] = this.techFlags[5];
+                                                this.techFlags[5] = 0;
                                                 this.e(5, 6);
                                             }
                                             this.var_boolean_l = true;
@@ -4811,38 +4811,38 @@ implements CommandListener {
                                             break;
                                         }
                                         case 0: {
-                                            if (this.var_byte_arr_c[26] == 0) {
+                                            if (this.techFlags[26] == 0) {
                                                 n3 = 3;
                                                 int[] nArray = this.playerUnitHeaders[0];
                                                 nArray[50] = nArray[50] + 5;
                                                 break;
                                             }
-                                            if (this.var_byte_arr_c[24] != 0) break;
+                                            if (this.techFlags[24] != 0) break;
                                             n3 = 1;
                                             int[] nArray = this.playerUnitHeaders[0];
                                             nArray[50] = nArray[50] + 5;
                                             break;
                                         }
                                         case 1: {
-                                            if (this.var_byte_arr_c[28] == 0) {
+                                            if (this.techFlags[28] == 0) {
                                                 n3 = 5;
                                                 int[] nArray = this.playerUnitHeaders[0];
                                                 nArray[52] = nArray[52] + 3;
                                                 break;
                                             }
-                                            if (this.var_byte_arr_c[32] == 0) {
+                                            if (this.techFlags[32] == 0) {
                                                 n3 = 9;
                                                 int[] nArray = this.playerUnitHeaders[0];
                                                 nArray[51] = nArray[51] + 3;
                                                 break;
                                             }
-                                            if (this.var_byte_arr_c[42] == 0) {
+                                            if (this.techFlags[42] == 0) {
                                                 n3 = 19;
                                                 int[] nArray = this.playerUnitHeaders[0];
                                                 nArray[52] = nArray[52] + 3;
                                                 break;
                                             }
-                                            if (this.var_byte_arr_c[41] != 0) break;
+                                            if (this.techFlags[41] != 0) break;
                                             n3 = 18;
                                             int[] nArray = this.playerUnitHeaders[0];
                                             nArray[51] = nArray[51] + 3;
@@ -4855,35 +4855,35 @@ implements CommandListener {
                                             break;
                                         }
                                         case 6: {
-                                            if (this.var_byte_arr_c[27] == 0) {
+                                            if (this.techFlags[27] == 0) {
                                                 n3 = 4;
                                                 for (int j = 0; j < 9; ++j) {
                                                     int[] nArray = this.playerUnitHeaders[0];
                                                     int n10 = 13 + j;
                                                     nArray[n10] = nArray[n10] + 1;
                                                 }
-                                            } else if (this.var_byte_arr_c[31] == 0) {
+                                            } else if (this.techFlags[31] == 0) {
                                                 n3 = 8;
                                                 for (int j = 0; j < 9; ++j) {
                                                     int[] nArray = this.playerUnitHeaders[0];
                                                     int n11 = 23 + j;
                                                     nArray[n11] = nArray[n11] + 1;
                                                 }
-                                            } else if (this.var_byte_arr_c[30] == 0) {
+                                            } else if (this.techFlags[30] == 0) {
                                                 n3 = 7;
                                                 for (int j = 0; j < 9; ++j) {
                                                     int[] nArray = this.playerUnitHeaders[0];
                                                     int n12 = 13 + j;
                                                     nArray[n12] = nArray[n12] + 1;
                                                 }
-                                            } else if (this.var_byte_arr_c[25] == 0) {
+                                            } else if (this.techFlags[25] == 0) {
                                                 n3 = 2;
                                                 for (int j = 0; j < 9; ++j) {
                                                     int[] nArray = this.playerUnitHeaders[0];
                                                     int n13 = 23 + j;
                                                     nArray[n13] = nArray[n13] + 1;
                                                 }
-                                            } else if (this.var_byte_arr_c[23] == 0) {
+                                            } else if (this.techFlags[23] == 0) {
                                                 n3 = 0;
                                                 for (int j = 0; j < 9; ++j) {
                                                     int[] nArray = this.playerUnitHeaders[0];
@@ -4891,9 +4891,9 @@ implements CommandListener {
                                                     nArray[n14] = nArray[n14] + 1;
                                                 }
                                             } else {
-                                                if (this.var_byte_arr_c[38] != 0) break;
+                                                if (this.techFlags[38] != 0) break;
                                                 n3 = 15;
-                                                this.var_byte_arr_c[8] = 1;
+                                                this.techFlags[8] = 1;
                                                 for (int j = 0; j < 9; ++j) {
                                                     int[] nArray = this.playerUnitHeaders[0];
                                                     int n15 = 23 + j;
@@ -4903,7 +4903,7 @@ implements CommandListener {
                                             break;
                                         }
                                         case 4: {
-                                            if (this.var_byte_arr_c[37] == 0) {
+                                            if (this.techFlags[37] == 0) {
                                                 n3 = 14;
                                                 for (int j = 0; j < 13; ++j) {
                                                     int[] nArray = this.playerUnitHeaders[0];
@@ -4912,7 +4912,7 @@ implements CommandListener {
                                                 }
                                                 break;
                                             }
-                                            if (this.var_byte_arr_c[34] == 0) {
+                                            if (this.techFlags[34] == 0) {
                                                 n3 = 11;
                                                 int[] nArray = this.playerUnitHeaders[0];
                                                 nArray[42] = nArray[42] + 1;
@@ -4920,7 +4920,7 @@ implements CommandListener {
                                                 nArray5[45] = nArray5[45] + 1;
                                                 break;
                                             }
-                                            if (this.var_byte_arr_c[33] == 0) {
+                                            if (this.techFlags[33] == 0) {
                                                 n3 = 10;
                                                 for (int j = 0; j < 13; ++j) {
                                                     int[] nArray = this.playerUnitHeaders[0];
@@ -4929,7 +4929,7 @@ implements CommandListener {
                                                 }
                                                 break;
                                             }
-                                            if (this.var_byte_arr_c[35] != 0) break;
+                                            if (this.techFlags[35] != 0) break;
                                             n3 = 12;
                                             int[] nArray = this.playerUnitHeaders[0];
                                             nArray[42] = nArray[42] + 1;
@@ -4938,7 +4938,7 @@ implements CommandListener {
                                             break;
                                         }
                                         case 12: {
-                                            if (this.var_byte_arr_c[36] == 0) {
+                                            if (this.techFlags[36] == 0) {
                                                 n3 = 13;
                                                 this.playerUnitHeaders[0][47] = 0;
                                                 this.playerUnitHeaders[0][46] = 2;
@@ -4947,7 +4947,7 @@ implements CommandListener {
                                                 this.playerUnitHeaders[1][12] = 25;
                                                 break;
                                             }
-                                            if (this.var_byte_arr_c[40] == 0) {
+                                            if (this.techFlags[40] == 0) {
                                                 n3 = 17;
                                                 this.playerUnitHeaders[0][47] = 3;
                                                 this.playerUnitHeaders[0][46] = 3;
@@ -4956,7 +4956,7 @@ implements CommandListener {
                                                 this.playerUnitHeaders[1][12] = 36;
                                                 break;
                                             }
-                                            if (this.var_byte_arr_c[43] != 0) break;
+                                            if (this.techFlags[43] != 0) break;
                                             n3 = 20;
                                             this.playerUnitHeaders[0][47] = 2;
                                             this.playerUnitHeaders[0][46] = 4;
@@ -4966,7 +4966,7 @@ implements CommandListener {
                                         }
                                     }
                                     if (n3 >= 0) {
-                                        this.var_byte_arr_c[23 + n3] = 1;
+                                        this.techFlags[23 + n3] = 1;
                                         this.ag = 20;
                                         a a3 = new a(68);
                                         this.var_java_lang_String_c = a3.a(24);
@@ -5029,7 +5029,7 @@ implements CommandListener {
                                         n3 = 9;
                                     }
                                 }
-                                if (this.boolean_a(i, 0, n3)) {
+                                if (this.canAfford(i, 0, n3)) {
                                     int n22 = this.var_int_arr_arr_b[i][n + 0] >>> 8;
                                     int n23 = this.var_int_arr_arr_b[i][n + 0] & 0xFF;
                                     int n24 = n22 + 1;
@@ -5045,8 +5045,8 @@ implements CommandListener {
                                             n27 = 1;
                                         }
                                         int n30 = (n27 << 1 & 0xF) + 0;
-                                        n24 = n22 + this.var_byte_arr_g[n30] * n29;
-                                        n25 = n23 + this.var_byte_arr_g[n30 + 1] * n29;
+                                        n24 = n22 + this.dirTable[n30] * n29;
+                                        n25 = n23 + this.dirTable[n30 + 1] * n29;
                                         n27 = (n27 + 1) % 7;
                                         if (n28++ < 64) continue;
                                         return;
@@ -5369,8 +5369,8 @@ implements CommandListener {
         if (n14 != 0) {
             n17 = this.tickCount & 1;
         }
-        int n18 = n14 * this.var_byte_arr_g[n16++];
-        n14 *= this.var_byte_arr_g[n16];
+        int n18 = n14 * this.dirTable[n16++];
+        n14 *= this.dirTable[n16];
         int n19 = 0;
         if ((this.playerUnitSlots[n9][n8 + 4] & 0x4000) != 0) {
             n19 = 2;
@@ -5397,8 +5397,8 @@ implements CommandListener {
                 }
                 if ((n7 = n15 + 2 & 7) < 4) {
                     n6 = 0;
-                    n5 = 12 * this.var_byte_arr_g[n16--];
-                    n6 = 12 * this.var_byte_arr_g[n16];
+                    n5 = 12 * this.dirTable[n16--];
+                    n6 = 12 * this.dirTable[n16];
                     this.a(graphics, n13, n - n6 - 8, n2 - n5 - 8, n7, n19);
                 }
                 if (n17 == 0) break;
@@ -5494,9 +5494,9 @@ implements CommandListener {
         int n13 = n9;
         if (n11 >= 12) {
             n7 = 0;
-            n7 = 0 + this.var_byte_arr_c[36];
-            n7 += this.var_byte_arr_c[40];
-            n6 = this.var_byte_arr_h[((n11 & 0xFF) << 2) + (n7 += this.var_byte_arr_c[43])] + 33;
+            n7 = 0 + this.techFlags[36];
+            n7 += this.techFlags[40];
+            n6 = this.var_byte_arr_h[((n11 & 0xFF) << 2) + (n7 += this.techFlags[43])] + 33;
         } else {
             n6 = this.var_byte_arr_h[((n11 & 0xFF) << 2) + n12] + 33;
         }
@@ -5630,7 +5630,7 @@ implements CommandListener {
         return true;
     }
 
-    final int int_c(int n, int n2) {
+    final int queueUnitTraining(int n, int n2) {
         int n3 = 0;
         switch (n2) {
             case 0: {
@@ -5870,7 +5870,7 @@ implements CommandListener {
                                 for (n7 = 0; n7 < 8; ++n7) {
                                     n6 = this.playerUnitSlots[i][n2 + 5] >>> 8;
                                     int n14 = this.playerUnitSlots[i][n2 + 5] & 0xFF;
-                                    if ((((n6 += this.var_byte_arr_g[n7 << 1]) | (n14 += this.var_byte_arr_g[(n7 << 1) + 1])) & 0xFFFFFFC0) != 0 || (this.mapTiles[n9 = n6 + (n14 << 6)] & 0x300) != 768 || (this.playerUnitSlots[i][n2 + 7] & 0xF0) >> 4 != (this.mapTiles[n9] & 3)) continue;
+                                    if ((((n6 += this.dirTable[n7 << 1]) | (n14 += this.dirTable[(n7 << 1) + 1])) & 0xFFFFFFC0) != 0 || (this.mapTiles[n9 = n6 + (n14 << 6)] & 0x300) != 768 || (this.playerUnitSlots[i][n2 + 7] & 0xF0) >> 4 != (this.mapTiles[n9] & 3)) continue;
                                     this.playerUnitSlots[i][n2 + 5] = (short)(n6 << 8 | n14);
                                     n7 = 10;
                                 }
@@ -5968,7 +5968,7 @@ implements CommandListener {
                         this.playerUnitSlots[n][n2 + 7] = 0;
                         int n11 = 256;
                         if (n == 1) {
-                            n11 = this.aM;
+                            n11 = this.aiGatherMultiplier;
                         }
                         int[] nArray = this.playerUnitHeaders[n];
                         int n12 = 5 + n10;
@@ -5994,7 +5994,7 @@ implements CommandListener {
                             sArray[n18] = (short)(sArray[n18] & 0xFF);
                             break;
                         }
-                        this.short_a((int)this.playerUnitSlots[n][n2 + 0], n17);
+                        this.findNearbyResource((int)this.playerUnitSlots[n][n2 + 0], n17);
                         break;
                     }
                     int n19 = (this.mapTiles[n6] & 0xFF) << 2;
@@ -6089,7 +6089,7 @@ implements CommandListener {
         int n3 = this.playerUnitSlots[n][n2 + 5] >>> 8;
         int n4 = (this.mapTiles[n3 += (this.playerUnitSlots[n][n2 + 5] & 0xFF) << 6] & 0xFF) << 2;
         int n5 = this.var_int_arr_arr_b[n][n4 + 2] & 0xFF;
-        if ((AgeOfEmpires.c.int_a() & 1) == 0) {
+        if ((AgeOfEmpires.c.nextRandomInt() & 1) == 0) {
             ++n5;
         }
         if (n5 <= 255) {
@@ -6160,14 +6160,14 @@ implements CommandListener {
         if (bl) {
             n6 = 0;
             if (n2 == 12) {
-                n6 = 0 + this.var_byte_arr_c[36];
-                n6 += this.var_byte_arr_c[40];
-                n6 += this.var_byte_arr_c[43];
+                n6 = 0 + this.techFlags[36];
+                n6 += this.techFlags[40];
+                n6 += this.techFlags[43];
             }
             this.c(n, 1, n2 + n6);
         }
         if (n2 != 1 && n2 != 11 && n2 != 12 && n == 0) {
-            this.var_byte_arr_c[10 + n2] = 0;
+            this.techFlags[10 + n2] = 0;
         }
         return n8;
     }
@@ -6204,7 +6204,7 @@ implements CommandListener {
         this.mapTiles[n7] = 0;
         int n8 = this.var_int_arr_arr_b[n][n4 + 3] & 0xFF;
         if (n == 0) {
-            this.var_byte_arr_c[10 + n8] = 1;
+            this.techFlags[10 + n8] = 1;
         }
         this.e(n, 1, n8);
         switch (n8) {
@@ -6359,9 +6359,9 @@ implements CommandListener {
             n5 = n7;
             for (n17 = 0; n17 < 7; ++n17) {
                 int n21;
-                byte by = this.var_byte_arr_g[n20++];
-                int n22 = n5 + this.var_byte_arr_g[by + 1];
-                if ((((n21 = n3 + this.var_byte_arr_g[by]) | n22) & 0xFFFFFFC0) != 0 || (this.mapTiles[n21 + (n22 << 6)] & 0xFFF) != 0 || (n21 << 8 | n22) == s) continue;
+                byte by = this.dirTable[n20++];
+                int n22 = n5 + this.dirTable[by + 1];
+                if ((((n21 = n3 + this.dirTable[by]) | n22) & 0xFFFFFFC0) != 0 || (this.mapTiles[n21 + (n22 << 6)] & 0xFFF) != 0 || (n21 << 8 | n22) == s) continue;
                 n3 = n21;
                 n5 = n22;
                 short[] sArray5 = this.playerUnitSlots[n];
@@ -6495,7 +6495,7 @@ implements CommandListener {
         }
     }
 
-    final void G() {
+    final void aimProjectiles() {
         for (int i = 0; i < 2; ++i) {
             int n = this.playerUnitHeaders[i][48];
             if (n == 0) continue;
@@ -6539,7 +6539,7 @@ implements CommandListener {
         }
     }
 
-    final void J() {
+    final void tickProjectiles() {
         for (int i = 0; i < 2; ++i) {
             int n = 0;
             int n2 = this.playerUnitHeaders[i][48];
@@ -6802,7 +6802,7 @@ implements CommandListener {
         }
     }
 
-    final void z() {
+    final void tickAi() {
         int n;
         int n2;
         int n3;
@@ -6818,9 +6818,9 @@ implements CommandListener {
             n5 &= 0xFFFFFF;
             if (n2 >= n7) {
                 this.var_int_i = 0;
-                if (n3 < n4 + (n4 >> 2) && n4 >= this.q) {
+                if (n3 < n4 + (n4 >> 2) && n4 >= this.aiAttackThreshold) {
                     this.var_int_i = 2;
-                } else if (n5 <= this.var_int_l) {
+                } else if (n5 <= this.aiGuardRadiusSq) {
                     this.var_int_i = 1;
                 }
                 this.playerUnitHeaders[1][54] = 0xFFFFFF;
@@ -6840,24 +6840,24 @@ implements CommandListener {
                 }
             }
         }
-        if (this.var_boolean_i) {
-            if (this.w++ >= this.aw) {
+        if (this.aiEnabled) {
+            if (this.aiFreeResTimer++ >= this.aiFreeResInterval) {
                 int[] nArray = this.playerUnitHeaders[1];
                 nArray[5] = nArray[5] + this.playerUnitHeaders[1][57];
                 int[] nArray2 = this.playerUnitHeaders[1];
                 nArray2[6] = nArray2[6] + this.playerUnitHeaders[1][57];
                 int[] nArray3 = this.playerUnitHeaders[1];
                 nArray3[7] = nArray3[7] + this.playerUnitHeaders[1][57];
-                this.w = 0;
+                this.aiFreeResTimer = 0;
             }
-            if (this.E++ >= this.an) {
+            if (this.aiBuildTimer++ >= this.aiBuildInterval) {
                 this.void_a();
-                if (this.boolean_b()) {
-                    this.E = 0;
+                if (this.tryPlaceAiBuilding()) {
+                    this.aiBuildTimer = 0;
                 }
             }
-            if (this.aq++ >= this.C && this.boolean_b(this.tickCount % 10)) {
-                this.aq = 0;
+            if (this.aiTrainTimer++ >= this.aiTrainInterval && this.tryTrainAiUnit(this.tickCount % 10)) {
+                this.aiTrainTimer = 0;
             }
         }
         n6 = 0;
@@ -6867,11 +6867,11 @@ implements CommandListener {
         }
         do {
             if ((this.playerUnitSlots[1][n6 + 3] & 0xFF) < 2 && (this.playerUnitSlots[1][n6 + 7] & 0xFF) == 0 && (this.playerUnitSlots[1][n6 + 2] == this.playerUnitSlots[1][n6 + 0] || this.playerUnitSlots[1][n6 + 1] == this.playerUnitSlots[1][n6 + 0])) {
-                this.playerUnitSlots[1][n6 + 2] = this.short_a((int)this.playerUnitSlots[1][n6 + 0], this.int_b(1));
+                this.playerUnitSlots[1][n6 + 2] = this.findNearbyResource((int)this.playerUnitSlots[1][n6 + 0], this.int_b(1));
             }
             n6 += 8;
         } while (--n7 > 0);
-        if (!this.var_boolean_i) {
+        if (!this.aiEnabled) {
             return;
         }
         n5 = n7;
@@ -6919,39 +6919,39 @@ implements CommandListener {
         }
     }
 
-    final boolean boolean_b() {
-        if (this.M == -1) {
+    final boolean tryPlaceAiBuilding() {
+        if (this.aiBuildTarget == -1) {
             return true;
         }
-        if (!this.boolean_a(1, 1, this.M)) {
+        if (!this.canAfford(1, 1, this.aiBuildTarget)) {
             return false;
         }
         int n = this.playerUnitHeaders[1][8];
         if (n == -1) {
             return true;
         }
-        int n2 = this.int_h(n);
+        int n2 = this.findAiBuildSpot(n);
         int n3 = n2 >>> 8;
-        this.a(1, this.M, n3, n2 &= 0xFF, 0x40000000, false);
+        this.a(1, this.aiBuildTarget, n3, n2 &= 0xFF, 0x40000000, false);
         return true;
     }
 
     final void void_a() {
-        int n = this.ai;
-        while (this.var_byte_arr_j[n] >= 0) {
-            if (this.a(1, (int)this.var_byte_arr_j[n], false) < this.var_byte_arr_j[n + 1]) {
-                this.M = this.var_byte_arr_j[n];
+        int n = this.aiBuildPhase;
+        while (this.aiBuildOrder[n] >= 0) {
+            if (this.a(1, (int)this.aiBuildOrder[n], false) < this.aiBuildOrder[n + 1]) {
+                this.aiBuildTarget = this.aiBuildOrder[n];
                 return;
             }
             n += 2;
         }
-        if (this.var_byte_arr_j[n] == -1) {
-            this.ai = n + 1;
+        if (this.aiBuildOrder[n] == -1) {
+            this.aiBuildPhase = n + 1;
         }
-        this.M = -1;
+        this.aiBuildTarget = -1;
     }
 
-    final int int_h(int n) {
+    final int findAiBuildSpot(int n) {
         int n2 = n;
         int n3 = 0;
         int n4 = -2;
@@ -6974,7 +6974,7 @@ implements CommandListener {
         return n2;
     }
 
-    final short short_a(int n, int n2) {
+    final short findNearbyResource(int n, int n2) {
         int n3;
         n2 &= 3;
         int n4 = n;
@@ -7063,7 +7063,7 @@ implements CommandListener {
         return 770;
     }
 
-    final boolean boolean_b(int n) {
+    final boolean tryTrainAiUnit(int n) {
         int n2;
         int n3 = this.playerUnitHeaders[1][2] + this.playerUnitHeaders[1][49];
         if (n3 >= this.playerUnitHeaders[1][3]) {
@@ -7072,7 +7072,7 @@ implements CommandListener {
         if (n3 >= 26) {
             return false;
         }
-        if (!this.boolean_a(1, 0, n)) {
+        if (!this.canAfford(1, 0, n)) {
             return false;
         }
         int n4 = this.playerUnitHeaders[0][0];
@@ -7098,7 +7098,7 @@ implements CommandListener {
         if ((n2 = this.playerUnitHeaders[1][57 + n5] + this.playerUnitHeaders[1][66 + n5]) >= this.playerUnitHeaders[1][75 + n5]) {
             return false;
         }
-        this.int_c(1, n);
+        this.queueUnitTraining(1, n);
         return true;
     }
 
@@ -7172,20 +7172,20 @@ implements CommandListener {
         --this.U;
     }
 
-    public final void F() {
+    public final void tickMissionScript() {
         int n;
         int n2 = 0;
         while (this.var_byte_arr_a[n2] != 127) {
             n = n2;
             if (this.var_byte_arr_a[n2] < 0) {
-                n2 = this.int_g(n2);
+                n2 = this.skipScriptBlock(n2);
                 continue;
             }
-            if ((n2 = this.int_d(n2)) >= 0) {
-                n2 = this.int_d(n2, n);
+            if ((n2 = this.evalScriptCondition(n2)) >= 0) {
+                n2 = this.runScriptActions(n2, n);
                 continue;
             }
-            n2 = this.int_a(-n2);
+            n2 = this.skipScriptActions(-n2);
         }
         n = 0;
         while (n < 4) {
@@ -7195,7 +7195,7 @@ implements CommandListener {
         this.var_int_c = 0;
     }
 
-    public final int int_d(int n) {
+    public final int evalScriptCondition(int n) {
         switch (this.var_byte_arr_a[n++]) {
             case 1: {
                 int n2;
@@ -7237,7 +7237,7 @@ implements CommandListener {
             case 6: {
                 int n12 = this.var_byte_arr_a[n++] & 0xFF;
                 int n13 = this.var_byte_arr_a[n++] & 0xFF;
-                if (this.var_byte_arr_c[n12] != n13) break;
+                if (this.techFlags[n12] != n13) break;
                 return n;
             }
             case 7: {
@@ -7295,7 +7295,7 @@ implements CommandListener {
         return -n;
     }
 
-    public final int int_d(int n, int n2) {
+    public final int runScriptActions(int n, int n2) {
         block13: while (true) {
             switch (this.var_byte_arr_a[n++]) {
                 case 8: {
@@ -7318,7 +7318,7 @@ implements CommandListener {
                 case 9: {
                     int n4 = this.var_byte_arr_a[n++] & 0xFF;
                     int n5 = this.var_byte_arr_a[n++] & 0xFF;
-                    this.var_byte_arr_c[n4] = (byte)n5;
+                    this.techFlags[n4] = (byte)n5;
                     break;
                 }
                 case 6: {
@@ -7371,7 +7371,7 @@ implements CommandListener {
                 }
                 case 1: {
                     int n4 = this.var_byte_arr_a[n++] & 0xFF;
-                    int n5 = this.int_f(n4);
+                    int n5 = this.scriptBlockOffset(n4);
                     if (this.var_byte_arr_a[n5] >= 0) break;
                     this.var_byte_arr_a[n5] = (byte)(-this.var_byte_arr_a[n5]);
                     break;
@@ -7390,7 +7390,7 @@ implements CommandListener {
                     int n4 = this.var_byte_arr_a[n++];
                     int n5 = n2;
                     if (n4 >= 0) {
-                        n5 = this.int_f(n4);
+                        n5 = this.scriptBlockOffset(n4);
                     }
                     if (this.var_byte_arr_a[n5] <= 0) break;
                     this.var_byte_arr_a[n5] = (byte)(-this.var_byte_arr_a[n5]);
@@ -7408,16 +7408,16 @@ implements CommandListener {
         }
     }
 
-    public final int int_f(int n) {
+    public final int scriptBlockOffset(int n) {
         int n2 = 0;
         while (n > 0) {
-            n2 = this.int_g(n2);
+            n2 = this.skipScriptBlock(n2);
             --n;
         }
         return n2;
     }
 
-    public final int int_g(int n) {
+    public final int skipScriptBlock(int n) {
         byte by;
         if ((by = this.var_byte_arr_a[n++]) < 0) {
             by = (byte)(-by);
@@ -7448,10 +7448,10 @@ implements CommandListener {
                 n += 3;
             }
         }
-        return this.int_a(n);
+        return this.skipScriptActions(n);
     }
 
-    public final int int_a(int n) {
+    public final int skipScriptActions(int n) {
         while (true) {
             switch (this.var_byte_arr_a[n++]) {
                 case 6: 
@@ -7808,15 +7808,15 @@ implements CommandListener {
                 this.loadNfo();
                 switch (this.gameMode) {
                     case 0: {
-                        this.nfoWriteInt(31, 2, r << 8 | var_int_k);
+                        this.nfoWriteInt(31, 2, rngStateHi << 8 | rngStateLo);
                         this.screenState = 12;
                         this.menuScreenId = 1;
                         break;
                     }
                     case 16: {
-                        if (n3 == 0 && this.aG == this.missionIndex) {
-                            if (this.aG < 2) {
-                                ++this.aG;
+                        if (n3 == 0 && this.tutorialProgress == this.missionIndex) {
+                            if (this.tutorialProgress < 2) {
+                                ++this.tutorialProgress;
                                 this.menuScreenId = 11;
                             } else {
                                 this.V = 2;
@@ -7827,9 +7827,9 @@ implements CommandListener {
                         break;
                     }
                     case 32: {
-                        if (this.aj < 6) {
-                            if (n3 == 0 && this.aj < this.missionIndex + 1) {
-                                this.aj = this.missionIndex + 1;
+                        if (this.campaignProgress < 6) {
+                            if (n3 == 0 && this.campaignProgress < this.missionIndex + 1) {
+                                this.campaignProgress = this.missionIndex + 1;
                             }
                             this.menuScreenId = 12;
                         } else {
@@ -7848,7 +7848,7 @@ implements CommandListener {
                     }
                 }
                 if (n3 == 0) {
-                    this.nfoWriteInt(28, 1, this.aG << 4 | this.aj);
+                    this.nfoWriteInt(28, 1, this.tutorialProgress << 4 | this.campaignProgress);
                     this.saveNfo();
                 }
             }
@@ -7863,7 +7863,7 @@ implements CommandListener {
     }
 
     static {
-        var_int_k = 45;
+        rngStateLo = 45;
     }
 }
 

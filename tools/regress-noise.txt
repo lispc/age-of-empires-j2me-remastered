@@ -1,8 +1,8 @@
 # fields-diff 的良性噪声字段（每行一个顶层字段名；改名时同步更新）
 # 这些是帧计数/动画计数/按键重复/toast/音频对象——两次 dump 间合法漂移
 tickCount
-E
-aq
+aiBuildTimer
+aiTrainTimer
 av
 R
 V

@@ -149,9 +149,10 @@ QEZC/X 别名）、鼠标支持（悬停高亮/单击选中/拖动框选/右键�
 
 - **方案**：定向二进制快照 + "同任务重载+覆写"，不做世界重建。捕获清单：
   任务身份（ac/aC/aF + .nfo 任务号——教程的 aF 恒 0，必须带 nfo[31,32] 才能区分
-  教程各关）、设置镜像 var_byte_arr_f、解锁进度 aj/aG、脚本树 var_byte_arr_i +
-  引擎指针（aR/ao/Z/H/v/ap）+ 任务数据镜像 var_byte_arr_a（脚本解释器会就地写
-  执行标记）、地图格 var_short_arr_a、每玩家单位/建筑四个槽位数组、资源/计数
+  教程各关）、设置镜像 nfoData（旧名 var_byte_arr_f）、解锁进度 aj/aG（wave2 已改名
+tutorialProgress/campaignProgress）、菜单树 menuTree（旧名 var_byte_arr_i）+
+  引擎指针（menuNode/menuNodeCount/menuHighlight/menuScreenId/pendingPanelSwitch/ap）
+  + 任务数据镜像 var_byte_arr_a（脚本解释器会就地写执行标记）、地图格 mapTiles、每玩家单位/建筑四个槽位数组、资源/计数
   int 数组、相机/光标/选中、dev 导航 spec（头部，供直启重放）。
 - **应用点**：读档请求在 EDT 帧首（p() 的 devFrameHousekeeping）串行化消费，
   避免与 tick/渲染竞态产生撕裂快照；apply 后 `af=0`+`k()` 强制全量重画。
@@ -253,11 +254,11 @@ Enter/Space/X/F1/Esc）退出；方向键/WASD/数字斜向键在全图上平移
 ## 深调研二：AI 增强
 
 **现状（已核实）**：
-- 敌人（玩家 1）的"AI"是**生产脚本**：`boolean_b(int 类型)`（c.java ~6341 行）——
-  定时器（`aq`/`C` 计数）到期时按 `ar % 10` 伪随机选兵种，检查人口上限
+- 敌人（玩家 1）的"AI"是**生产脚本**：`tryTrainAiUnit(兵种)`（旧名 boolean_b(int)，
+  wave2 已改名）——定时器（`aiTrainTimer`/`aiTrainInterval` 计数）到期时按
+  `tickCount % 10` 伪随机选兵种，检查人口上限
   （`[1][3]`，硬上限 26）与兵种配额（`[1][57+i]/[66+i]/[75+i]`），再按**玩家当前
-  时代**（`[0][0]`）切换克制兵种（n==2→3、5→6 之类），最后 `int_c(1, 兵种)` 扣
-  资源入队。
+  时代**（`[0][0]`）切换克制兵种（n==2→3、5→6 之类），最后 `queueUnitTraining(1, 兵种)` 扣资源入队。
 - 单位行为 = 移动步进器（贪心直线 + 7 邻格局部避障，见 docs/game-mechanics.md"移动与寻路"）
   + 攻击目标选择（`int_a(int,int,int)` 做距离平方比较选最近目标）。
 - 关卡脚本（敌方进攻波次等）在 `d.java`（地图/剧本对象）与菜单脚本里，未深入。

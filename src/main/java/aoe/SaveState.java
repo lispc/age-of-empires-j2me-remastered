@@ -35,8 +35,8 @@ public final class SaveState {
         out.writeBoolean(g.var_boolean_k);
         // —— 设置/进度（.nfo 镜像 + 解锁位）——
         writeBytes(out, g.nfoData);
-        out.writeInt(g.aj);
-        out.writeInt(g.aG);
+        out.writeInt(g.campaignProgress);
+        out.writeInt(g.tutorialProgress);
         // —— 脚本树与引擎指针（任务内目标/对话推进状态）——
         writeBytes(out, g.menuTree);
         // 任务数据镜像（res aF）：脚本解释器会就地写"已执行"标记，读档必须一并还原
@@ -100,8 +100,8 @@ public final class SaveState {
         g.missionResId = in.readInt();
         g.var_boolean_k = in.readBoolean();
         readBytes(in, g.nfoData);
-        g.aj = in.readInt();
-        g.aG = in.readInt();
+        g.campaignProgress = in.readInt();
+        g.tutorialProgress = in.readInt();
         readBytes(in, g.menuTree);
         readBytes(in, g.var_byte_arr_a);
         g.menuNode = in.readInt();

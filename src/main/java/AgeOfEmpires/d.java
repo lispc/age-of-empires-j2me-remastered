@@ -42,7 +42,7 @@ implements Runnable {
 
     public final void a(int n, int n2, short[] sArray, boolean bl) {
         if (this.o == 0) {
-            this.o = AgeOfEmpires.c.r << 8 | AgeOfEmpires.c.var_int_k;
+            this.o = AgeOfEmpires.c.rngStateHi << 8 | AgeOfEmpires.c.rngStateLo;
         }
         this.var_boolean_b = bl;
         this.var_short_arr_a = sArray;
@@ -52,8 +52,8 @@ implements Runnable {
         for (int i = 0; i < 4096; ++i) {
             this.var_short_arr_a[i] = 768;
         }
-        this.i = AgeOfEmpires.c.int_a() & 0x3F;
-        this.var_int_b = AgeOfEmpires.c.int_a() & 0x3F;
+        this.i = AgeOfEmpires.c.nextRandomInt() & 0x3F;
+        this.var_int_b = AgeOfEmpires.c.nextRandomInt() & 0x3F;
         this.i = 32;
         this.var_int_b = 32;
         this.var_int_a = this.i;
@@ -124,7 +124,7 @@ implements Runnable {
     }
 
     public final void g() {
-        int n = AgeOfEmpires.c.int_a() << 3;
+        int n = AgeOfEmpires.c.nextRandomInt() << 3;
         int n2 = 0;
         int n3 = 0;
         int n4 = 0;
@@ -163,18 +163,18 @@ implements Runnable {
     public final void f() {
         int n;
         int n2;
-        AgeOfEmpires.c.int_a();
+        AgeOfEmpires.c.nextRandomInt();
         int n3 = 0;
         do {
-            n2 = AgeOfEmpires.c.int_a() & 0x3F;
-            n = AgeOfEmpires.c.int_a() & 0x3F;
+            n2 = AgeOfEmpires.c.nextRandomInt() & 0x3F;
+            n = AgeOfEmpires.c.nextRandomInt() & 0x3F;
         } while (n2 >= 64 || n >= 64 || this.var_short_arr_a[n2 + (n << 6)] != 0);
         this.var_int_arr_a[0] = n2;
         this.var_int_arr_a[1] = n;
         boolean bl = false;
         do {
-            n3 = AgeOfEmpires.c.int_a() << 3;
-            int n4 = AgeOfEmpires.c.int_a() % 15;
+            n3 = AgeOfEmpires.c.nextRandomInt() << 3;
+            int n4 = AgeOfEmpires.c.nextRandomInt() % 15;
             n2 = (AgeOfEmpires.b.int_b(n3) * (20 + n4) >> 16) + this.var_int_arr_a[0];
             n = (AgeOfEmpires.b.c(n3) * (20 + n4) >> 16) + this.var_int_arr_a[1];
         } while (n2 < 0 || n < 0 || n2 >= 64 || n >= 64 || this.var_short_arr_a[n2 + (n << 6) & 0xFFF] != 0);
@@ -241,7 +241,7 @@ implements Runnable {
         for (int i = 0; i < n; ++i) {
             int n2;
             int n3;
-            while (this.var_short_arr_a[(n3 = AgeOfEmpires.c.int_a() & 0x3F) + ((n2 = AgeOfEmpires.c.int_a() & 0x3F) << 6) & 0xFFF] != 0) {
+            while (this.var_short_arr_a[(n3 = AgeOfEmpires.c.nextRandomInt() & 0x3F) + ((n2 = AgeOfEmpires.c.nextRandomInt() & 0x3F) << 6) & 0xFFF] != 0) {
             }
             this.var_int_arr_b[i << 1] = n3;
             this.var_int_arr_b[(i << 1) + 1] = n2;

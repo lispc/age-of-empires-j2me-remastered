@@ -1,0 +1,47 @@
+# Wave2 改名映射 —— AI / 任务脚本 DSL / 随机图 RNG 考古产出（2026-09-01）
+# 证据与语义详见 docs/game-mechanics.md（"AI"与"任务事件脚本 DSL"节）+ docs/symbols.md wave2 候选表
+# 格式：kind<TAB>owner<TAB>oldName<TAB>params<TAB>newName（params 用源码简单类型名；F 用 -）
+# ---- AI 大脑与开关 ----
+M	AgeOfEmpires.c	z	()	tickAi
+F	AgeOfEmpires.c	var_boolean_i	-	aiEnabled
+# ---- AI 难度参数（o(int) 的 gameMode==0 分支赋值；随机图三档难度即这三列）----
+M	AgeOfEmpires.c	o	(int)	setupMissionEnv
+F	AgeOfEmpires.c	an	-	aiBuildInterval
+F	AgeOfEmpires.c	q	-	aiAttackThreshold
+F	AgeOfEmpires.c	C	-	aiTrainInterval
+F	AgeOfEmpires.c	var_int_l	-	aiGuardRadiusSq
+F	AgeOfEmpires.c	aw	-	aiFreeResInterval
+F	AgeOfEmpires.c	aM	-	aiGatherMultiplier
+# ---- AI 经济状态 ----
+F	AgeOfEmpires.c	var_byte_arr_j	-	aiBuildOrder
+F	AgeOfEmpires.c	M	-	aiBuildTarget
+F	AgeOfEmpires.c	ai	-	aiBuildPhase
+F	AgeOfEmpires.c	w	-	aiFreeResTimer
+F	AgeOfEmpires.c	E	-	aiBuildTimer
+F	AgeOfEmpires.c	aq	-	aiTrainTimer
+M	AgeOfEmpires.c	boolean_b	()	tryPlaceAiBuilding
+M	AgeOfEmpires.c	boolean_b	(int)	tryTrainAiUnit
+M	AgeOfEmpires.c	int_h	(int)	findAiBuildSpot
+M	AgeOfEmpires.c	short_a	(int,int)	findNearbyResource
+M	AgeOfEmpires.c	boolean_a	(int,int,int)	canAfford
+M	AgeOfEmpires.c	int_c	(int,int)	queueUnitTraining
+# ---- 投射物（箭塔/远程）----
+M	AgeOfEmpires.c	G	()	aimProjectiles
+M	AgeOfEmpires.c	J	()	tickProjectiles
+# ---- 任务事件脚本 DSL（F() 解释器 + 三助手；操作码见 game-mechanics）----
+M	AgeOfEmpires.c	F	()	tickMissionScript
+M	AgeOfEmpires.c	int_g	(int)	skipScriptBlock
+M	AgeOfEmpires.c	int_a	(int)	skipScriptActions
+M	AgeOfEmpires.c	int_f	(int)	scriptBlockOffset
+M	AgeOfEmpires.c	int_d	(int)	evalScriptCondition
+M	AgeOfEmpires.c	int_d	(int,int)	runScriptActions
+# ---- 全局随机数（xorshift 变体状态对；d() 生成器把 (hi<<8|lo) 当种子）----
+M	AgeOfEmpires.c	int_a	()	nextRandomInt
+F	AgeOfEmpires.c	r	-	rngStateHi
+F	AgeOfEmpires.c	var_int_k	-	rngStateLo
+# ---- 进度与数据表 ----
+F	AgeOfEmpires.c	aG	-	tutorialProgress
+F	AgeOfEmpires.c	aj	-	campaignProgress
+F	AgeOfEmpires.c	var_byte_arr_c	-	techFlags
+F	AgeOfEmpires.c	var_byte_arr_e	-	costTable
+F	AgeOfEmpires.c	var_byte_arr_g	-	dirTable
