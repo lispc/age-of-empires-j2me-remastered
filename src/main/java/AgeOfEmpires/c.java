@@ -695,7 +695,11 @@ implements CommandListener {
         if (this.screenState != 6) {
             this.devStableFrames = 0;
         } else if (this.devStableFrames < 25) {
-            if (++this.devStableFrames == 25 && DEV_AUTO_CHECKPOINT) {
+            if (++this.devStableFrames == 25 && DEV_AUTO_CHECKPOINT
+                    && this.tickCount - this.devLastCheckpointTick >= 600) {
+                // 节流:每次离开主视图(开地图/弹窗)回来都会重新计满 25 帧,原实现
+                // 会连发 checkpoint(BUG-003);至少间隔 600 tick 再存一次。
+                this.devLastCheckpointTick = this.tickCount;
                 this.devSaveTo(devSaveDir() + "/auto.aoesave");
             }
         }
@@ -785,6 +789,8 @@ implements CommandListener {
     // 确定性回放锚：load 成功后的 tickCount；replaytrace 的相对 tick 以此为原点
     // （无 load 时以指令执行瞬间为原点）。见 replaytrace 指令与 tools/replaycheck.sh。
     private long devTraceBaseTick = -1;
+    // 上次自动 checkpoint 的 tick(节流用,见 devFrameHousekeeping)
+    private long devLastCheckpointTick = Integer.MIN_VALUE;
     private boolean devInScript;
 
     /** 执行一条 FIFO 指令；返回 false 表示 exit。 */
@@ -3174,7 +3180,10 @@ implements CommandListener {
                     this.playerUnitHeaders[1][7] = 15;
                     this.aiGatherMultiplier = 512;
                     this.aiBuildInterval = 250;
-                    this.aiAttackThreshold = 50;
+                    // 原版 50:AI 军队价值 2 分钟内到线即 75% 兵力 all-in 玩家基地
+                    // (Easy 训练间隔 20 tick≈1.6s/兵),实测新手 2 分钟被推平。
+                    // 移植平衡修正:Easy 提高首攻门槛,给玩家发育窗口;中/高难不变。
+                    this.aiAttackThreshold = 200;
                     this.aiTrainInterval = 20;
                     this.aiGuardRadiusSq = 49;
                     this.aiFreeResInterval = Integer.MAX_VALUE;

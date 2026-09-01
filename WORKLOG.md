@@ -7,6 +7,23 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
+### BUG-002 修正版结论 + Easy 平衡修正;BUG-003 checkpoint 节流(2026-09-01 深夜,玩家会话第二轮)
+
+- 玩家代理首局(误入教学关那局改为正常随机图后续局)报**致命**:Easy AI ~30s
+  rush、2 分钟推平,并给出双根因假说(模板 byte54=0 首轮扫描中毒 + 防御目标语义反)。
+  **复核结论**:① [54] 的写入点只有 setup 武装(0xFFFFFF)与 tickAi 运行时两处,
+  不存在模板拷贝,首轮中毒假说不成立;② 防御目标=玩家基地[0][8] 经原版字节码
+  仲裁(case 1 @684: 先验 [1][8]!=-1 再取 [0][8]+抖动)是**原版设计**。真正的
+  rush 驱动是 **Easy 原版参数**:aiAttackThreshold=50 + aiTrainInterval=20
+  (1.6s/兵),军队价值 ~2 分钟到线即 75% 兵力 all-in。
+- **平衡修正(有意偏离,已标注)**:Easy aiAttackThreshold 50→200,给新手发育
+  窗口;中/高难维持原值。game-mechanics AI 节已注明原值与理由。
+- **BUG-003 修复**:auto checkpoint 加 600 tick 节流(devLastCheckpointTick)——
+  原实现每次离开主视图(开地图/弹窗)回来都重存一次。
+- 附注(未改):Under Attack 弹窗为模态不暂停模拟且会拒存(aA=2 时 devSaveTo 拒绝),
+  属原版语义,先观察。
+- 分工:玩家代理已通知重启第三局(正式随机图,阈值修正后)。
+
 ### 反编译器全量对拍(Phase 2):CFR 再挖出 B() 伪影并修复;random:N 导航修复(2026-09-01 深夜,玩家子代理会话)
 
 - **Phase 2 字节码对拍**(子代理执行,报告 `docs/research/decompiler-fidelity.md`,
