@@ -630,6 +630,16 @@ implements CommandListener {
             System.getProperty("user.home") + "/Library/Application Support/AoeJ2ME/saves");
     }
 
+    /** FIFO save/load 路径解析：裸文件名归位到 saveDir（r21 仓库根冒出裸 s14 事故）。 */
+    static String devResolveSavePath(String p) {
+        if (p.indexOf('/') >= 0) {
+            return p;
+        }
+        String resolved = devSaveDir() + "/" + p;
+        System.out.println("[devMouse] bare name -> " + resolved);
+        return resolved;
+    }
+
     private void devToast(String s) {
         this.devToast = s;
         this.devToastUntil = System.currentTimeMillis() + 2000;
@@ -815,7 +825,7 @@ implements CommandListener {
             case "key": case "until": case "replaytrace": case "script":
             case "fields": case "save": case "load": case "dump": case "stopat":
                 need = 2; break;
-            case "state": case "exit": case "sitrep":
+            case "state": case "exit": case "sitrep": case "ping":
                 need = 1; break;
             default:
                 System.out.println("[devMouse] unknown cmd: " + line);
@@ -828,6 +838,11 @@ implements CommandListener {
         }
         try {
             switch (p[0]) {
+                case "ping":
+                    // handler 存活心跳：echo 端用它一秒判读端死活（r21 指令雨打死
+                    // handler 后 agent 拿 pong 失败即知该重启进程，而非盲发）。
+                    System.out.println("[devMouse] pong ar=" + this.tickCount);
+                    break;
                 case "move":
                     this.mouseA(0, Integer.parseInt(p[1]), Integer.parseInt(p[2]));
                     break;
@@ -1246,10 +1261,12 @@ implements CommandListener {
                     System.out.println("[devMouse] fields dumped to " + p[1]);
                     break;
                 case "save":
-                    this.devSaveTo(p.length > 1 ? p[1] : devSaveDir() + "/quick.aoesave");
+                    // 裸文件名（无路径分隔）统一解析到 saveDir——落 CWD 曾把仓库根
+                    // 弄出裸 s14（r21 事故源，agent 建议采纳）。
+                    this.devSaveTo(p.length > 1 ? devResolveSavePath(p[1]) : devSaveDir() + "/quick.aoesave");
                     break;
                 case "load":
-                    this.devLoadFrom(p.length > 1 ? p[1] : devSaveDir() + "/quick.aoesave");
+                    this.devLoadFrom(p.length > 1 ? devResolveSavePath(p[1]) : devSaveDir() + "/quick.aoesave");
                     Thread.sleep(300);      // 等帧首 EDT 应用
                     break;
                 case "dump":

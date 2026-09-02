@@ -113,8 +113,10 @@ tick 戳输入 trace + tools/replaycheck.sh 双跑对拍）、**卡死看门狗*
 - 考古：`strtbl <表> <条目|all>`（打印 data.res 字符串表条目）/
   `dlg <z> <v>`（强制开结算/简报对话框复现渲染问题）
 - 存读：`save [路径]` / `load <路径>`（`[save]` 行带捕获时刻 `ar=`，回放锚）。
-  ⚠️ 裸文件名会写到**进程 CWD**（r21 实测仓库根冒出 s14）——一律用绝对路径；
-  `auto.aoesave` 自动 checkpoint 写 saveDir。
+  ⚠️ 裸文件名现自动归位到 saveDir（打 `[devMouse] bare name ->` 回显）；跨任务
+  load 有 mission mismatch 门控会拒载。`auto.aoesave` 自动 checkpoint 写 saveDir。
+- 心跳：`ping` → `[devMouse] pong ar=<tick>`——echo 端一秒判 handler 死活
+  （指令雨可把它永久打死：echo 阻塞但主循环照走，r21 实锤），无 pong=重启进程。
 - **确定性回放**：`replaytrace <trace文件> [baseTick]`（到点注入，行格式
   `t <相对tick> key <键码>` / `t <相对tick> move <x> <y>`）；`stopat <tick>`
   （冻在精确 tick，对拍取态前必用）
