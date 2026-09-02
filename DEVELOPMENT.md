@@ -112,7 +112,9 @@ tick 戳输入 trace + tools/replaycheck.sh 双跑对拍）、**卡死看门狗*
 - 编排：`script <文件>`（批量，支持 `sleep 毫秒`、#注释）
 - 考古：`strtbl <表> <条目|all>`（打印 data.res 字符串表条目）/
   `dlg <z> <v>`（强制开结算/简报对话框复现渲染问题）
-- 存读：`save [路径]` / `load <路径>`（`[save]` 行带捕获时刻 `ar=`，回放锚）
+- 存读：`save [路径]` / `load <路径>`（`[save]` 行带捕获时刻 `ar=`，回放锚）。
+  ⚠️ 裸文件名会写到**进程 CWD**（r21 实测仓库根冒出 s14）——一律用绝对路径；
+  `auto.aoesave` 自动 checkpoint 写 saveDir。
 - **确定性回放**：`replaytrace <trace文件> [baseTick]`（到点注入，行格式
   `t <相对tick> key <键码>` / `t <相对tick> move <x> <y>`）；`stopat <tick>`
   （冻在精确 tick，对拍取态前必用）
