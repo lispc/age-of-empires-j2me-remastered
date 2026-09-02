@@ -67,29 +67,28 @@ def tile(tx: int, ty: int) -> str:
     return ""
 
 
+def clear_popup() -> None:
+    """清弹窗专用：用 -7 而非 -5。build 完工后光标自动吸附到完工建筑格，
+    -5 会在弹窗关闭后落成"生产排队"（r22 幻影排队事故，House 多出 1 村民）。"""
+    d = get_state(2.0)
+    if d.get("aA") == 2:
+        send("key -7")          # 弹窗上 -7=关弹窗，不触发光标格语义
+        time.sleep(0.6)
+        d = get_state(2.0)
+        if d.get("aA") == 4:    # -7 在无选中态会开暂停菜单
+            send("key -5")      # Continue 恢复
+            time.sleep(0.6)
+
+
 def wait_built(tx: int, ty: int, timeout: float = 15.0) -> bool:
-    """轮询 state 的建筑完工：用 sel 试探(选建筑成功且非在建即完工)。
-    更可靠：直接看 train/sel 的服务端结果——但 stdout 不在本进程。
-    所以用 tile+日志文件的调用方约定：本函数轮询 fifo.json 的 aA 恢复 6。"""
+    """轮询直到 aA 回到世界态 6（弹窗全清）。"""
     deadline = time.time() + timeout
     while time.time() < deadline:
         d = get_state(2.0)
         if d.get("aA") == 6:
             return True
-        send("key -5")          # 完成弹窗(-5 可关教学/完成两类)
-        time.sleep(0.6)
+        clear_popup()
     return False
-
-
-def clear_popup() -> None:
-    d = get_state(2.0)
-    if d.get("aA") not in (0, 6):
-        send("key -5")
-        time.sleep(0.6)
-        d = get_state(2.0)
-        if d.get("aA") not in (0, 6):
-            send("key -7")
-            time.sleep(0.6)
 
 
 def main() -> None:

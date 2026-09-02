@@ -870,6 +870,11 @@ implements CommandListener {
                     int v = this.mapTiles[tx + (ty << 6)];
                     int cls = v & 0x300, owner = (v & 0xC00) >> 10, ord = v & 0xFF;
                     if (cls == 0x200 || cls == 0x100) {
+                        if (this.selectionMark > 0) {
+                            // 替换语义：selectUnderCursor 不清旧组，残留的 0x8000 sel 位
+                            // 会让 goto 连带旧组一起走（r22 全军撞敌团灭事故根因）。
+                            this.clearSelection();
+                        }
                         this.selectUnderCursor(owner, cls, ord);
                         this.selectionMode = 6;
                         System.out.println("[devMouse] sel OK p" + owner
