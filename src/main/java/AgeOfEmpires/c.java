@@ -798,6 +798,29 @@ implements CommandListener {
     /** 执行一条 FIFO 指令；返回 false 表示 exit。 */
     private boolean devMouseCmd(String line) {
         String[] p = line.split("\\s+");
+        // 各命令最小 token 数（含命令名）：缺参直接拒并回显，否则 AIOOBE 只留
+        // 一行笼统异常（r20 裸 rclick 实锤），agent 无从得知正确用法。
+        int need;
+        switch (p[0]) {
+            case "move": case "press": case "release": case "click": case "rclick":
+            case "ctile": case "probe": case "strtbl": case "dlg": case "tapk":
+                need = 3; break;
+            case "drag":
+                need = 5; break;
+            case "key": case "until": case "replaytrace": case "script":
+            case "fields": case "save": case "load": case "dump": case "stopat":
+                need = 2; break;
+            case "state": case "exit":
+                need = 1; break;
+            default:
+                System.out.println("[devMouse] unknown cmd: " + line);
+                return true;
+        }
+        if (p.length < need) {
+            System.out.println("[devMouse] missing args, need " + (need - 1)
+                + " (got " + (p.length - 1) + "): " + line);
+            return true;
+        }
         try {
             switch (p[0]) {
                 case "move":
