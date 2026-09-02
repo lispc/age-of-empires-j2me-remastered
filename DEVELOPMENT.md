@@ -88,11 +88,15 @@ tick 戳输入 trace + tools/replaycheck.sh 双跑对拍）、**卡死看门狗*
 `mkfifo /tmp/aoe-mouse` 后 `echo "指令" > /tmp/aoe-mouse`；CLI 包装 `tools/aoectl`。
 
 - 输入：`move x y` / `press` / `release` / `click x y` / `rclick` / `drag x1 y1 x2 y2` /
-  `ctile <tx> <ty>`（tile 直点：实时相机换算，无 click 的镜头缓动漂移；240x320 标定）/
+  `ctile <tx> <ty>`（**tile 直点，首选**：实时相机换算物理像素，无 click 的镜头缓动
+  漂移；公式=物理帧缓冲基准 sx=32*(tx-ty)-2*camX-64, sy=16*(tx+ty)-2*camY+19，
+  第14轮玩家实测钉死；早版逻辑基准已废弃）/
   `key <键码>`（单发；合成松开要求"再完整过一帧"防 paint 中段吞键——2026-09-01 修）/
   `tapk <键码> <期望aA> [重试]`（带验证重注）
-  ⚠️ 坐标 = 当前屏幕逻辑分辨率（默认 240x320；设 aoe.width=480 则为 480x535）。
-  x≥宽-14/y≥高-14 的贴边区域会触发边缘滚动。
+  ⚠️ **FIFO mouse 坐标 = 物理帧缓冲空间**（=逻辑×SCALE，默认 480x640；设
+  aoe.width=480 时为 960 宽）——直接喂 j() 拾取管线，不经 dispatchMouse 的
+  /SCALE 换算（那是真实鼠标的路径）。裸 move/click 的贴边滚动阈值仍按逻辑
+  screenW/H 比较，两套单位混用是移植现状，`ctile` 可完全绕开。
 - 观测：`state`（写 `<fifo>.json` 快照：aA/am/ar/光标/相机/选中/迷雾/单位表）/
   `until <aA> [秒]` / `probe x y`（只拾取）/ `dump <png>`（同步导帧）/ `fields <txt>`
 - 编排：`script <文件>`（批量，支持 `sleep 毫秒`、#注释）

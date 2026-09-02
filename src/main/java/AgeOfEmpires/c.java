@@ -823,11 +823,15 @@ implements CommandListener {
                     // tile 直点：用当前相机把 tile 中心换算回屏幕坐标再走 click 链路。
                     // 普通 click 的屏幕坐标→tile 映射随镜头缓动漂移（鼠标拾取用的是
                     // 拾取那一刻的相机），远距精确点击不可行；ctile 用实时 cameraPx
-                    // 计算，无漂移。换算式 240x320 实测标定（第8轮玩家推导验证）：
-                    //   sx=(tx-ty)*16-camX+28  sy=(tx+ty)*8-camY+76
+                    // 计算，无漂移。
+                    // 坐标基准（第14轮玩家实测钉死）：FIFO mouse 坐标喂给 j() 的拾取
+                    // 管线，是**物理帧缓冲空间**（=逻辑×SCALE，默认 480x640），不是
+                    // 240x320 逻辑空间——tile 菱形中心 = (32*(tx-ty)-2*camX-64,
+                    // 16*(tx+ty)-2*camY+19)。早版用逻辑基准(16/8,+76)导致系统性
+                    // 偏左上、远点常被邻格精灵截胡。
                     int tx = Integer.parseInt(p[1]), ty = Integer.parseInt(p[2]);
-                    int sx = (tx - ty) * 16 - this.cameraPxX + 28;
-                    int sy = (tx + ty) * 8 - this.cameraPxY + 76;
+                    int sx = 32 * (tx - ty) - 2 * this.cameraPxX - 64;
+                    int sy = 16 * (tx + ty) - 2 * this.cameraPxY + 19;
                     this.mouseA(1, sx, sy);
                     Thread.sleep(200);
                     this.mouseA(2, sx, sy);
