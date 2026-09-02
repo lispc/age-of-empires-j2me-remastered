@@ -820,6 +820,8 @@ implements CommandListener {
                 need = 5; break;
             case "train": case "build":
                 need = 4; break;
+            case "gather":
+                need = 5; break;
             case "goto":
                 need = 3; break;
             case "key": case "until": case "replaytrace": case "script":
@@ -883,6 +885,31 @@ implements CommandListener {
                     } else {
                         System.out.println("[devMouse] sel FAIL (" + tx + "," + ty
                             + ") class=0x" + Integer.toHexString(cls) + " — 空地/资源/雾");
+                    }
+                    break;
+                }
+                case "gather": {
+                    // 宏：gather <村民tx> <村民ty> <资源tx> <资源ty> —— 直绑采集
+                    // （sel 村民→orderMove 资源格），省掉 agent 侧 sel 失败/落点漂移
+                    // 两步试错（r23 需求）。资源格须已探明（雾格会吞令）。
+                    int vtx = Integer.parseInt(p[1]) & 0x3F, vty = Integer.parseInt(p[2]) & 0x3F;
+                    int rtx = Integer.parseInt(p[3]) & 0x3F, rty = Integer.parseInt(p[4]) & 0x3F;
+                    int vv = this.mapTiles[vtx + (vty << 6)];
+                    if ((vv & 0x300) != 0x200) {
+                        System.out.println("[devMouse] gather FAIL (" + vtx + "," + vty
+                            + ") 无单位(站桩单位请用 ctile 选中)");
+                    } else if ((this.mapTiles[rtx + (rty << 6)] & 0x8000) != 0) {
+                        System.out.println("[devMouse] gather FAIL (" + rtx + "," + rty
+                            + ") 资源格在雾中(先探图)");
+                    } else {
+                        if (this.selectionMark > 0) {
+                            this.clearSelection();
+                        }
+                        this.selectUnderCursor((vv & 0xC00) >> 10, 0x200, vv & 0xFF);
+                        this.selectionMode = 6;
+                        this.orderMove(0, rtx, rty);
+                        System.out.println("[devMouse] gather OK 村民(" + vtx + "," + vty
+                            + ") → 资源(" + rtx + "," + rty + ")");
                     }
                     break;
                 }
@@ -1073,8 +1100,8 @@ implements CommandListener {
                     // 位置被误读成"我方单位瞬移/乱走"（死亡后槽位压缩又放大了错觉）
                     int unitTotal = 0;
                     for (int pl = 0; pl < 2 && unitTotal < 32; ++pl) {
-                        int ucnt = Math.min(this.playerUnitHeaders[pl][2], 16);
-                        for (int i = 0; i < ucnt && unitTotal < 32; ++i) {
+                        int ucnt = Math.min(this.playerUnitHeaders[pl][2], 32);
+                        for (int i = 0; i < ucnt && unitTotal < 64; ++i) {
                             int off = i * 8;
                             if (unitTotal > 0) {
                                 json.append(',');
@@ -1098,7 +1125,7 @@ implements CommandListener {
                         }
                     }
                     for (int pl = 0; pl < 2; ++pl) {
-                        int ucnt = Math.min(this.playerUnitHeaders[pl][2], 16);
+                        int ucnt = Math.min(this.playerUnitHeaders[pl][2], 32);
                         for (int i = 0; i < ucnt; ++i) {
                             int off = i * 8;
                             System.out.println("[devMouse] p" + pl + " unit " + i
