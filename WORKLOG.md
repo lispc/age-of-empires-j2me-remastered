@@ -7,6 +7,24 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
+### 效率工程:战术宏+接力制+build order(2026-09-02, r21 运行中制定)
+
+- **动因**:挖 r20 trace(183MB)——221 次工具调用 60% 是"sleep+grep log"等待
+  循环,游戏操作碎片化每轮手搓;20 轮 0 胜主因=重开局浪费+探索模式低效。
+- **服务端战术宏**(devMouseCmd 新增,regress 绿):`sel`(tile 直选)/`goto [all]`
+  (移动令)/`train`(建筑排队,如实报 k/n)/`build`(直放建筑,受 canAfford/上限/
+  占格约束)/`tile`(格诊断+在建进度)/`sitrep`(一行战况+敌军质心);state json 增
+  res/pop/queued/ai。绕过拾取/相机/臂置全链,FAIL 带原因不静默。
+- **意外收获(宏测试连锁)**:type10 官方名=**Barracks**(教学弹窗原文实锤)——
+  升封建需 a(0,10)>=1 的 r15/r16 原判断"需兵营"恢复名誉;成本实测 House 15木/
+  Barracks 20木10石/民兵 5木5金;放置+完工双弹窗冻结世界(施工/训练全停)实锤;
+  "弹窗态 FIFO 查询被吞"修正(state/sitrep 可用)。手册 §4.2/4.4/4.7/5.1 连锁修正。
+- **流程制度化**:接力协议(手册 §1.4,checkpoint 命名/交棒/回滚,永不重开);
+  build order 时刻表(§5.4,纸面估算+自校);AGENTS.md 增 mid-run 盯盘+轮后
+  round-stats 画像;tools/aoeops.py(宏组合层,自动清弹窗等完工)+
+  tools/round-stats.py(效率画像)入库。
+- commit: 宏+工具+手册(待填)。
+
 ### 第20轮:三连-5破译(生产即排队);建筑type表钉死;Defeated结算首目击;首带手册(2026-08-31)
 
 - **首个带操作手册的轮次**(docs/agent-operations.md):启动词瘦身,机制知识指向手册,

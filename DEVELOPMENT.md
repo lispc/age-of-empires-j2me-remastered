@@ -98,8 +98,17 @@ tick 戳输入 trace + tools/replaycheck.sh 双跑对拍）、**卡死看门狗*
   aoe.width=480 时为 960 宽）——直接喂 j() 拾取管线，不经 dispatchMouse 的
   /SCALE 换算（那是真实鼠标的路径）。裸 move/click 的贴边滚动阈值仍按逻辑
   screenW/H 比较，两套单位混用是移植现状，`ctile` 可完全绕开。
+- **战术宏（r21 新增，操作首选；FAIL 带原因回显不静默；详见 docs/agent-operations.md
+  §6.1b）**：`sel <tx> <ty>`（tile 直选单位/建筑，绕过像素拾取）/ `goto <tx> <ty> [all]`
+  （选中单位移动令，all=扩选全体同类）/ `train <tx> <ty> <n>`（生产建筑排队 n 个，
+  pop/canAfford 约束下如实报 k/n）/ `build <tx> <ty> <type>`（直接放置建筑，仍受
+  canAfford/上限/占格/雾约束）/ `tile <tx> <ty>`（格诊断：raw/类目/owner/序号/雾/
+  在建进度）/ `sitrep`（一行战况：ar/资源/人口/队列/ai/双方兵力构成/敌军质心）。
+  `state` 的 fifo.json 增 `res`/`pop`/`queued`/`ai` 字段。⚠️ 建筑放置/完工弹窗
+  （aA=2）冻结世界逻辑（施工/训练全停）——build 后须清弹窗（tools/aoeops.py 已封装）。
 - 观测：`state`（写 `<fifo>.json` 快照：aA/am/ar/光标/相机/选中/迷雾/单位表）/
   `until <aA> [秒]` / `probe x y`（只拾取）/ `dump <png>`（同步导帧）/ `fields <txt>`
+  （标量静态字段；数组实例字段如 costTable 不在内）
 - 编排：`script <文件>`（批量，支持 `sleep 毫秒`、#注释）
 - 考古：`strtbl <表> <条目|all>`（打印 data.res 字符串表条目）/
   `dlg <z> <v>`（强制开结算/简报对话框复现渲染问题）

@@ -48,6 +48,19 @@ tail -45 /tmp/aoe-playN/session.log | grep -v '^\[dbg\]'          # 或直接读
 - 参考实现（复制到本轮目录）：`/tmp/aoe-play18/q.sh`——`./q.sh "ctile 20 62" "key -4" ...`。
 - 也可以用 FIFO `script <文件>`（支持 `sleep 毫秒`，见 DEVELOPMENT.md）。
 
+### 1.4 接力协议（r21 起：永不重开一整局）
+
+20 轮教训：每轮从零开局的"重复劳动"占时过半。接力制三原则：
+
+- **checkpoint 命名**（save 到本轮 saves/）：`boot`（开局稳定点：首批建筑完工）、
+  `feudal`（升封建完成）、`army12`（总攻兵力到位）、`attack1`（总攻发起前）。
+  关键节点必存，失败回滚到最近 checkpoint 换战术重试，**同一局内多试几种打法**。
+- **跨轮接力**：agent 到 60-90 分钟或上下文过半即止损交棒——save 最新进度 + BUGS.md
+  写清"当前局面/下一步"，下一轮 agent 直接 load 续玩。跨局接续同理（Defeated 后
+  进程存活，`-5` 关简报即新局，r20 实测）。
+- **接手第一步**：`state`/`sitrep` 摸清局面 → `ls saves` 找最新 checkpoint → 读
+  BUGS.md 尾部"下一步"→ 继续。禁止无脑重开。
+
 ---
 
 ## 2. 坐标系统（最易错，先读这节再动手）
@@ -211,13 +224,15 @@ tail -45 /tmp/aoe-playN/session.log | grep -v '^\[dbg\]'          # 或直接读
 - 黑暗时代 5 槽：Lumber Camp(15木) / Mining Camp / Barracks / House(15木) /
   Outpost·塔(20木5金15石)。封建后 8 槽：Lumber/Mining/Mill/Blacksmith/Range(25木10石)/
   Stable(25木10石)/House/Outpost（Barracks 消失，黑暗不建封建补不了，r20 dump）。
-- **建筑 array type 真值表（r20 源码+三锚点实测钉死，此前各轮的表作废）**：
+- **建筑 array type 真值表（r20 源码+三锚点实测；r21 tile/dlg 官方名实锤）**：
   菜单槽名 ↔ `var_int_arr_c` 槽位表一一对应：**1=Mining Camp、5=Mill、6=Blacksmith、
-  7=Archery Range、8=Stable、9=TC、10=Lumber Camp、11=House、12=Tower/Outpost**；
-  4=Barracks（黑暗槽）；2/3 菜单不可建未定。锚点：采矿场建出 type1、磨坊 type5、
-  房 type11（r20 实测）；case 6 有 6 项研究分支=铁匠铺研究数（c.java:4311）。
-  **陷阱：type 10 名叫 Lumber Camp，实为步兵生产建筑（§4.4）**。敌方"农田"实为
-  type12 塔（r19"农田x6"误读，r20 勘误）。
+  7=Archery Range、8=Stable、9=TC、10=Barracks、11=House、12=Tower/Outpost**；
+  4=（黑暗槽待核）；2/3 菜单不可建未定。锚点：采矿场建出 type1、磨坊 type5、
+  房 type11（r20 实测）；case 6 有 6 项研究分支=铁匠铺研究数（c.java:4311）；
+  **type10 官方名 Barracks**（r21 宏测试读教学弹窗原文 "Barracks: Allows building of
+  Infantry units"，[dlg-parse] z=70 v=10）——此前"槽1=Lumber Camp"是槽名误读，
+  本作建不可建"Lumber Camp"存疑（r22 用 dump 图核对菜单全名）。敌方"农田"实为
+  type12 塔（r19 误读，r20 勘误；a() case12 登记 projectileTable=可攻击实锤）。
 - **槽位动态 + 数字截断**：已建成建筑从菜单消失、后续前移；数字键 n=key-49 只有 n<W
   才生效，且 ae 映射=键码-47（'1'→action2…'9'→10，r20）。**选槽前必须 dump**：
   `dump png` 看底栏高亮名，或菜单开着时 `fields t.txt` 读 `var_int_arr_c`（真实槽位
@@ -250,38 +265,40 @@ tail -45 /tmp/aoe-playN/session.log | grep -v '^\[dbg\]'          # 或直接读
   每次 `-5` = 排队+1（openBuildingMenu g=0 分支；pop 检查在排队时、付款在出兵时）。
   **不需要面板交互、不需要先选中建筑，-5 连发=连排**；pop 满时排队静默拒——
   r19 复刻失败的真因就是 pop 5/5 满，不是时序玄学。
-- **生产建筑→产品表（源码 c.java:4335-4353 + r20 实测）**：
-  - **House(11) → 村民 t0/t1，5木/个，唯一村民入口**（付款在出兵时）；
-  - **Lumber Camp(10) → 黑暗产 t2 民兵 / 封建产 t3 剑士，5木10金/个**（r20 连发
-    实测爆到 5 剑士）——名字叫伐木场，实为主战兵营；
-  - Archery Range(7) → t4 弓兵；Stable(8) → 封建 t5 侦察/城堡 t6 骑兵
-    （源码 aK=时代==1?5:6）；
-  - TC(9)/Mill(5)/Blacksmith(6)/Mining(1)/Barracks(4) → 只研究/升时代，不产单位。
+- **生产建筑→产品表（源码 c.java:4335-4353 + r20 实测 + r21 宏全链验证）**：
+  - **House(11) → 村民 t0/t1，5木/个，唯一村民入口**；
+  - **Barracks(10) → 黑暗产 t2 民兵 / 封建产 t3 剑士，5木10金/个**（r20 连发实测、
+    r21 宏出兵 t2x2 扣款 10木10金 精确对账）——官方名 Barracks（§4.2），主战兵营；
+  - Archery Range(7) → t4 弓兵；Stable(8) → 封建 t5 侦察/城堡 t6 骑兵；
+  - TC(9)/Mill(5)/Blacksmith(6)/Mining(1) → 只研究/升时代，不产单位。
 - 采样：~256 tick 出 1 个（r16）。Busy gate：建筑训练中 openBuildingMenu 返回 false，
   除非 selectedType>=2——即**派军事单位去点营地可绕过**（r18；面板屏只是装饰）。
 - TC **不能**训村民（源码 case 9 只有升时代分支，无生产——r17"TC 排村民"误报结案）。
 - **r16"伐木场量产村民"勘误**：当时排出的应是 t2 民兵（认错兵种）；村民全从 House 出。
 
-**建筑类型表**（array type 字节；r20 源码+三锚点实测钉死，r19 表作废）：
+**建筑类型表**（array type 字节；r20 源码+三锚点实测；r21 官方名/成本修正）：
 
 | type | 建筑 | 备注 |
 |---|---|---|
-| 1 | Mining Camp | r20 实测锚点（建出 type1） |
-| 4 | Barracks | 黑暗槽有、封建菜单消失（r20 dump） |
+| 1 | Mining Camp | r20 实测锚点（建出 type1）；上限 2 |
 | 5 | Mill | r20 实测锚点；单一研究（techFlags[29]） |
 | 6 | Blacksmith | 6 项攻防研究（c.java:4311，项数吻合） |
 | 7 | Archery Range | 产 t4 |
 | 8 | Stable | 产 t5/t6 |
-| 9 | Town Center | 只升时代；升封建需 a(0,10)>=1（Lumber≥1） |
-| 10 | Lumber Camp | 产 t2/t3（名不副实的主战兵营） |
-| 11 | House | **人口+5 只来自 9(TC)/11(House)**（j() switch）；r20 实测锚点 |
-| 12 | Tower/Outpost | 敌方 6 座"农田"实为塔（r19 误读，r20 勘误） |
-| 0 | 幻影/非法 | 水上废品槽位，勿用（r19 实测有 type0 水上幻影营） |
+| 9 | Town Center | 只升时代 |
+| 10 | **Barracks** | 产 t2/t3；官方名实锤（教学弹窗原文）；**20木10石**（r21 宏扣款实测）；不可重复建 |
+| 11 | House | **15木**（r20 扣款实测）；**人口+5 只来自 9(TC)/11(House)**；上限 4 |
+| 12 | Tower/Outpost | a() case12 登记 projectileTable=可攻击实锤；上限 5 |
+| 0 | 幻影/非法 | 水上废品槽位，勿用（r19） |
 
-**升时代前置（源码 c.java:4245-4260 钉死）**：升封建 = `a(0,10)>=1`（**Lumber Camp≥1，
-不是兵营**——r15/r16"需 Barracks"是把 10 认成兵营的连环误判）；升城堡 = 
-`a(0,5)+a(0,6)>=2`（Mill+Blacksmith **计数≥2 即可，第二座 Mill 也能凑数**——绕开
-臂置间歇失灵的捷径）；第三级 = `a(0,3)>=1`（type3 未定）。
+**升时代前置（源码 c.java:4245-4260）**：升封建 = `a(0,10)>=1` = **Barracks≥1**
+（r15/r16 原判断"需兵营"正确——r20 短暂的"需 Lumber"勘误作废，type10 就是
+Barracks）；升城堡 = `a(0,5)+a(0,6)>=2`（Mill+Blacksmith **计数≥2 即可，第二座
+Mill 也能凑数**）；第三级 = `a(0,3)>=1`（type3 未定）。
+
+**建造真实成本（r21 宏扣款实测，costTable 行=type+10）**：House 15木、Barracks
+20木10石、村民 5木、t2 民兵/t3 剑士 5木10金。放置时一次付全款（排队兵在出兵时付）。
+其余建筑成本在用宏首次建造时顺带记录（res 差分即可）。
 
 **资源格地形码**：`[pick]` 行的 0xF49 等是**渲染 id**；存档 mapTiles 编码是另一套
 （r20 钉死）：`(v&0x300)==0x100`=建筑（0x1100|序号）、`==0x300`=资源（低字节=种类，
@@ -317,7 +334,7 @@ tail -45 /tmp/aoe-playN/session.log | grep -v '^\[dbg\]'          # 或直接读
 
 ### 4.7 升时代
 
-- 前置（源码钉死，§4.4）：升封建 = **Lumber Camp(type10)≥1**（`a(0,10,true)>=1`；
+- 前置（源码钉死，§4.4）：升封建 = **Barracks(type10)≥1**（`a(0,10,true)>=1`；
   r15/r16"需 Barracks"系 type 误判勘误）。升城堡 = Mill+Blacksmith 计数≥2
   （第二座 Mill 可凑数）。
 - 菜谱（r16/r18）：军事单位点 TC 格（或光标置 TC 格 + `-5`）→ 开升级菜单/确认
@@ -335,8 +352,8 @@ tail -45 /tmp/aoe-playN/session.log | grep -v '^\[dbg\]'          # 或直接读
 | type | 名称 | 备注 |
 |---|---|---|
 | t0/t1 | 村民（两种） | 采集/建造；House(type11) 生产（§4.4）；type1 可选可令（r11 洗清"天生聋"） |
-| t2 | 民兵 | Lumber Camp(type10) 黑暗时代产（aK=2），约 5木5金 |
-| t3 | 剑士 | Lumber Camp(type10) 封建产（5木10金，r20 连发实测）；在场 t2 升封建自动升级 |
+| t2 | 民兵 | Barracks(10) 黑暗时代产（aK=2），5木5金（r21 扣款实测） |
+| t3 | 剑士 | Barracks(10) 封建产（5木10金，r20 连发实测）；在场 t2 升封建自动升级 |
 | t4 | 弓兵 | Archery Range(7)；5木+10金（r16/r20）；att6 远程 |
 | t5 | 侦察骑兵 | Stable(8) 封建产；开图专用；早期多轮曾把 t5 误当 TC |
 | t6 | 骑士 | Stable(8) 城堡产（源码 aK=时代==1?5:6，r20 考据，未实测） |
@@ -365,13 +382,26 @@ tail -45 /tmp/aoe-playN/session.log | grep -v '^\[dbg\]'          # 或直接读
 
 ### 5.4 制胜模板（r18 防御反击案 + r20 修订速攻案）
 
-1. 开局：House(15木,人口) + Lumber Camp(15木,出兵) 早建；**-5 连发爆兵**（§4.4）。
+1. 开局：House(15木,人口) + Barracks(20木10石,出兵) 早建；**宏爆兵/`-5` 连发**（§6.1b/§4.4）。
 2. **先杀敌 raid 队、保村民**——经济归零=无兵源=崩盘（r20 败因）；村民别离 TC。
 3. 军队分驻：主力驻家防反扑，前锋诱敌时家里必须有兵。
 4. 总攻 12+ 混编出门；**永不归零：任何时刻留 ≥1 单位**（§5.5）。
 5. 接敌选地形（森林咽喉），残血撤退站桩回血；**20 分钟内解决最佳**（r20：107k tick
    拉锯后双线崩盘）。
 6. 胜利=拆光敌全部建筑（§9 结案）：总攻目标不是杀单位而是逐一 ctile 建筑格。
+
+**标准 build order 时刻表（r21 制定；数字=纸面估算+实测锚点混合，开局 30-60s 存档
+差分自校后按实际修正——采集速率轮间波动大，勿盲信）**：
+
+| 时刻(约) | 动作 | 依据 |
+|---|---|---|
+| 0-1min | 2 村民分头 ctile 最近资源格(先石/金保收入)；sitrep 记初始资源 | 经济首验(§4.5) |
+| 1-3min | build House(15木) → build Barracks(20木10石)；村民继续采 | 人口+出兵前置 |
+| 3-5min | House 再排村民×2(train 或 -5 连发)；升封建(Barracks≥1 已满足, 15/15/15) | §4.7 |
+| 5-10min | 采集飞轮满转(3-4 村民)；Barracks 爆 t2/t3；攒 15/15/15 升城堡材料 | 敌 AI 5min≈16 单位 |
+| 10-15min | 军力 8+：t2/t3 主力+t4 弓 2-3；全图跳运兵至敌城咽喉外驻扎 | §3.5 菜谱 |
+| 15-20min | **总攻 12+ 混编**：前锋诱防御模式，主力保家 raid；得手即逐格拆建筑 | 敌 raid 最早 23min |
+| 全程 | 每 5min sitrep 对账时刻表，落后就砍城堡路线保兵力 | 执行模式纪律 |
 
 ### 5.5 败北判定
 
@@ -400,6 +430,38 @@ tail -45 /tmp/aoe-playN/session.log | grep -v '^\[dbg\]'          # 或直接读
   `tools/aoectl`。
 - 高频观测循环：`echo "state" > fifo; sleep 1; cat fifo.json`（python -m json.tool 更好读）。
   fifo.json：aA/am/ar/cursor/cam/sel/explored + units（p/type/tile/sel，每方上限 16）。
+
+### 6.1b 战术宏（r21 新增，操作首选——比像素链路快且稳）
+
+服务端直连游戏内部函数的原子命令，绕过拾取/相机/菜单/臂置全部脆弱链。**优先用宏，
+ctile/click 菜谱退为后备**。回显在游戏 stdout（`[devMouse] ... OK/FAIL +原因`），
+grep session.log 验证；失败是带原因的，不会静默。
+
+- `sel <tx> <ty>`：直选该格单位/建筑（tile 编码直读，不经过像素拾取）。
+- `goto <tx> <ty> [all]`：对选中单位下移动令；`all`=扩选全体同类再下令（替代不稳
+  的双击全选）。总攻/行军标配。
+- `train <tx> <ty> <n>`：在己方完工生产建筑排队 n 个（aK=0村民 2民兵 3剑士 4弓兵
+  5/6骑兵）。pop/canAfford 约束下如实报 `排队 k/n`；TC/研究建筑报 FAIL(g=2)。
+- `build <tx> <ty> <type>`：直接放置建筑（付费+施工），绕过 选村民→35→槽→臂置→
+  方向键→落位 七步链（臂置间歇失灵/parity 死角全规避）。仍受游戏约束：需有村民、
+  canAfford、数量上限（House4/Tower5/Mining2）、格空（占格/雾/出界 FAIL）。
+- `tile <tx> <ty>`：一格地形诊断（raw/类目/owner/序号/雾/在建进度）——查建筑是否
+  完工、找资源格类型首选。
+- `sitrep`：**一行战况**（ar/aA/光标/资源/人口/队列/ai/双方兵力构成/敌军质心）。
+  决策前一条 sitrep 替代全量 state 轮询。state 的 fifo.json 也新增
+  res/pop/queued/ai 字段（免开存档读资源）。
+- **弹窗纪律（宏时代的头号坑）**：建筑首次放置与完工各有教学/完成弹窗（aA=2），
+  **弹窗期间 j() 不跑=施工/训练/移动全部冻结**。宏 build 后必须 `-5` 清弹窗再等
+  完工（`tools/aoeops.py build` 已封装此流程）。弹窗态 state/sitrep 可用
+  （r21 实测，修正 r16"FIFO 被吞"表述）。
+
+### 6.1c 轮次效率工具
+
+- `tools/aoeops.py`：宏的组合层（build 自动清弹窗+等完工；train 前置等完工）。
+- `tools/round-stats.py <transcript.jsonl>`：轮后效率画像（工具分布/sleep 黑洞/
+  token 汇总），每轮战报附一份，驱动流程改进。
+- `until <aA> [超时s]`：**服务端条件等待**——把"sleep+grep"轮询压成一次调用
+  （等弹窗关闭/菜单打开/进任务）。等待类场景一律优先 until。
 
 ### 6.2 fields（文本内省，免图利器）
 
@@ -436,15 +498,17 @@ tail -45 /tmp/aoe-playN/session.log | grep -v '^\[dbg\]'          # 或直接读
 - [ ] 空地无选中按 -5 = 开暂停/任务菜单（aA=4）；菜单里方向键会移动高亮，**严禁盲按 -5**。
 - [ ] Surrender/Quit **无任何确认**，-5 激活即弃局（triage r12 两次实锤）。误开菜单的恢复法：
       不动方向键直接 -5（默认高亮=Continue=恢复，triage r7/r10）。
-- [ ] 完成弹窗（aA=2）吃掉所有输入，**弹窗态 FIFO save/state 也被吞**（r16）——先 -7 关。
+- [ ] 完成弹窗（aA=2）**冻结世界逻辑**（j() 不跑：施工/训练/移动全停，r21 实测）。
+      放置与完工各有弹窗，宏 build 后必须清弹窗；state/sitrep 弹窗态可用（修正 r16）。
 - [ ] aA=7 挂空放置残毒会劫持后续输入 → `-6` 清（r13/r14）。
 - [ ] -7 多义：弹窗上=关弹窗；**无选中=开暂停菜单（aA=4，r20 一轮踩两次）**；有选中=
       仅清选中；悬空选择=开 Statistics（aA=12）（triage r7/r10/r11）。aA=4 有两种身份：
       局内暂停菜单 / 退出链后的 Game Mode 页。恢复：不动方向键直接 -5（Continue）。
 - [ ] key 35（建造菜单）是 toggle：重复按=关菜单，"菜单自关/数字键失灵"先查这个（r20）。
-- [ ] 静默拒绝清单（全部无提示，靠 state/存档验证）：canAfford 不足（放置 c.java:4505、
-      训练槽置灰）；目标不可达（走到断点回退停）；水/出界格（Q=-1，键盘令/点击全弃）；
-      迷雾格建造（0x8000 负格）；ctile 目标出屏；建造菜单数字键 n>=W 被忽略。
+- [ ] 静默拒绝清单（全部无提示，靠 state/存档验证；**宏例外：FAIL 带原因回显**）：
+      canAfford 不足（放置 c.java:4505、训练槽置灰）；目标不可达（走到断点回退停）；
+      水/出界格（Q=-1，键盘令/点击全弃）；迷雾格建造（0x8000 负格）；ctile 目标出屏；
+      建造菜单数字键 n>=W 被忽略。
 - [ ] 建造菜单槽位动态（建成移出/时代重排/分页），**选槽前必 dump 或 fields**（triage r10 守则）。
 - [ ] 选中建筑 4 秒自动超时——"选中→数字键"要闪电完成（r13）。
 - [ ] ctile 合成 -5：点训练型建筑=意外排队 1 兵/村民（r16"幽灵点击排 4 村民"事故）；
@@ -509,14 +573,23 @@ tail -45 /tmp/aoe-playN/session.log | grep -v '^\[dbg\]'          # 或直接读
     后的新问题）；我方塔自动射击可信（r18）。
 15. **type 2/3 建筑身份**（r20 考据）：建造菜单不可建；case 3 生产 aK=9 且有贸易单位
     计数门槛（疑 Market），case 2 研究 aK=7——未定性，勿引用。
+16. **建造菜单槽名 vs 官方名不一致**（r21）：type10 教学弹窗名=Barracks，但 r20 dump
+    图菜单槽 1 读作"Lumber Camp"——菜单名表错位还是当时误读，r22 dump 核对。
+17. **训练队列的 pop 当量**（r21 宏测试）：train t2 民兵 1 个时 hdr[49]+2（占 2 队列
+    当量），出兵节奏/付款时点（排队付 vs 出兵付）与 r20 记载有出入，待专门实测。
 
 ### 已结案（证据存档，勿再当悬案引用）
 
 - **胜利条件 = 拆光敌全部建筑**（r20 简报原文实锤："smash all their buildings to
   pieces"）；0 单位 = 败北（r18）。
 - **TC 不产村民**（r20 源码：case 9 只有升时代分支）；r17"TC 排村民"误报撤案。
-- **Lumber Camp 15 木、House 15 木**（r20 实测扣款）；r16"40木+10金"读错行撤案。
+- **House 15木、Barracks(type10) 20木10石**（r21 宏扣款实测）；r16"40木+10金"读错行
+  撤案；"Lumber 15木"系列读数同样混入采集干扰作废。
+- **type10 官方名 = Barracks**（r21 教学弹窗原文）；升封建前置 a(0,10)>=1=需 Barracks
+  ——r15/r16 原判断恢复名誉，r20"需 Lumber 勘误"作废。
 - **爆兵三连 -5 = 生产即排队**（r20 源码钉死 §4.4）；"输入时序玄学"撤案。
-- **r19"射箭场排剑士"** = 实为 type10 建筑（r20 勘误）；射箭场产 t4 弓兵。
+- **r19"射箭场排剑士"** = 实为 Barracks(type10)（r20 勘误）；射箭场产 t4 弓兵。
 - **r19"House=type2/11=磨坊/12=农田"类型表** = r20 真值表作废替换（§4.4）。
 - **"载档单位锁死"**（r20 撤案）：后期同批单位全部可动，早期失败全是选中/面板竞态假象。
+- **"弹窗态 FIFO save/state 被吞"**（r16）→ r21 修正：state/sitrep 弹窗态实测可用；
+  被吞的是部分按键输入时序，非查询指令。

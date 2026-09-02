@@ -803,14 +803,19 @@ implements CommandListener {
         int need;
         switch (p[0]) {
             case "move": case "press": case "release": case "click": case "rclick":
-            case "ctile": case "probe": case "strtbl": case "dlg": case "tapk":
+            case "ctile": case "probe": case "strtbl": case "dlg": case "tapk": case "sel":
+            case "tile":
                 need = 3; break;
             case "drag":
                 need = 5; break;
+            case "train": case "build":
+                need = 4; break;
+            case "goto":
+                need = 3; break;
             case "key": case "until": case "replaytrace": case "script":
             case "fields": case "save": case "load": case "dump": case "stopat":
                 need = 2; break;
-            case "state": case "exit":
+            case "state": case "exit": case "sitrep":
                 need = 1; break;
             default:
                 System.out.println("[devMouse] unknown cmd: " + line);
@@ -842,6 +847,113 @@ implements CommandListener {
                 case "rclick":
                     this.mouseA(3, Integer.parseInt(p[1]), Integer.parseInt(p[2]));
                     break;
+                case "sel": {
+                    // 宏：按 tile 直选该格的单位/建筑。绕过像素拾取(相机缓动/精灵截胡/
+                    // 落点漂移三坑)。tile 编码见 mapTiles: 0x200=单位 0x100=建筑,
+                    // 低字节=槽位序号, bit10-11=owner。
+                    int tx = Integer.parseInt(p[1]) & 0x3F, ty = Integer.parseInt(p[2]) & 0x3F;
+                    int v = this.mapTiles[tx + (ty << 6)];
+                    int cls = v & 0x300, owner = (v & 0xC00) >> 10, ord = v & 0xFF;
+                    if (cls == 0x200 || cls == 0x100) {
+                        this.selectUnderCursor(owner, cls, ord);
+                        this.selectionMode = 6;
+                        System.out.println("[devMouse] sel OK p" + owner
+                            + (cls == 0x200 ? " unit" : " building")
+                            + " type=" + this.selectedType + " at (" + tx + "," + ty + ")");
+                    } else {
+                        System.out.println("[devMouse] sel FAIL (" + tx + "," + ty
+                            + ") class=0x" + Integer.toHexString(cls) + " — 空地/资源/雾");
+                    }
+                    break;
+                }
+                case "goto": {
+                    // 宏：对当前选中单位下移动令(可选 all=扩选全体同类再下令)。
+                    int tx = Integer.parseInt(p[1]) & 0x3F, ty = Integer.parseInt(p[2]) & 0x3F;
+                    boolean all = p.length > 3 && "all".equals(p[3]);
+                    if (this.selectionMark != 512 || this.selectionPlayer != 0) {
+                        System.out.println("[devMouse] goto FAIL 无有效选中(先 sel)");
+                    } else {
+                        if (all && this.selectedType >= 0) {
+                            this.selectUnits(0, this.selectedType);
+                        }
+                        this.orderMove(0, tx, ty);
+                        System.out.println("[devMouse] goto OK (" + tx + "," + ty + ")"
+                            + (all ? " x" + this.playerUnitHeaders[0][49] + "q" : "")
+                            + " type=" + this.selectedType);
+                    }
+                    break;
+                }
+                case "train": {
+                    // train 宏：光标直置建筑格排队 n 个(生产即排队, §手册4.4), 返回
+                    // 实际排队数(pop/canAfford 拒时如实报)。绕过拾取/面板/4s超时全链。
+                    int tx = Integer.parseInt(p[1]) & 0x3F, ty = Integer.parseInt(p[2]) & 0x3F;
+                    int want = Integer.parseInt(p[3]);
+                    int v = this.mapTiles[tx + (ty << 6)];
+                    if ((v & 0x300) != 0x100 || ((v & 0xC00) >> 10) != 0) {
+                        System.out.println("[devMouse] train FAIL (" + tx + "," + ty
+                            + ") 非己方建筑");
+                    } else if (!this.openBuildingMenu(v & 0xFF)) {
+                        System.out.println("[devMouse] train FAIL 菜单拒绝(在建/门控/无军事选中?)");
+                    } else if (this.var_int_g != 0) {
+                        System.out.println("[devMouse] train FAIL type 非生产建筑(g=" + this.var_int_g
+                            + " — TC/研究类建筑不产兵)");
+                    } else {
+                        // aK→单位 type 恒等映射（r20 实测: 0村民/2民兵/3剑士/4弓兵/5侦察）。
+                        // 不走 y()——它依赖菜单态的 var_int_arr_c 槽位表，宏上下文为 null。
+                        int q0 = this.playerUnitHeaders[0][49];
+                        int got = 0;
+                        for (int i = 0; i < want; ++i) {
+                            if (this.playerUnitHeaders[0][2] + this.playerUnitHeaders[0][49]
+                                < this.playerUnitHeaders[0][3] && this.canAfford(0, 0, this.aK)) {
+                                this.queueUnitTraining(0, this.aK);
+                                ++got;
+                            }
+                        }
+                        System.out.println("[devMouse] train OK 排队 " + got + "/" + want
+                            + " aK=" + this.aK + " (aK=0村民 2/3步兵 4弓兵 5/6骑兵)");
+                    }
+                    break;
+                }
+                case "build": {
+                    // build 宏：直接放置建筑(付费+施工中), 绕过 选村民→35→槽→臂置→
+                    // 方向键→落位 七步链(臂置间歇失灵/parity 死角全规避)。经济约束
+                    // (canAfford)与数量上限仍由游戏逻辑执行。
+                    int tx = Integer.parseInt(p[1]) & 0x3F, ty = Integer.parseInt(p[2]) & 0x3F;
+                    int type = Integer.parseInt(p[3]) & 0xFF;
+                    boolean hasVillager = false;
+                    for (int i = 0; i < this.playerUnitHeaders[0][2]; ++i) {
+                        int t = this.playerUnitSlots[0][(i << 3) + 3] & 0xFF;
+                        if (t == 0 || t == 1) {
+                            hasVillager = true;
+                            break;
+                        }
+                    }
+                    if (!hasVillager) {
+                        System.out.println("[devMouse] build FAIL 无村民(建造主体)");
+                    } else if (this.mapTiles[tx + (ty << 6)] < 0) {
+                        System.out.println("[devMouse] build FAIL (" + tx + "," + ty + ") 迷雾格未探索");
+                    } else if ((this.mapTiles[tx + (ty << 6)] & 0x300) != 0) {
+                        System.out.println("[devMouse] build FAIL (" + tx + "," + ty
+                            + ") 被单位/建筑/资源占格");
+                    } else if (type != 1 && type != 11 && type != 12 && this.techFlags[10 + type] == 0) {
+                        System.out.println("[devMouse] build FAIL type" + type + " 已建成过(不可重复)");
+                    } else if ((type == 11 && this.a(0, 11, false) >= 4)
+                        || (type == 12 && this.a(0, 12, false) >= 5)
+                        || (type == 1 && this.a(0, 1, false) >= 2)) {
+                        System.out.println("[devMouse] build FAIL type" + type + " 达数量上限");
+                    } else if (!this.canAfford(0, 1, type)) {
+                        System.out.println("[devMouse] build FAIL 资源不足 type" + type);
+                    } else {
+                        int off = this.a(0, type, tx, ty, 0x40000000, true);
+                        if (off < 0) {
+                            System.out.println("[devMouse] build FAIL 格被占/建筑数满(22)");
+                        } else {
+                            System.out.println("[devMouse] build OK type" + type + " @("
+                                + tx + "," + ty + ") 施工中(约1.3s完工)");
+                        }
+                    }
+                    break;
+                }
                 case "ctile": {
                     // tile 直点：用当前相机把 tile 中心换算回屏幕坐标再走 click 链路。
                     // 普通 click 的屏幕坐标→tile 映射随镜头缓动漂移（鼠标拾取用的是
@@ -913,7 +1025,14 @@ implements CommandListener {
                         .append(",\"ar\":").append(this.tickCount)
                         .append(",\"cursor\":[").append(this.cursorTileX).append(',').append(this.cursorTileY).append(']')
                         .append(",\"cam\":[").append(this.cameraPxX).append(',').append(this.cameraPxY).append(']')
-                        .append(",\"sel\":").append(this.selectionMode).append(",\"aE\":").append(this.selectionMark);
+                        .append(",\"sel\":").append(this.selectionMode).append(",\"aE\":").append(this.selectionMark)
+                        .append(",\"res\":[").append(this.playerUnitHeaders[0][5]).append(',')
+                        .append(this.playerUnitHeaders[0][6]).append(',')
+                        .append(this.playerUnitHeaders[0][7]).append(']')
+                        .append(",\"pop\":[").append(this.playerUnitHeaders[0][2]).append(',')
+                        .append(this.playerUnitHeaders[0][3]).append(']')
+                        .append(",\"queued\":").append(this.playerUnitHeaders[0][49])
+                        .append(",\"ai\":").append(this.var_int_i);
                     if (this.mapTiles != null) {
                         // explored = 无 0x8000 迷雾位的格子数（装载时大面积置位、随探索
                         // 经矩形填充助手清除；regress golden 开局值 298）。另一迷雾位
@@ -969,6 +1088,72 @@ implements CommandListener {
                                 + " sel=" + ((this.playerUnitSlots[pl][off + 4] & 0x8000) != 0));
                         }
                     }
+                    break;
+                }
+                case "tile": {
+                    // 诊断：打印一格 mapTiles 原值与分解（类目/owner/序号/雾/地表）。
+                    int tx = Integer.parseInt(p[1]) & 0x3F, ty = Integer.parseInt(p[2]) & 0x3F;
+                    int v = this.mapTiles[tx + (ty << 6)];
+                    String st = "";
+                    if ((v & 0x300) == 0x100 && (v & 0xC00) == 0) {
+                        int s = this.var_int_arr_arr_b[0][((v & 0xFF) << 2) + 2];
+                        st = " bldStatus=0x" + Integer.toHexString(s)
+                            + (((s & 0x40000000) != 0) ? " 在建" + (s & 0xFF) : (s & 0xFF) == 255 ? " 完工" : " ?" + (s & 0xFF));
+                    }
+                    System.out.println("[devMouse] tile (" + tx + "," + ty + ") raw=0x"
+                        + Integer.toHexString(v & 0xFFFF)
+                        + " class=0x" + Integer.toHexString(v & 0x300)
+                        + " owner=" + ((v & 0xC00) >> 10)
+                        + " ord=" + (v & 0xFF)
+                        + (v < 0 ? " 雾" : "") + ((v & 0x4000) != 0 ? " 地表" : "") + st);
+                    break;
+                }
+                case "sitrep": {
+                    // 一行战况摘要：agent 每次决策只需这一行，替代全量 state 轮询。
+                    StringBuilder sr = new StringBuilder(256);
+                    sr.append("[devMouse] sitrep ar=").append(this.tickCount)
+                        .append(" aA=").append(this.screenState).append("/").append(this.pendingScreenState)
+                        .append(" cur=(").append(this.cursorTileX).append(',').append(this.cursorTileY).append(')')
+                        .append(" res=").append(this.playerUnitHeaders[0][5]).append('/')
+                        .append(this.playerUnitHeaders[0][6]).append('/').append(this.playerUnitHeaders[0][7])
+                        .append(" pop=").append(this.playerUnitHeaders[0][2]).append('/').append(this.playerUnitHeaders[0][3])
+                        .append(" q=").append(this.playerUnitHeaders[0][49])
+                        .append(" ai=").append(this.var_int_i)
+                        .append(" sel=").append(this.selectionMark);
+                    int[] mine = new int[16], foe = new int[16];
+                    int foeN = 0, foeSx = 0, foeSy = 0;
+                    for (int pl = 0; pl < 2; ++pl) {
+                        int ucnt = this.playerUnitHeaders[pl][2];
+                        int[] tab = pl == 0 ? mine : foe;
+                        for (int i = 0; i < ucnt; ++i) {
+                            int off = i << 3;
+                            int t = this.playerUnitSlots[pl][off + 3] & 0xFF;
+                            if (t < 16) {
+                                ++tab[t];
+                            }
+                            if (pl == 1) {
+                                ++foeN;
+                                foeSx += this.playerUnitSlots[pl][off] >>> 8;
+                                foeSy += this.playerUnitSlots[pl][off] & 0xFF;
+                            }
+                        }
+                    }
+                    sr.append(" 我军:");
+                    for (int t = 0; t < 16; ++t) {
+                        if (mine[t] > 0) {
+                            sr.append('t').append(t).append('x').append(mine[t]).append(' ');
+                        }
+                    }
+                    sr.append("敌军:").append(foeN);
+                    for (int t = 0; t < 16; ++t) {
+                        if (foe[t] > 0) {
+                            sr.append(" t").append(t).append('x').append(foe[t]);
+                        }
+                    }
+                    if (foeN > 0) {
+                        sr.append(" 质心=(").append(foeSx / foeN).append(',').append(foeSy / foeN).append(')');
+                    }
+                    System.out.println(sr);
                     break;
                 }
                 case "until": {
