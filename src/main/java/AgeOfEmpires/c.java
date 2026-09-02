@@ -822,6 +822,8 @@ implements CommandListener {
                 need = 4; break;
             case "gather":
                 need = 5; break;
+            case "rally":
+                need = 3; break;
             case "goto":
                 need = 3; break;
             case "key": case "until": case "replaytrace": case "script":
@@ -886,6 +888,27 @@ implements CommandListener {
                         System.out.println("[devMouse] sel FAIL (" + tx + "," + ty
                             + ") class=0x" + Integer.toHexString(cls) + " — 空地/资源/雾");
                     }
+                    break;
+                }
+                case "rally": {
+                    // 宏：rally <tx> <ty> —— 全体军事单位(type>=2)逐类扩选+下令集结。
+                    // 绕开 goto all 的 x0q 空集结群(选中被移动自清后扩选空集, r24 破案)：
+                    // 这里每个 type 独立 selectUnits+orderMove，互不依赖选中存活。
+                    int tx = Integer.parseInt(p[1]) & 0x3F, ty = Integer.parseInt(p[2]) & 0x3F;
+                    int sent = 0, types = 0;
+                    for (int t = 2; t < 16; ++t) {
+                        if (this.a(0, t, false) <= 0) {   // a(0,type,false)=该 type 存量
+                            continue;
+                        }
+                        this.selectUnits(0, t);
+                        if (this.selectionMark == 512 && this.selectionPlayer == 0) {
+                            this.orderMove(0, tx, ty);
+                            ++types;
+                            sent += this.a(0, t, false);
+                        }
+                    }
+                    System.out.println("[devMouse] rally OK " + sent + " 单位(" + types
+                        + " 个兵种) → (" + tx + "," + ty + ")");
                     break;
                 }
                 case "gather": {
