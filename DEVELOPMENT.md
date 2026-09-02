@@ -2,7 +2,8 @@
 
 > 本档是**持续活跃的手册**：现状 / 环境 / 工具用法 / 路线图 / 坑，只写现在时态。
 > 带时间序的会话日志在 `WORKLOG.md`（append-only）；一次性考证报告在 `docs/research/`；
-> 游戏机制知识 `docs/game-mechanics.md`；符号对照 `docs/symbols.md`；玩家文档 `USER-GUIDE.md`。
+> 游戏机制知识 `docs/game-mechanics.md`；符号对照 `docs/symbols.md`；玩家文档 `USER-GUIDE.md`；
+> 自动化试玩代理的操作手册 `docs/agent-operations.md`（历轮实测经验积累，每轮滚动更新）。
 
 ## 一句话现状
 
