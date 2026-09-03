@@ -10,7 +10,7 @@ import AgeOfEmpires.c;
  *
  * 调用时机：onPaint 帧首（Timer/paint 线程，与模拟同线程），每帧一次，
  * AI 内部自行节流。tick 里可直接读 game 的公开字段
- * （playerUnitHeaders/playerUnitSlots/var_int_arr_arr_b/mapTiles/techFlags/
+ * （playerUnitHeaders/playerUnitSlots/buildingTable/mapTiles/techFlags/
  * tickCount/screenState/gameMode/相机/光标），写操作走公开原语：
  * orderMove/selectUnits/clearSelection/selectUnderCursor/queueUnitTraining/
  * canAfford/payCost/findAiBuildSpot/findNearbyResource/a(放建筑)/tryResearch。

@@ -22,7 +22,7 @@ import json
 import struct
 import sys
 
-# ---- mapTiles 类型化解码表（r27-r31 实测钉死，见 docs/deobfuscation.md）----
+# ---- mapTiles 类型化解码表（r27-r31 实测钉死，见 docs/symbols.md）----
 # 高位标志：0x8000=未探索雾 0x300 类=地表对象 0x4000=?(雾下单位相关)
 # 0x83xx：雾下资源（低 2 位 1木 2金 3石；低字节 0x7d/e/f=雾占位符非剩余量）
 # 0x85xx：雾下建筑（低字节=建筑 type——雾中信息可读，免侦察地图术）

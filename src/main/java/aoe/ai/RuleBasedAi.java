@@ -9,7 +9,7 @@ import AgeOfEmpires.c;
  * 决策一次（节流），全部决策只依赖游戏状态 + tickCount，不用墙钟、不用随机数
  * （因此天然确定：同一对局重放结果一致；也绝不消耗游戏的 nextRandomInt）。
  *
- * 读面：双方 playerUnitHeaders / playerUnitSlots / var_int_arr_arr_b(建筑记录) /
+ * 读面：双方 playerUnitHeaders / playerUnitSlots / buildingTable(建筑记录) /
  * mapTiles / techFlags。本里程碑允许读对面状态（hdr[1] 全字段）。
  * 写面：军事群令走 selectUnits(0,-1)+orderMove+clearSelection 原语；村民单体
  * 改派与敌方 AI 同做法——直接写 slot[2] 目标（引擎自身在 tickAi 里就是这么写的）。
@@ -150,7 +150,7 @@ public final class RuleBasedAi implements PlayerAi {
             }
         }
         // 建筑扫描
-        int[] recs = game.var_int_arr_arr_b[0];
+        int[] recs = game.buildingTable[0];
         int houseN = 0, barracksDone = 0, archeryDone = 0, siegeDone = 0;
         int lumberN = 0, miningN = 0, millN = 0, outpostN = 0;
         int tcSlot = -1, houseSlot = -1, barracksSlot = -1, archerySlot = -1, siegeSlot = -1;

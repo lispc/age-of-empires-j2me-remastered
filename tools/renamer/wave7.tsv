@@ -1,0 +1,12 @@
+# wave7：玩家代理 32 轮考据批次（2026-09-03，考据汇编转正，登记于 docs/symbols.md）
+# 只收录已完全读懂语义的符号。证据链：docs/deobfuscation.md + docs/symbols.md wave7 节
+# + /tmp/aoe-play22,25/BUGS*.md（r29-r31 战报）。battle-verified: rally 事故(a)、
+# 胜负判定(i case 9)、train 语义(aK)、结算判读(z/V)。
+# 注意：a/i/z/V 是单字母——renamer 注释同步有误伤史（wave4/wave6），apply 后逐条过 diff。
+# 格式：kind<TAB>owner<TAB>oldName<TAB>params<TAB>newName
+F	AgeOfEmpires.c	var_int_arr_arr_b	-	buildingTable
+F	AgeOfEmpires.c	aK	-	selectedTrainProduct
+F	AgeOfEmpires.c	z	-	dialogScriptId
+F	AgeOfEmpires.c	V	-	briefingVariant
+M	AgeOfEmpires.c	a	(int,int,boolean)	countBuildings
+M	AgeOfEmpires.c	i	(int,int)	onThingDestroyed

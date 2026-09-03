@@ -67,7 +67,7 @@ public final class SaveState {
         for (int i = 0; i < players; ++i) {
             writeInts(out, g.playerUnitHeaders[i]);
             writeShorts(out, g.playerUnitSlots[i]);
-            writeInts(out, g.var_int_arr_arr_b[i]);
+            writeInts(out, g.buildingTable[i]);
             writeShorts(out, g.projectileTable[i]);
         }
         // —— 相机/光标/选中 ——
@@ -136,7 +136,7 @@ public final class SaveState {
         for (int i = 0; i < players; ++i) {
             readInts(in, g.playerUnitHeaders[i]);
             readShorts(in, g.playerUnitSlots[i]);
-            readInts(in, g.var_int_arr_arr_b[i]);
+            readInts(in, g.buildingTable[i]);
             readShorts(in, g.projectileTable[i]);
         }
         g.cameraPxX = in.readInt();

@@ -192,6 +192,58 @@
 注意：AgeOfEmpires.c 另有**无参方法 m()**（.nfo RecordStore 读写），与字段无关；
 单字母改名后注释同步曾误伤该方法注释，已人工修复（wave4 教训再现）。
 
+## 已改名：wave7（2026-09-03，玩家代理 32 轮考据批次 + 文档归并）
+
+> 原 docs/deobfuscation.md（2026-09-03 玩家代理工程整理轮创建）并入本文件——
+> 该文档的符号映射内容在本节与既有表格中，结构语义考据见下方「补充结构语义」节。
+> 证据链：/tmp/aoe-play22,25/BUGS*.md（r29-r31 战报）+ 读码。
+
+字段（AgeOfEmpires.c）：
+
+| 新名 | 旧名 | 语义 |
+|---|---|---|
+| buildingTable | var_int_arr_arr_b | **建筑表** int[p][stride4]，i<headers[p][4]：[+0]tile 打包(tx=`>>8&0x3F`,ty=`&0x3F`) [+2]状态(0x40000000=施工中,&0xFF=进度,255=完工) [+3]&0xFF=type。⚠️ 别拿它数单位——rally 宏曾因此零移动+回显失真（r31 实锤，修于 dd96c2f） |
+| selectedTrainProduct | aK | 当前生产菜单选中待训的产品（openBuildingMenu 设默认、菜单光标可选；aK→建筑映射硬编码在 queueUnitTraining）。aK=0 产物 fifo 显示 type=1（村民第二种），t0 是任务初始赠品（r30 实测 4/4） |
+| dialogScriptId | z | 当前对话框/简报的脚本 id（startMissionBriefing 唯一写入）：62=任务简报 70=难度/链页 74=失败简报 **98=胜负结算** |
+| briefingVariant | V | 对话框变体/正文索引；z=98 结算时 **0=Victorious 1=Defeated**（r23-r31 判读位） |
+
+方法（AgeOfEmpires.c）：
+
+| 新名 | 旧名 | 语义 |
+|---|---|---|
+| countBuildings(int,int,boolean) | a | ⚠️ 数的是**建筑表**（bl=true 排除施工中）——勿当单位计数用；真单位计数用 devCountUnits（r32 基元） |
+| onThingDestroyed(int,int) | i | 建筑/单位摧毁处理器：清 mapTiles 占位、techFlags 置位、pop 回收、**胜负判定**——case 9(TC)：我方 TC 毁→98,1 即败；敌 TC 毁→98,0 即胜（gameMode 32 链 missionIndex≠0 时跳过，走 missionScript 路径）。r30 源码定案+r31 实战双验证（敌 0 单位+TC 毁同轮触发；敌工人存活不影响即胜） |
+
+注意：单字母 a/i/z/V 改名后 renamer 注释同步经全量 diff 复核，无 wave4 式误伤
+（英文冠词 "a" 因词边界+上下文未被动；check 模式对单字母名报大量噪声——循环变量
+i 与其他类同名符号均非本表目标，已用编译+javac 解析+`this.i(`/`var_int_arr_arr_b`
+绝迹 grep 替代验证）。
+
+## 补充结构语义（原 deobfuscation.md 考据，2026-09-03）
+
+**胜负判定双路径**（r30/r31 定案）：①敌 TC 毁→即胜（工人/村民不计入，r30 实测敌
+4 工人存活即胜；32 链模式例外见上）②我方 TC 毁→即败（与"0 单位=败北"互相独立的
+两条判定）。③missionScript 脚本条件（opcode 4=胜 5=败）为另一路径。
+
+**单位任务字**（playerUnitSlots[+7]，r32 读码钉死）：低 nibble=任务态 **0=闲置
+1=行军 2=采集中（高字节 0x66=满载计时，bit4-5=资源种）3=回送中**；selectUnits 的
+村民分支（type<2 且 nibble==0）=游戏自己的"选闲置村民"判定，assign 宏同款。
+
+**单位表/建筑表速查**：playerUnitSlots stride8（[+0]tile 打包 tx=`>>>8`/ty=`&0xFF`、
+[+3]type、[+4]&0x8000 选中位、[+7]任务字），`i<headers[2]` 全是活单位；
+buildingTable 见上表。playerUnitHeaders：[0]=age [2]=单位数(pop占用) [3]=pop上限
+[4]=建筑数 [5][6][7]=木/金/石 [49]=在训队列长。
+
+**地图格编码**（mapTiles short）：0x8000=未探索雾（gather/build 雾检位）；0x300=资源
+（低2位 1木2金3石，高字节≈剩余量非种类）；0x200=单位占位（低字节=槽位）；
+0x100=建筑占位（低字节=序号，bit10-11=owner）；雾下 **0x83xx=资源（&3 判种）、
+0x85xx=建筑（低字节=type）——雾中信息可读**（r31 免侦察地图术）；0x0=虚空/清零；
+0x1604=rubble；-32768=未初始化。
+
+**玩家 AI/工具钩子**：`-Daoe.bfsPath=1` 可选 BFS 寻路（player-ai 分支 2026-09-03
+合入，默认关）；`-Daoe.playerAi=<类名>` 帧首 AI hook（aoe/ai/RuleBasedAi 范例）；
+FIFO 宏清单见 DEVELOPMENT.md；存档解析 `tools/aoesave.py`（只读，类型化解码表内置）。
+
 ## 半懂（保留旧名，先补注释）
 
 aH（转场计时/激活参数双职责）、ap（返回节点）、var_int_arr_e（当局资源拷贝，

@@ -14,9 +14,8 @@
 package AgeOfEmpires;
 
 /* ============================================================================
- * 符号表（32 轮玩家代理逆向考据沉淀，2026-09-03；证据链见 docs/deobfuscation.md
- * 与 docs/agent-operations.md）。改名克制：大改名会污染与反编译原版的对照考古，
- * 以本表+就地注释代替。
+ * 符号表（32 轮玩家代理逆向考据沉淀，2026-09-03 wave7 改名后与本文件同步；
+ * 证据链见 docs/symbols.md 与 docs/agent-operations.md）。
  *
  * 【状态机】
  *   screenState(aA)   当前屏状态：2=对话框/弹窗（期间 j() 世界循环冻结！）
@@ -24,11 +23,14 @@ package AgeOfEmpires;
  *   pendingScreenState(am) 待切换屏状态（startMissionBriefing 链）
  *   tickCount(ar)     全局 tick（aoe.tickms=40ms/tick）
  *   gameMode          0=dev/headless 随机图 16=tutorial 32=战役链（TC 毁胜利判定
- *                     在 32 链模式且 missionIndex≠0 时被跳过——见 i() case 9）
- *   startMissionBriefing(as,z,V)：as=任务id z=对话框id(62=简报 70=难度页 98=胜负结算
- *                     74=失败简报) V=变体(98 结算: 0=胜 1=败)
- *   z=98 由两条独立判定触发：敌 TC 毁→V=0（即胜）；我 TC 毁→V=1（即败）。
- *   另有 missionScript 脚本胜利路径（opcode 4/5）。
+ *                     在 32 链模式且 missionIndex≠0 时被跳过——见 onThingDestroyed
+ *                     case 9）
+ *   startMissionBriefing(as, dialogScriptId, briefingVariant)：
+ *                     as=任务id；dialogScriptId=对话框id(62=简报 70=难度页
+ *                     98=胜负结算 74=失败简报)；briefingVariant=变体
+ *                     (98 结算: 0=胜 1=败)
+ *   dialogScriptId=98 由两条独立判定触发：敌 TC 毁→briefingVariant=0（即胜）；
+ *   我 TC 毁→briefingVariant=1（即败）。另有 missionScript 脚本胜利路径（opcode 4/5）。
  *
  * 【玩家数据】
  *   playerUnitHeaders[p]  玩家标量区：[0]=age [2]=单位数(pop占用) [3]=pop上限
@@ -38,11 +40,11 @@ package AgeOfEmpires;
  *                     (tx=>>>8, ty=&0xFF) [+3]&0xFF=type [+4]&0x8000=选中位
  *                     [+7]任务字：低nibble 0=闲置 1=行军 2=采集中(高字节0x66=满载
  *                     计时,bit4-5=资源种) 3=回送中
- *   var_int_arr_arr_b[p]  建筑表 stride=4（i<[4]）：[+0]tile 打包(tx=>>8&0x3F,ty=&0x3F)
+ *   buildingTable[p]  建筑表 stride=4（i<[4]）：[+0]tile 打包(tx=>>8&0x3F,ty=&0x3F)
  *                     [+2]状态(0x40000000=施工中,&0xFF=进度,255=完工) [+3]&0xFF=type
  *                     ⚠️ 数建筑的数组！拿它数单位=bug（rally 曾中招 r31）
- *   aK                生产建筑默认产品 aK→建筑映射见 queueUnitTraining；aK=0 产物
- *                     fifo 显示 type=1（村民第二种），t0 是任务初始赠品
+ *   selectedTrainProduct  生产菜单选中待训产品（映射见 queueUnitTraining）；
+ *                     =0 产物 fifo 显示 type=1（村民第二种），t0 是任务初始赠品
  *
  * 【地图】mapTiles[64×64] short：
  *   0x8000=未探索雾  0x300=资源(低2位 1木2金3石)  0x200=单位占位(低字节=槽位)
@@ -91,7 +93,7 @@ implements CommandListener {
     public short var_short_a;
     public short var_short_b;
     public short var_short_c;
-    public int[][] var_int_arr_arr_b;
+    public int[][] buildingTable;
     // 投射物记录池：[玩家][20]，每玩家 5 条记录 × 4 short，紧凑存放——活跃记录恒占
     // 0 .. playerUnitHeaders[玩家][48]-1（[48]=活跃数；发射追加在 [48]<<2 并 +1，
     // 移除走尾部交换 + [48]-1）。记录字段：[+0] 射手单位 id；[+1] 状态字，
@@ -117,7 +119,7 @@ implements CommandListener {
     // aC: 当前选中的任务序号（0 起；战役 0..6，随机地图 0..2）。
     public int gameMode;
     public int missionIndex;
-    public int z;
+    public int dialogScriptId;
     public int I;
     public int[] var_int_arr_e;
     // 音效开关（存档字节 29：0=开）。
@@ -140,10 +142,10 @@ implements CommandListener {
     public int t;
     public int cursorTileX;
     public int cursorTileY;
-    public int aK;
+    public int selectedTrainProduct;
     public String[] var_java_lang_String_arr_a;
     public int as;
-    public int V;
+    public int briefingVariant;
     public int overlayPrevState;
     public int aW;
     public int aT;
@@ -310,7 +312,7 @@ implements CommandListener {
         this.e();
         this.playerUnitHeaders = new int[2][91];
         this.playerUnitSlots = new short[2][208];
-        this.var_int_arr_arr_b = new int[2][88];
+        this.buildingTable = new int[2][88];
         this.projectileTable = new short[2][20];
         this.mapTiles = new short[4096];
         this.var_javax_microedition_lcdui_Font_a = Font.getDefaultFont();
@@ -1100,19 +1102,19 @@ implements CommandListener {
                         System.out.println("[devMouse] train FAIL type 非生产建筑(g=" + this.var_int_g
                             + " — TC/研究类建筑不产兵)");
                     } else {
-                        // aK→单位 type 恒等映射（r20 实测: 0村民/2民兵/3剑士/4弓兵/5侦察）。
+                        // selectedTrainProduct→单位 type 恒等映射（r20 实测: 0村民/2民兵/3剑士/4弓兵/5侦察）。
                         // 不走 y()——它依赖菜单态的 var_int_arr_c 槽位表，宏上下文为 null。
                         int q0 = this.playerUnitHeaders[0][49];
                         int got = 0;
                         for (int i = 0; i < want; ++i) {
                             if (this.playerUnitHeaders[0][2] + this.playerUnitHeaders[0][49]
-                                < this.playerUnitHeaders[0][3] && this.canAfford(0, 0, this.aK)) {
-                                this.queueUnitTraining(0, this.aK);
+                                < this.playerUnitHeaders[0][3] && this.canAfford(0, 0, this.selectedTrainProduct)) {
+                                this.queueUnitTraining(0, this.selectedTrainProduct);
                                 ++got;
                             }
                         }
                         System.out.println("[devMouse] train OK 排队 " + got + "/" + want
-                            + " aK=" + this.aK + " (aK=0村民 2/3步兵 4弓兵 5/6骑兵)");
+                            + " aK=" + this.selectedTrainProduct + " (aK=0村民 2/3步兵 4弓兵 5/6骑兵)");
                     }
                     break;
                 }
@@ -1139,9 +1141,9 @@ implements CommandListener {
                             + ") 被单位/建筑/资源占格");
                     } else if (type != 1 && type != 11 && type != 12 && this.techFlags[10 + type] == 0) {
                         System.out.println("[devMouse] build FAIL type" + type + " 已建成过(不可重复)");
-                    } else if ((type == 11 && this.a(0, 11, false) >= 4)
-                        || (type == 12 && this.a(0, 12, false) >= 5)
-                        || (type == 1 && this.a(0, 1, false) >= 2)) {
+                    } else if ((type == 11 && this.countBuildings(0, 11, false) >= 4)
+                        || (type == 12 && this.countBuildings(0, 12, false) >= 5)
+                        || (type == 1 && this.countBuildings(0, 1, false) >= 2)) {
                         System.out.println("[devMouse] build FAIL type" + type + " 达数量上限");
                     } else if (!this.canAfford(0, 1, type)) {
                         System.out.println("[devMouse] build FAIL 资源不足 type" + type);
@@ -1382,7 +1384,7 @@ implements CommandListener {
                     aj.append(",\"buildingRecs\":[");
                     boolean firstB = true;
                     for (int pl = 0; pl < 2; ++pl) {
-                        int[] r = this.var_int_arr_arr_b[pl];
+                        int[] r = this.buildingTable[pl];
                         for (int i = 0; i < this.playerUnitHeaders[pl][4]; ++i) {
                             int base = i * 4;
                             if (!firstB) {
@@ -1419,7 +1421,7 @@ implements CommandListener {
                     int v = this.mapTiles[tx + (ty << 6)];
                     String st = "";
                     if ((v & 0x300) == 0x100 && (v & 0xC00) == 0) {
-                        int s = this.var_int_arr_arr_b[0][((v & 0xFF) << 2) + 2];
+                        int s = this.buildingTable[0][((v & 0xFF) << 2) + 2];
                         st = " bldStatus=0x" + Integer.toHexString(s)
                             + (((s & 0x40000000) != 0) ? " 在建" + (s & 0xFF) : (s & 0xFF) == 255 ? " 完工" : " ?" + (s & 0xFF));
                     }
@@ -1526,7 +1528,7 @@ implements CommandListener {
                     break;
                 }
                 case "dlg": {
-                    // 强制打开结算/简报对话框（startMissionBriefing 0,z,v）复现渲染问题
+                    // 强制打开结算/简报对话框（startMissionBriefing 0,dialogScriptId,v）复现渲染问题
                     this.startMissionBriefing(0, Integer.parseInt(p[1]), Integer.parseInt(p[2]));
                     System.out.println("[devMouse] dlg z=" + p[1] + " v=" + p[2]
                         + " -> aA=" + this.screenState);
@@ -1670,7 +1672,7 @@ implements CommandListener {
     // 与模拟同线程）每帧调一次 aoe.ai.PlayerAi.tick(this)，AI 内部自行节流。
     // 反射装载失败或 tick 抛异常：打 [ai] 日志并永久禁用，不影响游戏本身。
     // AI 可读面 = 本类 public 字段（playerUnitHeaders/playerUnitSlots/
-    // var_int_arr_arr_b/mapTiles/techFlags/tickCount/screenState/gameMode/相机光标）；
+    // buildingTable/mapTiles/techFlags/tickCount/screenState/gameMode/相机光标）；
     // 写操作原语 = orderMove/selectUnits/clearSelection/selectUnderCursor/
     // queueUnitTraining/canAfford/payCost/findAiBuildSpot/findNearbyResource/
     // a(player,type,tx,ty,flags,bl)/tryResearch（其中 orderMove/queueUnitTraining/
@@ -1706,7 +1708,7 @@ implements CommandListener {
 
     /** 研究/升时代原语：与 y() case 2 完全同语义的核心三步（写建筑槽研究标志
      *  0x20000000|0x10000、清进度字节 0xFFFF00FF、payCost），但显式传建筑槽位
-     *  下标（buildingSlot = var_int_arr_arr_b[player] 的记录起点，4 int/记录；
+     *  下标（buildingSlot = buildingTable[player] 的记录起点，4 int/记录；
      *  UI 侧对应"选中建筑槽"字段 aD），不依赖当前选中状态，供玩家 AI 调用。
      *  可用性校验镜像 openBuildingMenu（研究菜单门真正生效的地方——研究菜单
      *  var_boolean_g=false，boolean_k case 2 的 techFlags 过滤对研究菜单不生效，
@@ -1717,7 +1719,7 @@ implements CommandListener {
      *  - 其余科技按 openBuildingMenu 的建筑类型→可研究科技+时代门槛表。
      *  y() case 2 保持原样不改，保证默认行为逐字节不变。 */
     public final boolean tryResearch(int player, int buildingSlot, int techId) {
-        int[] recs = this.var_int_arr_arr_b[player];
+        int[] recs = this.buildingTable[player];
         if (buildingSlot < 0 || buildingSlot + 3 >= recs.length) {
             return false;
         }
@@ -1734,13 +1736,13 @@ implements CommandListener {
             if (btype != 9 || techId != 21 + age || age >= 3) {
                 return false;
             }
-            if (age == 0 && this.a(player, 10, true) < 1) {
+            if (age == 0 && this.countBuildings(player, 10, true) < 1) {
                 return false;
             }
-            if (age == 1 && this.a(player, 5, true) + this.a(player, 6, true) < 2) {
+            if (age == 1 && this.countBuildings(player, 5, true) + this.countBuildings(player, 6, true) < 2) {
                 return false;
             }
-            if (age == 2 && this.a(player, 3, true) < 1) {
+            if (age == 2 && this.countBuildings(player, 3, true) < 1) {
                 return false;
             }
         } else {
@@ -2181,7 +2183,7 @@ implements CommandListener {
                 case 2: {
                     if (this.overlayPrevState == 1) {
                         this.renderMapView(graphics);
-                    } else if (this.overlayPrevState == 4 && this.z != 98) {
+                    } else if (this.overlayPrevState == 4 && this.dialogScriptId != 98) {
                         this.renderMenu(graphics);
                     } else {
                         this.renderWorld(graphics);
@@ -3545,7 +3547,7 @@ implements CommandListener {
                 if (n7 > 1) {
                     n7 = this.tickCount % (n7 - 1) << 2;
                 }
-                n3 = this.var_int_arr_arr_b[n5][n7 + 0];
+                n3 = this.buildingTable[n5][n7 + 0];
                 n2 = n3 >>> 8;
                 this.stampThumbTile(this.var_javax_microedition_lcdui_Graphics_a, n2, n3 &= 0xFF);
             }
@@ -4082,7 +4084,7 @@ implements CommandListener {
         this.clipRight = this.screenW;
         if (this.var_boolean_a) {
             if (this.var_boolean_g) {
-                this.aK = 0;
+                this.selectedTrainProduct = 0;
             }
             this.T = 0;
         }
@@ -4168,7 +4170,7 @@ implements CommandListener {
                 }
             } else {
                 int n8 = 0;
-                boolean bl2 = this.canAfford(0, 2, this.aK);
+                boolean bl2 = this.canAfford(0, 2, this.selectedTrainProduct);
                 switch (this.keyActionPulse) {
                     case 5: 
                     case 21: {
@@ -4186,7 +4188,7 @@ implements CommandListener {
                     case 22: 
                     case 38: {
                         if (this.T == 2) {
-                            this.startMissionBriefing(0, 81, this.aK);
+                            this.startMissionBriefing(0, 81, this.selectedTrainProduct);
                             break;
                         }
                         if (bl2 && this.T == 0) {
@@ -4232,7 +4234,7 @@ implements CommandListener {
                 graphics.drawString(this.var_java_lang_String_a, n11 + 36 + 8, n12 + 4 - 2, 20);
                 graphics.setColor(0);
                 graphics.drawString(this.var_java_lang_String_a, n11 + 36 + 7, n12 + 3 - 2, 20);
-                this.a(graphics, this.x, n11 + 3, n12 + (n10 - 36 >> 1), this.aK * 36, 0, 36, 36, 0, n8);
+                this.a(graphics, this.x, n11 + 3, n12 + (n10 - 36 >> 1), this.selectedTrainProduct * 36, 0, 36, 36, 0, n8);
                 n12 = n12 + n10 - 4 - 20;
                 if ((this.tickCount & 1) == 0) {
                     graphics.setColor(0xFFFFFF);
@@ -4256,7 +4258,7 @@ implements CommandListener {
                 this.a(graphics, this.x, n11 + (n13 << 1), n12, 888, 0, 12, 20, 0, 0);
             }
         }
-        this.a(graphics, this.var_int_arr_c[this.aK], this.var_java_lang_String_arr_a[this.aK << 1], this.var_java_lang_String_arr_a[(this.aK << 1) + 1]);
+        this.a(graphics, this.var_int_arr_c[this.selectedTrainProduct], this.var_java_lang_String_arr_a[this.selectedTrainProduct << 1], this.var_java_lang_String_arr_a[(this.selectedTrainProduct << 1) + 1]);
         if (!this.var_boolean_a) {
             this.t = this.cursorTileIdx;
             this.pendingScreenState = 6;
@@ -4343,10 +4345,10 @@ implements CommandListener {
         if (bl) {
             return;
         }
-        if (this.T != this.aK) {
+        if (this.T != this.selectedTrainProduct) {
             this.R = 40;
         }
-        this.aK = this.T;
+        this.selectedTrainProduct = this.T;
         if (bl2) {
             this.y();
             this.requestStateSwitch(8);
@@ -4357,16 +4359,16 @@ implements CommandListener {
     final void y() {
         switch (this.var_int_g) {
             case 0: {
-                if (this.playerUnitHeaders[0][2] + this.playerUnitHeaders[0][49] >= this.playerUnitHeaders[0][3] || !this.canAfford(0, 0, this.var_int_arr_c[this.aK])) break;
-                this.queueUnitTraining(0, this.var_int_arr_c[this.aK]);
+                if (this.playerUnitHeaders[0][2] + this.playerUnitHeaders[0][49] >= this.playerUnitHeaders[0][3] || !this.canAfford(0, 0, this.var_int_arr_c[this.selectedTrainProduct])) break;
+                this.queueUnitTraining(0, this.var_int_arr_c[this.selectedTrainProduct]);
                 return;
             }
             case 1: {
-                int n = this.var_int_arr_c[this.aK];
+                int n = this.var_int_arr_c[this.selectedTrainProduct];
                 if (n > 12) {
                     n = 12;
                 }
-                if (!this.canAfford(0, 1, this.var_int_arr_c[this.aK])) break;
+                if (!this.canAfford(0, 1, this.var_int_arr_c[this.selectedTrainProduct])) break;
                 this.selectionMode = 1;
                 this.p = n;
                 this.var_int_d = this.cameraPxX + this.cursorScreenPxX;
@@ -4376,17 +4378,17 @@ implements CommandListener {
                 return;
             }
             case 2: {
-                if (!this.canAfford(0, 2, this.var_int_arr_c[this.aK])) break;
-                int[] nArray = this.var_int_arr_arr_b[0];
+                if (!this.canAfford(0, 2, this.var_int_arr_c[this.selectedTrainProduct])) break;
+                int[] nArray = this.buildingTable[0];
                 int n = this.aD + 2;
                 nArray[n] = nArray[n] | 0x20000000;
-                int[] nArray2 = this.var_int_arr_arr_b[0];
+                int[] nArray2 = this.buildingTable[0];
                 int n2 = this.aD + 2;
                 nArray2[n2] = nArray2[n2] | 0x10000;
-                int[] nArray3 = this.var_int_arr_arr_b[0];
+                int[] nArray3 = this.buildingTable[0];
                 int n3 = this.aD + 2;
                 nArray3[n3] = nArray3[n3] & 0xFFFF00FF;
-                this.payCost(0, 2, this.var_int_arr_c[this.aK]);
+                this.payCost(0, 2, this.var_int_arr_c[this.selectedTrainProduct]);
             }
         }
     }
@@ -4409,15 +4411,15 @@ implements CommandListener {
                 }
                 switch (n) {
                     case 11: {
-                        if (this.a(0, 11, false) < 4) break;
+                        if (this.countBuildings(0, 11, false) < 4) break;
                         return false;
                     }
                     case 12: {
-                        if (this.a(0, 12, false) < 5) break;
+                        if (this.countBuildings(0, 12, false) < 5) break;
                         return false;
                     }
                     case 1: {
-                        if (this.a(0, 1, false) < 2) break;
+                        if (this.countBuildings(0, 1, false) < 2) break;
                         return false;
                     }
                 }
@@ -4781,24 +4783,24 @@ implements CommandListener {
                 int n2;
                 if (this.cursorTileIdx != -1 && (this.mapTiles[this.cursorTileIdx] & 0x300) == 256 && (n2 = (this.mapTiles[this.cursorTileIdx] & 0xC00) >> 10) == 0) {
                     int n3 = (this.mapTiles[this.cursorTileIdx] & 0xFF) << 2;
-                    if ((this.var_int_arr_arr_b[0][n3 + 2] & 0x20000000) != 0) {
+                    if ((this.buildingTable[0][n3 + 2] & 0x20000000) != 0) {
                         return;
                     }
-                    if ((this.var_int_arr_arr_b[0][n3 + 2] & 0xFF0000) != 0) {
-                        int[] nArray = this.var_int_arr_arr_b[0];
+                    if ((this.buildingTable[0][n3 + 2] & 0xFF0000) != 0) {
+                        int[] nArray = this.buildingTable[0];
                         int n4 = n3 + 2;
                         nArray[n4] = nArray[n4] - 65536;
-                        int[] nArray2 = this.var_int_arr_arr_b[0];
+                        int[] nArray2 = this.buildingTable[0];
                         int n5 = n3 + 2;
                         nArray2[n5] = nArray2[n5] & 0xDFFFFFFF;
-                        if ((this.var_int_arr_arr_b[0][n3 + 2] & 0xFF0000) == 0) {
-                            int[] nArray3 = this.var_int_arr_arr_b[0];
+                        if ((this.buildingTable[0][n3 + 2] & 0xFF0000) == 0) {
+                            int[] nArray3 = this.buildingTable[0];
                             int n6 = n3 + 2;
                             nArray3[n6] = nArray3[n6] & 0xFFFF00FF;
                         }
                         int n7 = this.playerUnitHeaders[0][0];
                         int n8 = 1;
-                        int n9 = this.var_int_arr_arr_b[0][n3 + 3] & 0xFF;
+                        int n9 = this.buildingTable[0][n3 + 3] & 0xFF;
                         if (n9 == 10) {
                             n8 = n7 == 0 ? 2 : 3;
                         } else if (n9 == 7) {
@@ -4824,10 +4826,10 @@ implements CommandListener {
                         nArray6[n10] = nArray6[n10] - 1;
                         return;
                     }
-                    if ((this.var_int_arr_arr_b[0][n3 + 2] & 0x40000000) != 0) {
+                    if ((this.buildingTable[0][n3 + 2] & 0x40000000) != 0) {
                         n3 = this.mapTiles[this.cursorTileIdx] & 0xFF;
-                        int n11 = this.var_int_arr_arr_b[0][(n3 << 2) + 3] & 0xFF;
-                        this.i(0, n3);
+                        int n11 = this.buildingTable[0][(n3 << 2) + 3] & 0xFF;
+                        this.onThingDestroyed(0, n3);
                         this.refundCost(0, 1, n11);
                         return;
                     }
@@ -4837,8 +4839,8 @@ implements CommandListener {
                     return;
                 }
                 if (this.selectedType != -1) {
-                    if (this.selectedType == 256 && this.selectionPlayer == 0 && (n2 = this.var_int_arr_arr_b[0][this.selectedSlot + 2] & 0xFF0000) != 0) {
-                        int[] nArray = this.var_int_arr_arr_b[0];
+                    if (this.selectedType == 256 && this.selectionPlayer == 0 && (n2 = this.buildingTable[0][this.selectedSlot + 2] & 0xFF0000) != 0) {
+                        int[] nArray = this.buildingTable[0];
                         int n12 = this.selectedSlot + 2;
                         nArray[n12] = nArray[n12] - 65536;
                         return;
@@ -4924,41 +4926,41 @@ implements CommandListener {
     }
 
     public final boolean openBuildingMenu(int n) {
-        if ((this.var_int_arr_arr_b[0][(n <<= 2) + 2] & 0x40000000) != 0) {
+        if ((this.buildingTable[0][(n <<= 2) + 2] & 0x40000000) != 0) {
             return false;
         }
-        if ((this.var_int_arr_arr_b[0][n + 2] & 0xFF) != 255 && this.selectedType < 2 && this.selectionPlayer == 0) {
+        if ((this.buildingTable[0][n + 2] & 0xFF) != 255 && this.selectedType < 2 && this.selectionPlayer == 0) {
             return false;
         }
         this.var_int_g = -1;
         int n2 = this.playerUnitHeaders[0][0];
-        switch (this.var_int_arr_arr_b[0][n + 3] & 0xFF) {
+        switch (this.buildingTable[0][n + 3] & 0xFF) {
             case 9: {
                 this.var_int_g = 2;
-                this.aK = 21 + n2;
+                this.selectedTrainProduct = 21 + n2;
                 if (n2 == 0) {
-                    if (this.a(0, 10, true) >= 1) break;
+                    if (this.countBuildings(0, 10, true) >= 1) break;
                     return false;
                 }
                 if (n2 == 1) {
-                    if (this.a(0, 5, true) + this.a(0, 6, true) >= 2) break;
+                    if (this.countBuildings(0, 5, true) + this.countBuildings(0, 6, true) >= 2) break;
                     return false;
                 }
                 if (n2 == 2) {
-                    if (this.a(0, 3, true) >= 1) break;
+                    if (this.countBuildings(0, 3, true) >= 1) break;
                     return false;
                 }
                 return false;
             }
             case 4: {
                 if (this.techFlags[37] == 0 && n2 >= 2) {
-                    this.aK = 14;
+                    this.selectedTrainProduct = 14;
                 } else if (this.techFlags[34] == 0 && n2 >= 2) {
-                    this.aK = 11;
+                    this.selectedTrainProduct = 11;
                 } else if (this.techFlags[33] == 0 && n2 >= 3) {
-                    this.aK = 10;
+                    this.selectedTrainProduct = 10;
                 } else if (this.techFlags[35] == 0 && n2 >= 3) {
-                    this.aK = 12;
+                    this.selectedTrainProduct = 12;
                 } else {
                     return false;
                 }
@@ -4967,9 +4969,9 @@ implements CommandListener {
             }
             case 0: {
                 if (this.techFlags[26] == 0 && n2 >= 1) {
-                    this.aK = 3;
+                    this.selectedTrainProduct = 3;
                 } else if (this.techFlags[24] == 0 && n2 >= 2) {
-                    this.aK = 1;
+                    this.selectedTrainProduct = 1;
                 } else {
                     return false;
                 }
@@ -4978,13 +4980,13 @@ implements CommandListener {
             }
             case 1: {
                 if (this.techFlags[28] == 0 && n2 >= 1) {
-                    this.aK = 5;
+                    this.selectedTrainProduct = 5;
                 } else if (this.techFlags[32] == 0 && n2 >= 1) {
-                    this.aK = 9;
+                    this.selectedTrainProduct = 9;
                 } else if (this.techFlags[42] == 0 && n2 >= 2) {
-                    this.aK = 19;
+                    this.selectedTrainProduct = 19;
                 } else if (this.techFlags[41] == 0 && n2 >= 2) {
-                    this.aK = 18;
+                    this.selectedTrainProduct = 18;
                 } else {
                     return false;
                 }
@@ -4995,28 +4997,28 @@ implements CommandListener {
                 if (this.techFlags[29] != 0) {
                     return false;
                 }
-                this.aK = 6;
+                this.selectedTrainProduct = 6;
                 this.var_int_g = 2;
                 break;
             }
             case 6: {
                 if (this.techFlags[27] == 0 && n2 >= 1) {
-                    this.aK = 4;
+                    this.selectedTrainProduct = 4;
                 } else if (this.techFlags[31] == 0 && n2 >= 1) {
-                    this.aK = 8;
+                    this.selectedTrainProduct = 8;
                 } else if (this.techFlags[30] == 0 && n2 >= 2) {
-                    this.aK = 7;
+                    this.selectedTrainProduct = 7;
                 } else if (this.techFlags[25] == 0 && n2 >= 2) {
-                    this.aK = 2;
+                    this.selectedTrainProduct = 2;
                 } else if (this.techFlags[23] == 0 && n2 >= 3) {
-                    this.aK = 0;
+                    this.selectedTrainProduct = 0;
                 } else if (this.techFlags[38] == 0 && n2 >= 3) {
-                    this.aK = 15;
+                    this.selectedTrainProduct = 15;
                 } else {
                     if (n2 < 3) {
                         return false;
                     }
-                    this.aK = 8;
+                    this.selectedTrainProduct = 8;
                     this.var_int_g = 0;
                     break;
                 }
@@ -5024,22 +5026,22 @@ implements CommandListener {
                 break;
             }
             case 11: {
-                this.aK = 0;
+                this.selectedTrainProduct = 0;
                 this.var_int_g = 0;
                 break;
             }
             case 10: {
-                this.aK = n2 == 0 ? 2 : 3;
+                this.selectedTrainProduct = n2 == 0 ? 2 : 3;
                 this.var_int_g = 0;
                 break;
             }
             case 7: {
-                this.aK = 4;
+                this.selectedTrainProduct = 4;
                 this.var_int_g = 0;
                 break;
             }
             case 8: {
-                this.aK = n2 == 1 ? 5 : 6;
+                this.selectedTrainProduct = n2 == 1 ? 5 : 6;
                 this.var_int_g = 0;
                 break;
             }
@@ -5047,12 +5049,12 @@ implements CommandListener {
                 if (this.playerUnitHeaders[0][74] + this.playerUnitHeaders[0][65] > 0) {
                     return false;
                 }
-                this.aK = 9;
+                this.selectedTrainProduct = 9;
                 this.var_int_g = 0;
                 break;
             }
             case 2: {
-                this.aK = 7;
+                this.selectedTrainProduct = 7;
                 this.var_int_g = 0;
                 break;
             }
@@ -5062,15 +5064,15 @@ implements CommandListener {
                 }
                 this.var_int_g = 2;
                 if (this.techFlags[43] == 0 && this.techFlags[40] != 0 && n2 >= 3) {
-                    this.aK = 20;
+                    this.selectedTrainProduct = 20;
                     break;
                 }
                 if (this.techFlags[40] == 0 && this.techFlags[36] != 0 && n2 >= 2) {
-                    this.aK = 17;
+                    this.selectedTrainProduct = 17;
                     break;
                 }
                 if (this.techFlags[36] == 0 && n2 >= 1) {
-                    this.aK = 13;
+                    this.selectedTrainProduct = 13;
                     break;
                 }
                 return false;
@@ -5081,7 +5083,7 @@ implements CommandListener {
         }
         switch (this.var_int_g) {
             case 2: {
-                if ((this.var_int_arr_arr_b[0][n + 2] & 0x20000000) != 0) {
+                if ((this.buildingTable[0][n + 2] & 0x20000000) != 0) {
                     return true;
                 }
                 if (this.requestStateSwitch(7)) {
@@ -5092,10 +5094,10 @@ implements CommandListener {
                     this.var_boolean_g = false;
                     this.aD = n;
                 }
-                int[] nArray = this.var_int_arr_arr_b[0];
+                int[] nArray = this.buildingTable[0];
                 int n3 = n + 2;
                 nArray[n3] = nArray[n3] | Integer.MIN_VALUE;
-                int[] nArray2 = this.var_int_arr_arr_b[0];
+                int[] nArray2 = this.buildingTable[0];
                 int n4 = n + 2;
                 nArray2[n4] = nArray2[n4] & 0xFF00FFFF;
                 break;
@@ -5113,15 +5115,15 @@ implements CommandListener {
                 }
                 int[] nArray = this.playerUnitHeaders[0];
                 nArray[49] = nArray[49] + 1;
-                if (this.aK < 2) {
+                if (this.selectedTrainProduct < 2) {
                     int[] nArray3 = this.playerUnitHeaders[0];
                     nArray3[66] = nArray3[66] + 1;
                 } else {
                     int[] nArray4 = this.playerUnitHeaders[0];
-                    int n5 = 66 + this.aK - 1;
+                    int n5 = 66 + this.selectedTrainProduct - 1;
                     nArray4[n5] = nArray4[n5] + 1;
                 }
-                int[] nArray5 = this.var_int_arr_arr_b[0];
+                int[] nArray5 = this.buildingTable[0];
                 int n6 = n + 2;
                 nArray5[n6] = nArray5[n6] + 65536;
                 break;
@@ -5145,7 +5147,7 @@ implements CommandListener {
         }
         switch (this.selectionMode) {
             case 0: {
-                if (n2 == 256 && (this.var_int_arr_arr_b[n][(n3 << 2) + 2] & 0x40000000) != 0) {
+                if (n2 == 256 && (this.buildingTable[n][(n3 << 2) + 2] & 0x40000000) != 0) {
                     return;
                 }
                 this.selectUnderCursor(n, n2, n3);
@@ -5224,15 +5226,15 @@ implements CommandListener {
                 this.G = 67;
                 this.var_boolean_a = false;
                 this.X = 10;
-                this.aK = this.selectedType;
+                this.selectedTrainProduct = this.selectedType;
                 break;
             }
             case 256: {
-                int[] nArray = this.var_int_arr_arr_b[n];
+                int[] nArray = this.buildingTable[n];
                 int n5 = (n3 <<= 2) + 2;
                 nArray[n5] = nArray[n5] | Integer.MIN_VALUE;
                 this.selectedSlot = n3;
-                this.selectedType = this.var_int_arr_arr_b[n][n3 + 3] & 0xFF;
+                this.selectedType = this.buildingTable[n][n3 + 3] & 0xFF;
                 this.var_boolean_h = true;
                 if (!this.requestStateSwitch(7)) break;
                 this.var_int_g = 1;
@@ -5240,7 +5242,7 @@ implements CommandListener {
                 this.G = 63;
                 this.var_boolean_a = false;
                 this.X = 13;
-                this.aK = this.selectedType;
+                this.selectedTrainProduct = this.selectedType;
                 break;
             }
             case 768: {
@@ -5328,7 +5330,7 @@ implements CommandListener {
         }
         n2 = 0;
         for (n = 0; n < this.playerUnitHeaders[this.selectionPlayer][4]; ++n) {
-            int[] nArray = this.var_int_arr_arr_b[this.selectionPlayer];
+            int[] nArray = this.buildingTable[this.selectionPlayer];
             int n4 = n2 + 2;
             nArray[n4] = nArray[n4] & Integer.MAX_VALUE;
             n2 += 4;
@@ -5450,11 +5452,11 @@ implements CommandListener {
         if (this.playerUnitHeaders[0][4] > 0) {
             n = this.tickCount % this.playerUnitHeaders[0][4];
             int n2 = n << 2;
-            int n3 = this.var_int_arr_arr_b[0][n2 + 0];
+            int n3 = this.buildingTable[0][n2 + 0];
             int n4 = n3 & 0xFF;
             n3 >>>= 8;
-            int n5 = this.var_int_arr_arr_b[0][n2 + 3] & 0xFF;
-            if ((this.var_int_arr_arr_b[0][n2 + 2] & 0x40000000) == 0) {
+            int n5 = this.buildingTable[0][n2 + 3] & 0xFF;
+            if ((this.buildingTable[0][n2 + 2] & 0x40000000) == 0) {
                 if (n5 == 12) {
                     this.void_a(n3, n4, 6);
                     return;
@@ -5640,11 +5642,11 @@ implements CommandListener {
             while (n2 < this.playerUnitHeaders[i][4]) {
                 int n3;
                 int n4;
-                int n5 = this.var_int_arr_arr_b[i][n + 2];
+                int n5 = this.buildingTable[i][n + 2];
                 if ((n5 & 0x40000000) != 0) {
-                    n4 = this.var_int_arr_arr_b[i][n + 3] & 0xFF;
+                    n4 = this.buildingTable[i][n + 3] & 0xFF;
                     if (((n5 += 8) & 0xFFFF) >= 255) {
-                        this.var_int_arr_arr_b[i][n + 2] = 255;
+                        this.buildingTable[i][n + 2] = 255;
                         if (i == 0) {
                             this.ag = 20;
                             a a2 = new a(69);
@@ -5656,7 +5658,7 @@ implements CommandListener {
                             }
                             this.var_java_lang_String_c = a2.a(n3);
                             this.var_java_lang_String_a = a2.a(16);
-                            if (this.var_boolean_d && this.a(0, n4, true) == 1) {
+                            if (this.var_boolean_d && this.countBuildings(0, n4, true) == 1) {
                                 this.startMissionBriefing(0, 70, n4);
                             }
                         }
@@ -5720,28 +5722,28 @@ implements CommandListener {
                                 this.projectileTable[i][n6 + 3] = 0;
                                 int[] nArray2 = this.playerUnitHeaders[i];
                                 nArray2[48] = nArray2[48] + 1;
-                                int[] nArray3 = this.var_int_arr_arr_b[i];
+                                int[] nArray3 = this.buildingTable[i];
                                 int n7 = n + 3;
                                 nArray3[n7] = nArray3[n7] & 0xFFFFFF;
-                                int[] nArray4 = this.var_int_arr_arr_b[i];
+                                int[] nArray4 = this.buildingTable[i];
                                 int n8 = n + 3;
                                 nArray4[n8] = nArray4[n8] | n6 << 24;
                                 break;
                             }
                             case 1: {
                                 if (this.playerUnitHeaders[i][10] == -1) {
-                                    this.playerUnitHeaders[i][10] = this.var_int_arr_arr_b[i][n + 0];
+                                    this.playerUnitHeaders[i][10] = this.buildingTable[i][n + 0];
                                     break;
                                 }
                                 if (this.playerUnitHeaders[i][11] == -1) {
-                                    this.playerUnitHeaders[i][11] = this.var_int_arr_arr_b[i][n + 0];
+                                    this.playerUnitHeaders[i][11] = this.buildingTable[i][n + 0];
                                 }
                                 if (i != 0) break;
                                 this.techFlags[10 + n4] = 0;
                             }
                         }
                     } else {
-                        int[] nArray = this.var_int_arr_arr_b[i];
+                        int[] nArray = this.buildingTable[i];
                         int n9 = n + 2;
                         nArray[n9] = nArray[n9] + 8;
                     }
@@ -5753,7 +5755,7 @@ implements CommandListener {
                             if ((n5 & 0xFF00) + 2048 >= 65280) {
                                 if (i == 0) {
                                     n3 = -1;
-                                    switch (this.var_int_arr_arr_b[0][n + 3] & 0xFF) {
+                                    switch (this.buildingTable[0][n + 3] & 0xFF) {
                                         case 9: {
                                             int[] nArray = this.playerUnitHeaders[0];
                                             nArray[0] = nArray[0] + 1;
@@ -5941,23 +5943,23 @@ implements CommandListener {
                                     }
                                     this.requestStateSwitch(8);
                                 }
-                                int[] nArray = this.var_int_arr_arr_b[i];
+                                int[] nArray = this.buildingTable[i];
                                 int n18 = n + 2;
                                 nArray[n18] = nArray[n18] & 0xFF;
                             } else {
-                                int[] nArray = this.var_int_arr_arr_b[i];
+                                int[] nArray = this.buildingTable[i];
                                 int n19 = n + 2;
                                 nArray[n19] = nArray[n19] + 2048;
                             }
                         } else {
                             int n20 = this.playerUnitHeaders[i][56];
                             if ((n5 & 0xFF00) + n20 < 65280) {
-                                int[] nArray = this.var_int_arr_arr_b[i];
+                                int[] nArray = this.buildingTable[i];
                                 int n21 = n + 2;
                                 nArray[n21] = nArray[n21] + n20;
                             } else {
                                 n3 = 0;
-                                switch (this.var_int_arr_arr_b[i][n + 3] & 0xFF) {
+                                switch (this.buildingTable[i][n + 3] & 0xFF) {
                                     case 11: {
                                         n3 = 1;
                                         if ((this.tickCount & 1) == 0) break;
@@ -5997,8 +5999,8 @@ implements CommandListener {
                                     }
                                 }
                                 if (this.canAfford(i, 0, n3)) {
-                                    int n22 = this.var_int_arr_arr_b[i][n + 0] >>> 8;
-                                    int n23 = this.var_int_arr_arr_b[i][n + 0] & 0xFF;
+                                    int n22 = this.buildingTable[i][n + 0] >>> 8;
+                                    int n23 = this.buildingTable[i][n + 0] & 0xFF;
                                     int n24 = n22 + 1;
                                     int n25 = n23 + 1;
                                     int n26 = 0;
@@ -6035,22 +6037,22 @@ implements CommandListener {
                                         int n31 = 66 + n3;
                                         nArray7[n31] = nArray7[n31] - 1;
                                         if (n4 == 0) {
-                                            int[] nArray8 = this.var_int_arr_arr_b[i];
+                                            int[] nArray8 = this.buildingTable[i];
                                             int n32 = n + 2;
                                             nArray8[n32] = nArray8[n32] & 0xFF0000FF;
                                         } else {
-                                            int[] nArray9 = this.var_int_arr_arr_b[i];
+                                            int[] nArray9 = this.buildingTable[i];
                                             int n33 = n + 2;
                                             nArray9[n33] = nArray9[n33] & 0xFF0000FF;
-                                            int[] nArray10 = this.var_int_arr_arr_b[i];
+                                            int[] nArray10 = this.buildingTable[i];
                                             int n34 = n + 2;
                                             nArray10[n34] = nArray10[n34] | n4;
                                         }
                                     } else {
-                                        int[] nArray = this.var_int_arr_arr_b[i];
+                                        int[] nArray = this.buildingTable[i];
                                         int n35 = n + 2;
                                         nArray[n35] = nArray[n35] & 0xFF0000FF;
-                                        int[] nArray11 = this.var_int_arr_arr_b[i];
+                                        int[] nArray11 = this.buildingTable[i];
                                         int n36 = n + 2;
                                         nArray11[n36] = nArray11[n36] & 0xFF00FFFF;
                                     }
@@ -6455,8 +6457,8 @@ implements CommandListener {
         short s = this.mapTiles[n3];
         int n8 = (s & 0xFF) << 2;
         int n9 = (s & 0xC00) >> 10;
-        int n10 = this.var_int_arr_arr_b[n9][n8 + 2];
-        int n11 = this.var_int_arr_arr_b[n9][n8 + 3];
+        int n10 = this.buildingTable[n9][n8 + 2];
+        int n11 = this.buildingTable[n9][n8 + 3];
         int n12 = this.playerUnitHeaders[n9][0];
         int n13 = n9;
         if (n11 >= 12) {
@@ -6470,10 +6472,10 @@ implements CommandListener {
         if ((n10 & 0x40000000) != 0) {
             n6 = 32;
             n7 = n10 & 0xFFFF;
-            this.var_int_arr_arr_b[n9][n8 + 2] = n7 >= 255 ? 255 : n10 & 0xFFFFFF00 | n7;
+            this.buildingTable[n9][n8 + 2] = n7 >= 255 ? 255 : n10 & 0xFFFFFF00 | n7;
         }
         if ((n10 & 0x10000000) != 0) {
-            int[] nArray = this.var_int_arr_arr_b[n9];
+            int[] nArray = this.buildingTable[n9];
             int n14 = n8 + 2;
             nArray[n14] = nArray[n14] & 0xEFFFFFFF;
             n13 = 3;
@@ -6483,7 +6485,7 @@ implements CommandListener {
             n5 = this.projectileTable[n9][n7 + 2];
             n4 = n5 >>> 8;
             n5 &= 0xFF;
-            int n15 = ((n4 -= this.var_int_arr_arr_b[n9][n8 + 0] >>> 8) - (n5 -= this.var_int_arr_arr_b[n9][n8 + 0] & 0xFF)) * 26;
+            int n15 = ((n4 -= this.buildingTable[n9][n8 + 0] >>> 8) - (n5 -= this.buildingTable[n9][n8 + 0] & 0xFF)) * 26;
             int n16 = (n4 + n5) * 12;
             int n17 = this.playerUnitHeaders[n9][47];
             if (n16 >= -10) {
@@ -6597,7 +6599,7 @@ implements CommandListener {
         return true;
     }
 
-    // queueUnitTraining(p, aK)：向 p 玩家的生产建筑排一个 aK 产品。aK→可排建筑
+    // queueUnitTraining(p, selectedTrainProduct)：向 p 玩家的生产建筑排一个 selectedTrainProduct 产品。selectedTrainProduct→可排建筑
     // （switch 返回值 n3）：0村民→House(11) 2/3民兵剑士→Barracks(10, 按时代默认)
     // 5/6骑兵→Stable(8) 4弓兵→Range(7)。占用 pop 当量（headers[49] 队列长）；
     // 付款在出兵时；宏路径排队前另检 canAfford（train case）。public 化=player-ai
@@ -6637,11 +6639,11 @@ implements CommandListener {
         }
         int n4 = 0;
         for (int i = 0; i < this.playerUnitHeaders[n][4]; ++i) {
-            if ((this.var_int_arr_arr_b[n][n4 + 3] & 0xFF) == n3) {
-                if ((this.var_int_arr_arr_b[n][n4 + 2] & 0x40000000) != 0) {
+            if ((this.buildingTable[n][n4 + 3] & 0xFF) == n3) {
+                if ((this.buildingTable[n][n4 + 2] & 0x40000000) != 0) {
                     return -1;
                 }
-                int[] nArray = this.var_int_arr_arr_b[n];
+                int[] nArray = this.buildingTable[n];
                 int n5 = n4 + 2;
                 nArray[n5] = nArray[n5] + 65536;
                 int[] nArray2 = this.playerUnitHeaders[n];
@@ -6978,7 +6980,7 @@ implements CommandListener {
                         break;
                     }
                     int n19 = (this.mapTiles[n6] & 0xFF) << 2;
-                    if ((this.var_int_arr_arr_b[n][n19 + 2] & 0xFF) >= 255) break;
+                    if ((this.buildingTable[n][n19 + 2] & 0xFF) >= 255) break;
                     n5 = 4;
                     this.playerUnitSlots[n][n2 + 7] = 4;
                     this.playerUnitSlots[n][n2 + 5] = (short)(n3 << 8 | n4);
@@ -6988,7 +6990,7 @@ implements CommandListener {
                 this.playerUnitSlots[n][n2 + 7] = 1;
                 int n20 = (this.mapTiles[n6] & 0xFF) << 2;
                 this.playerUnitSlots[n][n2 + 5] = (short)(n3 << 8 | n4);
-                int[] nArray = this.var_int_arr_arr_b[n8];
+                int[] nArray = this.buildingTable[n8];
                 int n21 = n20 + 2;
                 nArray[n21] = nArray[n21] | Integer.MIN_VALUE;
                 break;
@@ -7026,18 +7028,18 @@ implements CommandListener {
         switch (n6) {
             case 256: {
                 int n7 = (this.mapTiles[n3] & 0xFF) << 2;
-                int n8 = this.var_int_arr_arr_b[n4][n7 + 2] & 0xFF;
-                int n9 = this.var_int_arr_arr_b[n4][n7 + 3] & 0xFF;
+                int n8 = this.buildingTable[n4][n7 + 2] & 0xFF;
+                int n9 = this.buildingTable[n4][n7 + 3] & 0xFF;
                 int n10 = this.playerUnitHeaders[n][13 + n5] << 4;
                 if ((n8 -= (n10 /= this.playerUnitHeaders[n4][33 + n9])) > 0) {
-                    int[] nArray = this.var_int_arr_arr_b[n4];
+                    int[] nArray = this.buildingTable[n4];
                     int n11 = n7 + 2;
                     nArray[n11] = nArray[n11] & 0xFFFFFF00;
-                    int[] nArray2 = this.var_int_arr_arr_b[n4];
+                    int[] nArray2 = this.buildingTable[n4];
                     int n12 = n7 + 2;
                     nArray2[n12] = nArray2[n12] | (n8 | Integer.MIN_VALUE | 0x10000000);
                 } else {
-                    this.i(n4, this.mapTiles[n3] & 0xFF);
+                    this.onThingDestroyed(n4, this.mapTiles[n3] & 0xFF);
                     this.playerUnitSlots[n][n2 + 7] = 0;
                 }
                 if (n4 != 0) break;
@@ -7068,15 +7070,15 @@ implements CommandListener {
     final void tickConstruction(int n, int n2) {
         int n3 = this.playerUnitSlots[n][n2 + 5] >>> 8;
         int n4 = (this.mapTiles[n3 += (this.playerUnitSlots[n][n2 + 5] & 0xFF) << 6] & 0xFF) << 2;
-        int n5 = this.var_int_arr_arr_b[n][n4 + 2] & 0xFF;
+        int n5 = this.buildingTable[n][n4 + 2] & 0xFF;
         if ((AgeOfEmpires.c.nextRandomInt() & 1) == 0) {
             ++n5;
         }
         if (n5 <= 255) {
-            int[] nArray = this.var_int_arr_arr_b[n];
+            int[] nArray = this.buildingTable[n];
             int n6 = n4 + 2;
             nArray[n6] = nArray[n6] & 0xFFFFFF00;
-            int[] nArray2 = this.var_int_arr_arr_b[n];
+            int[] nArray2 = this.buildingTable[n];
             int n7 = n4 + 2;
             nArray2[n7] = nArray2[n7] | (n5 | Integer.MIN_VALUE);
             return;
@@ -7130,10 +7132,10 @@ implements CommandListener {
                 nArray4[48] = nArray4[48] + 1;
             }
         }
-        this.var_int_arr_arr_b[n][n8 + 0] = (n3 << 8) + n4;
-        this.var_int_arr_arr_b[n][n8 + 1] = n2;
-        this.var_int_arr_arr_b[n][n8 + 2] = n5;
-        this.var_int_arr_arr_b[n][n8 + 3] = n2;
+        this.buildingTable[n][n8 + 0] = (n3 << 8) + n4;
+        this.buildingTable[n][n8 + 1] = n2;
+        this.buildingTable[n][n8 + 2] = n5;
+        this.buildingTable[n][n8 + 3] = n2;
         n2 &= 0xFF;
         int[] nArray5 = this.playerUnitHeaders[n];
         nArray5[4] = nArray5[4] + 1;
@@ -7152,18 +7154,18 @@ implements CommandListener {
         return n8;
     }
 
-    // a(n,type,bl)：⚠️ 数的是【建筑表】var_int_arr_arr_b（i<headers[n][4]，stride4），
+    // a(n,type,bl)：⚠️ 数的是【建筑表】buildingTable（i<headers[n][4]，stride4），
     // bl=true 再排除施工中(0x40000000)。别拿它数单位——rally 宏曾因此零移动且回显
     // 全是建筑数（r31 事故，修复=devCountUnits）。
-    final int a(int n, int n2, boolean bl) {
+    final int countBuildings(int n, int n2, boolean bl) {
         int n3 = 0;
         int n4 = 0;
         int n5 = this.playerUnitHeaders[n][4];
         int n6 = 0;
         while (n6 < n5) {
-            if ((this.var_int_arr_arr_b[n][n4 + 3] & 0xFF) == n2) {
+            if ((this.buildingTable[n][n4 + 3] & 0xFF) == n2) {
                 if (bl) {
-                    if ((this.var_int_arr_arr_b[n][n4 + 2] & 0x40000000) == 0) {
+                    if ((this.buildingTable[n][n4 + 2] & 0x40000000) == 0) {
                         ++n3;
                     }
                 } else {
@@ -7180,16 +7182,16 @@ implements CommandListener {
     // 投射物/胜利败北判定）。case 9(TC) 即胜负开关：我方 TC 毁→98,1 败；敌 TC 毁→
     // 98,0 胜（gameMode 32 链且 missionIndex≠0 时跳过，走 missionScript 脚本路径）。
     // r30 源码定案 + r31 实战双验证（敌 0 单位+TC 毁同轮触发）。
-    public final void i(int n, int n2) {
+    public final void onThingDestroyed(int n, int n2) {
         int n3 = this.playerUnitHeaders[n][4] - 1;
         int[] nArray = this.playerUnitHeaders[n];
         nArray[89] = nArray[89] + 1;
         int n4 = n2 << 2;
         int n5 = n3 << 2;
-        int n6 = this.var_int_arr_arr_b[n][n4 + 0];
+        int n6 = this.buildingTable[n][n4 + 0];
         int n7 = (n6 >>> 8 & 0x3F) + ((n6 & 0x3F) << 6);
         this.mapTiles[n7] = 0;
-        int n8 = this.var_int_arr_arr_b[n][n4 + 3] & 0xFF;
+        int n8 = this.buildingTable[n][n4 + 3] & 0xFF;
         if (n == 0) {
             this.techFlags[10 + n8] = 1;
         }
@@ -7205,7 +7207,7 @@ implements CommandListener {
                 break;
             }
             case 11: {
-                if ((this.var_int_arr_arr_b[n][n4 + 2] & 0x40000000) == 0) {
+                if ((this.buildingTable[n][n4 + 2] & 0x40000000) == 0) {
                     int[] nArray2 = this.playerUnitHeaders[n];
                     nArray2[3] = nArray2[3] - 5;
                 }
@@ -7217,7 +7219,7 @@ implements CommandListener {
                 break;
             }
             case 1: {
-                int n9 = this.var_int_arr_arr_b[n][n4 + 0];
+                int n9 = this.buildingTable[n][n4 + 0];
                 if (n9 == this.playerUnitHeaders[n][10]) {
                     this.playerUnitHeaders[n][10] = -1;
                     break;
@@ -7227,10 +7229,10 @@ implements CommandListener {
                 break;
             }
             case 12: {
-                if ((this.var_int_arr_arr_b[n][n4 + 2] & 0x40000000) != 0) break;
+                if ((this.buildingTable[n][n4 + 2] & 0x40000000) != 0) break;
                 int n10 = this.playerUnitHeaders[n][48];
                 int n11 = n10 - 1 << 2;
-                int n12 = this.var_int_arr_arr_b[n][n4 + 3] >>> 24 & 0xFF;
+                int n12 = this.buildingTable[n][n4 + 3] >>> 24 & 0xFF;
                 if (n11 != n12) {
                     int n13;
                     for (n13 = 0; n13 < 4; ++n13) {
@@ -7238,31 +7240,31 @@ implements CommandListener {
                     }
                     n13 = this.projectileTable[n][n11 + 0];
                     int n14 = this.projectileTable[n][n12 + 2] & 0xFFFF;
-                    this.var_int_arr_arr_b[n][n13 + 3] = n12 << 24 | n14 << 8 | 0xC;
+                    this.buildingTable[n][n13 + 3] = n12 << 24 | n14 << 8 | 0xC;
                 }
                 int[] nArray3 = this.playerUnitHeaders[n];
                 nArray3[48] = nArray3[48] - 1;
             }
         }
         if (n4 != n5) {
-            n6 = this.var_int_arr_arr_b[n][n5];
+            n6 = this.buildingTable[n][n5];
             ++n5;
             int n15 = n7 = (n6 >>> 8 & 0x3F) + ((n6 & 0x3F) << 6);
             this.mapTiles[n15] = (short)(this.mapTiles[n15] & 0xFFFFFF00);
             int n16 = n7;
             this.mapTiles[n16] = (short)(this.mapTiles[n16] | n2);
-            this.var_int_arr_arr_b[n][n4] = n6;
-            this.var_int_arr_arr_b[n][++n4] = this.var_int_arr_arr_b[n][n5];
-            this.var_int_arr_arr_b[n][n5] = 0;
-            this.var_int_arr_arr_b[n][++n4] = this.var_int_arr_arr_b[n][++n5];
-            this.var_int_arr_arr_b[n][n5] = 0;
-            this.var_int_arr_arr_b[n][++n4] = this.var_int_arr_arr_b[n][++n5];
-            this.var_int_arr_arr_b[n][n5] = 0;
+            this.buildingTable[n][n4] = n6;
+            this.buildingTable[n][++n4] = this.buildingTable[n][n5];
+            this.buildingTable[n][n5] = 0;
+            this.buildingTable[n][++n4] = this.buildingTable[n][++n5];
+            this.buildingTable[n][n5] = 0;
+            this.buildingTable[n][++n4] = this.buildingTable[n][++n5];
+            this.buildingTable[n][n5] = 0;
         } else {
-            this.var_int_arr_arr_b[n][n4++] = 0;
-            this.var_int_arr_arr_b[n][n4++] = 0;
-            this.var_int_arr_arr_b[n][n4++] = 0;
-            this.var_int_arr_arr_b[n][n4] = 0;
+            this.buildingTable[n][n4++] = 0;
+            this.buildingTable[n][n4++] = 0;
+            this.buildingTable[n][n4++] = 0;
+            this.buildingTable[n][n4] = 0;
         }
         int[] nArray4 = this.playerUnitHeaders[n];
         nArray4[4] = nArray4[4] - 1;
@@ -7701,7 +7703,7 @@ implements CommandListener {
             if (n3 <= 0) continue;
             int n5 = this.playerUnitHeaders[i][12];
             short s = this.projectileTable[i][n2 + 0];
-            int n6 = this.var_int_arr_arr_b[i][s + 0];
+            int n6 = this.buildingTable[i][s + 0];
             int n7 = n6 >>> 8 & 0x3F;
             n6 &= 0x3F;
             int n8 = i ^ 1;
@@ -7715,10 +7717,10 @@ implements CommandListener {
                     this.projectileTable[i][n2 + 3] = 0;
                     this.projectileTable[i][n2 + 1] = (short)n9;
                     this.projectileTable[i][n2 + 2] = this.playerUnitSlots[n8][n9 + 0];
-                    int[] nArray = this.var_int_arr_arr_b[i];
+                    int[] nArray = this.buildingTable[i];
                     int n14 = s + 3;
                     nArray[n14] = nArray[n14] & 0xFF0000FF;
-                    int[] nArray2 = this.var_int_arr_arr_b[i];
+                    int[] nArray2 = this.buildingTable[i];
                     int n15 = s + 3;
                     nArray2[n15] = nArray2[n15] | (this.projectileTable[i][n2 + 2] & 0xFFFF) << 8;
                     n11 = 1000;
@@ -7746,7 +7748,7 @@ implements CommandListener {
                         int n8 = (this.mapTiles[n7] & 0xC00) >> 10;
                         if (n8 == i || (this.mapTiles[n7] & 0xFFF) == 0) {
                             this.projectileTable[i][n + 1] = 1000;
-                            int[] nArray = this.var_int_arr_arr_b[i];
+                            int[] nArray = this.buildingTable[i];
                             int n9 = this.projectileTable[i][n + 0] + 3;
                             nArray[n9] = nArray[n9] & 0xFF0000FF;
                         } else if ((this.mapTiles[n7] & 0x300) == 512) {
@@ -7755,7 +7757,7 @@ implements CommandListener {
                             if ((n10 -= n11) <= 0) {
                                 this.g(n8, this.mapTiles[n7] & 0xFF);
                                 this.projectileTable[i][n + 1] = 1000;
-                                int[] nArray = this.var_int_arr_arr_b[i];
+                                int[] nArray = this.buildingTable[i];
                                 int n12 = this.projectileTable[i][n + 0] + 3;
                                 nArray[n12] = nArray[n12] & 0xFF0000FF;
                             } else {
@@ -7767,15 +7769,15 @@ implements CommandListener {
                                 sArray2[n14] = (short)(sArray2[n14] | (n10 | 0x1000));
                                 if (n8 == 0) {
                                     if (this.playerUnitSlots[n8][s + 2] == this.playerUnitSlots[n8][s + 0] && (this.playerUnitSlots[n8][s + 7] & 0xFF) != 1) {
-                                        this.playerUnitSlots[n8][s + 2] = (short)this.var_int_arr_arr_b[i][this.projectileTable[i][n + 0] + 0];
+                                        this.playerUnitSlots[n8][s + 2] = (short)this.buildingTable[i][this.projectileTable[i][n + 0] + 0];
                                     }
                                 } else if ((this.playerUnitSlots[n8][s + 7] & 0xFF) != 1) {
-                                    this.playerUnitSlots[n8][s + 2] = (short)this.var_int_arr_arr_b[i][this.projectileTable[i][n + 0] + 0];
+                                    this.playerUnitSlots[n8][s + 2] = (short)this.buildingTable[i][this.projectileTable[i][n + 0] + 0];
                                 }
                             }
                         } else {
                             this.projectileTable[i][n + 1] = 1000;
-                            int[] nArray = this.var_int_arr_arr_b[i];
+                            int[] nArray = this.buildingTable[i];
                             int n15 = this.projectileTable[i][n + 0] + 3;
                             nArray[n15] = nArray[n15] & 0xFF0000FF;
                         }
@@ -7962,11 +7964,11 @@ implements CommandListener {
         int n12 = 0;
         while (n12 < n11) {
             int n13;
-            int n14 = this.var_int_arr_arr_b[n9][n10 + 0];
+            int n14 = this.buildingTable[n9][n10 + 0];
             int n15 = n14 >>> 8 & 0x3F;
             n14 &= 0x3F;
             if ((n13 = (n15 -= n4) * n15 + (n14 -= n3) * n14) > 0 && n13 <= n6) {
-                if ((this.var_int_arr_arr_b[n9][n10 + 3] & 0xFF) == 12) {
+                if ((this.buildingTable[n9][n10 + 3] & 0xFF) == 12) {
                     n8 = n10;
                     break;
                 }
@@ -7988,13 +7990,13 @@ implements CommandListener {
                     short[] sArray2 = this.playerUnitSlots[n];
                     int n17 = n2 + 7;
                     sArray2[n17] = (short)(sArray2[n17] | 1);
-                    this.playerUnitSlots[n][n2 + 5] = (short)this.var_int_arr_arr_b[n9][n8 + 0];
-                    this.b(n, n2, this.var_int_arr_arr_b[n9][n8 + 0] >>> 8, this.var_int_arr_arr_b[n9][n8 + 0] & 0xFF);
+                    this.playerUnitSlots[n][n2 + 5] = (short)this.buildingTable[n9][n8 + 0];
+                    this.b(n, n2, this.buildingTable[n9][n8 + 0] >>> 8, this.buildingTable[n9][n8 + 0] & 0xFF);
                     this.playerUnitSlots[n][n2 + 2] = this.playerUnitSlots[n][n2 + 0];
                     return;
                 }
             }
-            this.playerUnitSlots[n][n2 + 2] = (short)this.var_int_arr_arr_b[n9][n8 + 0];
+            this.playerUnitSlots[n][n2 + 2] = (short)this.buildingTable[n9][n8 + 0];
         }
     }
 
@@ -8135,7 +8137,7 @@ implements CommandListener {
     final void void_a() {
         int n = this.aiBuildPhase;
         while (this.aiBuildOrder[n] >= 0) {
-            if (this.a(1, (int)this.aiBuildOrder[n], false) < this.aiBuildOrder[n + 1]) {
+            if (this.countBuildings(1, (int)this.aiBuildOrder[n], false) < this.aiBuildOrder[n + 1]) {
                 this.aiBuildTarget = this.aiBuildOrder[n];
                 return;
             }
@@ -8284,7 +8286,7 @@ implements CommandListener {
         if (n4 >= 2 && n == 5) {
             n = 6;
         }
-        if (n == 8 && this.a(1, 3, true) == 0) {
+        if (n == 8 && this.countBuildings(1, 3, true) == 0) {
             return false;
         }
         int n5 = n - 1;
@@ -8714,10 +8716,10 @@ implements CommandListener {
             // 小地图随时可再按 0 进。
             this.overlayPrevState = this.screenState == 1 ? 8 : this.screenState;
             if (System.getProperty("aoe.debug") != null) {
-                System.out.println("[view] dialog open z=" + this.z + " overlayPrevState=" + this.overlayPrevState);
+                System.out.println("[view] dialog open z=" + this.dialogScriptId + " overlayPrevState=" + this.overlayPrevState);
             }
         }
-        this.void_c(this.V);
+        this.void_c(this.briefingVariant);
         this.aQ = 0;
         this.var_boolean_f = true;
         this.var_boolean_b = true;
@@ -8725,11 +8727,11 @@ implements CommandListener {
     }
 
     final void void_c(int n) {
-        a a2 = new a(this.z);
+        a a2 = new a(this.dialogScriptId);
         String string = a2.a(n);
         int n2 = string.length() - 1;
         if (System.getProperty("aoe.debug") != null) {
-            System.out.println("[dlg-parse] z=" + this.z + " v=" + n + " strLen=" + string.length()
+            System.out.println("[dlg-parse] z=" + this.dialogScriptId + " v=" + n + " strLen=" + string.length()
                 + " str=" + string);
         }
         this.var_java_lang_String_arr_a = new String[32];
@@ -8998,7 +9000,7 @@ implements CommandListener {
 
     /** 任务结束结算（g(0, 98, n3)，n3==0 为胜利）：推进解锁计数 aj/aG、
      *  写每关高分（nfoHighScores）并持久化 .nfo 字节 28。 */
-    // startMissionBriefing(as, z, V)：切到简报/对话框屏。z=对话框脚本 id
+    // startMissionBriefing(as, dialogScriptId, V)：切到简报/对话框屏。dialogScriptId=对话框脚本 id
     // （62=任务简报 70=难度/链页 74=失败简报 98=胜负结算屏）；V=变体/正文索引
     // （98 结算:0=Victorious 1=Defeated）。已在对话框态时来新简报会重跑解析
     // （链式弹窗 BUG-005 修复点）。
@@ -9008,15 +9010,15 @@ implements CommandListener {
         }
         if (this.requestStateSwitch(2)) {
             this.as = n;
-            this.z = n2;
-            this.V = n3;
+            this.dialogScriptId = n2;
+            this.briefingVariant = n3;
             if (this.screenState == 2 && this.pendingScreenState == 2) {
                 // 链式弹窗修复(BUG-005 根因,2026-09-01 第5轮玩家定位):已在对话框态
                 // 时来新简报,pending==current 不触发 boolean_a() 的 n(aH) 重入,
-                // z/V 换了但正文仍是上一条对话框的解析结果(实测:dlg 70 9 空条目
+                // dialogScriptId/V 换了但正文仍是上一条对话框的解析结果(实测:dlg 70 9 空条目
                 // 开着时再发 70 12,画面维持空白)。重跑 n() 的解析段;不动
                 // overlayPrevState,关闭链仍应回世界视图。
-                this.void_c(this.V);
+                this.void_c(this.briefingVariant);
                 this.aQ = 0;
                 this.var_boolean_f = true;
                 this.var_boolean_b = true;
@@ -9050,7 +9052,7 @@ implements CommandListener {
                                 ++this.tutorialProgress;
                                 this.menuScreenId = 11;
                             } else {
-                                this.V = 2;
+                                this.briefingVariant = 2;
                                 this.menuScreenId = 1;
                             }
                         }

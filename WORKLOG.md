@@ -7,6 +7,21 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
+### wave7 改名批次 + player-ai 合并 + 符号文档归并(2026-09-03)
+
+- **player-ai 合入 main(3291166)**: BFS 寻路(-Daoe.bfsPath=1,默认关,regress 证明
+  golden 未动)+RuleBasedAi+ailoop.sh 批量跑局+mapgen 死循环等两 bug 修复。
+- **wave7 改名(tools/renamer,AST)**: 32 轮考据的完全考证符号转正——
+  var_int_arr_arr_b→buildingTable、aK→selectedTrainProduct、z→dialogScriptId、
+  V→briefingVariant、a(I,I,Z)→countBuildings、i(I,I)→onThingDestroyed。
+  跨文件引用(SaveState/RuleBasedAi)自动联动;无 wave4 式注释误伤(全量 diff 复核)。
+  check 模式对单字母名是文本级噪声(循环变量 i/其他类同名),以编译+绝迹 grep 替代验证。
+- **文档归并**: docs/deobfuscation.md 并入 docs/symbols.md(wave7 节+补充结构语义节;
+  后者本就是改名登记的约定位置),原文件删除;手册/c.java 头/aoesave.py 指针同步。
+- 注意: 改名只动源码标识符与注释,**运行中进程仍旧类**——live 对局不受影响,
+  下次进程换血(发 R33)时新类生效。
+- regress: 每步三连绿。
+
 ### 第30-31轮:🏆🏆 第四胜(m+14)第五胜(m+15); 胜负判定源码定案; rally事故与修复(2026-09-03)
 
 - **第四胜(m+14, R30)**: 绝地续命范本——1村民困守→金矿起飞(60金/min)→t3x19
