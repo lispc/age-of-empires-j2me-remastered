@@ -4,10 +4,13 @@ import AgeOfEmpires.c;
 
 /**
  * 规则式玩家 AI（-Daoe.playerAi=aoe.ai.RuleBasedAi）。随机图（gameMode=0）
- * Easy/Medium/Expert 通用。最终成绩（2026-09-03 第二批，v21 定型）：
- * Medium 1000+ 9胜1僵持（1004 退化图）/ 1010+ 10胜 / 2000+ 8胜（决胜 27/29）；
- * Easy 4胜1僵持（同 1004）；Expert 3-4/9 决胜（基线 0/9——×8 采集 +
- * aiTrainInterval=1 下已接近规则式上限）。
+ * Easy/Medium/Expert 通用。最终成绩（2026-09-03 第三批，v30 定型 = v21 行为 +
+ * 波次预测器遥测）：Medium 1000+ 9胜1僵持（1004 退化图）/ 1010+ 9胜1负 /
+ * 2000+ 8胜2负（决胜 26/29，与 v21 的 27/29 同噪声带）；Easy 4胜1僵持（同 1004）；
+ * Expert 1000+ 2胜7负1僵持（决胜 22.2%，与 v21 的 33.3% 同噪声带 ±1-2）、
+ * 2000+ 1/10。第三批结论：预测器已验证（发波跨越点误差≈0），但架在其上的
+ * 五个行为变体（v25-v29 抢攻/村民参战）全部输给反应式基线并回滚——约束在
+ * 波 1 接战兵力比而非时机信息，详见迭代笔记「波次建模（第三批）」。
  *
  * 战略（针对 Medium/Expert：敌方 3.07×/8× 采集 + all-in 阈值 60/100；我方 4 村民 +
  * pop 25 硬顶，拼经济必输）：**塔防吸收 all-in → 反击拆敌 TC**（随机图拆敌
@@ -100,6 +103,32 @@ public final class RuleBasedAi implements PlayerAi {
     private int resEnemyTc = -1;                     // 资源勘察危险区圆心（敌 TC），每决策刷新
     private final int[] towerTiles = new int[8];     // 完工塔位（v16 塔援护用）
     private int towerCnt;
+
+    // ===== 波次建模（2026-09-03 第三批：预测器+遥测落库，行为与 v21 完全一致）=====
+    // 预测器本身已验证（首发波预测误差 ~120-168t≈行军项系统偏差），但架在其上的
+    // 五个行为变体全部被批量数据证伪并回滚（v25 发波即冲 1/9、v26 波扎进塔群再
+    // 出门 2/9、v27 预测抢先手 2/9、v28 村民守家参战 1/9、v29 村民随军抢攻 1/9，
+    // 基线 3/9）——约束不在时机信息而在波 1 接战的兵力比（产能硬顶）。详见
+    // docs/research/rulebased-ai-medium-iteration.md「波次建模（第三批）」。
+    // 敌 all-in 判定（tickAi 源码复核）：hdr[1][55]（敌军值=Σ活兵攻甲+村民2/个+
+    // 历史建成塔的幻影值——完工 +hdr[45]+hdr[46]，被拆不减）≥ aiAttackThreshold
+    // 且 hdr[0][55]（我军值，同口径）< 敌军值×1.25 时，75% 兵力 attack-move 我 TC
+    // （目标 = hdr[0][8] + tickCount 抖动的 ±1-2 格；扫描每"我方单位数" tick 完成
+    // 一轮，判定同频）。预测器：滚动窗口最小二乘拟合 hdr[1][55] 斜率 → 外推跨越
+    // need=max(aiAttackThreshold, 4×hdr[0][55]/5+1) 的时刻 → 加行军时间（走廊长
+    // ×8t/格：移速计时器初值 0xF00 每 tick 减装填值，剑士 1024≈4t/格、投石机
+    // 256≈16t/格的混合估值）= 下一波到家时刻。发波侦测：敌军事单位 slot[2] 目标
+    // 落在我 TC 4 格内的 ≥4 个 = 波已在路上（直接镜像 tickAi 的目标写法）。
+    private static final int WAVE_WIN = 32;           // 斜率窗口样本数（采样间隔=DECIDE_EVERY）
+    private static final int WAVE_MARCH_PER_TILE = 8; // 敌波行军估值（tick/格）
+    private final int[] waveSampT = new int[WAVE_WIN];
+    private final int[] waveSampV = new int[WAVE_WIN];
+    private int waveSampN;
+    private int waveEta = -1;                         // 预测下一波到家 tick（-1=不可预测）
+    private int waveNeed;                             // 当前发波军值门槛
+    private int waveSlopeMilli;                       // 敌军值斜率（千分比 val/tick）
+    private boolean waveInFlight;
+    private int waveLaunchTick = -1;
 
     @Override
     public void tick(c game) {
@@ -245,6 +274,8 @@ public final class RuleBasedAi implements PlayerAi {
         int myTc = hdr[8];
         int enemyTc = ehdr[8];
         this.resEnemyTc = enemyTc;
+        // 波次预测器（v24）：只读+打点，行为不变
+        this.trackWaves(game, hdr, ehdr, eslots, eunits, myTc, enemyTc);
         // 难度感知（v15）：Expert（采集 ×8 + 每 tick 出兵尝试 + 免费资源滴）下
         // 敌兵是磨不完的，v13/v14 的 7 兵 CRUSHED 反击等于把仅有的家底送进
         // 敌塔环（Expert 基线 4 连败同一样态：反击送军→下一波破家）。Expert 上
@@ -858,8 +889,116 @@ public final class RuleBasedAi implements PlayerAi {
                 + " enemy=" + ehdr[2] + "u " + ehdr[4] + "b mil=" + enemyMilCount
                 + "(val " + enemyMilVal + ", peak " + this.enemyMilPeak + ")"
                 + " towers=" + towerN
+                + " e55=" + ehdr[55] + "/" + this.waveNeed
+                + " slope=" + this.waveSlopeMilli
+                + " eta=" + (this.waveEta > 0 ? this.waveEta - game.tickCount : -1)
+                + (this.waveInFlight ? " INFLIGHT" : "")
                 + " mode=" + (threat ? "DEFEND" : this.attackMode ? "ATTACK" : "eco"));
         }
+    }
+
+    /** 波次预测器（v24）：每决策 tick 采样敌军值，拟合斜率外推发波时刻 + 侦测在途波。
+     *  只读游戏状态+打日志，不改任何行为。全确定性（只用 tickCount 与读面数据）。 */
+    private void trackWaves(c game, int[] hdr, int[] ehdr, short[] eslots, int eunits,
+                            int myTc, int enemyTc) {
+        // 采样入窗（满了挤掉最旧样本）
+        if (this.waveSampN < WAVE_WIN) {
+            this.waveSampT[this.waveSampN] = game.tickCount;
+            this.waveSampV[this.waveSampN] = ehdr[55];
+            ++this.waveSampN;
+        } else {
+            for (int i = 1; i < WAVE_WIN; ++i) {
+                this.waveSampT[i - 1] = this.waveSampT[i];
+                this.waveSampV[i - 1] = this.waveSampV[i];
+            }
+            this.waveSampT[WAVE_WIN - 1] = game.tickCount;
+            this.waveSampV[WAVE_WIN - 1] = ehdr[55];
+        }
+        // 发波侦测：敌军事单位的目标格（slot[2]）落在我 TC 4 格内的计数
+        int dispatched = 0, leadD2 = Integer.MAX_VALUE;
+        if (myTc >= 0) {
+            int tcx = myTc >>> 8, tcy = myTc & 0xFF;
+            for (int i = 0; i < eunits; ++i) {
+                int o = i << 3;
+                if ((eslots[o + 3] & 0xFF) < 2) {
+                    continue;
+                }
+                int tgt = eslots[o + 2] & 0xFFFF;
+                if (Math.max(Math.abs((tgt >>> 8) - tcx), Math.abs((tgt & 0xFF) - tcy)) > 4) {
+                    continue;
+                }
+                ++dispatched;
+                int pos = eslots[o + 0] & 0xFFFF;
+                int px = (pos >>> 8) - tcx, py = (pos & 0xFF) - tcy;
+                int d2 = px * px + py * py;
+                if (d2 < leadD2) {
+                    leadD2 = d2;
+                }
+            }
+        }
+        int corridor = corridorLen(myTc, enemyTc);
+        if (!this.waveInFlight && dispatched >= 4) {
+            this.waveInFlight = true;
+            this.waveLaunchTick = game.tickCount;
+            System.out.println("[ai] WAVE launched n=" + dispatched
+                + " e55=" + ehdr[55] + " m55=" + hdr[55]
+                + (this.waveEta > 0 ? " predictedEta=" + this.waveEta
+                    + " err=" + (game.tickCount - this.waveEta) : " (no prediction)")
+                + " t=" + game.tickCount);
+        } else if (this.waveInFlight && dispatched <= 1) {
+            this.waveInFlight = false;
+            this.waveSampN = 0;      // 窗内混入波次折损骤降，重置斜率拟合
+            this.waveEta = -1;
+            System.out.println("[ai] WAVE cleared, e55=" + ehdr[55]
+                + " span=" + (game.tickCount - this.waveLaunchTick) + " t=" + game.tickCount);
+        }
+        if (this.waveInFlight) {
+            // 波已在路上：ETA = 先头兵距我 TC 格数 × 4t/格（按最快兵种估）
+            this.waveEta = leadD2 < Integer.MAX_VALUE
+                ? game.tickCount + isqrt(leadD2) * 4 : game.tickCount;
+            return;
+        }
+        // 积累期：斜率外推跨越门槛的时刻 + 行军时间
+        this.waveNeed = Math.max(game.aiAttackThreshold, (hdr[55] << 2) / 5 + 1);
+        if (this.waveSampN < 8 || corridor == Integer.MAX_VALUE) {
+            this.waveEta = -1;
+            this.waveSlopeMilli = 0;
+            return;
+        }
+        int n = this.waveSampN;
+        int t0 = this.waveSampT[0];
+        long sx = 0, sv = 0, sxv = 0, sxx = 0;
+        for (int i = 0; i < n; ++i) {
+            long x = this.waveSampT[i] - t0;
+            long v = this.waveSampV[i];
+            sx += x;
+            sv += v;
+            sxv += x * v;
+            sxx += x * x;
+        }
+        long denom = (long) n * sxx - sx * sx;
+        if (denom <= 0) {
+            this.waveEta = -1;
+            this.waveSlopeMilli = 0;
+            return;
+        }
+        this.waveSlopeMilli = (int) (1000 * ((long) n * sxv - sx * sv) / denom);
+        if (this.waveSlopeMilli <= 0) {
+            this.waveEta = -1;
+            return;
+        }
+        int gap = this.waveNeed - ehdr[55];
+        long toCross = gap <= 0 ? 0 : (long) gap * 1000 / this.waveSlopeMilli;
+        this.waveEta = (int) (game.tickCount + toCross + (long) corridor * WAVE_MARCH_PER_TILE);
+    }
+
+    /** 整数平方根（math 不进模拟路径的确定性实现）。 */
+    private static int isqrt(int v) {
+        int r = 0;
+        while ((r + 1) * (r + 1) <= v) {
+            ++r;
+        }
+        return r;
     }
 
     /** TC 朝敌 TC 方向 dist 格（切比雪夫）的驻防/塔位锚点。 */
