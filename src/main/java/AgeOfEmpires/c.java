@@ -828,6 +828,7 @@ implements CommandListener {
                 need = 3; break;
             case "key": case "until": case "replaytrace": case "script":
             case "fields": case "save": case "load": case "dump": case "stopat":
+            case "count":
                 need = 2; break;
             case "state": case "exit": case "sitrep": case "ping":
                 need = 1; break;
@@ -885,6 +886,9 @@ implements CommandListener {
                             + (cls == 0x200 ? " unit" : " building")
                             + " type=" + this.selectedType + " at (" + tx + "," + ty + ")");
                     } else {
+                        // sel 失败=未选中任何东西；残留旧组会让后续裸 goto 打到旧组上
+                        // （r31 全军被拉回北辕事故）——FAIL 路径同样清选中。
+                        this.clearSelection();
                         System.out.println("[devMouse] sel FAIL (" + tx + "," + ty
                             + ") class=0x" + Integer.toHexString(cls) + " — 空地/资源/雾");
                     }
@@ -894,18 +898,20 @@ implements CommandListener {
                     // 宏：rally <tx> <ty> —— 全体军事单位(type>=2)逐类扩选+下令集结。
                     // 绕开 goto all 的 x0q 空集结群(选中被移动自清后扩选空集, r24 破案)：
                     // 这里每个 type 独立 selectUnits+orderMove，互不依赖选中存活。
+                    // r31 修复：门槛/回显改真单位计数 devCountUnits——原 a(0,t,false)
+                    // 数的是建筑数组，真有兵的 type 因无同名建筑全被 skip（实测零移动），
+                    // 且回显的"单位数"实为建筑数。
                     int tx = Integer.parseInt(p[1]) & 0x3F, ty = Integer.parseInt(p[2]) & 0x3F;
                     int sent = 0, types = 0;
                     for (int t = 2; t < 16; ++t) {
-                        if (this.a(0, t, false) <= 0) {   // a(0,type,false)=该 type 存量
+                        int cnt = this.devCountUnits(0, t);
+                        if (cnt <= 0) {
                             continue;
                         }
                         this.selectUnits(0, t);
-                        if (this.selectionMark == 512 && this.selectionPlayer == 0) {
-                            this.orderMove(0, tx, ty);
-                            ++types;
-                            sent += this.a(0, t, false);
-                        }
+                        this.orderMove(0, tx, ty);
+                        ++types;
+                        sent += cnt;
                     }
                     System.out.println("[devMouse] rally OK " + sent + " 单位(" + types
                         + " 个兵种) → (" + tx + "," + ty + ")");
@@ -1084,6 +1090,15 @@ implements CommandListener {
                     }
                     System.out.println("[devMouse] tapk " + kc + " expect aA=" + expect
                         + ": " + (this.screenState == expect ? "ok" : "timeout") + " (aA=" + this.screenState + ")");
+                    break;
+                }
+                case "count": {
+                    // 宏：count <type> —— 双方真单位计数（devCountUnits 基元）。
+                    // "全军就位判定"：连续两次 count 数值不变=集结/到货完成（r30/r31 需求）。
+                    int t = Integer.parseInt(p[1]);
+                    System.out.println("[devMouse] count t" + t
+                        + " 我=" + this.devCountUnits(0, t)
+                        + " 敌=" + this.devCountUnits(1, t));
                     break;
                 }
                 case "state": {
@@ -4880,6 +4895,21 @@ implements CommandListener {
                 n3 += 8;
             }
         }
+    }
+
+    // 真单位计数（r31 rally 事故修复基元）：playerUnitSlots 是唯一可信单位表
+    // （stride 8，off+3=type）；a(n,type,false) 数的是建筑数组，勿再当单位用。
+    // type<0 = 全军事(type>=2)。
+    final int devCountUnits(int pl, int type) {
+        int n = 0;
+        int ucnt = this.playerUnitHeaders[pl][2];
+        for (int i = 0, off = 0; i < ucnt; ++i, off += 8) {
+            int t = this.playerUnitSlots[pl][off + 3] & 0xFF;
+            if (type >= 0 ? t == type : t >= 2) {
+                ++n;
+            }
+        }
+        return n;
     }
 
     public final void clearSelection() {
