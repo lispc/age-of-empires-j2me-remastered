@@ -902,3 +902,43 @@ FAIL 回显都带原因，先读回显再补救。
    总攻直指敌 TC 即可，扫生产建筑只是清场需要。**
    （§5.5"0 单位=立即败北""败北≈0单位+0生产建筑"均不够准确：0 单位+有建筑
    不判负；TC 毁则无论剩多少兵都判负。）
+
+## 11. 战役录制/回放协议（2026-09-03 战役攻略第 1 夜新增）
+
+战役（`-Daoe.dev=campaign:N`，共 7 关，res 103..109 任务数据+110..116 触发脚本）。
+录制=会话日志本身：每条 FIFO 指令应用瞬间打 `[fifo] ar=<tick>`，键事件打
+`[input] ar=<tick>`（-Daoe.debug=1）。
+
+**录制规程**：
+1. boot：`-Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1
+   -Daoe.harnessQuiet=1 -Daoe.exitOnResult=1 -Daoe.saveDir=/tmp/... -Daoe.mapSeed=8224
+   -Daoe.devMouse=<fifo>`（harnessQuiet 必开，否则看门狗墙钟乱按污染录制）。
+2. 推掉简报弹窗（key -6）到 aA=6 → `save <work>/base.aoesave`（此刻 ar=回放原点）。
+3. 之后所有写操作只准走可重放宏（retask/goto/sel/rally/train/build/gather/assign/key/
+   move）；tapk（墙钟重试）与 save/load/state/slots 等不进 trace。
+4. 终局 `[result] WIN|LOSS ticks=N` 截断（mktrace --until）。
+5. `tools/mktrace.py <session.log> <baseAr> <dir>/trace.txt --until '[result]'` 生成
+   trace（行语法 `t <rel> key|move|fifo ...`——fifo 前缀别漏，漏了=0 events 假回放）。
+
+**回放**：`tools/campaign-replay.sh <dir> [tickms] [--headless]`——devBoot 直启
+base.aoesave → replaytrace 重放。tickms 任意（默认 10=4 倍速），事件按 tick 锚定，
+观看速度不影响进程。对拍要求：`[result]` 必须复现 + 双侧过 mktrace 过滤后的操作流
+逐行一致；空流"一致"=假阳性，脚本已防。
+
+**位精确机制**：写宏（sel/goto/rally/retask/assign/train/build/gather）由 dev 线程
+入队（`[fifo] ar=` 锚=入队 tick），模拟线程每帧 sim 段前统一排空——play 与 replay
+同路径，回放位精确。键鼠/诊断/控制流仍 dev 线程内联（键是脉冲事件 ±1 帧无害）。
+录制必须用含队列的二进制（2026-09-03 之后的 build）；旧录制若发现回放不复现终局，
+用新 build 重放一遍旧 trace 重新生成 session.log/trace.txt（锚点不变）即可升级。
+
+**战役专用经验**（m1/m2 实测）：
+- m1 型护送关：口袋被树墙围死时走"砍隧道"（m+16 教程同款）；砍树用 retask 拍到
+  前线树格，**趟数在砍完一载时扣（与交存无关）**，隧道不需要交存通路。
+- 雾下资源判种 0x83xx&3：**0=浆果不可采集**，1=木 2=金 3=石。村庄边的"森林"可能
+  是浆果丛——先 res 全图对账再规划。
+- 采集钩子只认"多步行走踏入资源格"：单位 idle 在资源格上时，同格 retask 是 no-op，
+  1 格乒乓也不触发，要 2+ 格外的 approach；DDA 长途交存走（30+格）会 stall 断自
+  动循环（首趟交付后不再交付）——经济关需 waypoint 接力护送状态机（待建）。
+- 单位死亡后槽位压缩，按槽位寻址（retask/slots）前先核对 type；战役 m2 损失单位
+  不判负（败北条件比"护送死一个"宽松）。
+- 载量 hdr[50..52]=木5/金3/石3 每趟，交存入账=载量×采集倍率>>8。

@@ -7,6 +7,37 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
+### 战役攻略第 1 夜: m1 通关+全程录制, 回放基建落地, m2 采集引擎考古(2026-09-03)
+
+- **m1(护送关)通关**: `WIN ticks=90133`。开局口袋被树墙围死(与 m+16 同款),
+  唯一路=南线 y=59 砍 14 棵树开隧道直通我方 Lucina 堡(北线 y=51-53 有敌 3 塔卡口,
+  弃)。砍穿后村民自动走到堡垒触发脚本胜利(z=98, 战役 m1 胜利=脚本路径非 TC 毁)。
+- **回放基建(本轮主产出)**: ①devMouseCmd 入口 `[fifo] ar=<tick>` 录制锚点——会话日志
+  即操作录制; ②replaytrace 新增 `fifo` op(tick 锚定重放宏命令, 控制流指令拒嵌套);
+  ③新宏 `slots <p>`(槽位表含任务字)/`retask <slot> <tx> <ty>`(按槽位直写任务目标,
+  复刻 orderMove 三写, 解 sel 竞态); ④tools/mktrace.py(日志→trace, 排除只读/控制流
+  指令, key/move 原生 op 其余走 fifo 前缀); ⑤tools/campaign-replay.sh(devBoot 直启
+  base 存档+replaytrace, tickms 任意=任意倍速观看, 结果与 tickms 无关)。
+  m1 录制入库 recordings/campaign/m1/{base.aoesave,trace.txt,session.log}。
+- **已知边界(诚实标注)→已解决**: 回放最初为"重演"非位精确——dev 线程裸写在帧内
+  微位置 play/replay 不同, 1479 条累计 ±tick 尾差足以翻转终局(m1 回放三连稳定差
+  一格进堡区)。修复=**写宏队列化**: sel/goto/rally/retask/assign/train/build/gather
+  八类写操作 dev 线程入队([fifo] ar= 锚=入队 tick), 模拟线程每帧 sim 段前统一排空
+  (devOpQueue/devDraining/DEV_QUEUED_OPS, onPaint switch 前排空)——play/replay 同
+  路径后位精确。replaycheck(A/B 对称对拍)双绿 ✓; regress PASS ✓。
+- **m2(经济关 100木/100石/100金)未完, 考据收获大**: 石 186✓(一次 retask 即自动
+  循环), 木 10/金 15 后卡死。**采集引擎边界实测**: ①采集钩子只在"多步行走踏入资源
+  格"时触发, 站资源格上 idle 时同格 retask=no-op, 1 格乒乓不够, 需 2+ 格 approach;
+  ②DDA 长途(30+格)交存走会 stall → 载满回送 orbit → 首趟交付后再不交付(m2 木/金
+  双双如此), 需 waypoint 接力护送状态机(未做); ③雾下资源 kind 0x83xx&3: 0=浆果
+  (不可采集!)1=木 2=金 3=石——m2 村庄周边"森林"实为浆果丛, 真树在西南(10-15,24-32);
+  ④槽位死亡压缩会吞按槽位寻址的宏, 先核对 type; ⑤m2 村民/军队损失不触发判负
+  (败北比"护送死一个"宽松); ⑥载量 hdr[50..52]=木5/金3/石3 每趟, 交存×采集倍率。
+- **事故**: campaign-replay.sh v1 awk 取列错(base 解析成 events=1479)+0 events 假回放
+  还报"一致(0 行)"——对拍必须非空+终局必须复现, 已修; 另一次 replaycheck state 差异
+  系并行回放抢 CPU 的计时扰动, 复跑双绿。
+- commit: 本条目对应。m3-m7 + m2 接力护送机 = 下轮主菜, 工具链已就绪。
+
 ### 两个疑似 bug 验证局(2026-09-03, 收官加演): 双双排除
 
 - **bug"难度页显示与实际不一致"——排除**。mapSeed=8224 下 7 次全新 boot 全部

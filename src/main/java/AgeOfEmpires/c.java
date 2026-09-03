@@ -889,10 +889,28 @@ implements CommandListener {
     private long devTraceBaseTick = -1;
     // 上次自动 checkpoint 的 tick(节流用,见 devFrameHousekeeping)
     private boolean devInScript;
+    // 写宏队列：dev 线程入队([fifo] ar= 锚=入队 tick)，模拟线程在每帧 sim 段前
+    // 统一应用。裸写在帧内微位置 play/replay 不同，1479 条累计 ±tick 尾差足以翻转
+    // 终局(m1 录制局实测)；量化到 tick 边界后两侧同路径，回放位精确。
+    private final java.util.Queue<String> devOpQueue = new java.util.concurrent.ConcurrentLinkedQueue<>();
+    private boolean devDraining;
+    /** 写宏集合：入队量化到帧边界；其余(诊断/控制流/键鼠)保持 dev 线程内联即时。 */
+    private static final java.util.Set<String> DEV_QUEUED_OPS = java.util.Set.of(
+        "sel", "goto", "rally", "retask", "assign", "train", "build", "gather");
 
     /** 执行一条 FIFO 指令；返回 false 表示 exit。 */
     private boolean devMouseCmd(String line) {
+        // 操作录制锚点：每条指令应用瞬间记 tick。会话日志的 [fifo]/[input] 行
+        // 就是精确回放所需的全部信息（tools/mktrace.py 转换、replaytrace `fifo` op 重放）。
+        if (!this.devDraining) {
+            // 排空重入时不重复打点：[fifo] ar= 锚=入队 tick（trace 单条目契约）
+            System.out.println("[fifo] ar=" + this.tickCount + " " + line);
+        }
         String[] p = line.split("\\s+");
+        if (!this.devDraining && DEV_QUEUED_OPS.contains(p[0])) {
+            this.devOpQueue.add(line);      // 锚点=本 tick；应用在下一帧 sim 段前
+            return true;
+        }
         // 各命令最小 token 数（含命令名）：缺参直接拒并回显，否则 AIOOBE 只留
         // 一行笼统异常（r20 裸 rclick 实锤），agent 无从得知正确用法。
         int need;
@@ -911,11 +929,13 @@ implements CommandListener {
                 need = 4; break;
             case "rally":
                 need = 3; break;
+            case "retask":
+                need = 4; break;
             case "goto":
                 need = 3; break;
             case "key": case "until": case "replaytrace": case "script":
             case "fields": case "save": case "load": case "dump": case "stopat":
-            case "count":
+            case "count": case "slots":
                 need = 2; break;
             case "state": case "exit": case "sitrep": case "ping": case "aistate":
                 need = 1; break;
@@ -978,6 +998,30 @@ implements CommandListener {
                         this.clearSelection();
                         System.out.println("[devMouse] sel FAIL (" + tx + "," + ty
                             + ") class=0x" + Integer.toHexString(cls) + " — 空地/资源/雾");
+                    }
+                    break;
+                }
+                case "retask": {
+                    // 宏：retask <slot> <tx> <ty> —— 按槽位直写任务目标（p0 单位）。
+                    // 与 orderMove 的选中路径同款三写（slot[2]=目标 slot[1]=现位 word7=0），
+                    // 但不经过 sel——orbit 中的单位位置秒变，sel 坐标必落空（m1 录制局实锤）。
+                    // 用途：解"回送中卡死"（目标格设为可达空地，word7 清 0 走过去）与
+                    // 免 sel 派工。落点=资源格时同 assign 触发采集。
+                    int slotIdx = Integer.parseInt(p[1]);
+                    int tx = Integer.parseInt(p[2]) & 0x3F, ty = Integer.parseInt(p[3]) & 0x3F;
+                    short[] tab = this.playerUnitSlots[0];
+                    int off = slotIdx << 3;
+                    if (slotIdx < 0 || slotIdx >= this.playerUnitHeaders[0][2]) {
+                        System.out.println("[devMouse] retask FAIL slot" + slotIdx
+                            + " 越界(n=" + this.playerUnitHeaders[0][2] + ")");
+                    } else {
+                        int w7 = tab[off + 7] & 0xFFFF;
+                        tab[off + 2] = (short)(tx << 8 | ty);
+                        tab[off + 1] = tab[off + 0];
+                        tab[off + 7] = 0;
+                        System.out.println("[devMouse] retask slot" + slotIdx + " ("
+                            + (tab[off] >>> 8) + "," + (tab[off] & 0xFF) + ")w" + Integer.toHexString(w7)
+                            + " -> (" + tx + "," + ty + ")");
                     }
                     break;
                 }
@@ -1227,6 +1271,23 @@ implements CommandListener {
                     System.out.println("[devMouse] count t" + t
                         + " 我=" + this.devCountUnits(0, t)
                         + " 敌=" + this.devCountUnits(1, t));
+                    break;
+                }
+                case "slots": {
+                    // 诊断：打印 p 玩家单位槽位 {i:type@(tx,ty)w任务字}（只读不进 trace）。
+                    // 任务字=word7 hex：低 nibble 0闲置/1行军/2采集(高字节0x66=满载计时)/3回送。
+                    int pl = Integer.parseInt(p[1]) & 1;
+                    int ucnt = this.playerUnitHeaders[pl][2];
+                    StringBuilder sb2 = new StringBuilder("[slots] p" + pl + " n=" + ucnt);
+                    for (int i = 0, off = 0; i < ucnt; ++i, off += 8) {
+                        sb2.append(' ').append(i).append(":t")
+                            .append(this.playerUnitSlots[pl][off + 3] & 0xFF)
+                            .append("@(").append(this.playerUnitSlots[pl][off] >>> 8)
+                            .append(',').append(this.playerUnitSlots[pl][off] & 0xFF)
+                            .append(")w").append(Integer.toHexString(
+                                this.playerUnitSlots[pl][off + 7] & 0xFFFF));
+                    }
+                    System.out.println(sb2);
                     break;
                 }
                 case "state": {
@@ -1628,7 +1689,24 @@ implements CommandListener {
                                 this.onKeyPress(kc);
                                 var_com_ulysseo_mad_b_a.queueSyntheticKeyRelease(kc);
                             } else if ("move".equals(q[2])) {
-                                this.mouseA(0, Integer.parseInt(q[3]), Integer.parseInt(q[4]));
+                                int mx = Integer.parseInt(q[3]);
+                                int my = Integer.parseInt(q[4]);
+                                // 与现场 [fifo] 日志同格式，回放/现场两股流可逐行对拍
+                                System.out.println("[fifo] ar=" + this.tickCount + " move " + mx + " " + my);
+                                this.mouseA(0, mx, my);
+                            } else if ("fifo".equals(q[2])) {
+                                // 宏/输入指令到点重放（sel/goto/train/build/...）：与现场同一条
+                                // devMouseCmd 路径（其入口 [fifo] 日志即对拍流）。控制流指令
+                                // （load/save/replaytrace/script/stopat/exit/until）拒绝——
+                                // 会破坏 tick 锚定或嵌套死循环。
+                                String rest = String.join(" ", java.util.Arrays.copyOfRange(q, 3, q.length));
+                                if ("replaytrace".equals(q[3]) || "script".equals(q[3]) || "load".equals(q[3])
+                                        || "save".equals(q[3]) || "stopat".equals(q[3]) || "exit".equals(q[3])
+                                        || "until".equals(q[3])) {
+                                    System.out.println("[devMouse] replaytrace: 拒绝控制流指令: " + rest);
+                                } else {
+                                    devMouseCmd(rest);
+                                }
                             } else {
                                 System.out.println("[devMouse] replaytrace unknown op: " + tl);
                                 continue;
@@ -2230,6 +2308,18 @@ implements CommandListener {
                 }
                 if (this.var_boolean_b) {
                     this.a(graphics, 21, this.screenW - 10, this.screenH - 6, 21, 0, 7, 6, 0, 0);
+                }
+                // dev 写宏帧首排空：任何屏状态都先应用（弹窗态按键类操作不被饿死）
+                if (!this.devOpQueue.isEmpty()) {
+                    this.devDraining = true;
+                    try {
+                        String op;
+                        while ((op = this.devOpQueue.poll()) != null) {
+                            devMouseCmd(op);
+                        }
+                    } finally {
+                        this.devDraining = false;
+                    }
                 }
                 switch (this.screenState) {
                     case 7: {
