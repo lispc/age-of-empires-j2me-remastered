@@ -125,6 +125,7 @@ trace（回放锚）· `[mouse]/[mouseA]/[pick]/[band]` 鼠标链路 · `[trace]
 永久回退 DDA） ·
 **`[watchdog]` Timer 线程疑似卡死 + 完整栈** · `[fMenu]/[k]/[menuGate]` 菜单流 ·
 `[dev]/[devBoot]/[devMouse]/[probe]` dev 链路 · `[ai]` 玩家 AI 装载/异常/决策打点 ·
+`[mapgen]` 随机图生成器死循环逃逸（d.f() 重试超 65536 次才出现，正常图不应有）·
 `[result]` 批跑终局信号（`WIN|LOSS ticks=N`，-Daoe.exitOnResult=1 时无条件打印）。
 
 排查口诀：用户报"卡死/蓝屏/按键无效" → 先要 run-*.log：`[paint]`（异常循环）→

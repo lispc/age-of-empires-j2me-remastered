@@ -481,9 +481,12 @@ implements CommandListener {
             }
             // Game Mode → （选关等中间屏）→ 任务装载：菜单链长度随模式/版本
             // 有差异（有的屏高亮项脚本是空操作），连按 FIRE 直到离开菜单态。
+            // 注意：mission>1 的右切只能在选关/难度屏按——Game Mode 屏（menuScreenId==1）
+            // 的高亮项也是 op=3 循环器，在那里右切会把模式切跑（2026-09-02 实测
+            // random:2 被右切成 Tutorial→进了教学关 2）。
             long deadline = System.currentTimeMillis() + 30000;
             while (this.screenState == 4 && System.currentTimeMillis() < deadline) {
-                if (mission > 1 && devHiScriptOp() == 3) {
+                if (mission > 1 && this.menuScreenId != 1 && devHiScriptOp() == 3) {
                     for (int i = 1; i < mission; ++i) {
                         devPress(-4);           // 选关循环器右切（仅限 op=3 的选关项）
                     }
