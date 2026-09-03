@@ -510,6 +510,9 @@ boot 先 build 后派工。滚动难度递增的是 **rush 时机**（m+9 3.5k �
   `tools/aoectl`。
 - 高频观测循环：`echo "state" > fifo; sleep 1; cat fifo.json`（python -m json.tool 更好读）。
   fifo.json：aA/am/ar/cursor/cam/sel/explored + units（p/type/tile/sel，每方上限 16）。
+- **按键的线上格式是 `key <键码>`**（如 `key -5`/`key -7`）——裸发 `-5` 落
+  "unknown cmd" 无效且无提示副作用（r30 卡建造弹窗 1 分钟实证：手搓裸 `-5`/`-7`
+  连发全场冻结）。`tools/aoeops.py clear_popup()` 已按正确格式封装，优先用。
 
 ### 6.1b 战术宏（r21 新增，操作首选——比像素链路快且稳）
 
@@ -554,8 +557,9 @@ grep session.log 验证；失败是带原因的，不会静默。
   决策前一条 sitrep 替代全量 state 轮询。state 的 fifo.json 也新增
   res/pop/queued/ai 字段（免开存档读资源）。
 - **弹窗纪律（宏时代的头号坑）**：建筑首次放置与完工各有教学/完成弹窗（aA=2），
-  **弹窗期间 j() 不跑=施工/训练/移动全部冻结**。宏 build 后必须 `-5` 清弹窗再等
-  完工（`tools/aoeops.py build` 已封装此流程）。弹窗态 state/sitrep 可用
+  **弹窗期间 j() 不跑=施工/训练/移动全部冻结**。宏 build 后必须 `key -5` 清弹窗再等
+  完工（线上格式必须带 `key ` 前缀，裸 `-5` 无效，见 §6.1；
+  `tools/aoeops.py build` 已封装此流程）。弹窗态 state/sitrep 可用
   （r21 实测，修正 r16"FIFO 被吞"表述）。
 
 ### 6.1c 轮次效率工具
