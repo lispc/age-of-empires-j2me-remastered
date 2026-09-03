@@ -6,6 +6,8 @@
 
 用法:
   aoectl state                 打印游戏状态（JSON）
+  aoectl aistate               打印全量结构化状态（<fifo>.aistate.json：
+                               双方 headers/techFlags/全单位/全建筑，无截断）
   aoectl wait-mission [超时秒]  等待进入任务主视图 (aA=6)
   aoectl until <aA> [超时秒]    等待画面状态到指定值
   aoectl tap X Y               鼠标单击（逻辑坐标 240x320）
@@ -54,6 +56,27 @@ def refresh_status(timeout=8.0):
     raise TimeoutError(f"no status at {STATUS} — 游戏在跑吗？-Daoe.devMouse={FIFO} 了吗？")
 
 
+def refresh_aistate(timeout=8.0):
+    """aistate 命令：同 state 的同步协议，输出文件是 <fifo>.aistate.json。"""
+    path = FIFO + ".aistate.json"
+    try:
+        os.remove(path)
+    except OSError:
+        pass
+    send("aistate")
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if os.path.exists(path):
+            for _ in range(20):
+                with open(path) as f:
+                    data = f.read()
+                if data.rstrip().endswith("}"):
+                    return json.loads(data)
+                time.sleep(0.02)
+        time.sleep(0.05)
+    raise TimeoutError(f"no aistate at {path} — 游戏在跑吗？-Daoe.devMouse={FIFO} 了吗？")
+
+
 def main() -> int:
     if len(sys.argv) < 2:
         print(__doc__)
@@ -61,6 +84,8 @@ def main() -> int:
     cmd, args = sys.argv[1], sys.argv[2:]
     if cmd == "state":
         print(json.dumps(refresh_status(), ensure_ascii=False, indent=1))
+    elif cmd == "aistate":
+        print(json.dumps(refresh_aistate(), ensure_ascii=False, indent=1))
     elif cmd == "wait-mission":
         timeout = args[0] if args else "60"
         send(f"until 6 {timeout}")

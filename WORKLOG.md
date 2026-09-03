@@ -7,6 +7,46 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
+### 玩家 AI 基建批：turbo/noRender/playerAi/aistate/exitOnResult/mapSeed/rmsDir + aiEnabled 泄漏修复（2026-09-02）
+
+- **全部做成 -D 可选开关，默认路径逐字节不变**（regress/replaycheck 证据见下）：
+  `-Daoe.turbo=1` tight-loop（mad/b 不起 Timer，非 daemon 线程全速跑 e.run()）；
+  `-Daoe.noRender=1` 跳任务主视图渲染；`-Daoe.playerAi=<类>` 帧首 hook
+  （新接口 `aoe.ai.PlayerAi`，反射装载，失败/异常打 `[ai]` 并禁用）；
+  FIFO 新指令 `aistate`（写 `<fifo>.aistate.json` 全量状态，aoectl 同名子命令）；
+  `-Daoe.exitOnResult=1` 终局无条件打 `[result] WIN|LOSS ticks=N` 后 exit；
+  `-Daoe.mapSeed=N` 随机图种子覆盖（beginMissionLoad 单点）；`-Daoe.rmsDir=` RMS 重定向。
+- **两处实测纠偏（相对最初设计）**：① turbo 线程必须**非 daemon**——普通模式
+  JVM 保活靠 java.util.Timer 的非 daemon 线程，turbo 不建 Timer，daemon 会导致
+  main 返回后 JVM 数秒内自发退出（实测 t<10s 必死）。② noRender 守卫只能放在
+  dispatchRender 的 case 6（主视图）：整跳 dispatchRender 会冻住菜单引擎
+  （按键消费/闪屏定时翻页都嵌在 renderMenu 里），dev 导航永久卡闪屏。
+- **aiEnabled 跨任务泄漏修复**：setupMissionEnv 装载默认段统一落 Easy 档默认值
+  （aiEnabled=true/build 250/train 20/guard 49/freeRes MAX/phase 0/target -1），
+  模式分支照旧覆盖。教学关此前继承的是字段初值（interval 全 0），修复后
+  aiFreeResTimer 开始连续走字——存读 roundtrip 出现 7 tick 合法漂移，
+  归因明确后把该字段补进 regress-noise.txt（与 aiBuildTimer/aiTrainTimer 同类）。
+- **新研究原语 tryResearch(player, buildingSlot, techId)**：y() case 2 三步
+  （0x20000000|0x10000 写建筑槽 + 清进度字节 + payCost）+ 显式槽位 + 校验
+  （在研究中/techFlags[23+id]==0 不可用（boolean_k case 2 菜单门同源）/canAfford）。
+  y() case 2 原样未动。
+- **冒烟证据**：turbo+noRender 下 tick 冲到 7.1M/120s（~59k tick/s）、nav 正常进关；
+  TestAi（/tmp 一次性类）hook 装载并按节流打 `[ai]` tick；aistate 双方单位/建筑
+  条数与 headers[2]/[4] 对账一致；rmsDir 落盘 /tmp 验证。mapSeed=1/999/默认
+  三张图 TC 位各异；seed 999 + exitOnResult 端到端 `[result] LOSS ticks=6975` 退出。
+- **已知现象（非本批引入）**：默认图（8224）Easy AI 经济会在 17 建筑/14 单位后
+  停摆（gold=1、army=129<200 阈值、村民不续采），被动玩家永不被推平——
+  mapSeed=999 则 7k tick 被灭。AI 卡经济属原版/移植平衡层问题，留待玩家 AI 轮次排查。
+- 验证：`./gradlew classes` 绿；regress 三连 PASS（静态指纹一致 + roundtrip 干净）；
+  replaycheck PASS（state JSON + input 轨迹双一致，停表 3336 tick）。
+- **replaycheck 基建修缮（顺手）**：nav 轮询竞态——任务简报对话框在 nav 线程退出
+  后才弹出（g(1,71,0)），无人关窗 → 轮询永远卡 aA=2，本机实测 baseline 同病
+  （HEAD 跑 3 次挂 1 次同类）。修 tools/replaycheck.sh 轮询环：看到 aA=2 补一发
+  -6 续等（与既有"save 被拒补 -6"同款；这些键都在基准存档/load 之前，不进对拍）。
+  剩余已知 flake：cursor/cam/sel ±1-2px 偶发漂移（注入键按住时长的帧相位竞态，
+  baseline 同样出现；模拟层 units/explored/input 轨迹每次都对得上）。
+- commit：未提交（玩家统一合并）。
+
 ### 第12轮:[combat] 完整性验证通过;封建内容实测;Surrender 陷阱二次实锤(2026-09-02)
 
 - **[combat] 验证通过**:9 死亡=9 行,remaining 单调 8→0 与战后 state 一致,

@@ -32,3 +32,7 @@ mouseLastTile
 mouseRclickGrace
 mouseRclickPending
 bgmFramesLeft
+# —— 2026-09-02 补：与 aiBuildTimer/aiTrainTimer 同类的 AI 帧计数器；
+# 因 aiEnabled 跨任务泄漏修复（装载统一落默认值）后教学关 aiFreeResInterval
+# 由 0 变 MAX，该计时器开始连续走字，存读两帧间合法漂移 ——
+aiFreeResTimer

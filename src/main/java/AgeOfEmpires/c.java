@@ -609,6 +609,7 @@ implements CommandListener {
     // ===== dev 效率工具：autoDismiss / HUD / 快照存档（F5/F9、FIFO、自动 checkpoint）=====
     private static final boolean DEV_AUTO_DISMISS = System.getProperty("aoe.autoDismiss") != null;
     static final boolean DEV_HUD = System.getProperty("aoe.devHud") != null;
+    static final boolean DEV_NO_RENDER = System.getProperty("aoe.noRender") != null;
     private static final boolean DEV_AUTO_CHECKPOINT =
         !"-".equals(System.getProperty("aoe.autoCheckpoint", "1"));
     /** 对话框自动推进：任务里进过一次主视图后，screenState==2 的弹窗每 4 帧补一个左软键。 */
@@ -944,6 +945,118 @@ implements CommandListener {
                     }
                     break;
                 }
+                case "aistate": {
+                    // 全量结构化状态（玩家 AI / 批量实验用）：写 <fifo>.aistate.json
+                    // ——不动 state 指令的 <fifo>.json（那是 golden/回放契约）。
+                    // 与 state 的差别：双方单位不设 32 条上限、带 slot/prev/target/hp/
+                    // action，另含双方 headers 关键字段、techFlags、全部建筑记录。
+                    StringBuilder aj = new StringBuilder(4096);
+                    aj.append("{\"tick\":").append(this.tickCount)
+                        .append(",\"aA\":").append(this.screenState)
+                        .append(",\"gameMode\":").append(this.gameMode);
+                    if (this.techFlags != null) {
+                        aj.append(",\"techFlags\":[");
+                        for (int i = 0; i < this.techFlags.length; ++i) {
+                            if (i > 0) {
+                                aj.append(',');
+                            }
+                            aj.append(this.techFlags[i]);
+                        }
+                        aj.append(']');
+                    }
+                    aj.append(",\"players\":[");
+                    for (int pl = 0; pl < 2; ++pl) {
+                        if (pl > 0) {
+                            aj.append(',');
+                        }
+                        // headers: [0]=时代 [2]现役单位 [3]人口上限 [4]建筑记录数
+                        // [5..7]木金石 [8]=该方 TC/基地格（双方都在 [8]，AI 防守逻辑
+                        // 读 hdr[1][8]、进攻目标读 hdr[0][8] 可为证）[9]=类型0建筑放置
+                        // 记录 [49]训练队列长 [55]军队价值 [86..90]生产/阵亡/建成/建筑损失/交存趟数
+                        int[] h = this.playerUnitHeaders[pl];
+                        aj.append("{\"age\":").append(h[0])
+                            .append(",\"units\":").append(h[2])
+                            .append(",\"popCap\":").append(h[3])
+                            .append(",\"buildings\":").append(h[4])
+                            .append(",\"res\":[").append(h[5]).append(',').append(h[6]).append(',').append(h[7]).append(']')
+                            .append(",\"tcTile\":").append(h[8])
+                            .append(",\"hq9\":").append(h[9])
+                            .append(",\"trainQueue\":").append(h[49])
+                            .append(",\"armyValue\":").append(h[55])
+                            .append(",\"produced\":").append(h[86])
+                            .append(",\"lost\":").append(h[87])
+                            .append(",\"built\":").append(h[88])
+                            .append(",\"buildingsLost\":").append(h[89])
+                            .append(",\"deliveries\":").append(h[90])
+                            .append('}');
+                    }
+                    aj.append(']');
+                    if (this.mapTiles != null) {
+                        int explored = 0;
+                        for (int i = 0; i < this.mapTiles.length; ++i) {
+                            if ((this.mapTiles[i] & 0x8000) == 0) {
+                                ++explored;
+                            }
+                        }
+                        aj.append(",\"explored\":").append(explored);
+                    }
+                    aj.append(",\"units\":[");
+                    boolean firstU = true;
+                    for (int pl = 0; pl < 2; ++pl) {
+                        short[] s = this.playerUnitSlots[pl];
+                        for (int i = 0; i < this.playerUnitHeaders[pl][2]; ++i) {
+                            int off = i * 8;
+                            if (!firstU) {
+                                aj.append(',');
+                            }
+                            firstU = false;
+                            aj.append("{\"p\":").append(pl)
+                                .append(",\"slot\":").append(i)
+                                .append(",\"tile\":[").append((s[off] & 0xFFFF) >>> 8).append(',').append(s[off] & 0xFF).append(']')
+                                .append(",\"prevTile\":[").append((s[off + 1] & 0xFFFF) >>> 8).append(',').append(s[off + 1] & 0xFF).append(']')
+                                .append(",\"target\":[").append((s[off + 2] & 0xFFFF) >>> 8).append(',').append(s[off + 2] & 0xFF).append(']')
+                                .append(",\"type\":").append(s[off + 3] & 0xFF)
+                                .append(",\"hp\":").append(s[off + 4] & 0xFF)
+                                .append(",\"action\":").append(s[off + 7] & 0xF)
+                                .append(",\"sel\":").append((s[off + 4] & 0x8000) != 0)
+                                .append('}');
+                        }
+                    }
+                    aj.append(']');
+                    aj.append(",\"buildingRecs\":[");
+                    boolean firstB = true;
+                    for (int pl = 0; pl < 2; ++pl) {
+                        int[] r = this.var_int_arr_arr_b[pl];
+                        for (int i = 0; i < this.playerUnitHeaders[pl][4]; ++i) {
+                            int base = i * 4;
+                            if (!firstB) {
+                                aj.append(',');
+                            }
+                            firstB = false;
+                            // 记录布局（放置代码 a(int,int,int,int,int,boolean)）：
+                            // [+0]=格 x<<8|y [+1]=类型（箭塔带高字节打包，取 &0xFF）
+                            // [+2] 低字节=HP，0x40000000=在建，0x20000000=研究中
+                            aj.append("{\"p\":").append(pl)
+                                .append(",\"slot\":").append(i)
+                                .append(",\"type\":").append(r[base + 1] & 0xFF)
+                                .append(",\"tile\":[").append((r[base] >>> 8) & 0xFF).append(',').append(r[base] & 0xFF).append(']')
+                                .append(",\"hp\":").append(r[base + 2] & 0xFF)
+                                .append(",\"uc\":").append((r[base + 2] & 0x40000000) != 0)
+                                .append('}');
+                        }
+                    }
+                    aj.append("]}\n");
+                    if (this.devFifoPath != null) {
+                        try {
+                            java.nio.file.Files.write(java.nio.file.Path.of(this.devFifoPath + ".aistate.json"),
+                                aj.toString().getBytes("UTF-8"));
+                        } catch (Exception e) {
+                            System.out.println("[devMouse] aistate: " + e);
+                        }
+                    }
+                    System.out.println("[devMouse] aistate written, ar=" + this.tickCount);
+                    break;
+                }
                 case "until": {
                     // 阻塞等 screenState 到目标值（把"发命令→sleep→grep 日志"循环挪进游戏进程）
                     int target = Integer.parseInt(p[1]);
@@ -1127,6 +1240,130 @@ implements CommandListener {
     }
     // ===== dev 鼠标驱动结束 =====
     // ===== dev 模式结束 =====
+
+    // ===== 玩家 AI 接口（移植新增） =====
+    // -Daoe.playerAi=<全限定类名>：帧首 hook。onPaint 帧首（Timer/paint 线程，
+    // 与模拟同线程）每帧调一次 aoe.ai.PlayerAi.tick(this)，AI 内部自行节流。
+    // 反射装载失败或 tick 抛异常：打 [ai] 日志并永久禁用，不影响游戏本身。
+    // AI 可读面 = 本类 public 字段（playerUnitHeaders/playerUnitSlots/
+    // var_int_arr_arr_b/mapTiles/techFlags/tickCount/screenState/gameMode/相机光标）；
+    // 写操作原语 = orderMove/selectUnits/clearSelection/selectUnderCursor/
+    // queueUnitTraining/canAfford/payCost/findAiBuildSpot/findNearbyResource/
+    // a(player,type,tx,ty,flags,bl)/tryResearch（其中 orderMove/queueUnitTraining/
+    // findAiBuildSpot/findNearbyResource 原先是包可见，为此放宽为 public）。
+    private static final String PLAYER_AI_CLASS = System.getProperty("aoe.playerAi");
+    private aoe.ai.PlayerAi playerAiHook;
+    private boolean playerAiDisabled;
+
+    private void tickPlayerAi() {
+        if (this.playerAiHook == null) {
+            if (this.playerAiDisabled) {
+                return;
+            }
+            try {
+                this.playerAiHook = (aoe.ai.PlayerAi) Class.forName(PLAYER_AI_CLASS)
+                    .getDeclaredConstructor().newInstance();
+                System.out.println("[ai] player AI loaded: " + PLAYER_AI_CLASS);
+            } catch (Throwable t) {
+                this.playerAiDisabled = true;
+                System.out.println("[ai] load failed: " + PLAYER_AI_CLASS + ": " + t);
+                return;
+            }
+        }
+        try {
+            this.playerAiHook.tick(this);
+        } catch (Throwable t) {
+            this.playerAiDisabled = true;
+            this.playerAiHook = null;
+            System.out.println("[ai] tick exception, AI disabled: " + t);
+            t.printStackTrace();
+        }
+    }
+
+    /** 研究/升时代原语：与 y() case 2 完全同语义的核心三步（写建筑槽研究标志
+     *  0x20000000|0x10000、清进度字节 0xFFFF00FF、payCost），但显式传建筑槽位
+     *  下标（buildingSlot = var_int_arr_arr_b[player] 的记录起点，4 int/记录；
+     *  UI 侧对应"选中建筑槽"字段 aD），不依赖当前选中状态，供玩家 AI 调用。
+     *  可用性校验镜像 openBuildingMenu（研究菜单门真正生效的地方——研究菜单
+     *  var_boolean_g=false，boolean_k case 2 的 techFlags 过滤对研究菜单不生效，
+     *  首批实现误把它当菜单门，导致升时代永远被拒，2026-09-02 玩家 AI 实测暴露）：
+     *  - techFlags[23+techId] != 0 = 该科技已研究（j() 研究完成时置位）→ 拒绝；
+     *  - 升时代（21/22/23）只在 TC(9)、techId == 21+当前时代，且前置建筑达标
+     *    （封建：建成兵营≥1；城堡：磨坊+铁匠铺≥2；帝国：城堡≥1）；
+     *  - 其余科技按 openBuildingMenu 的建筑类型→可研究科技+时代门槛表。
+     *  y() case 2 保持原样不改，保证默认行为逐字节不变。 */
+    public final boolean tryResearch(int player, int buildingSlot, int techId) {
+        int[] recs = this.var_int_arr_arr_b[player];
+        if (buildingSlot < 0 || buildingSlot + 3 >= recs.length) {
+            return false;
+        }
+        if ((recs[buildingSlot + 2] & 0x40000000) != 0) {
+            return false;   // 建筑未建成
+        }
+        if ((recs[buildingSlot + 2] & 0x20000000) != 0) {
+            return false;   // 该建筑已有研究在进行
+        }
+        int btype = recs[buildingSlot + 3] & 0xFF;
+        int age = this.playerUnitHeaders[player][0];
+        if (techId >= 21 && techId <= 23) {
+            // 升时代：openBuildingMenu case 9
+            if (btype != 9 || techId != 21 + age || age >= 3) {
+                return false;
+            }
+            if (age == 0 && this.a(player, 10, true) < 1) {
+                return false;
+            }
+            if (age == 1 && this.a(player, 5, true) + this.a(player, 6, true) < 2) {
+                return false;
+            }
+            if (age == 2 && this.a(player, 3, true) < 1) {
+                return false;
+            }
+        } else {
+            if (techId < 0 || 23 + techId >= this.techFlags.length
+                    || this.techFlags[23 + techId] != 0) {
+                return false;   // 已研究（或非法 id）
+            }
+            if (!researchOfferedAt(btype, techId, age, this.techFlags)) {
+                return false;
+            }
+        }
+        if (!this.canAfford(player, 2, techId)) {
+            return false;
+        }
+        recs[buildingSlot + 2] |= 0x20000000 | 0x10000;
+        recs[buildingSlot + 2] &= 0xFFFF00FF;
+        this.payCost(player, 2, techId);
+        return true;
+    }
+
+    /** openBuildingMenu 的"建筑当前提供哪项科技"表的镜像（不含已研究检查——调用方已查）。
+     *  塔升级链（13→17→20）额外要求前一级已研究。 */
+    private static boolean researchOfferedAt(int btype, int techId, int age, byte[] techFlags) {
+        switch (btype) {
+            case 4:  // 大学
+                return (techId == 14 || techId == 11) && age >= 2
+                    || (techId == 10 || techId == 12) && age >= 3;
+            case 0:  // 伐木场
+                return techId == 3 && age >= 1 || techId == 1 && age >= 2;
+            case 1:  // 采矿场
+                return (techId == 5 || techId == 9) && age >= 1
+                    || (techId == 19 || techId == 18) && age >= 2;
+            case 5:  // 磨坊
+                return techId == 6;
+            case 6:  // 铁匠铺
+                return (techId == 4 || techId == 8) && age >= 1
+                    || (techId == 7 || techId == 2) && age >= 2
+                    || (techId == 0 || techId == 15) && age >= 3;
+            case 12: // 哨塔（塔升级链）
+                return techId == 13 && age >= 1
+                    || techId == 17 && age >= 2 && techFlags[36] != 0
+                    || techId == 20 && age >= 3 && techFlags[40] != 0;
+            default:
+                return false;
+        }
+    }
+    // ===== 玩家 AI 接口结束 =====
 
     public final void loadKeymap(int n) {
         this.keymap = com.ulysseo.mad.c.byte_arr_a(n);
@@ -1487,6 +1724,9 @@ implements CommandListener {
     public final void onPaint(Graphics graphics) {
         ++this.tickCount;
         this.devFrameHousekeeping();
+        if (PLAYER_AI_CLASS != null) {
+            this.tickPlayerAi();
+        }
         if (this.var_boolean_j) {
             if (Runtime.getRuntime().freeMemory() < 50000L) {
                 return;
@@ -1741,7 +1981,15 @@ implements CommandListener {
                 return;
             }
             case 6: {
-                this.a(graphics);
+                // -Daoe.noRender=1：跳过任务主视图渲染（批量玩家 AI 实验提速）。
+                // 守卫只能放在这里、不能整跳 dispatchRender：菜单引擎（renderMenu）
+                // 的按键消费与闪屏定时翻页都嵌在渲染函数里，整跳会冻住菜单导航。
+                // 注意：鼠标像素拾取依赖渲染帧，noRender 下 FIFO probe/click/ctile
+                // 失效；a(Graphics) 内嵌的 tickCursor/updateCamera/mouseTick 同样
+                // 不跑（玩家 AI 走原语，不依赖这些）。
+                if (!DEV_NO_RENDER) {
+                    this.a(graphics);
+                }
                 return;
             }
             case 7: {
@@ -2657,6 +2905,12 @@ implements CommandListener {
             if (this.var_AgeOfEmpires_d_a.o == 0) {
                 this.var_AgeOfEmpires_d_a.o = 8224;
             }
+            // -Daoe.mapSeed=N：批量实验换图。在随机图装载点覆盖 nfo 种子
+            // （拆分字节序与上方原路径完全一致），不设属性时逐字节不变。
+            Integer mapSeed = Integer.getInteger("aoe.mapSeed");
+            if (mapSeed != null) {
+                this.var_AgeOfEmpires_d_a.o = mapSeed.intValue();
+            }
             rngStateLo = (byte)(this.var_AgeOfEmpires_d_a.o >>> 8) & 0xFF;
             rngStateHi = (byte)(this.var_AgeOfEmpires_d_a.o & 0xFF);
         }
@@ -3229,6 +3483,18 @@ implements CommandListener {
         this.aiAttackThreshold = 0;
         this.aiFreeResTimer = 0;
         this.aiTrainTimer = 0;
+        // aiEnabled 跨任务泄漏修复：这组 AI 开关/调参原先只在 gameMode==0(随机图)
+        // 和战役 m4 分支赋值且从不复位——同进程先玩战役再玩随机图会继承上一场的
+        // 全部调参（教学分支甚至继承战役的 aiEnabled=false）。装载新任务时统一
+        // 先落默认值（=Easy 档），模式分支照旧覆盖。
+        this.aiEnabled = true;
+        this.aiBuildInterval = 250;
+        this.aiTrainInterval = 20;
+        this.aiGuardRadiusSq = 49;
+        this.aiFreeResInterval = Integer.MAX_VALUE;
+        this.aiBuildTimer = 0;
+        this.aiBuildPhase = 0;
+        this.aiBuildTarget = -1;
         this.var_int_i = 0;
         if (this.gameMode == 0) {
             this.aiEnabled = true;
@@ -4623,7 +4889,7 @@ implements CommandListener {
         this.selectedType = -1;
     }
 
-    final void orderMove(int n, int n2, int n3) {
+    public final void orderMove(int n, int n2, int n3) {
         short s = (short)(n2 << 8 | n3);
         int n4 = 0;
         int n5 = 0;
@@ -5883,7 +6149,7 @@ implements CommandListener {
         return true;
     }
 
-    final int queueUnitTraining(int n, int n2) {
+    public final int queueUnitTraining(int n, int n2) {
         int n3 = 0;
         switch (n2) {
             case 0: {
@@ -7231,7 +7497,7 @@ implements CommandListener {
         this.aiBuildTarget = -1;
     }
 
-    final int findAiBuildSpot(int n) {
+    public final int findAiBuildSpot(int n) {
         int n2 = n;
         int n3 = 0;
         int n4 = -2;
@@ -7254,7 +7520,7 @@ implements CommandListener {
         return n2;
     }
 
-    final short findNearbyResource(int n, int n2) {
+    public final short findNearbyResource(int n, int n2) {
         int n3;
         n2 &= 3;
         int n4 = n;
@@ -8102,6 +8368,15 @@ implements CommandListener {
                 this.var_boolean_b = true;
             }
             if (n2 == 98) {
+                // -Daoe.exitOnResult=1：批量实验终局信号。无条件打印（不受
+                // aoe.debug 门控，同 [paint] 的做法）并立即退出——与批量脚本的
+                // 契约，格式固定勿改。放在 nfo 写回/screenState=12 之前：批跑
+                // 不需要结算屏，也顺带跳过随机图种子写回 nfo。
+                if (System.getProperty("aoe.exitOnResult") != null) {
+                    System.out.println("[result] " + (n3 == 0 ? "WIN" : "LOSS") + " ticks=" + this.tickCount);
+                    System.out.flush();
+                    System.exit(0);
+                }
                 this.clipTop = 0;
                 this.clipLeft = 0;
                 this.clipBottom = this.screenH;

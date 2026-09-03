@@ -50,7 +50,12 @@ run_one() {  # $1=A|B  $2=base(仅B用)
   local j=""; for i in $(seq 1 60); do
     echo state >&9; sleep 0.4
     j=$(grep -o '"aA":[0-9]*' "$FIFO.json" 2>/dev/null | head -1)
-    [ "$j" = '"aA":6' ] && break; sleep 2
+    [ "$j" = '"aA":6' ] && break
+    # 任务简报对话框(aA=2)可能在 nav 线程退出后才弹出:无人关窗时轮询永远卡在
+    # aA=2(2026-09-02 实测 baseline 同病)。补一发 -6 关窗续等——这些键都发生在
+    # 基准存档(A)或 load(B)之前,与下方 save 被拒重试的既有做法同款,不进对拍。
+    [ "$j" = '"aA":2' ] && echo "key -6" >&9
+    sleep 2
   done
   [ "$j" = '"aA":6' ] || { echo "[$tag] FAIL 未进任务"; kill $PID; return 1; }
   sleep 3   # 等自动 checkpoint 落盘、画面彻底稳定

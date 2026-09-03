@@ -82,6 +82,12 @@ tick 戳输入 trace + tools/replaycheck.sh 双跑对拍）、**卡死看门狗*
 | `aoe.harnessQuiet=1` | DevHarness 进任务后不再自动按键（**回放时必开**，墙钟输入会破坏确定性） |
 | `aoe.dumpFrames=<png>` | 每 ~5s 导帧 |
 | `aoe.width/height/scale` | 逻辑分辨率/窗口倍数（回归/golden 必须走默认 240x320） |
+| `aoe.turbo=1` | tight-loop 主循环：不起 Timer，非 daemon 线程全速跑 tick（CPU 100% 预期；批量 AI 实验用。非 daemon 是保活需要：普通模式靠 Timer 线程撑 JVM） |
+| `aoe.noRender=1` | 跳过任务主视图渲染（dispatchRender case 6）。菜单/对话框仍渲染——菜单引擎嵌在渲染函数里，整跳会冻住导航。probe/click/ctile 失效 |
+| `aoe.playerAi=<全限定类名>` | 玩家 AI 帧首 hook：实现 `aoe.ai.PlayerAi`（`void tick(AgeOfEmpires.c game)`），每帧首调一次，自行节流；装载失败/tick 异常打 `[ai]` 并禁用 |
+| `aoe.exitOnResult=1` | 终局（startMissionBriefing z==98）无条件打印 `[result] WIN|LOSS ticks=N` 后 System.exit(0)——批量脚本契约，格式勿改 |
+| `aoe.mapSeed=N` | 随机图种子覆盖（beginMissionLoad 装载点，N 拆 hi/lo 两字节；不设则逐字节不变） |
+| `aoe.rmsDir=<dir>` | RecordStore（.nfo）落盘目录重定向（批量实验隔离，防种子写回污染用户数据） |
 
 ### FIFO 指令（`-Daoe.devMouse=<fifo>`；逻辑坐标 240x320）
 
@@ -94,6 +100,9 @@ tick 戳输入 trace + tools/replaycheck.sh 双跑对拍）、**卡死看门狗*
   ⚠️ 坐标 = 当前屏幕逻辑分辨率（默认 240x320；设 aoe.width=480 则为 480x535）。
   x≥宽-14/y≥高-14 的贴边区域会触发边缘滚动。
 - 观测：`state`（写 `<fifo>.json` 快照：aA/am/ar/光标/相机/选中/迷雾/单位表）/
+  `aistate`（写 `<fifo>.aistate.json` **全量**状态：双方 headers 关键字段/techFlags/
+  全部单位无截断（slot/tile/prevTile/target/type/hp/action/sel）/全部建筑记录/explored；
+  不动 state 的 golden 契约）/
   `until <aA> [秒]` / `probe x y`（只拾取）/ `dump <png>`（同步导帧）/ `fields <txt>`
 - 编排：`script <文件>`（批量，支持 `sleep 毫秒`、#注释）
 - 考古：`strtbl <表> <条目|all>`（打印 data.res 字符串表条目）/
@@ -104,7 +113,7 @@ tick 戳输入 trace + tools/replaycheck.sh 双跑对拍）、**卡死看门狗*
   （冻在精确 tick，对拍取态前必用）
 - `exit`
 
-### 日志行速查（全部 aoe.debug 门控，`[paint]` 例外=无条件）
+### 日志行速查（全部 aoe.debug 门控，`[paint]`/`[result]` 例外=无条件）
 
 `[dbg]` 25-tick 心跳（ar/am/aA…）· `[void_a]` 按键 · `[input]` 带 tick 戳的输入
 trace（回放锚）· `[mouse]/[mouseA]/[pick]/[band]` 鼠标链路 · `[trace] g->` 状态切换 ·
@@ -112,7 +121,8 @@ trace（回放锚）· `[mouse]/[mouseA]/[pick]/[band]` 鼠标链路 · `[trace]
 `[view]` 地图进出/对话框/世界重建 · `[paint]` 帧内异常（**无条件**打印，画面冻住
 先看它）· `[save]/[load]` 快照（save 带 `ar=`）· `[proj]` 投射物扫描护栏触发 ·
 **`[watchdog]` Timer 线程疑似卡死 + 完整栈** · `[fMenu]/[k]/[menuGate]` 菜单流 ·
-`[dev]/[devBoot]/[devMouse]/[probe]` dev 链路。
+`[dev]/[devBoot]/[devMouse]/[probe]` dev 链路 · `[ai]` 玩家 AI 装载/异常/决策打点 ·
+`[result]` 批跑终局信号（`WIN|LOSS ticks=N`，-Daoe.exitOnResult=1 时无条件打印）。
 
 排查口诀：用户报"卡死/蓝屏/按键无效" → 先要 run-*.log：`[paint]`（异常循环）→
 `[watchdog]`（死循环栈）→ `[view]`（视图去哪了）→ `[trace] g->`（状态机）。
