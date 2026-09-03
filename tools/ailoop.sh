@@ -16,9 +16,10 @@
 # 的 RMS),绝不碰用户真实存档。
 #
 # 用法:
-#   tools/ailoop.sh [-n 局数] [-d 难度] [-a AI类名] [-s 起始种子] [-t 每局超时秒] [-k] [-b] [-S N] [-x 种子表]
+#   tools/ailoop.sh [-n 局数] [-d 难度] [-a AI类名] [-s 起始种子] [-t 每局超时秒] [-k] [-b] [-f] [-S N] [-x 种子表]
 #                   -k 保留每局日志(默认跑完只留 summary.csv)
 #                   -b 开 BFS 寻路(-Daoe.bfsPath=1,部队机动明显改善;默认关=原版行为)
+#                   -f 关迷雾诚实模式(-Daoe.aiFog=0,回退全图;默认开=只读已探索格敌情)
 #                   -S N 周期快照(-Daoe.snapshotEvery=N,每 N tick 存 snap-<tick>.aoesave,
 #                        滚动留最新 8 份;败局尸检用,默认关)
 #                   -x 逗号分隔的跳过种子表(叠加在 tools/ailoop-skip.txt 之上);
@@ -42,13 +43,14 @@ SELFTEST=0
 [ "${1:-}" = "--selftest" ] && SELFTEST=1
 
 # ---- 参数 ----
-N=10; DIFF=1; AI=""; SEED0=1000; TIMEOUT=300; KEEP=0; BFS=0; SNAP=0; SKIPX=""
+N=10; DIFF=1; AI=""; SEED0=1000; TIMEOUT=300; KEEP=0; BFS=0; SNAP=0; SKIPX=""; FOGOFF=0
 usage() { sed -n '2,36p' "$0"; exit "${1:-1}"; }
-[ $SELFTEST = 0 ] && while getopts "n:d:a:s:t:kbS:x:h" opt; do
+[ $SELFTEST = 0 ] && while getopts "n:d:a:s:t:kbS:x:fh" opt; do
     case $opt in
         n) N=$OPTARG ;; d) DIFF=$OPTARG ;; a) AI=$OPTARG ;;
         s) SEED0=$OPTARG ;; t) TIMEOUT=$OPTARG ;; k) KEEP=1 ;;
         b) BFS=1 ;;
+        f) FOGOFF=1 ;;
         S) SNAP=$OPTARG ;;
         x) SKIPX=$OPTARG ;;
         *) usage ;;
@@ -157,10 +159,14 @@ while [ $i -le "$N" ]; do
     [ "$BFS" = 1 ] && BFS_ARG="-Daoe.bfsPath=1"
     SNAP_ARG=""
     [ "$SNAP" -gt 0 ] 2>/dev/null && SNAP_ARG="-Daoe.snapshotEvery=$SNAP"
+    FOG_ARG=""
+    [ "$FOGOFF" = 1 ] && FOG_ARG="-Daoe.aiFog=0"
+    # 消融诊断：AOE_AIFOG=res = 资源全图+敌情诚实（覆盖 -f）
+    [ -n "${AOE_AIFOG:-}" ] && FOG_ARG="-Daoe.aiFog=$AOE_AIFOG"
     t0=$SECONDS
     "$JAVA" -Daoe.headless=1 "-Daoe.dev=random:$DIFF" -Daoe.turbo=1 -Daoe.noRender=1 \
         -Daoe.mute=1 -Daoe.debug=1 -Daoe.exitOnResult=1 "-D$SEED_PROP=$seed" \
-        ${AI_ARG:+"$AI_ARG"} ${BFS_ARG:+"$BFS_ARG"} ${SNAP_ARG:+"$SNAP_ARG"} \
+        ${AI_ARG:+"$AI_ARG"} ${BFS_ARG:+"$BFS_ARG"} ${SNAP_ARG:+"$SNAP_ARG"} ${FOG_ARG:+"$FOG_ARG"} \
         -Daoe.saveDir="$gdir/saves" -Daoe.rmsDir="$gdir/rms" \
         -Duser.home="$gdir/userhome" \
         -cp "$CP" aoe.Main > "$log" 2>&1 &

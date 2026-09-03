@@ -94,6 +94,7 @@ LLM 玩家代理的宏层（sel/goto/train/build/gather/rally/sitrep 等 FIFO �
 | `aoe.exitOnResult=1` | 终局（startMissionBriefing z==98）无条件打印 `[result] WIN|LOSS ticks=N` 后 System.exit(0)——批量脚本契约，格式勿改 |
 | `aoe.mapSeed=N` | 随机图种子覆盖（beginMissionLoad 装载点，N 拆 hi/lo 两字节；不设则逐字节不变） |
 | `aoe.bfsPath=1` | 可选 BFS 寻路（默认关）：`boolean_b` 的 DDA 选落点换成沿缓存 BFS 路径取下一格，落点检查/抵达钩子/扇形回退不变；语义详见 game-mechanics「移动与寻路」 |
+| `aoe.aiFog` | RuleBasedAi 迷雾诚实模式（默认开=只读已探索格敌情/资源，禁读 hdr[1] 统计）：`=0` 回退全图（ailoop `-f`）；`=res`/`=tc` 消融档（资源全图/敌 TC 全图，仅诊断） |
 | `aoe.rmsDir=<dir>` | RecordStore（.nfo）落盘目录重定向（批量实验隔离，防种子写回污染用户数据） |
 
 ### FIFO 指令（`-Daoe.devMouse=<fifo>`；逻辑坐标 240x320）
