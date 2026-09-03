@@ -626,6 +626,42 @@ implements CommandListener {
     private String devToast;
     private long devToastUntil;
 
+    // ===== 可选 BFS 寻路（-Daoe.bfsPath=1，默认关，关闭时行为与原版逐字节一致）=====
+    // 只替换 boolean_b 里"选落点"一步：DDA 直线步进换成"沿 BFS 路径取下一格"；
+    // 落点三重检查、目标格被占处理（抵达钩子，采集/接敌靠它）、7 邻格扇形回退、
+    // 占位表更新全部保留。障碍语义：建筑(0x100)与地形资源/虚空(0x300)当墙，
+    // 单位占用(0x200)当可穿（动态障碍由运行时扇形回退处理，与原版兼容）。
+    // 目标格本身是墙（采集资源/攻击建筑）时，以目标格的可走邻格为种子反向洪泛，
+    // 走到目标隔壁即算到位，后续由原抵达钩子接管。路径是纯缓存（可从 slot[2]
+    // 重建），不进存档、不影响快照格式。同步 = 推进/沿原路径归队/离队重算；
+    // 连续 8 次无进展升级为"单位也当墙"绕开人墙，再不行永久回退原 DDA（兜底）。
+    static final boolean BFS_PATH = "1".equals(System.getProperty("aoe.bfsPath"));
+    /** BFS 邻格扩张/回溯的固定方向顺序（8 连通，与原版可斜走语义一致；固定顺序保确定性）。 */
+    private static final byte[] BFS_DX = {1, 1, 0, -1, -1, -1, 0, 1};
+    private static final byte[] BFS_DY = {0, -1, -1, -1, 0, 1, 1, 1};
+    /** 单单位路径容量（格）。最短路径超长即放弃，回退原 DDA+扇形行为。 */
+    private static final int BFS_PATH_CAP = 1024;
+    /** 每玩家单位上限（playerUnitSlots = short[2][208]，8 short/单位）。 */
+    private static final int BFS_MAX_UNITS = 26;
+    /** 沿路径连续无进展（pos 不前进）这么多次后升级重算/回退（节流）。 */
+    private static final int BFS_REPLAN_AFTER = 8;
+    /** 每单位路径格序列（打包 tx<<8|ty），flat 下标 = 玩家*26+单位。 */
+    private final short[] bfsPath = new short[2 * BFS_MAX_UNITS * BFS_PATH_CAP];
+    /** 路径长度（格数）；0 = 无路径（不可达/已在目标隔壁/超长），回退原 DDA。 */
+    private final short[] bfsPathLen = new short[2 * BFS_MAX_UNITS];
+    /** 下一个待确认格在路径中的下标。 */
+    private final short[] bfsPathPos = new short[2 * BFS_MAX_UNITS];
+    /** 路径对应的目标（slot[2] 打包值）；不一致即重算。初值 0 不会误命中（首算即覆盖）。 */
+    private final short[] bfsPathTarget = new short[2 * BFS_MAX_UNITS];
+    /** 沿路径连续无进展（pos 不前进，含振荡活锁）计数，到 BFS_REPLAN_AFTER 触发升级。 */
+    private final short[] bfsPathStuck = new short[2 * BFS_MAX_UNITS];
+    /** 重算模式：1 = 把单位占用格也当墙（无进展后升级，绕开静态人墙/袋形死角）。 */
+    private final byte[] bfsUnitsBlock = new byte[2 * BFS_MAX_UNITS];
+    /** BFS 距离场 scratch（-1 = 未访问）。 */
+    private final int[] bfsDist = new int[4096];
+    /** BFS 队列 scratch。 */
+    private final int[] bfsQueue = new int[4096];
+
     static String devSaveDir() {
         return System.getProperty("aoe.saveDir",
             System.getProperty("user.home") + "/Library/Application Support/AoeJ2ME/saves");
@@ -731,6 +767,11 @@ implements CommandListener {
             this.devPendingRestore = null;
             try {
                 aoe.SaveState.apply(this, data);
+                // BFS 路径是纯缓存但带目标记忆:装载后必须失效,否则"装载前 live 段"
+                // 残留的缓存会污染回放确定性(2026-09-02 实测:devBoot 双跑单位错位)
+                if (BFS_PATH) {
+                    java.util.Arrays.fill(this.bfsPathTarget, (short)-1);
+                }
                 // 回放锚：trace 的相对 tick 坐标从这里起算（快照 v2 已钉住 tickCount）
                 this.devTraceBaseTick = this.tickCount;
                 System.out.println("[load] applied (" + data.length + "B) traceBase=" + this.devTraceBaseTick);
@@ -3428,6 +3469,11 @@ implements CommandListener {
 
     public final boolean setupMissionEnv(int n) {
         int n2;
+        if (BFS_PATH) {
+            // 新任务清空 BFS 路径缓存:不同任务的 slot[2] 目标可能撞车,
+            // 残留缓存会把上张图的路径接到新任务单位上
+            java.util.Arrays.fill(this.bfsPathTarget, (short)-1);
+        }
         this.bgmFramesLeft = 0;
         this.clipLeft = 0;
         this.clipRight = this.screenW;
@@ -6814,6 +6860,7 @@ implements CommandListener {
         if (n4 == (n3 = this.playerUnitSlots[n][n2 + 0])) {
             return false;
         }
+        int targetPacked = n4; // n4 随后被 >>>= 8 就地改写,BFS 寻路要用打包目标
         short s = this.playerUnitSlots[n][n2 + 1];
         int n5 = n3 & 0xFF;
         short s2 = (short)(this.mapTiles[(n3 >>>= 8) + (n5 << 6)] & 0xFFF);
@@ -6837,6 +6884,20 @@ implements CommandListener {
             n11 = -n11;
         }
         int n13 = this.playerUnitSlots[n][n2 + 3] >> 8;
+        boolean dda = true;
+        if (BFS_PATH) {
+            // 可选 BFS 寻路：沿缓存路径取下一格替代 DDA 直线步进；之后的落点检查、
+            // 抵达钩子、扇形回退、占位表更新完全复用。bfsNextStep 返回 -1 =
+            // 目标不可达或已在目标隔壁 → 落回原 DDA 直线步进（严格不比原版差）。
+            int bfsNext = this.bfsNextStep(n, n2 >> 3, n3, n5, targetPacked);
+            if (bfsNext >= 0) {
+                n3 = bfsNext >>> 8;
+                n5 = bfsNext & 0xFF;
+                n13 = 0;
+                dda = false;
+            }
+        }
+        if (dda) {
         if (n9 > n11) {
             if ((n13 += n11) << 1 >= n9) {
                 n5 += n12;
@@ -6849,6 +6910,7 @@ implements CommandListener {
                 n13 -= n11;
             }
             n5 += n12;
+        }
         }
         if ((n3 & 0xFF) > 63) {
             n6 = n3;
@@ -6909,6 +6971,180 @@ implements CommandListener {
         this.playerUnitSlots[n][n2 + 1] = this.playerUnitSlots[n][n2 + 0];
         this.playerUnitSlots[n][n2 + 0] = (short)(n3 << 8 | n5);
         return true;
+    }
+
+    /**
+     * BFS 寻路的"选落点"（仅 BFS_PATH 打开时由 boolean_b 调用）。
+     * 返回下一步落点（打包 tx<<8|ty），-1 = 回退原 DDA+扇形行为。
+     * 同步策略：到达建议格则推进；被扇形闪避带偏时先沿原路径归队（扇形落点通常
+     * 仍在路径上，避免重算风暴），彻底离队才重算。节流/升级：沿路径连续
+     * BFS_REPLAN_AFTER 次无进展（含"在几格间振荡但 pos 不前进"的活锁）→ 先升级为
+     * "单位也当墙"重算绕开静态人墙；仍无进展 → 本目标永久回退原 DDA+扇形
+     * （= 基准行为兜底，严格不比原版差）。
+     */
+    private int bfsNextStep(int player, int unit, int curTx, int curTy, int target) {
+        int idx = player * BFS_MAX_UNITS + unit;
+        int cur = curTx << 8 | curTy;
+        if (this.bfsPathTarget[idx] != (short)target) {
+            this.bfsUnitsBlock[idx] = 0;
+            this.bfsComputePath(idx, cur, target, false);
+        }
+        int len = this.bfsPathLen[idx];
+        if (len == 0) {
+            return -1; // 不可达 / 已在目标隔壁 / 已判定回退 → 原 DDA（抵达钩子靠它）
+        }
+        int base = idx * BFS_PATH_CAP;
+        int prevPos = this.bfsPathPos[idx];
+        int pos = prevPos;
+        if (pos < len && (this.bfsPath[base + pos] & 0xFFFF) == cur) {
+            ++pos; // 确认到达上次建议的格子
+        } else {
+            // 先沿原路径归队（路径是最短路，无重复格，至多命中一次）
+            int k = -1;
+            for (int i = 0; i < len; ++i) {
+                if ((this.bfsPath[base + i] & 0xFFFF) == cur) {
+                    k = i;
+                    break;
+                }
+            }
+            if (k >= 0) {
+                pos = k + 1;
+            } else {
+                // 彻底离队 → 以当前位置重算（保持当前 unitsBlock 档位）
+                this.bfsComputePath(idx, cur, target, this.bfsUnitsBlock[idx] != 0);
+                len = this.bfsPathLen[idx];
+                if (len == 0) {
+                    return -1;
+                }
+                pos = 0;
+            }
+        }
+        this.bfsPathPos[idx] = (short)pos;
+        if (pos >= len) {
+            this.bfsPathStuck[idx] = 0;
+            return -1; // 路径走完（墙目标走到隔壁）→ DDA 收尾，触发抵达钩子
+        }
+        if (pos > prevPos) {
+            this.bfsPathStuck[idx] = 0;
+        } else if (++this.bfsPathStuck[idx] >= BFS_REPLAN_AFTER) {
+            this.bfsPathStuck[idx] = 0;
+            if (this.bfsUnitsBlock[idx] == 0) {
+                // 无进展到阈值 → 升级为"单位当墙"重算，绕开静态人墙/袋形死角
+                this.bfsUnitsBlock[idx] = 1;
+                this.bfsComputePath(idx, cur, target, true);
+                if (System.getProperty("aoe.debug") != null) {
+                    System.out.println("[bfs] p" + player + " u" + unit + " escalate unitsBlock"
+                        + " cur=" + Integer.toHexString(cur) + " target=" + Integer.toHexString(target)
+                        + " -> len=" + this.bfsPathLen[idx] + " ar=" + this.tickCount);
+                }
+                len = this.bfsPathLen[idx];
+                if (len == 0) {
+                    return -1;
+                }
+                this.bfsPathPos[idx] = 0;
+                pos = 0;
+            } else {
+                // 单位当墙也走不通 → 本目标永久回退原 DDA+扇形（= 基准行为）
+                if (System.getProperty("aoe.debug") != null) {
+                    System.out.println("[bfs] p" + player + " u" + unit + " fallback to DDA"
+                        + " cur=" + Integer.toHexString(cur) + " target=" + Integer.toHexString(target)
+                        + " ar=" + this.tickCount);
+                }
+                this.bfsPathLen[idx] = 0;
+                return -1;
+            }
+        }
+        return this.bfsPath[base + pos] & 0xFFFF;
+    }
+
+    /**
+     * 以 cur 为起点、target 为目标重算 BFS 路径：从目标（或其可走邻格，目标格本身是墙时）
+     * 做多源反向洪泛建距离场，再从 cur 沿距离递减回溯出路径。队列/邻格顺序全固定，
+     * 无 RNG、无 HashMap/墙钟，确定性可回放。unitsBlock=true 时单位占用格也当墙
+     * （停滞后的升级重算：绕开静态人墙；起点格自身除外）。不可达/已在种子格/路径
+     * 超容量时 len=0。
+     */
+    private void bfsComputePath(int idx, int cur, int target, boolean unitsBlock) {
+        this.bfsPathTarget[idx] = (short)target;
+        this.bfsPathPos[idx] = 0;
+        this.bfsPathStuck[idx] = 0;
+        int[] dist = this.bfsDist;
+        for (int i = 0; i < 4096; ++i) {
+            dist[i] = -1;
+        }
+        int[] queue = this.bfsQueue;
+        int head = 0;
+        int tail = 0;
+        int ttx = target >>> 8 & 0x3F;
+        int tty = target & 0x3F;
+        if (this.bfsWalkable(ttx, tty, unitsBlock)) {
+            dist[ttx + (tty << 6)] = 0;
+            queue[tail++] = ttx + (tty << 6);
+        } else {
+            // 目标格是墙（采集资源/攻击建筑）：以其全部可走邻格为种子，
+            // 走到目标隔壁即算到位，抵达钩子由 boolean_b 原有逻辑接管
+            for (int d = 0; d < 8; ++d) {
+                int nx = ttx + BFS_DX[d];
+                int ny = tty + BFS_DY[d];
+                if (!this.bfsWalkable(nx, ny, unitsBlock)) continue;
+                dist[nx + (ny << 6)] = 0;
+                queue[tail++] = nx + (ny << 6);
+            }
+        }
+        int curTx = cur >>> 8 & 0x3F;
+        int curTy = cur & 0x3F;
+        int curTile = curTx + (curTy << 6);
+        while (head < tail) {
+            int t = queue[head++];
+            if (t == curTile) break; // 队列按距离非减序弹出，首次弹出 cur 即最短
+            int tx = t & 0x3F;
+            int ty = t >>> 6;
+            int nd = dist[t] + 1;
+            for (int d = 0; d < 8; ++d) {
+                int nx = tx + BFS_DX[d];
+                int ny = ty + BFS_DY[d];
+                if (((nx | ny) & 0xFFFFFFC0) != 0) continue;
+                int nt = nx + (ny << 6);
+                if (dist[nt] != -1) continue;
+                // 起点格带单位自己(0x200)，unitsBlock 下也要允许踏入
+                if (nt != curTile && !this.bfsWalkable(nx, ny, unitsBlock)) continue;
+                dist[nt] = nd;
+                queue[tail++] = nt;
+            }
+        }
+        int d0 = dist[curTile];
+        if (d0 <= 0 || d0 > BFS_PATH_CAP) {
+            this.bfsPathLen[idx] = 0; // 不可达 / 已在目标隔壁 / 超长 → 回退原行为
+            return;
+        }
+        // 沿距离场回溯：每步按固定顺序找 dist 恰好小 1 的邻格（距离场保证必然找到）
+        int base = idx * BFS_PATH_CAP;
+        for (int step = 0; step < d0; ++step) {
+            int want = d0 - step - 1;
+            for (int d = 0; d < 8; ++d) {
+                int nx = curTx + BFS_DX[d];
+                int ny = curTy + BFS_DY[d];
+                if (((nx | ny) & 0xFFFFFFC0) != 0) continue;
+                if (dist[nx + (ny << 6)] != want) continue;
+                curTx = nx;
+                curTy = ny;
+                break;
+            }
+            this.bfsPath[base + step] = (short)(curTx << 8 | curTy);
+        }
+        this.bfsPathLen[idx] = (short)d0;
+    }
+
+    /**
+     * BFS 障碍判定：建筑(0x100)与地形资源/虚空(0x300)当墙；空格与单位占用(0x200)
+     * 可穿；unitsBlock=true（停滞后的升级重算）时单位占用格也当墙。
+     */
+    private boolean bfsWalkable(int tx, int ty, boolean unitsBlock) {
+        if (((tx | ty) & 0xFFFFFFC0) != 0) {
+            return false;
+        }
+        int kind = this.mapTiles[tx + (ty << 6)] & 0x300;
+        return kind == 0 || (kind == 0x200 && !unitsBlock);
     }
 
     final void void_a(int n, int n2) {

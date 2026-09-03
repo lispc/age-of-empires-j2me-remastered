@@ -87,6 +87,7 @@ tick 戳输入 trace + tools/replaycheck.sh 双跑对拍）、**卡死看门狗*
 | `aoe.playerAi=<全限定类名>` | 玩家 AI 帧首 hook：实现 `aoe.ai.PlayerAi`（`void tick(AgeOfEmpires.c game)`），每帧首调一次，自行节流；装载失败/tick 异常打 `[ai]` 并禁用 |
 | `aoe.exitOnResult=1` | 终局（startMissionBriefing z==98）无条件打印 `[result] WIN|LOSS ticks=N` 后 System.exit(0)——批量脚本契约，格式勿改 |
 | `aoe.mapSeed=N` | 随机图种子覆盖（beginMissionLoad 装载点，N 拆 hi/lo 两字节；不设则逐字节不变） |
+| `aoe.bfsPath=1` | 可选 BFS 寻路（默认关）：`boolean_b` 的 DDA 选落点换成沿缓存 BFS 路径取下一格，落点检查/抵达钩子/扇形回退不变；语义详见 game-mechanics「移动与寻路」 |
 | `aoe.rmsDir=<dir>` | RecordStore（.nfo）落盘目录重定向（批量实验隔离，防种子写回污染用户数据） |
 
 ### FIFO 指令（`-Daoe.devMouse=<fifo>`；逻辑坐标 240x320）
@@ -120,6 +121,8 @@ trace（回放锚）· `[mouse]/[mouseA]/[pick]/[band]` 鼠标链路 · `[trace]
 `[dlg-parse]` 对话框正文解析（z/v/串长，查空白弹窗）·
 `[view]` 地图进出/对话框/世界重建 · `[paint]` 帧内异常（**无条件**打印，画面冻住
 先看它）· `[save]/[load]` 快照（save 带 `ar=`）· `[proj]` 投射物扫描护栏触发 ·
+`[bfs]` BFS 寻路升级/回退事件（仅 `-Daoe.bfsPath=1` 时存在：unitsBlock 升级 /
+永久回退 DDA） ·
 **`[watchdog]` Timer 线程疑似卡死 + 完整栈** · `[fMenu]/[k]/[menuGate]` 菜单流 ·
 `[dev]/[devBoot]/[devMouse]/[probe]` dev 链路 · `[ai]` 玩家 AI 装载/异常/决策打点 ·
 `[result]` 批跑终局信号（`WIN|LOSS ticks=N`，-Daoe.exitOnResult=1 时无条件打印）。
