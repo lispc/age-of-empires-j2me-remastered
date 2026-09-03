@@ -127,6 +127,15 @@ trace（回放锚）· `[mouse]/[mouseA]/[pick]/[band]` 鼠标链路 · `[trace]
 排查口诀：用户报"卡死/蓝屏/按键无效" → 先要 run-*.log：`[paint]`（异常循环）→
 `[watchdog]`（死循环栈）→ `[view]`（视图去哪了）→ `[trace] g->`（状态机）。
 
+### 玩家 AI 批量对局
+
+`tools/ailoop.sh -n N -d 难度 -a <AI类名> -s 起始种子 -t 超时 -k -b`：批量 headless
+turbo 随机图对局 + 胜率统计（`-b` = 透传 `-Daoe.bfsPath=1`；`-k` 留每局日志）。
+现实现：`aoe.ai.RuleBasedAi`（规则式，架构与决策依据见 `src/main/java/aoe/ai/README.md`）。
+AI 日志统一 `[ai]` 前缀（assign/build/research/ATTACK/DEFEND/… + 每 500 tick 态势摘要）。
+**注意**：菜单导航耗 tick 是墙钟依赖的，同一种子跨跑 tick 相位不同，单局胜负有
+混沌敏感性——判 AI 强弱看批量胜率，别看单局复现。
+
 ### 黄金回归网
 
 `tools/regress.sh`：headless 教程关 + 固定场景，静态指纹 + 存读 roundtrip
