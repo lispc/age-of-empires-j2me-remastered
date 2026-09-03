@@ -175,14 +175,36 @@ implements Runnable {
         int n2;
         AgeOfEmpires.c.nextRandomInt();
         int n3 = 0;
+        // 移植修复（2026-09-02，seed 1004 实测）：原版这两个 do-while 在"环带
+        // 20..34 全被占/全图无空格"的种子上无限自旋——watchdog 栈直指本方法，
+        // 装载屏永卡（VF 渲染一致，非 CFR 伪影，是原版自身的死循环隐患）。
+        // 加确定性逃逸：65536 次重试后改为全图行主序扫描找空格，只在原本
+        // 必死循环的种子上改变行为，正常种子的 RNG 消耗序列逐字节不变。
+        int tries = 0;
         do {
+            if (++tries > 65536) {
+                int[] fg = this.findFreeTile(0, 0, 0);
+                n2 = fg[0];
+                n = fg[1];
+                System.out.println("[mapgen] f() loop1 escape after " + tries + " tries -> " + n2 + "," + n);
+                break;
+            }
             n2 = AgeOfEmpires.c.nextRandomInt() & 0x3F;
             n = AgeOfEmpires.c.nextRandomInt() & 0x3F;
         } while (n2 >= 64 || n >= 64 || this.var_short_arr_a[n2 + (n << 6)] != 0);
         this.var_int_arr_a[0] = n2;
         this.var_int_arr_a[1] = n;
         boolean bl = false;
+        tries = 0;
         do {
+            if (++tries > 65536) {
+                // 与出生点 1 至少隔 8 格的最近空格；找不到退到任意空格
+                int[] fg = this.findFreeTile(this.var_int_arr_a[0], this.var_int_arr_a[1], 8);
+                n2 = fg[0];
+                n = fg[1];
+                System.out.println("[mapgen] f() loop2 escape after " + tries + " tries -> " + n2 + "," + n);
+                break;
+            }
             n3 = AgeOfEmpires.c.nextRandomInt() << 3;
             int n4 = AgeOfEmpires.c.nextRandomInt() % 15;
             n2 = (AgeOfEmpires.b.int_b(n3) * (20 + n4) >> 16) + this.var_int_arr_a[0];
@@ -191,6 +213,26 @@ implements Runnable {
         this.var_int_arr_a[2] = n2;
         this.var_int_arr_a[3] = n;
         ++this.q;
+    }
+
+    /** f() 死循环逃逸用：行主序找满足"空格（var_short_arr_a==0）且与 (cx,cy)
+     *  切比雪夫距离 >= minDist"的第一个格；没有则放宽到任意空格；再没有返回 (0,0)。 */
+    private int[] findFreeTile(int cx, int cy, int minDist) {
+        int[] fallback = null;
+        for (int ty = 0; ty < 64; ++ty) {
+            for (int tx = 0; tx < 64; ++tx) {
+                if (this.var_short_arr_a[tx + (ty << 6)] != 0) {
+                    continue;
+                }
+                if (fallback == null) {
+                    fallback = new int[]{tx, ty};
+                }
+                if (Math.max(Math.abs(tx - cx), Math.abs(ty - cy)) >= minDist) {
+                    return new int[]{tx, ty};
+                }
+            }
+        }
+        return fallback != null ? fallback : new int[]{0, 0};
     }
 
     public final void e() {

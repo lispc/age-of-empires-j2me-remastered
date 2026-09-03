@@ -13,10 +13,13 @@ import java.util.List;
 /**
  * RecordStore 的桌面实现：记录保存在用户目录 ~/.aoe-desktop/ 下的小文件里。
  * 格式：int 记录数，然后每条记录 int 长度 + 字节内容。记录 id 从 1 开始。
+ * -Daoe.rmsDir=<dir> 可整体重定向落盘目录（批量实验隔离 nfo，
+ * 避免每局写回随机图种子污染用户数据）。
  */
 public final class RecordStore {
     private static final File STORE_DIR =
-            new File(System.getProperty("user.home"), ".aoe-desktop");
+            new File(System.getProperty("aoe.rmsDir",
+                    System.getProperty("user.home") + "/.aoe-desktop"));
 
     private final File file;
     private final List<byte[]> records = new ArrayList<>();

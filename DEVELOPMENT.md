@@ -83,6 +83,13 @@ tick 戳输入 trace + tools/replaycheck.sh 双跑对拍）、**卡死看门狗*
 | `aoe.harnessQuiet=1` | DevHarness 进任务后不再自动按键（**回放时必开**，墙钟输入会破坏确定性） |
 | `aoe.dumpFrames=<png>` | 每 ~5s 导帧 |
 | `aoe.width/height/scale` | 逻辑分辨率/窗口倍数（回归/golden 必须走默认 240x320） |
+| `aoe.turbo=1` | tight-loop 主循环：不起 Timer，非 daemon 线程全速跑 tick（CPU 100% 预期；批量 AI 实验用。非 daemon 是保活需要：普通模式靠 Timer 线程撑 JVM） |
+| `aoe.noRender=1` | 跳过任务主视图渲染（dispatchRender case 6）。菜单/对话框仍渲染——菜单引擎嵌在渲染函数里，整跳会冻住导航。probe/click/ctile 失效 |
+| `aoe.playerAi=<全限定类名>` | 玩家 AI 帧首 hook：实现 `aoe.ai.PlayerAi`（`void tick(AgeOfEmpires.c game)`），每帧首调一次，自行节流；装载失败/tick 异常打 `[ai]` 并禁用 |
+| `aoe.exitOnResult=1` | 终局（startMissionBriefing z==98）无条件打印 `[result] WIN|LOSS ticks=N` 后 System.exit(0)——批量脚本契约，格式勿改 |
+| `aoe.mapSeed=N` | 随机图种子覆盖（beginMissionLoad 装载点，N 拆 hi/lo 两字节；不设则逐字节不变） |
+| `aoe.bfsPath=1` | 可选 BFS 寻路（默认关）：`boolean_b` 的 DDA 选落点换成沿缓存 BFS 路径取下一格，落点检查/抵达钩子/扇形回退不变；语义详见 game-mechanics「移动与寻路」 |
+| `aoe.rmsDir=<dir>` | RecordStore（.nfo）落盘目录重定向（批量实验隔离，防种子写回污染用户数据） |
 
 ### FIFO 指令（`-Daoe.devMouse=<fifo>`；逻辑坐标 240x320）
 
@@ -112,6 +119,9 @@ tick 戳输入 trace + tools/replaycheck.sh 双跑对拍）、**卡死看门狗*
   `state` 的 fifo.json 增 `res`/`pop`/`queued`/`ai` 字段。⚠️ 建筑放置/完工弹窗
   （aA=2）冻结世界逻辑（施工/训练全停）——build 后须清弹窗（tools/aoeops.py 已封装）。
 - 观测：`state`（写 `<fifo>.json` 快照：aA/am/ar/光标/相机/选中/迷雾/单位表）/
+  `aistate`（写 `<fifo>.aistate.json` **全量**状态：双方 headers 关键字段/techFlags/
+  全部单位无截断（slot/tile/prevTile/target/type/hp/action/sel）/全部建筑记录/explored；
+  不动 state 的 golden 契约）/
   `until <aA> [秒]` / `probe x y`（只拾取）/ `dump <png>`（同步导帧）/ `fields <txt>`
   （标量静态字段；数组实例字段如 costTable 不在内）
 - 编排：`script <文件>`（批量，支持 `sleep 毫秒`、#注释）
@@ -127,18 +137,31 @@ tick 戳输入 trace + tools/replaycheck.sh 双跑对拍）、**卡死看门狗*
   （冻在精确 tick，对拍取态前必用）
 - `exit`
 
-### 日志行速查（全部 aoe.debug 门控，`[paint]` 例外=无条件）
+### 日志行速查（全部 aoe.debug 门控，`[paint]`/`[result]` 例外=无条件）
 
 `[dbg]` 25-tick 心跳（ar/am/aA…）· `[void_a]` 按键 · `[input]` 带 tick 戳的输入
 trace（回放锚）· `[mouse]/[mouseA]/[pick]/[band]` 鼠标链路 · `[trace] g->` 状态切换 ·
 `[dlg-parse]` 对话框正文解析（z/v/串长，查空白弹窗）·
 `[view]` 地图进出/对话框/世界重建 · `[paint]` 帧内异常（**无条件**打印，画面冻住
 先看它）· `[save]/[load]` 快照（save 带 `ar=`）· `[proj]` 投射物扫描护栏触发 ·
+`[bfs]` BFS 寻路升级/回退事件（仅 `-Daoe.bfsPath=1` 时存在：unitsBlock 升级 /
+永久回退 DDA） ·
 **`[watchdog]` Timer 线程疑似卡死 + 完整栈** · `[fMenu]/[k]/[menuGate]` 菜单流 ·
-`[dev]/[devBoot]/[devMouse]/[probe]` dev 链路。
+`[dev]/[devBoot]/[devMouse]/[probe]` dev 链路 · `[ai]` 玩家 AI 装载/异常/决策打点 ·
+`[mapgen]` 随机图生成器死循环逃逸（d.f() 重试超 65536 次才出现，正常图不应有）·
+`[result]` 批跑终局信号（`WIN|LOSS ticks=N`，-Daoe.exitOnResult=1 时无条件打印）。
 
 排查口诀：用户报"卡死/蓝屏/按键无效" → 先要 run-*.log：`[paint]`（异常循环）→
 `[watchdog]`（死循环栈）→ `[view]`（视图去哪了）→ `[trace] g->`（状态机）。
+
+### 玩家 AI 批量对局
+
+`tools/ailoop.sh -n N -d 难度 -a <AI类名> -s 起始种子 -t 超时 -k -b`：批量 headless
+turbo 随机图对局 + 胜率统计（`-b` = 透传 `-Daoe.bfsPath=1`；`-k` 留每局日志）。
+现实现：`aoe.ai.RuleBasedAi`（规则式，架构与决策依据见 `src/main/java/aoe/ai/README.md`）。
+AI 日志统一 `[ai]` 前缀（assign/build/research/ATTACK/DEFEND/… + 每 500 tick 态势摘要）。
+**注意**：菜单导航耗 tick 是墙钟依赖的，同一种子跨跑 tick 相位不同，单局胜负有
+混沌敏感性——判 AI 强弱看批量胜率，别看单局复现。
 
 ### 黄金回归网
 

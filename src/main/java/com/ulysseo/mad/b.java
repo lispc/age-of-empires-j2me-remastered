@@ -114,11 +114,30 @@ extends GameCanvas {
         this.c = true;
         this.var_boolean_b = false;
         this.var_java_util_TimerTask_b = new e(this);
-        this.var_java_util_Timer_a = new Timer();
-        if (n2 == 1) {
-            this.var_java_util_Timer_a.schedule(this.var_java_util_TimerTask_b, 0L, (long)n);
+        if (n2 == 1 && System.getProperty("aoe.turbo") != null) {
+            // -Daoe.turbo=1 tight-loop：不起 Timer，改起线程反复调
+            // e.run()（w() 退出检查 + [dbg] 心跳 + repaint + serviceRepaints
+            // 全在 e.run 里，原样保留）；退出靠 a() 置 c=false，e.run 每圈自查。
+            // CPU 100% 是预期行为——批量玩家 AI 实验追求模拟速度。
+            // 线程名沿用 "Timer-" 前缀：卡死看门狗按此前缀识别主循环线程。
+            // 必须是非 daemon：普通模式的 JVM 保活靠 java.util.Timer 的非 daemon
+            // 线程，turbo 不建 Timer，若本线程 daemon，main 一返回 JVM 即自发
+            // 退出（实测启动后数秒内必死）。退出路径（destroyApp→a()→c=false /
+            // exitOnResult 的 System.exit）不受影响。
+            Thread turbo = new Thread(() -> {
+                while (this.c) {
+                    this.var_java_util_TimerTask_b.run();
+                }
+            }, "Timer-turbo");
+            turbo.setDaemon(false);
+            turbo.start();
         } else {
-            this.var_java_util_Timer_a.scheduleAtFixedRate(this.var_java_util_TimerTask_b, 0L, (long)n);
+            this.var_java_util_Timer_a = new Timer();
+            if (n2 == 1) {
+                this.var_java_util_Timer_a.schedule(this.var_java_util_TimerTask_b, 0L, (long)n);
+            } else {
+                this.var_java_util_Timer_a.scheduleAtFixedRate(this.var_java_util_TimerTask_b, 0L, (long)n);
+            }
         }
         startPaintWatchdog();
     }

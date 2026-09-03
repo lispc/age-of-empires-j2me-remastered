@@ -319,6 +319,145 @@
 - 教训(第 N 次):玩家的"全代码无 X"结论必须对照实证与 docs 再采信——
   本轮若照它的建议"修 clamp 或加收入"就破坏了原版经济。
 
+
+### 规则式玩家 AI 落地（RuleBasedAi）：Easy 15 局 13 胜 1 负 1 僵持 + 三个引擎/基建 bug 修复（2026-09-02）
+
+- **做了什么**：新建 `aoe.ai.RuleBasedAi`（`src/main/java/aoe/ai/`，含 README）——
+  每 8 tick 决策，模块顺序：态势扫描 → 军事（回防优先于出门；进攻要满编/2× 碾压，
+  t12000 后降门槛强行出门破僵局）→ 村民派工 → 训练 → 科技 → 建筑（一次一座，
+  房→伐木→兵营→采矿→封建后射箭场/磨坊/攻城→哨塔×2）。确定性：无墙钟无随机数
+  （也不碰 nextRandomInt——`PlayerAi` 接口注释原先写反成"只能用游戏 RNG"，已改正）。
+- **实战成绩**（ailoop -b 开 BFS，超时 150s/局）：
+  - 主验证 `-n 5 -d 1 -s 1000`：**4 胜 0 负 1 僵持**（达标 ≥4/5）；
+  - 扩展 `-n 15 -d 1 -s 995`：**13 胜 1 负（1002）1 僵持（1004）**，决胜胜率 92.9%，
+    含 seed 999（敌方正常进攻的图）12678 tick 获胜；中位 ~10.3k tick（≈14 分钟游戏时）。
+  - Medium `-d 2` 三局全败（~15k-20k tick）：差距成因 = 敌方 3.07× 采集 + 60 阈值的
+    早期 all-in，我方 4 村民硬上限 ×1 产量的经济天花板撑不起对冲；第一次进攻波
+    （val 60 vs 18 触发）被敌方防御反击+后续爆兵磨死。**注意同一图同一种子跨跑
+    结果会翻（1002 在两轮间胜/负各一次）——菜单导航墙钟段改变 tick 相位，
+    单局不可复现，只能看批量胜率**（已写进 DEVELOPMENT.md）。
+- **过程中抓到并修掉的三个 bug（全部非本批引入）**：
+  1. **tryResearch 可用性校验整个写反**（上一批新原语）：研究菜单
+     （openBuildingMenu，X=24 且 var_boolean_g=false）根本不过 boolean_k 的
+     techFlags[23+id] 门；techFlags[23+id]=1 的语义是"**已研究**"。原实现把
+     "未研究"当"不可用"拒绝——**升时代永远失败**（封建都升不了）。已重写为镜像
+     openBuildingMenu 的建筑类型→科技+时代门槛表（含升时代的兵营/磨坊+铁匠/城堡
+     前置建筑检查），AI 实测升封建/Double-Bit Axe/Gold Mining 全部生效。
+  2. **随机图生成器 d.f() 死循环**（seed 1004 实锤，watchdog 栈直指）：原版两个
+     do-while 在"出生点环带 20..34 格全被占"的种子上无限自旋（VF 渲染一致，
+     非 CFR 伪影，是原版自身隐患）。修复 = 65536 次重试后确定性逃逸（行主序扫描
+     找空格，打 `[mapgen]` 日志）——只在原本必卡死的种子里改变行为，正常种子
+     RNG 消耗序列逐字节不变（regress 三连 PASS 佐证 golden 未动）。
+  3. **devNavToMission 的 random:2/3 导航错乱**：mission>1 的右切会在
+     Game Mode 屏（高亮项也是 op=3 循环器）就按下去，把模式切成 Tutorial——
+     `-d 2` 实际进了教学关 2（首批 Medium 数据全是无效局）。修复：右切加
+     `menuScreenId != 1` 门。修复后 Medium 局确认 gameMode=0 + 敌方 50/50/50 开局。
+- **AI 侧踩坑/设计要点**：
+  - 引擎 findNearbyResource 的结果缓存（var_short_a/b/c）**双方共享**：玩家 AI
+    调用会把敌方村民引到我们采的森林互殴（双方村民在 (43,40) 连环死亡的战斗日志
+    实锤）→ AI 用自扫 findResource（全图 4096 格扫，带"必须有可走邻格"过滤）。
+  - 边缘死角资源（seed 1003 的 (63,18) 树四邻全树）会让村民永远走不到位、经济
+    归零又不算空闲 → 村民卡死检测：行军中 300 tick 没挪窝 → 目标格拉黑 3000 tick
+    重派。
+  - 建造链条里"采矿场无金矿可贴"会永远卡住后续链条 → 资源不存在即永久跳过
+    （noWoodRes/noGoldRes）。
+  - 村民产自**房屋**不是 TC（queueUnitTraining case 0→建筑 11）；训练上限
+    hdr[75] 把开局赠送也算进去（总共 ~4 封顶）；产兵扣款在产出时（j() 里
+    canAfford 门），排多不亏但占人口名额。
+  - 敌方 Easy 不到 200 军队价值永不进攻 → 我们不主动打就是无限平局；
+    但半吊子进攻会把敌方防御模式（87.5% 兵力反扑我方 TC）打开——进攻阈值
+    要满编（≥120 价值）或 2× 碾压。
+- **遗留**：seed 1004 这类"原版必卡死"的退化图修复后能玩了，但敌方 TC 落在
+  角落被 5 哨塔围死 + 全图无可达金矿 → 我方攻不下也输不了，STALL 属可接受；
+  Medium 待经济/塔防策略升级（候选：更早双哨塔、金矿护卫、第一波防守反击模板）。
+- 验证：`./gradlew classes` 绿；regress 三连 PASS（golden 未动）；replaycheck
+  input 轨迹一致，state 仅 aE/sel 视图字段 diff = WORKLOG 已记录的既有 flake。
+- commit：未提交（工作树交玩家统一合并）。
+
+
+### 可选 BFS 寻路（-Daoe.bfsPath=1，默认关）+ devBoot/回放基建缺口取证（2026-09-02）
+
+- **做了什么**：`boolean_b`（移动步进器）的"选落点"环节换成可选 BFS 路径跟随——
+  开关 `-Daoe.bfsPath=1`，默认关且关闭路径逐字节不变（regress 三连 PASS×2 轮，
+  golden 未动）。方案与障碍语义/目标格是墙的处理/外挂数组见
+  game-mechanics「移动与寻路」。只包选落点：落点三重检查、抵达钩子、扇形回退、
+  占位表更新全部复用原版。
+- **抓到并修掉的真 bug（实现期）**：① `boolean_b` 里 `n4`（打包目标）在 DDA 段前被
+  `n4 >>>= 8` 就地改写——第一版 BFS 拿到的是"只有 tx"的假目标，单位集体往左缘走
+  （AI 村民全部冻在 x≈0..2），改为进 DDA 前快照 `targetPacked`。② 脱节即重算导致
+  重算风暴+三角振荡活锁（一格三格间来回、stuck 计数抓不到；日志实测同一
+  (单位,位置,目标) 重算 2 万+次）——改为**先沿原路径归队**（扫描续走）、彻底离队才
+  重算，stuck 改为"沿路径 pos 无进展"计数。③ **装载泄漏**：路径缓存不进快照，但
+  devBoot 装载前的 live 段会填充缓存，装载后残留缓存污染确定性（双跑单位错位）——
+  在 `SaveState.apply` 调用点与 `setupMissionEnv` 装载点失效缓存（填 -1）。
+- **人墙升级**：沿路径连续 8 次无进展 → 升级为"单位也当墙"重算绕开静态人墙；
+  再不行本目标永久回退原 DDA+扇形（兜底 = 基准行为，严格不比原版差）。
+- **A/B 实测**（devBoot 同一基准档直启消除菜单导航前缀噪声）：
+  - seed 999 全程局（最终版）：基准 5524 vs BFS 5487/5441 任务内 tick（≈持平略优）；
+    基准腿跨构建复跑 ticks 完全一致（20870 两次），BFS 腿复跑 5487→5441 量级稳定。
+  - devBoot 腿 5 seed 对照：999/1001/1002/1003 两腿均 STALL（同一 boot 点的 AI 经济
+    极易自锁，两种移动模式同病）；1000 基准 LOSS 20870 / BFS STALL——
+    **归因实验**：从 BFS 冻结档续跑基准模式，村民同样无法交存（deliveries 同冻在 90）——
+    AI 自建建筑把 TC 围死成口袋后**两种模式同死**，属既有 AI 布局缺陷，非 BFS 回归。
+  - BFS 腿 6 局：0 异常栈、0 [proj] 护栏；watchdog 命中 BFS 热代码属 turbo 采样
+    假阳性（[dbg] 心跳持续推进,300s 推进 7.3M~19M tick,与基准 8.7M~15.7M 同量级）。
+- **采集验证**（BFS 开）：AI 村民 action=2(采集)/3(回存) 正常轮转，
+  deliveries 0→62、资源 50/15/15→90/79/75（同时还在花钱建军）。玩家村民不自动采集
+  （基准同样,原版设计：自动采集只有 AI 侧）;ctile 点选链在本会话未走通（选不中）,
+  玩家侧采集留作后续验证。**订正**：采集 action 码 = 2（slot[7]&0xF；1=攻击 3=回存
+  4=建造），任务书里的 action=4 系误记。
+- **基建缺口取证（既有问题，非本批引入）**：
+  - replaycheck 今日 3 连挂（sel/cursor/cam 视图字段 diff、input 轨迹一致）——
+    用"仅撤掉本批 c.java 改动的基线 classpath"（/tmp/base-classes）复跑同样挂且方向
+    翻转（A=0,B=6 vs A=6,B=0），证明是既有竞态/ flake，与本批无关。疑似残留
+    devBoot/装载墙钟窗口泄漏，留待基建轮次排查。
+  - devBoot 双跑对拍（同档直启,无输入,stopat 对拍）基线也发散（11 个单位坐标字段）——
+    装载前 live 段长度墙钟依赖,rngState 虽在快照内但仍有别的状态泄漏;**在修该缺口前,
+    devBoot 双跑不能用作 tick 级确定性证明**。
+- 验证：./gradlew classes 绿;regress 三连 PASS（最终构建）;replaycheck 基线同挂
+  （见上,非本批回归）。未 commit（工作树还有上一批 player-ai 基建未提交改动）。
+
+
+### 玩家 AI 基建批：turbo/noRender/playerAi/aistate/exitOnResult/mapSeed/rmsDir + aiEnabled 泄漏修复（2026-09-02）
+
+- **全部做成 -D 可选开关，默认路径逐字节不变**（regress/replaycheck 证据见下）：
+  `-Daoe.turbo=1` tight-loop（mad/b 不起 Timer，非 daemon 线程全速跑 e.run()）；
+  `-Daoe.noRender=1` 跳任务主视图渲染；`-Daoe.playerAi=<类>` 帧首 hook
+  （新接口 `aoe.ai.PlayerAi`，反射装载，失败/异常打 `[ai]` 并禁用）；
+  FIFO 新指令 `aistate`（写 `<fifo>.aistate.json` 全量状态，aoectl 同名子命令）；
+  `-Daoe.exitOnResult=1` 终局无条件打 `[result] WIN|LOSS ticks=N` 后 exit；
+  `-Daoe.mapSeed=N` 随机图种子覆盖（beginMissionLoad 单点）；`-Daoe.rmsDir=` RMS 重定向。
+- **两处实测纠偏（相对最初设计）**：① turbo 线程必须**非 daemon**——普通模式
+  JVM 保活靠 java.util.Timer 的非 daemon 线程，turbo 不建 Timer，daemon 会导致
+  main 返回后 JVM 数秒内自发退出（实测 t<10s 必死）。② noRender 守卫只能放在
+  dispatchRender 的 case 6（主视图）：整跳 dispatchRender 会冻住菜单引擎
+  （按键消费/闪屏定时翻页都嵌在 renderMenu 里），dev 导航永久卡闪屏。
+- **aiEnabled 跨任务泄漏修复**：setupMissionEnv 装载默认段统一落 Easy 档默认值
+  （aiEnabled=true/build 250/train 20/guard 49/freeRes MAX/phase 0/target -1），
+  模式分支照旧覆盖。教学关此前继承的是字段初值（interval 全 0），修复后
+  aiFreeResTimer 开始连续走字——存读 roundtrip 出现 7 tick 合法漂移，
+  归因明确后把该字段补进 regress-noise.txt（与 aiBuildTimer/aiTrainTimer 同类）。
+- **新研究原语 tryResearch(player, buildingSlot, techId)**：y() case 2 三步
+  （0x20000000|0x10000 写建筑槽 + 清进度字节 + payCost）+ 显式槽位 + 校验
+  （在研究中/techFlags[23+id]==0 不可用（boolean_k case 2 菜单门同源）/canAfford）。
+  y() case 2 原样未动。
+- **冒烟证据**：turbo+noRender 下 tick 冲到 7.1M/120s（~59k tick/s）、nav 正常进关；
+  TestAi（/tmp 一次性类）hook 装载并按节流打 `[ai]` tick；aistate 双方单位/建筑
+  条数与 headers[2]/[4] 对账一致；rmsDir 落盘 /tmp 验证。mapSeed=1/999/默认
+  三张图 TC 位各异；seed 999 + exitOnResult 端到端 `[result] LOSS ticks=6975` 退出。
+- **已知现象（非本批引入）**：默认图（8224）Easy AI 经济会在 17 建筑/14 单位后
+  停摆（gold=1、army=129<200 阈值、村民不续采），被动玩家永不被推平——
+  mapSeed=999 则 7k tick 被灭。AI 卡经济属原版/移植平衡层问题，留待玩家 AI 轮次排查。
+- 验证：`./gradlew classes` 绿；regress 三连 PASS（静态指纹一致 + roundtrip 干净）；
+  replaycheck PASS（state JSON + input 轨迹双一致，停表 3336 tick）。
+- **replaycheck 基建修缮（顺手）**：nav 轮询竞态——任务简报对话框在 nav 线程退出
+  后才弹出（g(1,71,0)），无人关窗 → 轮询永远卡 aA=2，本机实测 baseline 同病
+  （HEAD 跑 3 次挂 1 次同类）。修 tools/replaycheck.sh 轮询环：看到 aA=2 补一发
+  -6 续等（与既有"save 被拒补 -6"同款；这些键都在基准存档/load 之前，不进对拍）。
+  剩余已知 flake：cursor/cam/sel ±1-2px 偶发漂移（注入键按住时长的帧相位竞态，
+  baseline 同样出现；模拟层 units/explored/input 轨迹每次都对得上）。
+- commit：未提交（玩家统一合并）。
+
 ### 第12轮:[combat] 完整性验证通过;封建内容实测;Surrender 陷阱二次实锤(2026-09-02)
 
 - **[combat] 验证通过**:9 死亡=9 行,remaining 单调 8→0 与战后 state 一致,
