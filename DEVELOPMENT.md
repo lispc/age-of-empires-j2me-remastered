@@ -104,6 +104,7 @@ tick 戳输入 trace + tools/replaycheck.sh 双跑对拍）、**卡死看门狗*
   （选中单位移动令，all=扩选全体同类）/ `rally <tx> <ty>`（全体军事集结；
   **2026-09-03 修复**：门槛/回显改真单位计数 devCountUnits——原 a(0,t,false) 数建筑
   数组致零移动+回显失真，r31 实锤）/ `count <type>`（双方真单位计数，全军就位判定）/
+  `assign <rtx> <rty> [n]`（闲置村民——任务字低 nibble==0——批量绑资源，r32 新增）/
   `train <tx> <ty> <n>`（生产建筑排队 n 个，
   pop/canAfford 约束下如实报 k/n）/ `build <tx> <ty> <type>`（直接放置建筑，仍受
   canAfford/上限/占格/雾约束）/ `tile <tx> <ty>`（格诊断：raw/类目/owner/序号/雾/

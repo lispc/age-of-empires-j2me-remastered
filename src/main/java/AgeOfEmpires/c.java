@@ -13,6 +13,44 @@
  */
 package AgeOfEmpires;
 
+/* ============================================================================
+ * 符号表（32 轮玩家代理逆向考据沉淀，2026-09-03；证据链见 docs/deobfuscation.md
+ * 与 docs/agent-operations.md）。改名克制：大改名会污染与反编译原版的对照考古，
+ * 以本表+就地注释代替。
+ *
+ * 【状态机】
+ *   screenState(aA)   当前屏状态：2=对话框/弹窗（期间 j() 世界循环冻结！）
+ *                     4=菜单 6=世界视图 8=建造菜单 12=胜利/结算屏
+ *   pendingScreenState(am) 待切换屏状态（startMissionBriefing 链）
+ *   tickCount(ar)     全局 tick（aoe.tickms=40ms/tick）
+ *   gameMode          0=dev/headless 随机图 16=tutorial 32=战役链（TC 毁胜利判定
+ *                     在 32 链模式且 missionIndex≠0 时被跳过——见 i() case 9）
+ *   startMissionBriefing(as,z,V)：as=任务id z=对话框id(62=简报 70=难度页 98=胜负结算
+ *                     74=失败简报) V=变体(98 结算: 0=胜 1=败)
+ *   z=98 由两条独立判定触发：敌 TC 毁→V=0（即胜）；我 TC 毁→V=1（即败）。
+ *   另有 missionScript 脚本胜利路径（opcode 4/5）。
+ *
+ * 【玩家数据】
+ *   playerUnitHeaders[p]  玩家标量区：[0]=age [2]=单位数(pop占用) [3]=pop上限
+ *                     [4]=建筑数 [5][6][7]=木/金/石 [49]=在训队列长 [48]=投射物活跃数
+ *                     [56..][66..]=队列/计数区
+ *   playerUnitSlots[p]    单位表 stride=8（i<[2] 全是活单位）：[+0]tile 打包
+ *                     (tx=>>>8, ty=&0xFF) [+3]&0xFF=type [+4]&0x8000=选中位
+ *                     [+7]任务字：低nibble 0=闲置 1=行军 2=采集中(高字节0x66=满载
+ *                     计时,bit4-5=资源种) 3=回送中
+ *   var_int_arr_arr_b[p]  建筑表 stride=4（i<[4]）：[+0]tile 打包(tx=>>8&0x3F,ty=&0x3F)
+ *                     [+2]状态(0x40000000=施工中,&0xFF=进度,255=完工) [+3]&0xFF=type
+ *                     ⚠️ 数建筑的数组！拿它数单位=bug（rally 曾中招 r31）
+ *   aK                生产建筑默认产品 aK→建筑映射见 queueUnitTraining；aK=0 产物
+ *                     fifo 显示 type=1（村民第二种），t0 是任务初始赠品
+ *
+ * 【地图】mapTiles[64×64] short：
+ *   0x8000=未探索雾  0x300=资源(低2位 1木2金3石)  0x200=单位占位(低字节=槽位)
+ *   0x100=建筑占位(低字节=建筑序号,bit10-11=owner)  雾下：0x83xx=资源(&3 判种)
+ *   0x85xx=建筑(低字节=type)——雾中信息其实可读（免侦察地图术）
+ *   0x0=虚空/毁灭  Short.MIN_VALUE=未初始化
+ * ========================================================================= */
+
 import AgeOfEmpires.AoeMidlet;
 import AgeOfEmpires.a;
 import AgeOfEmpires.b;
@@ -822,6 +860,8 @@ implements CommandListener {
                 need = 4; break;
             case "gather":
                 need = 5; break;
+            case "assign":
+                need = 4; break;
             case "rally":
                 need = 3; break;
             case "goto":
@@ -939,6 +979,47 @@ implements CommandListener {
                         this.orderMove(0, rtx, rty);
                         System.out.println("[devMouse] gather OK 村民(" + vtx + "," + vty
                             + ") → 资源(" + rtx + "," + rty + ")");
+                    }
+                    break;
+                }
+                case "assign": {
+                    // 宏：assign <rtx> <rty> [n] —— 把最多 n 个闲置村民绑到资源格。
+                    // 闲置判定=游戏自己的标准：type≤1 且 slot word7 低 nibble==0
+                    // （selectUnits 的村民分支同款；word7: 0=闲置 1=行军 2=采集中
+                    // [高字节0x66=满载计时,bit4-5=资源种] 3=回送中——r32 读码钉死）。
+                    // 逐个 clearSelection+selectUnderCursor+orderMove（命令落点=资源格
+                    // 触发采集，r22 读码）。n 省略=全部闲置村民。
+                    int rtx = Integer.parseInt(p[1]) & 0x3F, rty = Integer.parseInt(p[2]) & 0x3F;
+                    int want = p.length > 3 ? Integer.parseInt(p[3]) : Integer.MAX_VALUE;
+                    int rv = this.mapTiles[rtx + (rty << 6)];
+                    if ((rv & 0x8000) != 0) {
+                        System.out.println("[devMouse] assign FAIL (" + rtx + "," + rty
+                            + ") 资源格在雾中(先探图)");
+                    } else if ((rv & 0x300) != 0x300 || (rv & 3) == 0) {
+                        System.out.println("[devMouse] assign FAIL (" + rtx + "," + rty
+                            + ") 非资源格(raw=0x" + Integer.toHexString(rv & 0xFFFF) + ")");
+                    } else {
+                        int ucnt = this.playerUnitHeaders[0][2];
+                        int done = 0;
+                        StringBuilder sb = new StringBuilder("[devMouse] assign ");
+                        for (int i = 0; i < ucnt && done < want; ++i) {
+                            int off = i << 3;
+                            short[] tab = this.playerUnitSlots[0];
+                            int t = tab[off + 3] & 0xFF;
+                            if (t > 1 || (tab[off + 7] & 0xF) != 0) {
+                                continue;
+                            }
+                            this.clearSelection();
+                            this.selectUnderCursor(0, 0x200, i);
+                            this.selectionMode = 6;
+                            this.orderMove(0, rtx, rty);
+                            sb.append("slot").append(i).append("@(").append(tab[off] >>> 8)
+                                .append(',').append(tab[off] & 0xFF).append(") ");
+                            ++done;
+                        }
+                        System.out.println(sb.append("→ 资源(").append(rtx).append(',').append(rty)
+                            .append(") 绑 ").append(done).append(" 个闲置村民 (种=林/金/石码 ")
+                            .append(rv & 3).append(')').toString());
                     }
                     break;
                 }
@@ -4859,6 +4940,10 @@ implements CommandListener {
         this.selectionMode = 6;
     }
 
+    // selectUnits(n, n2)：把 n 玩家 type==n2 的全部活单位打上 0x8000 选中位并置
+    // group-选中态（selectionMark=512 是"组选标记"不是数量！）。n2=-1=全体军事(≥2)，
+    // n2<2=村民且只选闲置(word7 低 nibble==0——游戏自己的闲置判定，assign 宏同款)。
+    // 不清旧组：调用方负责先 clearSelection（sel 宏的替换语义）。
     public final void selectUnits(int n, int n2) {
         this.selectionMark = 512;
         this.selectedType = n2;
@@ -6197,6 +6282,10 @@ implements CommandListener {
         return true;
     }
 
+    // queueUnitTraining(p, aK)：向 p 玩家的生产建筑排一个 aK 产品。aK→可排建筑
+    // （switch 返回值 n3）：0村民→House(11) 2/3民兵剑士→Barracks(10, 按时代默认)
+    // 5/6骑兵→Stable(8) 4弓兵→Range(7)。占用 pop 当量（headers[49] 队列长）；
+    // 付款在出兵时；宏路径排队前另检 canAfford（train case）。
     final int queueUnitTraining(int n, int n2) {
         int n3 = 0;
         switch (n2) {
@@ -6747,6 +6836,9 @@ implements CommandListener {
         return n8;
     }
 
+    // a(n,type,bl)：⚠️ 数的是【建筑表】var_int_arr_arr_b（i<headers[n][4]，stride4），
+    // bl=true 再排除施工中(0x40000000)。别拿它数单位——rally 宏曾因此零移动且回显
+    // 全是建筑数（r31 事故，修复=devCountUnits）。
     final int a(int n, int n2, boolean bl) {
         int n3 = 0;
         int n4 = 0;
@@ -6768,6 +6860,10 @@ implements CommandListener {
         return n3;
     }
 
+    // i(p, slot)：建筑/单位被摧毁处理器（清 mapTiles 占位、techFlags 置位、pop 回收、
+    // 投射物/胜利败北判定）。case 9(TC) 即胜负开关：我方 TC 毁→98,1 败；敌 TC 毁→
+    // 98,0 胜（gameMode 32 链且 missionIndex≠0 时跳过，走 missionScript 脚本路径）。
+    // r30 源码定案 + r31 实战双验证（敌 0 单位+TC 毁同轮触发）。
     public final void i(int n, int n2) {
         int n3 = this.playerUnitHeaders[n][4] - 1;
         int[] nArray = this.playerUnitHeaders[n];
@@ -8396,6 +8492,10 @@ implements CommandListener {
 
     /** 任务结束结算（g(0, 98, n3)，n3==0 为胜利）：推进解锁计数 aj/aG、
      *  写每关高分（nfoHighScores）并持久化 .nfo 字节 28。 */
+    // startMissionBriefing(as, z, V)：切到简报/对话框屏。z=对话框脚本 id
+    // （62=任务简报 70=难度/链页 74=失败简报 98=胜负结算屏）；V=变体/正文索引
+    // （98 结算:0=Victorious 1=Defeated）。已在对话框态时来新简报会重跑解析
+    // （链式弹窗 BUG-005 修复点）。
     final void startMissionBriefing(int n, int n2, int n3) {
         if (System.getProperty("aoe.debug") != null) {
             System.out.println("[trace] g(" + n + "," + n2 + "," + n3 + ") ac=" + this.gameMode);
