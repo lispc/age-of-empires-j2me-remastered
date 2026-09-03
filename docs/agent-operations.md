@@ -552,7 +552,11 @@ grep session.log 验证；失败是带原因的，不会静默。
   方向键→落位 七步链（臂置间歇失灵/parity 死角全规避）。仍受游戏约束：需有村民、
   canAfford、数量上限（House4/Tower5/Mining2）、格空（占格/雾/出界 FAIL）。
 - `tile <tx> <ty>`：一格地形诊断（raw/类目/owner/序号/雾/在建进度）——查建筑是否
-  完工、找资源格类型首选。
+  完工、找资源格类型首选。**格上有站桩单位时 raw 读到占位符 0x0（非地形）**
+  （r30）——判定地形用 fresh 存档 mapTiles 或换邻格参照。
+- **虚空袋陷阱**（r30，m+14 金区实证）：资源簇被虚空环包夹时 pathfinder 会把单位
+  关进封闭袋（走虚空不死但出不来）——进资源区从开阔侧绕行，先用存档 mapTiles
+  看清入口柱。
 - `sitrep`：**一行战况**（ar/aA/光标/资源/人口/队列/ai/双方兵力构成/敌军质心）。
   决策前一条 sitrep 替代全量 state 轮询。state 的 fifo.json 也新增
   res/pop/queued/ai 字段（免开存档读资源）。
