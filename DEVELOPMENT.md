@@ -2,7 +2,8 @@
 
 > 本档是**持续活跃的手册**：现状 / 环境 / 工具用法 / 路线图 / 坑，只写现在时态。
 > 带时间序的会话日志在 `WORKLOG.md`（append-only）；一次性考证报告在 `docs/research/`；
-> 游戏机制知识 `docs/game-mechanics.md`；符号对照 `docs/symbols.md`；玩家文档 `USER-GUIDE.md`。
+> 游戏机制知识 `docs/game-mechanics.md`；符号对照 `docs/symbols.md`；玩家文档 `USER-GUIDE.md`；
+> 自动化试玩代理的操作手册 `docs/agent-operations.md`（历轮实测经验积累，每轮滚动更新）。
 
 ## 一句话现状
 
@@ -95,20 +96,37 @@ tick 戳输入 trace + tools/replaycheck.sh 双跑对拍）、**卡死看门狗*
 `mkfifo /tmp/aoe-mouse` 后 `echo "指令" > /tmp/aoe-mouse`；CLI 包装 `tools/aoectl`。
 
 - 输入：`move x y` / `press` / `release` / `click x y` / `rclick` / `drag x1 y1 x2 y2` /
-  `ctile <tx> <ty>`（tile 直点：实时相机换算，无 click 的镜头缓动漂移；240x320 标定）/
+  `ctile <tx> <ty>`（**tile 直点，首选**：实时相机换算物理像素，无 click 的镜头缓动
+  漂移；公式=物理帧缓冲基准 sx=32*(tx-ty)-2*camX-64, sy=16*(tx+ty)-2*camY+19，
+  第14轮玩家实测钉死；早版逻辑基准已废弃）/
   `key <键码>`（单发；合成松开要求"再完整过一帧"防 paint 中段吞键——2026-09-01 修）/
   `tapk <键码> <期望aA> [重试]`（带验证重注）
-  ⚠️ 坐标 = 当前屏幕逻辑分辨率（默认 240x320；设 aoe.width=480 则为 480x535）。
-  x≥宽-14/y≥高-14 的贴边区域会触发边缘滚动。
+  ⚠️ **FIFO mouse 坐标 = 物理帧缓冲空间**（=逻辑×SCALE，默认 480x640；设
+  aoe.width=480 时为 960 宽）——直接喂 j() 拾取管线，不经 dispatchMouse 的
+  /SCALE 换算（那是真实鼠标的路径）。裸 move/click 的贴边滚动阈值仍按逻辑
+  screenW/H 比较，两套单位混用是移植现状，`ctile` 可完全绕开。
+- **战术宏（r21 新增，操作首选；FAIL 带原因回显不静默；详见 docs/agent-operations.md
+  §6.1b）**：`sel <tx> <ty>`（tile 直选单位/建筑，绕过像素拾取）/ `goto <tx> <ty> [all]`
+  （选中单位移动令，all=扩选全体同类）/ `train <tx> <ty> <n>`（生产建筑排队 n 个，
+  pop/canAfford 约束下如实报 k/n）/ `build <tx> <ty> <type>`（直接放置建筑，仍受
+  canAfford/上限/占格/雾约束）/ `tile <tx> <ty>`（格诊断：raw/类目/owner/序号/雾/
+  在建进度）/ `sitrep`（一行战况：ar/资源/人口/队列/ai/双方兵力构成/敌军质心）。
+  `state` 的 fifo.json 增 `res`/`pop`/`queued`/`ai` 字段。⚠️ 建筑放置/完工弹窗
+  （aA=2）冻结世界逻辑（施工/训练全停）——build 后须清弹窗（tools/aoeops.py 已封装）。
 - 观测：`state`（写 `<fifo>.json` 快照：aA/am/ar/光标/相机/选中/迷雾/单位表）/
   `aistate`（写 `<fifo>.aistate.json` **全量**状态：双方 headers 关键字段/techFlags/
   全部单位无截断（slot/tile/prevTile/target/type/hp/action/sel）/全部建筑记录/explored；
   不动 state 的 golden 契约）/
   `until <aA> [秒]` / `probe x y`（只拾取）/ `dump <png>`（同步导帧）/ `fields <txt>`
+  （标量静态字段；数组实例字段如 costTable 不在内）
 - 编排：`script <文件>`（批量，支持 `sleep 毫秒`、#注释）
 - 考古：`strtbl <表> <条目|all>`（打印 data.res 字符串表条目）/
   `dlg <z> <v>`（强制开结算/简报对话框复现渲染问题）
-- 存读：`save [路径]` / `load <路径>`（`[save]` 行带捕获时刻 `ar=`，回放锚）
+- 存读：`save [路径]` / `load <路径>`（`[save]` 行带捕获时刻 `ar=`，回放锚）。
+  ⚠️ 裸文件名现自动归位到 saveDir（打 `[devMouse] bare name ->` 回显）；跨任务
+  load 有 mission mismatch 门控会拒载。`auto.aoesave` 自动 checkpoint 写 saveDir。
+- 心跳：`ping` → `[devMouse] pong ar=<tick>`——echo 端一秒判 handler 死活
+  （指令雨可把它永久打死：echo 阻塞但主循环照走，r21 实锤），无 pong=重启进程。
 - **确定性回放**：`replaytrace <trace文件> [baseTick]`（到点注入，行格式
   `t <相对tick> key <键码>` / `t <相对tick> move <x> <y>`）；`stopat <tick>`
   （冻在精确 tick，对拍取态前必用）
