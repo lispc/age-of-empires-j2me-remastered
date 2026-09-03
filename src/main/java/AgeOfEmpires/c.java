@@ -931,6 +931,8 @@ implements CommandListener {
                 need = 3; break;
             case "retask":
                 need = 4; break;
+            case "hdr9":
+                need = 3; break;
             case "goto":
                 need = 3; break;
             case "key": case "until": case "replaytrace": case "script":
@@ -999,6 +1001,16 @@ implements CommandListener {
                         System.out.println("[devMouse] sel FAIL (" + tx + "," + ty
                             + ") class=0x" + Integer.toHexString(cls) + " — 空地/资源/雾");
                     }
+                    break;
+                }
+                case "hdr9": {
+                    // 宏：hdr9 <tx> <ty> —— 直写玩家伐木场交存点指针 hdr[9]（-1=无）。
+                    // 伪造到袋内空地=载满回送变"走到袋心闲置"，绕开不可达 TC 的回送
+                    // orbit（m1 三连 LOSS 根因）。到空地不触发交付钩子，村民停下待重新
+                    // 派工；趟数在砍完一载时已扣，隧道不需要真实入账。
+                    int tx = Integer.parseInt(p[1]) & 0x3F, ty = Integer.parseInt(p[2]) & 0x3F;
+                    this.playerUnitHeaders[0][9] = (short)(tx << 8 | ty);
+                    System.out.println("[devMouse] hdr9 -> (" + tx + "," + ty + ")");
                     break;
                 }
                 case "retask": {
