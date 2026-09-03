@@ -4,13 +4,13 @@ import AgeOfEmpires.c;
 
 /**
  * 规则式玩家 AI（-Daoe.playerAi=aoe.ai.RuleBasedAi）。随机图（gameMode=0）
- * Easy/Medium/Expert 通用。最终成绩（2026-09-03 第三批，v30 定型 = v21 行为 +
- * 波次预测器遥测）：Medium 1000+ 9胜1僵持（1004 退化图）/ 1010+ 9胜1负 /
- * 2000+ 8胜2负（决胜 26/29，与 v21 的 27/29 同噪声带）；Easy 4胜1僵持（同 1004）；
- * Expert 1000+ 2胜7负1僵持（决胜 22.2%，与 v21 的 33.3% 同噪声带 ±1-2）、
- * 2000+ 1/10。第三批结论：预测器已验证（发波跨越点误差≈0），但架在其上的
- * 五个行为变体（v25-v29 抢攻/村民参战）全部输给反应式基线并回滚——约束在
- * 波 1 接战兵力比而非时机信息，详见迭代笔记「波次建模（第三批）」。
+ * Easy/Medium/Expert 通用。最终成绩（2026-09-03 第四批，v35 定型 = v30 +
+ * Expert 波 1 接战微操四件套）：Medium 1000+ 9胜1僵持（1004 退化图）/ 1010+
+ * 9胜1负 / 2000+ 8胜2负（决胜 26/29，与 v30 一致）；Easy 4胜1僵持；
+ * Expert 1000+ 3/10 + 复测 1/10（合并 20%，与 v30 的 22-33% 同噪声带）。
+ * 第四批结论：微操交换比收益是实的（[combat] 统计 2.46→3.0-3.5，崩盘推迟
+ * ~50%）但决胜胜率不动——约束在围城经济/产能总量而非交战质量，规则式
+ * Expert 天花板 ≈20-33% 定性成立，详见迭代笔记「波 1 接战微操（第四批）」。
  *
  * 战略（针对 Medium/Expert：敌方 3.07×/8× 采集 + all-in 阈值 60/100；我方 4 村民 +
  * pop 25 硬顶，拼经济必输）：**塔防吸收 all-in → 反击拆敌 TC**（随机图拆敌
@@ -72,6 +72,8 @@ public final class RuleBasedAi implements PlayerAi {
     private static final int[] TOWER_DIST = {4, 6, 9, 12, 16};
     // v17 Expert 紧凑塔环：×8 经济的波次规模下，外圈孤塔（12/16 格）援护不及=白送，
     // 压缩到 3-11 格让塔火互相覆盖、军队援护路程最短（Expert 连败全是塔被逐个拔掉）
+    // （v33 试过扩到 7 座：石料贫乏图塔 6/7 卡死 smith/射箭场链（弓兵绝育、金囤 860
+    // 花不掉，seed 1001 由胜转负实锤），回滚——塔链长度就是 smith 前置，动不得）
     private static final int[] TOWER_DIST_EXPERT = {3, 5, 7, 9, 11};
 
     private int nextDecide;
@@ -93,6 +95,11 @@ public final class RuleBasedAi implements PlayerAi {
     // 的消耗战里，保一个老兵=省 10-20 金的替换费）。群令会把回血单位召回战线，
     // 靠每决策重泊覆盖。槽位死亡压缩会错位，最多误泊一次，无害。
     private final int[] healUntil = new int[26];
+    // 集火闪避计数（v31 Expert 微操遥测，摘要行 dodges=）
+    private int dodgeCount;
+    // 投石机猎手标记/计数（v32：本决策被派往 t8 的单位不参与闪避；摘要行 hunts=）
+    private final boolean[] huntingM = new boolean[26];
+    private int huntCount;
     // 村民卡死检测（行军中 300 tick 没挪窝 → 目标拉黑 3000 tick 重派）
     private final int[] villLastPos = new int[26];
     private final int[] villLastTick = new int[26];
@@ -353,19 +360,47 @@ public final class RuleBasedAi implements PlayerAi {
             // v7 前远程被群令送进近战圈白死（seed 1019 弓兵 3 连阵亡实锤）。
             // 敌 t8 投石机在 20 格内时远程改点杀 t8（远程拆塔克星，§5.1/r29）。
             // 顺序：先 -1 群令，再按兵种覆盖（selectUnits(type) 重选后 orderMove 只动该兵种）。
-            game.selectUnits(0, -1);
-            game.orderMove(0, defendTile >>> 8, defendTile & 0xFF);
+            // v31（仅 Expert）环形拦截：近战不再冲入侵者本身（冲锋=走出塔火圈被围殴，
+            // v2 十二格冲锋被放风筝的同类问题），钉在锚点朝敌 3 格塔火重叠区等接敌。
+            // 敌 t8 由 v32 猎手小队处理（见下），全军冲 t8 = 离圈送死。
+            int meleeTile = defendTile;
+            if (expert && defendAnchor >= 0 && corridorLen(defendAnchor, defendTile) > 3) {
+                meleeTile = stanceTile(defendAnchor, defendTile, 3);
+            }
             int rangedTile;
             if (mangonelTile >= 0 && mangonelD2 <= 400) {
                 rangedTile = mangonelTile;
             } else {
                 rangedTile = defendAnchor >= 0 ? stanceTile(defendTile, defendAnchor, 3) : defendTile;
             }
+            if (expert) {
+                // v34 逐单位下令：攻击态（action==1）单位不动——群令 orderMove 会清
+                // slot[7] 攻击计数器并把缠斗中的兵拉开，48t 一次的重发等于周期性
+                // 抹掉全军装填 + 来回踱步（持续 DPS 暗坑）。回撤/猎手单位也不动。
+                for (int i = 0; i < units; ++i) {
+                    int o = i << 3;
+                    int type = slots[o + 3] & 0xFF;
+                    if (type < 2 || (slots[o + 7] & 0xF) == 1
+                            || this.healUntil[i] > game.tickCount || this.huntingM[i]) {
+                        continue;
+                    }
+                    int tgt = (type == 4 || type == 8) ? rangedTile : meleeTile;
+                    if ((slots[o + 2] & 0xFFFF) != tgt) {
+                        slots[o + 1] = slots[o + 0];
+                        slots[o + 2] = (short) tgt;
+                        slots[o + 7] = 0;
+                        slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+                    }
+                }
+            } else {
+            game.selectUnits(0, -1);
+            game.orderMove(0, meleeTile >>> 8, meleeTile & 0xFF);
             game.selectUnits(0, 4);
             game.orderMove(0, rangedTile >>> 8, rangedTile & 0xFF);
             game.selectUnits(0, 8);
             game.orderMove(0, rangedTile >>> 8, rangedTile & 0xFF);
             game.clearSelection();
+            }
             if (invaderD2 <= 64 || defendAnchor != myTc) {
                 System.out.println("[ai] DEFEND invader " + invaderN + " at " + (defendTile >>> 8) + ","
                     + (defendTile & 0xFF) + (defendAnchor != myTc ? " (tower)" : "")
@@ -563,6 +598,147 @@ public final class RuleBasedAi implements PlayerAi {
                     slots[o + 2] = (short) healTile;
                     slots[o + 7] = 0;
                     slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+                }
+            }
+        }
+
+        // ===== Expert 波 1 接战微操：投石机猎手（v32，每决策重投） =====
+        // 敌 t8 是塔群棺材钉：拆塔 14 伤/15t（塔对射 8 伤/17t 射不过），且移速 256
+        // （全场最慢）逃不掉。塔援护 DEFEND 要敌兵进塔 6 格才触发，t8 在 4-8 格
+        // 外慢慢磨塔时全军旁观（v31 seed 1000 复盘：外圈 3 塔被 2 台 t8 白拆）。
+        // 全军冲=离圈送死，派 ≤2 个最近的快腿近战（t2/3/5/6）直取；敌命中会改写
+        // 我方 slot[2]（d() 反扑语义），靠每决策重投续上。猎手不参与闪避。
+        java.util.Arrays.fill(this.huntingM, false);
+        if (expert && !this.attackMode && myTc >= 0) {
+            int huntersLeft = Math.min(4, Math.max(1, milCount / 2));
+            for (int j = 0; j < eunits && huntersLeft > 0; ++j) {
+                int eo = j << 3;
+                if ((eslots[eo + 3] & 0xFF) != 8) {
+                    continue;
+                }
+                int mt = eslots[eo + 0] & 0xFFFF;
+                int mx = mt >>> 8, my = mt & 0xFF;
+                boolean menace = false;
+                {
+                    int dx = mx - (myTc >>> 8), dy = my - (myTc & 0xFF);
+                    menace = dx * dx + dy * dy <= 100;
+                }
+                for (int k = 0; !menace && k < this.towerCnt; ++k) {
+                    int dx = mx - (this.towerTiles[k] >>> 8), dy = my - (this.towerTiles[k] & 0xFF);
+                    menace = dx * dx + dy * dy <= 100;
+                }
+                if (!menace) {
+                    continue;
+                }
+                for (int pick = 0; pick < 2 && huntersLeft > 0; ++pick) {
+                    int bestI = -1, bestD2 = Integer.MAX_VALUE;
+                    for (int i = 0; i < units; ++i) {
+                        int o = i << 3;
+                        int type = slots[o + 3] & 0xFF;
+                        if ((type != 2 && type != 3 && type != 5 && type != 6)
+                                || this.huntingM[i] || this.healUntil[i] > game.tickCount) {
+                            continue;
+                        }
+                        int up = slots[o + 0] & 0xFFFF;
+                        int dx = (up >>> 8) - mx, dy = (up & 0xFF) - my;
+                        int d2 = dx * dx + dy * dy;
+                        if (d2 < bestD2) {
+                            bestD2 = d2;
+                            bestI = i;
+                        }
+                    }
+                    if (bestI < 0) {
+                        break;
+                    }
+                    this.huntingM[bestI] = true;
+                    --huntersLeft;
+                    ++this.huntCount;
+                    int o = bestI << 3;
+                    if ((slots[o + 2] & 0xFFFF) != mt) {
+                        slots[o + 1] = slots[o + 0];
+                        slots[o + 2] = (short) mt;
+                        slots[o + 7] = 0;
+                        slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+                    }
+                }
+            }
+        }
+
+        // ===== Expert 波 1 接战微操：集火闪避（v31，必须在群令/回撤之后跑） =====
+        // 引擎攻击按"格"结算：攻击态 slot[5]=目标格，格上无人则每 tick 校验时
+        // slot[7] 清零重来（g() case 1），敌近战出手需攒 8 tick 装填。被锁定单位
+        // 每决策（8t）横移一步 = 敌装填永远攒不满还要重新走位，我方其余单位原地
+        // 继续输出——把 1:1 换血变成 0:N。落点强制留在塔火圈（hdr[12]，封建后 25）
+        // 内，防 v2 式被拉出塔圈风筝；自己装填将满（再 1-2t 出手）时让这一击打完。
+        // 闪避人数上限 milCount/2，防全员后撤零输出。
+        if (expert && !this.attackMode && myTc >= 0) {
+            int coverR2 = hdr[12];
+            int maxDancers = Math.max(1, milCount / 2);
+            int dancers = 0;
+            for (int i = 0; i < units && dancers < maxDancers; ++i) {
+                int o = i << 3;
+                int myType = slots[o + 3] & 0xFF;
+                if (myType < 2 || this.healUntil[i] > game.tickCount || this.huntingM[i]) {
+                    continue;
+                }
+                int pos = slots[o + 0] & 0xFFFF;
+                int px = pos >>> 8, py = pos & 0xFF;
+                boolean focused = false;
+                for (int j = 0; j < eunits; ++j) {
+                    int eo = j << 3;
+                    int eType = eslots[eo + 3] & 0xFF;
+                    if (eType < 2) {
+                        continue;
+                    }
+                    if ((eslots[eo + 7] & 0xF) == 1 && (eslots[eo + 5] & 0xFFFF) == pos) {
+                        focused = true;            // 敌攻击态正锁定我这格
+                        break;
+                    }
+                    // 远程脆皮加一条：敌近战以我为目标贴到 2 格内时提前闪
+                    if ((myType == 4 || myType == 8) && eType != 4 && eType != 8 && eType != 9
+                            && (eslots[eo + 2] & 0xFFFF) == pos) {
+                        int et = eslots[eo + 0] & 0xFFFF;
+                        int edx = (et >>> 8) - px, edy = (et & 0xFF) - py;
+                        if (edx * edx + edy * edy <= 4) {
+                            focused = true;
+                            break;
+                        }
+                    }
+                }
+                if (!focused) {
+                    continue;
+                }
+                // 我方攻击装填将满（近战 ≥6/8）：让这一击打完再走
+                if ((slots[o + 7] & 0xF) == 1 && ((slots[o + 7] & 0x7F00) >> 8) >= 6) {
+                    continue;
+                }
+                // 8 邻格选退步点：可站立，塔火圈内优先，其次离敌近战最远
+                int curScore = dodgeScore(eslots, eunits, px, py, coverR2);
+                int best = -1, bestScore = curScore;
+                for (int ddy = -1; ddy <= 1; ++ddy) {
+                    for (int ddx = -1; ddx <= 1; ++ddx) {
+                        if (ddx == 0 && ddy == 0) {
+                            continue;
+                        }
+                        int nx = px + ddx, ny = py + ddy;
+                        if (nx < 1 || ny < 1 || nx > 62 || ny > 62
+                                || (game.mapTiles[nx + (ny << 6)] & 0x300) != 0) {
+                            continue;
+                        }
+                        int sc = dodgeScore(eslots, eunits, nx, ny, coverR2);
+                        if (sc > bestScore) {
+                            bestScore = sc;
+                            best = nx << 8 | ny;
+                        }
+                    }
+                }
+                if (best >= 0 && best != (slots[o + 2] & 0xFFFF)) {
+                    slots[o + 1] = slots[o + 0];
+                    slots[o + 2] = (short) best;
+                    slots[o + 7] = 0;
+                    slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+                    ++dancers;
+                    ++this.dodgeCount;
                 }
             }
         }
@@ -893,6 +1069,7 @@ public final class RuleBasedAi implements PlayerAi {
                 + " slope=" + this.waveSlopeMilli
                 + " eta=" + (this.waveEta > 0 ? this.waveEta - game.tickCount : -1)
                 + (this.waveInFlight ? " INFLIGHT" : "")
+                + (expert ? " dodges=" + this.dodgeCount + " hunts=" + this.huntCount : "")
                 + " mode=" + (threat ? "DEFEND" : this.attackMode ? "ATTACK" : "eco"));
         }
     }
@@ -990,6 +1167,32 @@ public final class RuleBasedAi implements PlayerAi {
         int gap = this.waveNeed - ehdr[55];
         long toCross = gap <= 0 ? 0 : (long) gap * 1000 / this.waveSlopeMilli;
         this.waveEta = (int) (game.tickCount + toCross + (long) corridor * WAVE_MARCH_PER_TILE);
+    }
+
+    /** 集火闪避落点评分（v31）：在任一完工塔的火圈（hdr[12]）内 +100000，
+     *  外加与敌近战兵种（t2/3/5/6）最近距离²（截断 999，无敌人时=999）。 */
+    private int dodgeScore(short[] eslots, int eunits, int x, int y, int coverR2) {
+        int minD2 = 999;
+        for (int j = 0; j < eunits; ++j) {
+            int eo = j << 3;
+            int eType = eslots[eo + 3] & 0xFF;
+            if (eType < 2 || eType == 4 || eType == 8 || eType == 9) {
+                continue;
+            }
+            int et = eslots[eo + 0] & 0xFFFF;
+            int dx = (et >>> 8) - x, dy = (et & 0xFF) - y;
+            int d2 = dx * dx + dy * dy;
+            if (d2 < minD2) {
+                minD2 = d2;
+            }
+        }
+        for (int k = 0; k < this.towerCnt; ++k) {
+            int dx = (this.towerTiles[k] >>> 8) - x, dy = (this.towerTiles[k] & 0xFF) - y;
+            if (dx * dx + dy * dy <= coverR2) {
+                return 100000 + minD2;
+            }
+        }
+        return minD2;
     }
 
     /** 整数平方根（math 不进模拟路径的确定性实现）。 */

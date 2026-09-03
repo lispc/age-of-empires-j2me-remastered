@@ -83,6 +83,7 @@ LLM 玩家代理的宏层（sel/goto/train/build/gather/rally/sitrep 等 FIFO �
 | `aoe.devBoot=<存档>` | 从快照直启（仅存档带 nav spec 时可用） |
 | `aoe.autoDismiss=1` | 教程对话框自动推进（调试会话常用；**回放时禁用**） |
 | `aoe.autoCheckpoint=1`（默认开） | 每任务稳定后自动写一次 auto.aoesave（setupMissionEnv 复位标志；弹窗/全图往返不再重触发） |
+| `aoe.snapshotEvery=N`（缺省关） | 任务主视图（screenState==6）期间每 N tick 帧首快照写 saveDir/snap-<tick>.aoesave，滚动只留最新 8 份（ailoop `-S N` 透传；败局尸检配合 tools/aoesave.py 解析） |
 | `aoe.devHud=1` | 画面顶部状态 HUD（截图自描述） |
 | `aoe.harnessQuiet=1` | DevHarness 进任务后不再自动按键（**回放时必开**，墙钟输入会破坏确定性） |
 | `aoe.dumpFrames=<png>` | 每 ~5s 导帧 |
@@ -160,8 +161,9 @@ trace（回放锚）· `[mouse]/[mouseA]/[pick]/[band]` 鼠标链路 · `[trace]
 
 ### 玩家 AI 批量对局
 
-`tools/ailoop.sh -n N -d 难度 -a <AI类名> -s 起始种子 -t 超时 -k -b`：批量 headless
-turbo 随机图对局 + 胜率统计（`-b` = 透传 `-Daoe.bfsPath=1`；`-k` 留每局日志）。
+`tools/ailoop.sh -n N -d 难度 -a <AI类名> -s 起始种子 -t 超时 -k -b [-S N]`：批量 headless
+turbo 随机图对局 + 胜率统计（`-b` = 透传 `-Daoe.bfsPath=1`；`-k` 留每局日志；
+`-S N` = 透传 `-Daoe.snapshotEvery=N` 周期快照，滚动 8 份，败局尸检用）。
 现实现：`aoe.ai.RuleBasedAi`（规则式，架构与决策依据见 `src/main/java/aoe/ai/README.md`）。
 AI 日志统一 `[ai]` 前缀（assign/build/research/ATTACK/DEFEND/… + 每 500 tick 态势摘要）。
 **注意**：菜单导航耗 tick 是墙钟依赖的，同一种子跨跑 tick 相位不同，单局胜负有

@@ -7,6 +7,47 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
+### RuleBasedAi 第四批：波 1 接战微操（2026-09-03，Expert 天花板定性）
+
+- **做了什么**：v35 = v30 + Expert 门控微操四件套（全在 `aoe/ai/RuleBasedAi.java`）：
+  ① 环形拦截（DEFEND 近战钉锚点朝敌 3 格塔火圈，不冲锋）；② 集火闪避（被敌
+  攻击态锁定的单位每 8t 横移一格——读码实锤攻击按"格"结算、离格=敌装填清零）；
+  ③ 投石机猎手（t8 贴塔 10 格派 ≤2 快腿近战直取，每决策重投）；④ DEFEND 改
+  逐单位下令（群令 orderMove 清 slot[7] 攻击计数器=周期性打断全军装填）。
+  遥测：摘要行 `dodges=/hunts=`。
+- **成绩**：Expert 1000+ 3/10 + 复测 1/10（合并 4/20=20%）vs v30 基线 2/9
+  （22.2%）——**未达 ≥50% 目标，与基线同噪声带**；Medium 三区间 26/29、
+  Easy 4/4+1S 与 v30 完全一致（微操全 Expert 门控）。交换比（[combat] 死亡行，
+  剔除 1004 退化图）2.46→3.01，我方死亡率 -23%，同种子 1000 崩盘从 6.0k
+  推迟到 9.2k。**微操有效但救不了 Expert：约束在围城经济/产能总量，不在交战
+  质量——规则式 Expert 天花板 20-33% 定性成立。**
+- **证伪/实锤**：v33 塔环 5→7 卡死 smith/射箭场链（塔链长度=smith 前置，石贫图
+  金囤 860 花不掉）回滚；v36 远程站位 2 格（交换比最好 3.54 但胜场不动）回滚。
+  机制新考证：索敌=槽序第一个非最近（集火不可走位实现）、受击反扑改写 slot[2]
+  （"敌优先打塔"真身）、塔每 17t 一发、我方行军单位不自动索敌。
+- **证据**：迭代笔记第四批章（docs/research/rulebased-ai-medium-iteration.md）；
+  批次日志 /tmp/aoe-ai/20260903-21*~22*。
+- **验证**：`./gradlew classes` 绿；`tools/regress.sh` PASS（未 --update）。
+- commit：未提交（按任务要求不做 git 写操作）。
+- **事故**：v35 泛化批（1010+）在跑时执行了一次 `./gradlew classes`（v36 改动），
+  批末尾局可能读到新 class——该批只作噪声参考、未污染结论；教训：
+  **批量在跑时绝不重建**。
+
+### 周期快照 -Daoe.snapshotEvery=N（2026-09-03，ailoop 败局尸检基建）
+
+- **做了什么**：`-Daoe.snapshotEvery=N`（缺省关）——任务主视图（screenState==6）
+  期间每 N tick 在帧首（devFrameHousekeeping，与 devSaveTo 同一捕获时机）写
+  `<saveDir>/snap-<tick>.aoesave`，滚动只留最新 8 份（按文件名 tick 排序删旧，
+  跨会话存量也纳入窗口）；异常只打 `[save] snapshot` 日志不炸主循环。ailoop.sh
+  加 `-S N` 透传。触发用"下次阈值 tick"比较而非 tick%N==0（turbo 一帧跨多 tick
+  会跳过余数命中）。捕获是纯只读序列化，不动 tickCount/RNG，快照格式未变
+  （SaveState.VERSION 不 bump）。
+- **验证**：`./gradlew classes` 绿；`tools/regress.sh` PASS（默认关，golden 未动）。
+  冒烟（random:1 turbo noRender，snapshotEvery=500，120s 杀）：7083 份写出、间隔
+  精确 500 tick、滚动窗口后磁盘恰 8 份；aoesave.py 解析 snap-3542601 正常，
+  档内 tickCount 与文件名一致。
+- commit：未提交（按任务要求不做 git 写操作）。
+
 ### 文档翻案：移速方向 + 敌免费资源滴（2026-09-03，主会话代码仲裁）
 
 - **移速装填"越小越快"整个写反**（unit-stats/操作手册 r29 同源错误）：机制是
@@ -23,6 +64,10 @@
 - 顺带修正 game-mechanics AI 节"军队价值=单位成本之和"→ Σ存活单位(攻+甲)
   （死亡按攻+甲扣减 c.java:6690；被拆塔的完工加值不回扣——威慑只增不减，
   v30 遥测实锤）。
+- 另把波 1 微操批的战斗机制考证沉淀进 game-mechanics.md 新节「战斗与索敌」
+  （索敌=槽序第一个非距离最近/攻击按格结算目标离格白攒装填/受击反扑改写 slot[2]/
+  塔 ~1 发/17t/B() 每玩家每 tick 只索敌 1 单位/orderMove 清 slot[7]=打断装填的
+  DPS 暗坑），deep-dive-2 的"int_a 选最近目标"误记就地修正，unit-stats 补塔射速。
 - 纯文档改动，回归不受影响；证据全部读码（行号见上）。
 
 ### RuleBasedAi 波次建模（2026-09-03，第三批）：预测器落地+验证，时机套利证伪
