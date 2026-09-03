@@ -602,8 +602,11 @@ FAIL 回显都带原因，先读回显再补救。
   重启进程也不换**（r33 实证：重启后 md5 同图，难度链倒是随会话内存重置）。
   **可靠换图=`-Daoe.mapSeed=N`**（player-ai 分支新增，装载点无条件覆盖 RMS 种子；
   pin 死后整个会话每关同图——情报永不过期，封死与否一次探明）。候选种子可用
-  `aoesave.py res` md5 快筛（不同 md5=不同图；封死与否仍需 live 侦察确认，
-  §6.1b' 判据）。Surrender 菜谱见上。
+  `aoesave.py res` md5 快筛（不同 md5=不同图）。**⚠️ 新鲜存档无法洪泛筛连通性**
+  （r33 实证：未探索地面与虚空都存 0x8000 无法区分——已知连通的 8224 图也被误判
+  封死；重探索存档如 m17 才可靠），连通性只能 live 侦察确认；目前唯一已知连通
+  种子=8224。**pin 优先级**：mapSeed 设置时每关装载都覆盖 RMS 回写——败北也不换图
+  （r33 读码）；无 flag 时 z=98 结算（胜/败）才换图，Surrender 不换。Surrender 菜谱见上。
 - **Surrender 菜谱**（aA=6 无选中起步）：`-7`→aA=4 菜单（Continue/Instructions/
   Surrender/Options/Quit）→`-2`=高亮下移→高亮 Surrender→`-5`→直接回主菜单
   （无结算无确认）。菜单键偶发吞发，每步 dump 验证。
