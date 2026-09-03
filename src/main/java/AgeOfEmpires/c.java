@@ -663,6 +663,15 @@ implements CommandListener {
     /** 本任务是否已写过 auto checkpoint（setupMissionEnv 装载新任务时复位）。 */
     private boolean devCheckpointedThisMission;
     private volatile String devPendingSavePath;
+    /** 周期快照：-Daoe.snapshotEvery=N（N>0 生效，缺省关）。任务主视图期间每 N tick
+     *  在帧首捕获一份 snap-<tick>.aoesave 到 saveDir，滚动只留最新 8 份
+     *  （ailoop 败局尸检用，配合 tools/aoesave.py 只读解析）。 */
+    private static final int DEV_SNAPSHOT_EVERY = Integer.getInteger("aoe.snapshotEvery", 0);
+    private static final int DEV_SNAPSHOT_KEEP = 8;
+    /** 下次该捕快照的 tick 阈值（>= 触发；不用 tick%N==0，turbo 一帧可能跨多 tick）。 */
+    private int devNextSnapshotTick;
+    /** 待写快照路径（仅 devFrameHousekeeping 同线程读写，无需 volatile）。 */
+    private String devPendingSnapshotPath;
     private volatile byte[] devPendingRestore;
     /** 本次会话进入当前任务用的 nav spec（"-Daoe.dev" 语义）；窗口会话为 null。 */
     public String devLastNavSpec;
@@ -796,6 +805,13 @@ implements CommandListener {
                 this.devSaveTo(devSaveDir() + "/auto.aoesave");
             }
         }
+        // 周期快照（screenState==6 期间；弹窗冻结态也是有效尸检材料，照存）。
+        // 只排队路径，捕获在同方法下方的帧首写盘块——与 devSaveTo 同一时机。
+        if (DEV_SNAPSHOT_EVERY > 0 && this.screenState == 6
+                && this.tickCount >= this.devNextSnapshotTick) {
+            this.devNextSnapshotTick = this.tickCount + DEV_SNAPSHOT_EVERY;
+            this.devPendingSnapshotPath = devSaveDir() + "/snap-" + this.tickCount + ".aoesave";
+        }
         if (this.devPendingSavePath != null) {
             String path = this.devPendingSavePath;
             this.devPendingSavePath = null;
@@ -813,6 +829,23 @@ implements CommandListener {
             } catch (Exception e) {
                 System.out.println("[save] " + path + ": " + e);
                 this.devToast("Save failed");
+            }
+        }
+        if (this.devPendingSnapshotPath != null) {
+            String path = this.devPendingSnapshotPath;
+            this.devPendingSnapshotPath = null;
+            try {
+                byte[] data = aoe.SaveState.capture(this);
+                java.nio.file.Path p = java.nio.file.Path.of(path);
+                if (p.getParent() != null) {
+                    java.nio.file.Files.createDirectories(p.getParent());
+                }
+                java.nio.file.Files.write(p, data);
+                System.out.println("[save] wrote " + path + " (" + data.length + "B) ar=" + this.tickCount);
+                devPruneSnapshots(p.getParent());
+            } catch (Exception e) {
+                // 尸检辅助不许炸主循环：失败打日志继续，下个周期再试
+                System.out.println("[save] snapshot " + path + ": " + e);
             }
         }
         if (this.devPendingRestore != null) {
@@ -833,6 +866,26 @@ implements CommandListener {
                 System.out.println("[load] apply: " + e);
                 this.devToast("Load failed");
             }
+        }
+    }
+
+    /** 快照滚动窗口：dir 下 snap-<tick>.aoesave 只留最新 DEV_SNAPSHOT_KEEP 份
+     *  （按文件名里的 tick 排序——名字不定长补零，字典序不可靠）。 */
+    private static void devPruneSnapshots(java.nio.file.Path dir) throws java.io.IOException {
+        java.util.List<java.nio.file.Path> snaps = new java.util.ArrayList<>();
+        try (java.util.stream.Stream<java.nio.file.Path> s = java.nio.file.Files.list(dir)) {
+            s.filter(p -> p.getFileName().toString().matches("snap-\\d+\\.aoesave"))
+                .forEach(snaps::add);
+        }
+        if (snaps.size() <= DEV_SNAPSHOT_KEEP) {
+            return;
+        }
+        snaps.sort(java.util.Comparator.comparingInt(p -> {
+            String n = p.getFileName().toString();
+            return Integer.parseInt(n.substring(5, n.length() - ".aoesave".length()));
+        }));
+        for (int i = 0; i < snaps.size() - DEV_SNAPSHOT_KEEP; ++i) {
+            java.nio.file.Files.deleteIfExists(snaps.get(i));
         }
     }
 

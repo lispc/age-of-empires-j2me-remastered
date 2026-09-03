@@ -16,9 +16,11 @@
 # 的 RMS),绝不碰用户真实存档。
 #
 # 用法:
-#   tools/ailoop.sh [-n 局数] [-d 难度] [-a AI类名] [-s 起始种子] [-t 每局超时秒] [-k] [-b]
+#   tools/ailoop.sh [-n 局数] [-d 难度] [-a AI类名] [-s 起始种子] [-t 每局超时秒] [-k] [-b] [-S N]
 #                   -k 保留每局日志(默认跑完只留 summary.csv)
 #                   -b 开 BFS 寻路(-Daoe.bfsPath=1,部队机动明显改善;默认关=原版行为)
+#                   -S N 周期快照(-Daoe.snapshotEvery=N,每 N tick 存 snap-<tick>.aoesave,
+#                        滚动留最新 8 份;败局尸检用,默认关)
 #   tools/ailoop.sh --selftest  假日志自检解析/统计逻辑(不跑游戏,无需构建产物)
 # 默认:n=10 d=1 无AI 种子1000起每局+1 超时300s。
 # 示例:
@@ -37,13 +39,14 @@ SELFTEST=0
 [ "${1:-}" = "--selftest" ] && SELFTEST=1
 
 # ---- 参数 ----
-N=10; DIFF=1; AI=""; SEED0=1000; TIMEOUT=300; KEEP=0; BFS=0
-usage() { sed -n '2,30p' "$0"; exit "${1:-1}"; }
-[ $SELFTEST = 0 ] && while getopts "n:d:a:s:t:kbh" opt; do
+N=10; DIFF=1; AI=""; SEED0=1000; TIMEOUT=300; KEEP=0; BFS=0; SNAP=0
+usage() { sed -n '2,32p' "$0"; exit "${1:-1}"; }
+[ $SELFTEST = 0 ] && while getopts "n:d:a:s:t:kbS:h" opt; do
     case $opt in
         n) N=$OPTARG ;; d) DIFF=$OPTARG ;; a) AI=$OPTARG ;;
         s) SEED0=$OPTARG ;; t) TIMEOUT=$OPTARG ;; k) KEEP=1 ;;
         b) BFS=1 ;;
+        S) SNAP=$OPTARG ;;
         *) usage ;;
     esac
 done
@@ -135,10 +138,12 @@ while [ $i -le "$N" ]; do
     [ -n "$AI" ] && AI_ARG="-Daoe.playerAi=$AI"
     BFS_ARG=""
     [ "$BFS" = 1 ] && BFS_ARG="-Daoe.bfsPath=1"
+    SNAP_ARG=""
+    [ "$SNAP" -gt 0 ] 2>/dev/null && SNAP_ARG="-Daoe.snapshotEvery=$SNAP"
     t0=$SECONDS
     "$JAVA" -Daoe.headless=1 "-Daoe.dev=random:$DIFF" -Daoe.turbo=1 -Daoe.noRender=1 \
         -Daoe.mute=1 -Daoe.debug=1 -Daoe.exitOnResult=1 "-D$SEED_PROP=$seed" \
-        ${AI_ARG:+"$AI_ARG"} ${BFS_ARG:+"$BFS_ARG"} \
+        ${AI_ARG:+"$AI_ARG"} ${BFS_ARG:+"$BFS_ARG"} ${SNAP_ARG:+"$SNAP_ARG"} \
         -Daoe.saveDir="$gdir/saves" -Daoe.rmsDir="$gdir/rms" \
         -Duser.home="$gdir/userhome" \
         -cp "$CP" aoe.Main > "$log" 2>&1 &
