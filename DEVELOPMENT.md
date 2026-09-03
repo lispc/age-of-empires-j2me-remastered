@@ -12,7 +12,11 @@
 快照存档 v3（F5/F9 + 自动 checkpoint + devBoot 直启；v3=techFlags 解锁位持久化，
 v2 旧档可读）、**确定性回放**（RNG 分流 +
 tick 戳输入 trace + tools/replaycheck.sh 双跑对拍）、**卡死看门狗**（Timer 线程停跳
-自动打栈进日志）。反编译血统是 CFR，已采信 Vineflower 为对照 oracle（见「不变量与坑」）。
+自动打栈进日志）。**玩家 AI 层已就位**：规则式玩家 AI（`aoe.ai.RuleBasedAi`，
+`-Daoe.playerAi` 挂载）+ ailoop.sh 批量对局（`[result]` 终局信号）+ 主线 20+ 轮
+LLM 玩家代理的宏层（sel/goto/train/build/gather/rally/sitrep 等 FIFO 宏）与实证
+操作手册（`docs/agent-operations.md`，矛盾处以其 §10 代码级仲裁记录为准）。
+反编译血统是 CFR，已采信 Vineflower 为对照 oracle（见「不变量与坑」）。
 
 ## 环境与构建
 
