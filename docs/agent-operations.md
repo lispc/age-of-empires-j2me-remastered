@@ -457,11 +457,13 @@ Mill 也能凑数**）；第三级 = `a(0,3)>=1`（type3 未定）。
 
 **走廊阶梯塔（r26 验证，汇率最优防术）**：塔直接修在敌行军线 tile 上（非家门口），
 2 塔+2 t3 换 4 敌；敌村民残部会逃进己方塔环，单兵追击=送死。
-**新关 boot 模板（r26 固化；r28 升格为硬序）**：**build Barracks → train →
-House → 之后才允许任何侦察/parse**（r28 败因：扫描插队到 build 前，1.5k tick
-= 敌 rush 窗口，boot 被平）。塔修敌行军线（走廊阶梯塔）；build 宏需闲置村民，
-boot 先 build 后派工。滚动难度递增的是 **rush 时机**（m+9 3.5k → m+10 2k tick
-即出兵），boot 越快越安全。
+**新关 boot 模板（r26 固化；r28 升格为硬序；r31 放宽）**：**build Barracks → train →
+House → 之后才允许任何游戏内侦察/parse**（r28 败因：扫描插队到 build 前，1.5k tick
+= 敌 rush 窗口，boot 被平）。**放宽（r31）**：**存档侦察（save→parse 资源→probe p1
+建筑）读的是文件不占游戏 tick，可与 boot 并行**——开局标准三连与 build/train 互不
+冲突，且是最高杠杆动作（5 分钟拿敌全布防+全图资源）。塔修敌行军线（走廊阶梯塔）；
+build 宏需闲置村民，boot 先 build 后派工。滚动难度递增的是 **rush 时机**（m+9 3.5k →
+m+10 2k tick 即出兵），boot 越快越安全。
 **标准 build order 时刻表（r21 制定；数字=纸面估算+实测锚点混合，开局 30-60s 存档
 差分自校后按实际修正——采集速率轮间波动大，勿盲信）**：
 
@@ -482,12 +484,13 @@ Barracks 满链爆主力到 15+；⑤**一波流总攻**。添油 vs 一波流�
 分批接敌 12:6 惨换，`goto all` 整波碾压 3:6 净胜（r30 双案例）——**兵力不齐绝不出门**。
 进城拆楼吃塔伤（悬案13）：兵力换塔伤划算，直取 TC 收胜。
 
-**m+15 代地图情报（r30 交棒+r31 精化，地图代次标签：m+15）**：我方出生点变 (14,24)、
-开局 t3x5+t5x1+res 200/100/100（难度跳变配置）；敌双源——北旧城 (12-17,13-19)
-18 楼含 5 塔全保留**且塔自主开火**，南新 TC(17,52)=**全场唯一敌 TC（=胜利目标）**、
-布防 5 塔+Barracks+Range+Stable，敌 age=0 黑暗、res 1 金且南半场无金矿=无产能
-（t3x6+t4x5+t5x2 即全部战力，只会缩塔，ai=0 蹲 59k tick 实证）。行军绕 x≤10 西走廊
-避北城塔线。t4 射箭场路线仍视为封死（悬案 17 techFlags 残留）。
+**m+15 代地图情报（r30 交棒+r31 精化+勘误，地图代次标签：m+15）**：我方出生点变
+(14,24)、开局 t3x5+t5x1+res 200/100/100（难度跳变配置）；敌南新 TC(17,52)=**全场
+唯一敌 TC（=胜利目标）**、布防 5 塔+Barracks+Range+Stable，敌 age=0 黑暗、res 1 金
+且南半场无金矿=无产能。**勘误（r31 fresh 存档直读）**：r30"北旧城 (12-17,13-19)
+18 楼 5 塔跨关保留"系误报——m+15 北城不存在；跨代敌建筑情报必须 fresh 存档复核，
+雾码 0x85xx 直读为准（§4.5）。行军分段 rally 链（§6.1b rally 已坏，用 sel+goto all
+三棒接力）。t4 射箭场路线仍视为封死（悬案 17 techFlags 残留）。
 
 ### 5.5 败北判定
 
@@ -527,7 +530,9 @@ Barracks 满链爆主力到 15+；⑤**一波流总攻**。添油 vs 一波流�
   [watchdog]…）**见 DEVELOPMENT.md**「FIFO 指令」「日志行速查」两节。CLI 包装
   `tools/aoectl`。
 - 高频观测循环：`echo "state" > fifo; sleep 1; cat fifo.json`（python -m json.tool 更好读）。
-  fifo.json：aA/am/ar/cursor/cam/sel/explored + units（p/type/tile/sel，每方上限 16）。
+  fifo.json：aA/am/ar/cursor/cam/sel/explored + units（p/type/tile/sel；**每方上限
+  32、合计 64**，源码 state 序列化——r31 报"截断 16"与本构建源码不符待复核；大军期
+  sitrep/state 双源有 race，以 sitrep 构成计数为准）。
 - **按键的线上格式是 `key <键码>`**（如 `key -5`/`key -7`）——裸发 `-5` 落
   "unknown cmd" 无效且无提示副作用（r30 卡建造弹窗 1 分钟实证：手搓裸 `-5`/`-7`
   连发全场冻结）。`tools/aoeops.py clear_popup()` 已按正确格式封装，优先用。
@@ -539,9 +544,10 @@ ctile/click 菜谱退为后备**。回显在游戏 stdout（`[devMouse] ... OK/F
 grep session.log 验证；失败是带原因的，不会静默。
 
 **宏签名速查卡**（r30 建议；参数细节看下方各条）：
-`sel tx ty`｜`goto tx ty [all]`｜`rally tx ty`｜`gather vtx vty rtx rty`｜
+`sel tx ty`｜`goto tx ty [all]`｜`gather vtx vty rtx rty`｜
 `train tx ty n`(n=数量)｜`build tx ty type`(type=建筑码)｜`tile tx ty`｜
-`sitrep`｜`key -N`(弹窗/菜单键)｜`ping`。FAIL 回显都带原因，先读回显再补救。
+`sitrep`｜`key -N`(弹窗/菜单键)｜`ping`。~~rally~~（r31 已知损坏勿用）。
+FAIL 回显都带原因，先读回显再补救。
 
 - `sel <tx> <ty>`：直选该格单位/建筑（tile 编码直读，不经过像素拾取）。**含替换
   语义**（r22 修复：选新目标前自动清旧选中组——selectUnderCursor 本体不清残留
@@ -555,10 +561,14 @@ grep session.log 验证；失败是带原因的，不会静默。
   0x1604 rubble——判"楼没了"看 class≠0x100。
 - `goto <tx> <ty> [all]`：对选中单位下移动令；`all`=扩选全体同类再下令（替代不稳
   的双击全选）。总攻/行军标配。**⚠️ x0q=空集结群**（r24 破案）：ctile+goto 连招必败
-  ——ctile 合成 -5 令单位开步→移动清选中→all 扩选空集。**远端集结一律用 rally**；
-  回显 `xNq` 的 N=排队量非接令兵数。
-- `rally <tx> <ty>`：**全体军事单位集结**（r24 需求）——逐兵种 selectUnits+orderMove，
-  互不依赖选中存活，根治 x0q。全军行军/决战集结首选。
+  ——ctile 合成 -5 令单位开步→移动清选中→all 扩选空集。回显 `xNq` 的 N=排队量
+  非接令兵数。**sel FAIL 不清选中**（r31 血泪）：sel 失败后裸 goto 会打到旧扩选组
+  上（曾全军被拉回北辕）——goto 前确认上一条 sel 回显 OK。
+- `rally <tx> <ty>`：**已知损坏，勿用**（r31 读码+两连发实测零移动：存量检查
+  `a(0,t,false)` 数的是**建筑数组**——回显"10 单位(4 兵种)"实为 4 房+4 塔+1TC+
+  1 兵营，selectUnits 没选到真单位）。r24-r29 的"成功"案例回显同样失真。
+  **唯一可靠全军移动=`sel 最南站桩者 → goto x y all`**（r31 三棒 28 格雾行军实证）。
+  修复=存量检查换真单位计数（主会话待办）。
 - `gather <村民tx> <村民ty> <资源tx> <资源ty>`：直绑采集（r23 需求）——资源格须
   已探明（雾中 FAIL，r30 实测雾检明确回显）；站桩村民 sel 自选失败时先 ctile 选中
   再 gather 即成（r30 一次命中）。**goto 采集绑定是一次性的**
@@ -749,6 +759,8 @@ grep session.log 验证；失败是带原因的，不会静默。
 17. **跨关 techFlags 残留**（r29）：射箭场(type7)从未建过却报"已建成过"——
     任务链滚动不重置 techFlags（我方一次性建筑 flag 跨关泄漏），弓兵路线被封。
     **疑似原版难度设计**（越往后兵种越受限），修前先考据原版行为/数据.res 127 表。
+    **r31 关联新证据**：age 也跨关携带（m+16 双方开局即封建，train 回显 aK=2/3
+    为判据）——跨关不重置的可能不止 techFlags 一项。
 
 ### 已结案（证据存档，勿再当悬案引用）
 
