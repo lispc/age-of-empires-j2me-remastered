@@ -980,6 +980,10 @@ fps=30≈12 倍原速）；长 trace 验证+出视频建议 tickms=2 免超时�
 - **驱动离线 dry-run 纪律（r40 定版）**：上 boot 前用 mock 模拟器把状态机迭代到
   模拟 WIN（r40 九轮离线迭代 → 3 boot 零驱动低级 bug；r38/r39 半数 boot 死于驱动
   bug）。参考实现 tools/campaign/mocksim.py（M4C_DRY 注入口）。
+  **sim 单位制（r50 实锤）**：mocksim 时间=迭代（90ar）——live 的"每 tick"
+  速率入模必须 ×90，否则出现"TC 2500t 不掉血"假象；dry 数字反常先查单位制
+  再查逻辑。**战术结论依赖伤害模型**：TC 掉血入模后「保兵优于换兵」翻转为
+  front-at-parity（dry 多活 2800t）——模型改了，结论要重算。
   **探针 boot（r47 新实践）**：独立目录+3 条 fifo 命令+state/aistate 轮询
   10 分钟即可定案造价/可建性/入账语义——比纯读码多一层"引擎真做了"的证据，
   机制考证性价比最高（type0 造价与放格即生效即此法定案）。
