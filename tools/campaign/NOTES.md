@@ -27,7 +27,7 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
 （数据 res 号：m1=104 / m2=105 / m3=106 …；脚本=数据+7，解码器 resdec.py 换号即用。
 地形=数据内嵌 rng 确定性生成（res 106 头两字节），与 mapSeed/RMS 无关，每 boot 同图，
 可离线洪泛侦察——注意 BFS 下虚空可通行、资源格当墙。）
-### m4 大学关（⏳ 七轮 24 boot 全 LOSS 止损（r38-r44）；收敛链 6538→5712，早期波已能全歼，残局=矿仓储蓄门一行）
+### m4 大学关（⏳ 八轮 27 boot 全 LOSS 止损（r38-r45）；储蓄门已验+村民零死亡达成，新三墙=TC 不攻击/金管道/幽灵驱动）
 - **胜负条件（res 114）**：WIN = 封建→**升城堡完成**（techFlags[14]==1，c.java:6200）
   → **放置 University/type4**（置回 0，c.java:7590）→ 计时 50t → WIN。res 127 初始
   [14]=0 ⇒ University 在城堡前被"已建成"锁死，**顺序不可颠倒**。Univ 25木/25石。
@@ -42,9 +42,9 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   armyValue（断收入用）。**reserve 干涸前提（r42 修正）**：「敌 reserve 波
   ~ar5700-6000 干涸」仅当敌村民被清才成立——敌村民存活时 army 滚到 102 波不断
   （r44 boot3 再证 AV 97）。
-- **波 1 方差（r44 勘误）**：5 样本 **[1173, 2115, 2378, 2575, 3449]**——同图同种子
-  开局逐 tick 一致而波 1 差 950-2300t（疑似 AI 侧非模拟随机，机制未考证）。一切卡
-  时刻的预防按 **1173** 设计。
+- **波 1 方差（r44 勘误，r45 续证）**：8 样本跨 **[1173, 3449]**（新增 1994/3088；
+  3088 晚抽签局波前完成开局全件=大优）——同图同种子开局逐 tick 一致而波 1 差
+  ~2300t（疑似 AI 侧非模拟随机，机制未考证）。一切卡时刻的预防按 **1173** 设计。
 - **探索模型三要素（r43/N4 读码定案，全战役通用）**：build 雾判=`mapTiles[t]<0`
   （c.java:1479）；可建区=①全体单位当前格 3×3（每 tick，revealFogAroundUnit
   c.java:5978）+ ②**完工建筑**曼哈顿菱形 r3（塔 r6，每 tick 轮询一栋，void_a
@@ -58,18 +58,26 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
 - **七轮战况**：r43 N1-N4 全生效（扫堂后兵营 3/3 建成、WOOD_NEAR 退役零走廊死亡）；
   r44 残局三行+尸检三修落地，**boot3 修复全按设计工作：m#1@1634、House#1@1994、
   v=5@4083、矿区上人@4731，波 1 晚抽时 TC+m 把前两波全歼（p1m 归零）**——史上最接近。
-- **唯一堵墙=「落地即花」断矿仓**：vil/mil 门各 5W 无蓄积豁免，每趟 5W 落地即花，
-  W 永远够不到矿仓门槛 15 → G=10 初始金耗尽后 m 封顶 2 → all-in 潮（AV 81→97，
-  250-600t 连发）磨光。r44 死因链：boot1=史上最早波 1173+House 死锁（house_emg 门
-  曾依赖 m≥1 互锁，已改 barracks≥1）；boot2=house_emg spam 3 房吃 15W（已加
-  `m≥1 or W≥10`）；boot3=落地即花（上墙）。
-- **第 8 轮残局（一行级）**：vil 门（~737）加矿仓**储蓄门** `(len(camps)>0 or W>=20
-  or not scouted)`——camp@~2500-2700 → 金工到岗 → m#3@~3300 接上 all-in 潮。
-  dry 确认后上机，3 boot 预算刷新。**若 camp 按期落地仍磨光 → 换 RAID_EARLIEST
-  前压**（m=4 主动压敌村民断 AV 滚动，见「reserve 干涸前提」）；塔线 S 不够弃。
-- **现行代驱动**=`tools/campaign/m4gdrv.py`+`mocksim4g.py`（v6.4-g：残局三行+尸检
-  三修；boot 用 **campaign:5**+新鲜 rmsDir→idx4）；历代 m4fdrv/m4edrv/m4ddrv/
-  m4cdrv/m4bdrv/m4drv（consolidation 候选：r38-r44 七代 m4 驱动可择机归并）。
+- **八轮战况（r45）**：储蓄门+house_emg 双豁免落地——「落地即花」墙正式拆除
+  （boot1 W=10 稳持 700t → 矿仓 3956 落地）；**宵禁规则达成村民首次全程零死亡**
+  （boot3 波 1@3088 前完成 barracks/m2/H1/v=4 零死亡，历代最佳开局）。3 boot
+  LOSS 7159/无结果(僵尸局)/5108。
+- **新三墙（r45 定性）**：①**TC 无攻击力**（已入 game-mechanics；mocksim 的 TC
+  防御分支是虚构=dry 假阳性源，「TC+m 守庭院」实为 m 独守）；②金管道——军事
+  死亡→槽位压缩→**jobs 表枚举序重建错位**（boot3 实锤：满载金矿工被改派木工，
+  金蒸发）+静默窗不够交一趟金；③**跨 boot 幽灵驱动**（2400s 超时>单局时长，旧
+  驱动活进新局发令+误抄 play.log，boot2 真日志被覆写丢失）。附带情报：满载
+  （word7 低 nibble=3 回送态）retask 不可靠且**改派吞货**；僵尸局（0 单位但 TC
+  立=不判负、TC 掉血极慢）白烧 25 分钟——驱动要自带提前弃局判定。
+- **第 9 轮残局（BUGS-m4h 交棒）**：boot.sh pkill 旧驱动+驱动 ar 倒退守卫；
+  民兵敌众我寡退 (46,60) 风筝不硬拼（TC 掉血慢可承受白打）；jobs 按槽锚定重建
+  （只对新增 slot 追加岗位）；矿仓 CANDS 前移 (42,40)/(40,42) 半程交金，或
+  RAID_MIN=2 静默窗先手压敌村民；宵禁出坑加「孤敌围城」分支一行；mocksim 删
+  TC 防御分支。
+- **现行代驱动**=`tools/campaign/m4hdrv.py`+`mocksim4h.py`（v6.4-h：储蓄门+
+  house_emg 双豁免+宵禁+MODE 横幅；boot 用 **campaign:5**+新鲜 rmsDir→idx4）；
+  历代 m4gdrv/m4fdrv/m4edrv/m4ddrv/m4cdrv/m4bdrv/m4drv（consolidation 候选：
+  r38-r45 八代 m4 驱动可择机归并）。
 - 操作要点：z=70 完工弹窗 -6 清；t2=2 pop ⇒ House 先行；slots 幽灵槽判活用 state
   JSON；`echo > fifo` 阻塞=进程已退；boot.sh 应保留每次 play.log 副本（r42 boot1/2
   play.log 被覆盖丢失）；aistate 缺敌 pool/波出生时间戳字段（波预测靠 p1mil 计数沿）。

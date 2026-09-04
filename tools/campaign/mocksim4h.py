@@ -1,23 +1,27 @@
 #!/usr/bin/env python3
-"""m4gdrv 离线 dry-run 模拟器：解释驱动命令、演化简化世界，验证状态机分支。
-跑法：python3 tools/campaign/mocksim4g.py   （内部 import m4gdrv 并注入 SIM）
+"""m4hdrv 离线 dry-run 模拟器：解释驱动命令、演化简化世界，验证状态机分支。
+跑法：python3 tools/campaign/mocksim4h.py   （内部 import m4hdrv 并注入 SIM）
 
 覆盖分支：build 雾格候选回退 / **奇和格硬断言（升时代锁死防线）** / train 排队与
 pop / 弹窗冻结与 -6 / 敌波时间线（gate=armyValue 门）/ 庭院决战（含塔加成）/
 raid 分队+keeper / 波出生回撤与复工 / 阶段 EARLY→MID→FULL / 矿仓(交存点)收益
 建模 / 升时代舞步（方向断言）/ Mill-BS-塔-University 链 / WIN / LOSS。
 """
+import os
 import sys
 import time
 
-# 使用本目录的 m4gdrv 副本（v6.4-g）
-import m4gdrv
+# r44 教训自检：忘带 M4D_DRY=1 = 驱动走真 FIFO 路径（上轮报假 LOSS@5358 事故）
+assert os.environ.get('M4D_DRY') == '1', '需 M4D_DRY=1 跑 dry（否则驱动走 FIFO 路径）'
+
+# 使用本目录的 m4hdrv 副本（v6.4-h）
+import m4hdrv
 
 TC = (43, 57)
 GOLD_T = {(35, 36), (36, 36), (37, 36), (35, 35), (36, 35), (34, 36),
           (34, 37), (37, 35)}
 STONE_T = {(39, 40), (41, 40), (41, 38), (38, 40), (40, 40), (39, 39)}
-WOOD_T = {(32, 52), (33, 51)} | set(m4gdrv.WOOD_SAFE)
+WOOD_T = {(32, 52), (33, 51)} | set(m4hdrv.WOOD_SAFE)
 BCOST = {0: (15, 0, 0), 1: (15, 0, 0), 10: (20, 0, 10), 11: (5, 0, 0),
          5: (15, 0, 10), 6: (25, 0, 20), 12: (20, 5, 15), 4: (25, 0, 25)}
 # 需要时代门的建筑：techFlags 语义（[15]/[16] 封建解锁 Mill/BS，[14] 城堡解锁 Univ）
@@ -26,21 +30,21 @@ E_MINE = (16, 40)          # 敌矿工作业区中心
 
 
 def assert_cursor():
-    p = m4gdrv.cursor_path(44, 60, 43, 57)
+    p = m4hdrv.cursor_path(44, 60, 43, 57)
     assert p == [-1, -1, -4], p
-    p = m4gdrv.cursor_path(0, 0, 2, 0)
+    p = m4hdrv.cursor_path(0, 0, 2, 0)
     assert p == [-2, -4], p
-    p = m4gdrv.cursor_path(43, 57, 43, 57)
+    p = m4hdrv.cursor_path(43, 57, 43, 57)
     assert p == [], p
-    p = m4gdrv.cursor_path(45, 58, 43, 57)
+    p = m4hdrv.cursor_path(45, 58, 43, 57)
     assert p is None, p
     # 偶和格断言：驱动所有候选表必须全偶和
     for name in ['B_CANDS', 'HOUSE_CANDS', 'CAMP_CANDS', 'MILL_CANDS',
                  'BS_CANDS', 'TOWER_CANDS', 'UNIV_CANDS']:
         for (x, y) in getattr(m4gdrv, name):
             assert (x + y) % 2 == 0, f'{name} 含奇和格 ({x},{y})'
-    assert (m4gdrv.TC[0] + m4gdrv.TC[1]) % 2 == 0
-    assert (m4gdrv.FRONT[0] + m4gdrv.FRONT[1]) % 2 == 0
+    assert (m4hdrv.TC[0] + m4hdrv.TC[1]) % 2 == 0
+    assert (m4hdrv.FRONT[0] + m4hdrv.FRONT[1]) % 2 == 0
     print('cursor_path/偶和候选断言通过')
 
 
@@ -452,10 +456,10 @@ class Sim:
 
 
 assert_cursor()
-m4gdrv.SIM = Sim()
+m4hdrv.SIM = Sim()
 t0 = time.time()
-m4gdrv.main()
-sim = m4gdrv.SIM
+m4hdrv.main()
+sim = m4hdrv.SIM
 print(f'DRY-RUN 完成（{time.time() - t0:.1f}s）：result = {sim.result}')
 print('milestones:', sim.marks)
 if sim.parity_violation:
