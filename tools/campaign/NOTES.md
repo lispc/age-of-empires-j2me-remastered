@@ -27,7 +27,7 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
 （数据 res 号：m1=104 / m2=105 / m3=106 …；脚本=数据+7，解码器 resdec.py 换号即用。
 地形=数据内嵌 rng 确定性生成（res 106 头两字节），与 mapSeed/RMS 无关，每 boot 同图，
 可离线洪泛侦察——注意 BFS 下虚空可通行、资源格当墙。）
-### m4 大学关（⏳ 十四轮 45 boot 未 WIN 止损（r38-r51）；**G 沙漠墙攻破**（b2 硬序 camp@2000 首次达标，boot2 经济大胜 v=10/W=240）+ **boot3 僵局盘**（m=9+双塔+raid 灭尽敌村民 p1v=0 波断流+20+ 波全防+res 485/33/777=立于不败）——**最后一环=研究舞步 live 化**（14 轮 0 次 paid：TC 菜单要先 sel 选中，无选中 -5=暂停菜单且被当移动指令消费=奇偶锁成因））
+### m4 大学关（⏳ 十五轮 48 boot 未 WIN 止损（r38-r52）；**研究舞步定案**（推翻 sel 推断：光标停己方完工建筑格连按两次 -5，aA=7 卡片全场冻结；无食物，封建 15/15/15 城堡 20/20/20；驱动 v7.0-o 已带失败码）——最后一环只剩 **G 管道断流**（5-6 金工在岗 G=0-3 挂 3000t，camp 建成后金工疑未改派半程点），G 一通则僵局盘 feudal→castle→Univ 一条龙即 WIN）
 - **胜负条件（res 114）**：WIN = 封建→**升城堡完成**（techFlags[14]==1，c.java:6200）
   → **放置 University/type4**（置回 0，c.java:7590）→ 计时 50t → WIN。res 127 初始
   [14]=0 ⇒ University 在城堡前被"已建成"锁死，**顺序不可颠倒**。Univ 25木/25石。
@@ -87,12 +87,12 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   H#1@(30,62) 作木仓房（**需先验证 House 是否 wood 交存点**——nearestDropOff
   读 hdr[9] 指针，与建筑类型的关系未考证）。配套：mocksim 加 M4D_WAVE0=<tick>
   最早抽签压力注入 + hdr9 交存模拟 + 头部「已知分叉点清单」。
-- **现行代驱动**=`tools/campaign/m4ndrv.py`+`mocksim4n.py`（v6.9-n：b2 硬序
-  bank→兵营/flee_pick/G5 练兵/raid 150t+pinned 分支/RESEARCH_LOCK+光标恢复
-  （待探针验证）/穿敌格死亡模型/M4D_BURST/raid p1av 回写；boot 用
-  **campaign:5**+新鲜 rmsDir→idx4）；历代 m4mdrv/m4ldrv/m4kdrv/m4jdrv/m4idrv/
-  m4hdrv/m4gdrv/m4fdrv/m4edrv/m4ddrv/m4cdrv/m4bdrv/m4drv（consolidation 候选：
-  r38-r51 十四代 m4 驱动可择机归并）。
+- **现行代驱动**=`tools/campaign/m4odrv.py`+`mocksim4o.py`（v7.0-o：研究舞步
+  定案版=光标上 TC 连按两次 -5+失败码+aA==7 残留确认；b2 硬序/carry-guard/
+  raid 场势/RESEARCH_LOCK 全保留；boot 用 **campaign:5**+新鲜 rmsDir→idx4）；
+  历代 m4ndrv/m4mdrv/m4ldrv/m4kdrv/m4jdrv/m4idrv/m4hdrv/m4gdrv/m4fdrv/m4edrv/
+  m4ddrv/m4cdrv/m4bdrv/m4drv（consolidation 候选：r38-r52 十五代 m4 驱动可
+  择机归并）。
 - 操作要点：z=70 完工弹窗 -6 清；t2=2 pop ⇒ House 先行；slots 幽灵槽判活用 state
   JSON；`echo > fifo` 阻塞=进程已退；boot.sh 应保留每次 play.log 副本（r42 boot1/2
   play.log 被覆盖丢失）；aistate 缺敌 pool/波出生时间戳字段（波预测靠 p1mil 计数沿）。
