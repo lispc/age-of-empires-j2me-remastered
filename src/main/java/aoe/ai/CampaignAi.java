@@ -1,0 +1,699 @@
+package aoe.ai;
+
+import AgeOfEmpires.c;
+
+/**
+ * 战役 AI（-Daoe.playerAi=aoe.ai.CampaignAi）。按 missionIndex 分派 handler。
+ * 与 RuleBasedAi（随机图）分立：战役目标各异（拆堡/护送/配额/守城），胜负走
+ * missionScript 脚本路径而非通用 TC 规则（missionIndex==0 除外——它的脚本
+ * 只有开局简报，胜负走 onThingDestroyed 通用规则：拆敌 TC 胜、全灭负）。
+ * 各关胜负条件目录：docs/research/campaign-mission-scripts.md
+ * （tools/scriptdis.py 反汇编产物）。
+ *
+ * 读面：与 RuleBasedAi 相同 + 直读敌 buildingTable（战役期初允许全图读，
+ * 诚实化是后话——战役考核的是任务解法不是侦察）。写面：逐单位 slot 直写
+ * （同 RuleBasedAi v34 的 DEFEND 原语），攻击态（任务字低 nibble==1）单位
+ * 不打断（清 slot[7] = 抹装填）。
+ *
+ * 确定性：只按 tickCount 节流，无墙钟、无 RNG。
+ */
+public final class CampaignAi implements PlayerAi {
+
+    private static final int DECIDE_EVERY = 8;
+    private static final int LOG_EVERY = 500;
+
+    private int nextDecide;
+    private int lastLog;
+    private int lastMissionLogged = -1;
+
+    // ===== #0 拆堡关状态 =====
+    private int m0Target = -1;          // 当前攻击目标（打包 tx<<8|ty）；-1=未定位
+    private int m0Reissue;              // 上次群体重投 tick（目标不变的周期性续投）
+    private int razeAnchor = -1;        // 出发质心（拆建筑关的撤退回血点）
+    private final boolean[] razeHealing = new boolean[26]; // 残血撤退中标记
+
+    @Override
+    public void tick(c game) {
+        int t = game.tickCount;
+        if (t < this.nextDecide) {
+            return;
+        }
+        this.nextDecide = t + DECIDE_EVERY;
+        int ss = game.screenState;
+        if (ss == 2) {
+            // 弹窗冻结世界（简报/事件对话），headless 自关窗。战役简服用 -7 实测可关。
+            game.onKeyPress(-7);
+            return;
+        }
+        if (ss != 6 || game.gameMode != 32) {
+            return;
+        }
+        switch (game.missionIndex) {
+            case 0:
+            case 3:
+            case 6:
+                this.tickRaze(game);
+                break;
+            case 5:
+                this.tickProtectCastle(game);
+                break;
+            case 2:
+                this.tickGatherQuota(game);
+                break;
+            case 1:
+                this.tickEscort(game);
+                break;
+            default:
+                if (this.lastMissionLogged != game.missionIndex) {
+                    this.lastMissionLogged = game.missionIndex;
+                    System.out.println("[cai] mission " + game.missionIndex + ": no handler, idling");
+                }
+        }
+        if (t - this.lastLog >= LOG_EVERY) {
+            this.lastLog = t;
+            int units = game.playerUnitHeaders[0][2];
+            int ebld = game.playerUnitHeaders[1][4];
+            System.out.println("[cai] t=" + t + " m" + game.missionIndex
+                + " units=" + units + " ebld=" + ebld + " tgt="
+                + (this.m0Target >= 0 ? (this.m0Target >>> 8) + "," + (this.m0Target & 0xFF) : "?"));
+        }
+    }
+
+    /** 拆建筑关（#0/#3/#6 通用）：#0 胜负走通用规则（拆敌 TC 即胜）；#3/#6
+     *  脚本胜利 = p1 建筑数==0（res113/res116）。
+     *  迭代史：v1 全体 all-in 敌 TC（#3/#6 全灭）；v2 守军最少优先+残血撤退
+     *  （接敌单位不撤，缠斗到死）；v3 接敌也撤退+塔区惩罚（#3 5/5 攻克）。
+     *  v4（#6 总攻关：敌塔 Keep 级 攻4/甲25/索敌 6 格，投石机索敌只有 4 格——
+     *  塔比投石机手长，近战砍塔=自杀 255/2 需千 tick，塔杀剑士 135t）：
+     *  兵种分工——攻城组（t7 冲车/t8 投石机/t9 征服者）专职点塔，一座一座拔，
+     *  HP<120 即撤（塔 dps 高，90 阈值来不及走）；近战组只拆塔区外建筑，
+     *  塔区外拆完后在锚点站桩回血等攻城组，绝不进塔火。我方无攻城单位存活时
+     *  近战才被迫啃塔（#3 没有攻城兵，塔总得有人拆）。 */
+    private void tickRaze(c game) {
+        short[] slots = game.playerUnitSlots[0];
+        int units = game.playerUnitHeaders[0][2];
+        if (units == 0) {
+            return;
+        }
+        // 出发质心（首帧记录）= 撤退回血点
+        if (this.razeAnchor < 0) {
+            int sx = 0, sy = 0;
+            for (int i = 0; i < units; ++i) {
+                int pos = slots[i << 3] & 0xFFFF;
+                sx += pos >>> 8;
+                sy += pos & 0xFF;
+            }
+            this.razeAnchor = (sx / units) << 8 | (sy / units);
+        }
+        int ax = this.razeAnchor >>> 8, ay = this.razeAnchor & 0xFF;
+        // 敌单位位置表（守军计数用）
+        short[] es = game.playerUnitSlots[1];
+        int eu = game.playerUnitHeaders[1][2];
+        int[] eb = game.buildingTable[1];
+        int ebCount = game.playerUnitHeaders[1][4];
+        // 攻城组是否存活（t7/t8/t9）——没有则近战被迫啃塔（#3 场景）
+        boolean siegeAlive = false;
+        for (int i = 0; i < units; ++i) {
+            int type = slots[(i << 3) + 3] & 0xFF;
+            if (type == 7 || type == 8 || type == 9) {
+                siegeAlive = true;
+                break;
+            }
+        }
+        // 两类目标：towerTarget = 离锚点最近的敌塔；softTarget = 塔区外、守军
+        // 最少的普通建筑。塔区 = 本身是塔或在任一敌塔 7 格内（v3 尸检：塔旁矿场
+        // 收光我方 6 兵）。
+        int towerTarget = -1, towerD2 = Integer.MAX_VALUE;
+        for (int i = 0; i < ebCount; ++i) {
+            int o = i << 2;
+            if ((eb[o + 3] & 0xFF) != 12) {
+                continue;
+            }
+            int bx = (eb[o] >> 8) & 0x3F, by = eb[o] & 0x3F;
+            int d2 = (bx - ax) * (bx - ax) + (by - ay) * (by - ay);
+            if (d2 < towerD2) {
+                towerD2 = d2;
+                towerTarget = bx << 8 | by;
+            }
+        }
+        int softTarget = -1;
+        long bestScore = Long.MAX_VALUE;
+        for (int i = 0; i < ebCount; ++i) {
+            int o = i << 2;
+            if ((eb[o + 3] & 0xFF) == 12) {
+                continue;
+            }
+            int bx = (eb[o] >> 8) & 0x3F, by = eb[o] & 0x3F;
+            boolean towerZone = false;
+            for (int j = 0; j < ebCount; ++j) {
+                int q = j << 2;
+                if ((eb[q + 3] & 0xFF) != 12) {
+                    continue;
+                }
+                int dx = ((eb[q] >> 8) & 0x3F) - bx, dy = (eb[q] & 0x3F) - by;
+                if (dx * dx + dy * dy <= 49) {
+                    towerZone = true;
+                    break;
+                }
+            }
+            if (towerZone) {
+                continue;
+            }
+            int defenders = 0;
+            for (int j = 0; j < eu; ++j) {
+                int ep = es[j << 3] & 0xFFFF;
+                int dx = (ep >>> 8) - bx, dy = (ep & 0xFF) - by;
+                if (dx * dx + dy * dy <= 64) {
+                    ++defenders;
+                }
+            }
+            long score = defenders * 1000000L
+                + (bx - ax) * (bx - ax) + (by - ay) * (by - ay);
+            if (score < bestScore) {
+                bestScore = score;
+                softTarget = bx << 8 | by;
+            }
+        }
+        if (towerTarget < 0 && softTarget < 0) {
+            return; // 敌建筑清零——胜局判定在路上
+        }
+        this.m0Target = softTarget >= 0 ? softTarget : towerTarget;
+        boolean reissue = game.tickCount - this.m0Reissue >= 150;
+        for (int i = 0; i < units; ++i) {
+            int o = i << 3;
+            int type = slots[o + 3] & 0xFF;
+            boolean siege = type == 7 || type == 8 || type == 9;
+            int hp = slots[o + 4] & 0xFF;
+            boolean healing = this.razeHealing[i];
+            int retreatAt = siege ? 120 : 90;
+            if (!healing && hp < retreatAt) {
+                this.razeHealing[i] = true;
+                healing = true;
+            } else if (healing && hp >= 220) {
+                this.razeHealing[i] = false;
+                healing = false;
+            }
+            // 接敌单位不打断——除非触发了撤退（缠斗到死是 #3 全灭根因：守军
+            // 不追击，脱战就能活）
+            if (!healing && (slots[o + 7] & 0xF) == 1) {
+                continue;
+            }
+            int tgt;
+            if (healing) {
+                // 撤退点按槽位散开——同点撤退会互相占位，到不了靶心格就不回血
+                // （站桩回血要 pos==tgt；#6 尸检：5 台攻城器全卡在锚点外 1-2 格
+                // HP 5-111 永不愈合）。
+                tgt = this.retreatTile(i);
+            } else if (siege) {
+                tgt = towerTarget >= 0 ? towerTarget
+                    : (softTarget >= 0 ? softTarget : this.razeAnchor);
+            } else {
+                tgt = softTarget >= 0 ? softTarget
+                    : (towerTarget >= 0 && !siegeAlive ? towerTarget : this.razeAnchor);
+            }
+            boolean stale = (slots[o + 2] & 0xFFFF) != tgt;
+            boolean idle = (slots[o + 7] & 0xF) == 0
+                && (slots[o + 0] & 0xFFFF) == (slots[o + 2] & 0xFFFF);
+            if (stale || (reissue && idle)) {
+                slots[o + 1] = slots[o + 0];
+                slots[o + 2] = (short) tgt;
+                slots[o + 7] = 0;
+                slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+            }
+        }
+        if (reissue) {
+            this.m0Reissue = game.tickCount;
+        }
+    }
+
+    /** #5 守城关（res115："Protect the Castle"。胜 = p1 单位数==0（脚本波次
+     *  全歼）；负 = 我方城堡（建筑 type 3）被毁）。
+     *  波次表（刷出即冲我方城堡 (37,47)）：4 剑士 → +500t 5 弓兵 → +500t 3 骑兵
+     *  → +500t 4 冲车 → +700t 3 投石机。我方 5 剑士 + 5 骑兵守 1 城堡。
+     *  策略：锚定城堡，优先点杀冲车/投石机（对城宝具），其余就近拦截；
+     *  视野内无敌则直读敌槽位全场追猎残敌（胜利要全歼）。 */
+    private void tickProtectCastle(c game) {
+        // 锚点 = 我方城堡
+        int castle = -1;
+        int[] mb = game.buildingTable[0];
+        int mbCount = game.playerUnitHeaders[0][4];
+        for (int i = 0; i < mbCount; ++i) {
+            int o = i << 2;
+            if ((mb[o + 3] & 0xFF) == 3) {
+                castle = ((mb[o] >> 8) & 0x3F) << 8 | (mb[o] & 0x3F);
+                break;
+            }
+        }
+        if (castle < 0) {
+            return; // 城堡没了——败局判定在路上
+        }
+        int cx = castle >>> 8, cy = castle & 0xFF;
+        // 选目标：冲车/投石机优先（任何距离），其次离城堡最近的敌兵。
+        short[] eslots = game.playerUnitSlots[1];
+        int eunits = game.playerUnitHeaders[1][2];
+        int target = -1, targetD2 = Integer.MAX_VALUE;
+        for (int i = 0; i < eunits; ++i) {
+            int o = i << 3;
+            int pos = eslots[o] & 0xFFFF;
+            int dx = (pos >>> 8) - cx, dy = (pos & 0xFF) - cy;
+            int d2 = dx * dx + dy * dy;
+            int type = eslots[o + 3] & 0xFF;
+            if (type == 7 || type == 8) {
+                d2 = -1; // 攻城武器绝对优先
+            }
+            if (target < 0 || d2 < targetD2) {
+                target = pos;
+                targetD2 = d2;
+            }
+        }
+        if (target < 0) {
+            return; // 全歼达成——胜局判定在路上
+        }
+        this.m0Target = target;
+        short[] slots = game.playerUnitSlots[0];
+        int units = game.playerUnitHeaders[0][2];
+        for (int i = 0; i < units; ++i) {
+            int o = i << 3;
+            if ((slots[o + 7] & 0xF) == 1) {
+                continue; // 接敌/攻击中，不打断
+            }
+            if ((slots[o + 2] & 0xFFFF) != target) {
+                slots[o + 1] = slots[o + 0];
+                slots[o + 2] = (short) target;
+                slots[o + 7] = 0;
+                slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+            }
+        }
+    }
+
+    /** #2 经济配额关（res112："collect 100 wood, 100 stone and 100 gold"——
+     *  脚本判定是 hdr[0][5..7] 各 **严格 >100**）。我方 3 村民 + 4 剑士 + 2 侦察，
+     *  敌 8 兵静止散布（aiEnabled=false，不主动进攻，但守在木/金矿点旁会
+     *  自动接敌——主线 m2 笔记：先清 (17,38)(18,39) 弓手再伐木）。
+     *  策略：军事逐个清剿"蹲在所需资源 8 格内"的敌兵（离我 TC 最近者优先）；
+     *  村民只派无蹲守的资源格，按配额缺口最大者分派。采集→交存→返矿引擎
+     *  全自动（§10 定论），AI 只处理闲置。 */
+    private void tickGatherQuota(c game) {
+        int[] hdr0 = game.playerUnitHeaders[0];
+        // 我方 TC（锚点/逃命点）
+        int tc = -1;
+        int[] mb = game.buildingTable[0];
+        for (int i = 0; i < hdr0[4]; ++i) {
+            if ((mb[(i << 2) + 3] & 0xFF) == 9) {
+                tc = ((mb[i << 2] >> 8) & 0x3F) << 8 | (mb[i << 2] & 0x3F);
+                break;
+            }
+        }
+        if (tc < 0) {
+            return;
+        }
+        int tx = tc >>> 8, ty = tc & 0xFF;
+        int[] need = new int[4]; // 1木 2金 3石
+        for (int k = 1; k <= 3; ++k) {
+            need[k] = Math.max(0, 101 - hdr0[4 + k]); // hdr[5]=木 [6]=金 [7]=石
+        }
+        if (need[1] + need[2] + need[3] == 0) {
+            return; // 配额达成——胜局判定在路上（脚本是严格 >100）
+        }
+        // 敌单位表 + 蹲守检测
+        short[] es = game.playerUnitSlots[1];
+        int eu = game.playerUnitHeaders[1][2];
+        // 军事清剿：找"蹲资源敌兵"（距任一尚需资源格 ≤8）里离我 TC 最近者
+        int clearTarget = -1, clearD2 = Integer.MAX_VALUE;
+        for (int i = 0; i < eu; ++i) {
+            int ep = es[i << 3] & 0xFFFF;
+            int ex = ep >>> 8, ey = ep & 0xFF;
+            if (!this.nearWantedResource(game, ex, ey, need)) {
+                continue;
+            }
+            int d2 = (ex - tx) * (ex - tx) + (ey - ty) * (ey - ty);
+            if (d2 < clearD2) {
+                clearD2 = d2;
+                clearTarget = ep;
+            }
+        }
+        // 军事下令（不接敌打断）
+        short[] slots = game.playerUnitSlots[0];
+        int units = hdr0[2];
+        if (clearTarget >= 0) {
+            this.m0Target = clearTarget;
+            for (int i = 0; i < units; ++i) {
+                int o = i << 3;
+                if ((slots[o + 3] & 0xFF) < 2 || (slots[o + 7] & 0xF) == 1) {
+                    continue;
+                }
+                if ((slots[o + 2] & 0xFFFF) != clearTarget) {
+                    slots[o + 1] = slots[o + 0];
+                    slots[o + 2] = (short) clearTarget;
+                    slots[o + 7] = 0;
+                    slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+                }
+            }
+        }
+        // 村民分派：闲置（任务字 0 且已到目标格）→ 缺口最大种类的最近安全格
+        for (int i = 0; i < units; ++i) {
+            int o = i << 3;
+            if ((slots[o + 3] & 0xFF) >= 2) {
+                continue; // 军事
+            }
+            boolean idle = (slots[o + 7] & 0xF) == 0
+                && (slots[o + 0] & 0xFFFF) == (slots[o + 2] & 0xFFFF);
+            if (!idle) {
+                continue; // 采集循环引擎全自动
+            }
+            int pos = slots[o] & 0xFFFF;
+            // 缺口最大优先，找不到安全格退次缺
+            for (int kTry = 0; kTry < 3; ++kTry) {
+                int kind = this.maxNeedKind(need);
+                if (kind == 0) {
+                    break;
+                }
+                int tile = this.nearestSafeResource(game, pos, kind, es, eu);
+                if (tile >= 0) {
+                    slots[o + 1] = slots[o + 0];
+                    slots[o + 2] = (short) tile;
+                    slots[o + 7] = 0;
+                    slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+                    System.out.println("[cai] assign villager " + i + " kind=" + kind
+                        + " -> " + (tile >>> 8) + "," + (tile & 0xFF) + " t=" + game.tickCount);
+                    break;
+                }
+                need[kind] = 0; // 该种类无安全格，本决策退而求其次
+            }
+        }
+    }
+
+    /** 缺口最大的资源种类（1木2金3石；0=全满）。调用处在找不到安全格时
+     *  把 need[kind] 清零以退到次缺种类。 */
+    private int maxNeedKind(int[] need) {
+        int best = 0;
+        for (int k = 1; k <= 3; ++k) {
+            if (need[k] > 0 && (best == 0 || need[k] > need[best])) {
+                best = k;
+            }
+        }
+        return best;
+    }
+
+    /** (ex,ey) 是否蹲在任一尚需资源格 8 格内。 */
+    private boolean nearWantedResource(c game, int ex, int ey, int[] need) {
+        for (int yy = Math.max(0, ey - 8); yy <= Math.min(63, ey + 8); ++yy) {
+            for (int xx = Math.max(0, ex - 8); xx <= Math.min(63, ex + 8); ++xx) {
+                int t = game.mapTiles[xx + (yy << 6)] & 0xFFF;
+                if ((t & 0x300) == 0x300 && need[t & 3] > 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** 离 pos 最近、8 格内无敌兵的资源格（kind 1木2金3石）。全图读（战役许可）。 */
+    private int nearestSafeResource(c game, int pos, int kind, short[] es, int eu) {
+        int px = pos >>> 8, py = pos & 0xFF;
+        int best = -1, bestD2 = Integer.MAX_VALUE;
+        for (int y = 0; y < 64; ++y) {
+            for (int x = 0; x < 64; ++x) {
+                int t = game.mapTiles[x + (y << 6)] & 0xFFF;
+                if ((t & 0x300) != 0x300 || (t & 3) != kind) {
+                    continue;
+                }
+                boolean camped = false;
+                for (int j = 0; j < eu; ++j) {
+                    int ep = es[j << 3] & 0xFFFF;
+                    int dx = (ep >>> 8) - x, dy = (ep & 0xFF) - y;
+                    if (dx * dx + dy * dy <= 64) {
+                        camped = true;
+                        break;
+                    }
+                }
+                if (camped) {
+                    continue;
+                }
+                int d2 = (x - px) * (x - px) + (y - py) * (y - py);
+                if (d2 < bestD2) {
+                    bestD2 = d2;
+                    best = x << 8 | y;
+                }
+            }
+        }
+        return best;
+    }
+
+    // ===== #1 护送关状态 =====
+    private int escortPhase;            // 0=清西敌 1=砍隧道 2=护送
+    private int escortAnchor = -1;      // 村民口袋质心（首帧记录）
+    private boolean escortHdr9;         // 伪交存点已写
+    private int escortStall;            // 砍树无进展计数
+    private int escortLastFront = -1;   // 上次的前排 x 合计
+
+    /** #1 护送关（res111：胜 = p0 单位#0 静止位于 x[50,57)×y[57,64) 持续 20t；
+     *  负 = 任一村民（type<2）死亡。军事死亡合法——res111 解码，m1run2 已验证）。
+     *  移植 m1run2.py 配方（宏时代已通关的战术）：
+     *  0) 军事清掉口袋西侧固定敌（村民乱漂撞敌=判负，先拔钉子）；
+     *  1) 砍隧道：树墙 = 东侧大片木格；每行"前排"= 最西且西邻可走的木格。
+     *     只砍 y≥57 的安全行——敌塔 (48,50)(50,50)(49,52) 塔火半径 4 覆盖
+     *     北行（y≤56），南行安全。3 村民 1 人 1 行，砍穿 x≥50 为止；
+     *  2) 伪交存点 hdr[9]=(前排-3, 58)：根治载满回送 orbit（m1 时代 r35 教训）；
+     *  3) 砍穿后全体村民 retask (51,60) 进堡区。
+     *  纪律：村民全程不得进 y<57（塔区）；卡死 3 决策（24t）无进展才重发
+     *  （频繁重发触发 BFS 离队重算，m1run 的 gather_hammer 教训）。 */
+    private void tickEscort(c game) {
+        short[] slots = game.playerUnitSlots[0];
+        int units = game.playerUnitHeaders[0][2];
+        if (units == 0) {
+            return;
+        }
+        // 村民/军事分桶
+        int[] vill = new int[26];
+        int nv = 0;
+        for (int i = 0; i < units; ++i) {
+            if ((slots[(i << 3) + 3] & 0xFF) < 2) {
+                vill[nv++] = i;
+            }
+        }
+        if (nv == 0) {
+            return; // 村民死光=判负在路上
+        }
+        if (this.escortAnchor < 0) {
+            int sx = 0, sy = 0;
+            for (int i = 0; i < nv; ++i) {
+                int pos = slots[vill[i] << 3] & 0xFFFF;
+                sx += pos >>> 8;
+                sy += pos & 0xFF;
+            }
+            this.escortAnchor = (sx / nv) << 8 | (sy / nv);
+        }
+        int ax = this.escortAnchor >>> 8, ay = this.escortAnchor & 0xFF;
+
+        if (this.escortPhase == 0) {
+            // 清口袋 12 格内的敌兵（固定敌在 (15,47)/(16,54) 一带）
+            short[] es = game.playerUnitSlots[1];
+            int eu = game.playerUnitHeaders[1][2];
+            int tgt = -1, best = Integer.MAX_VALUE;
+            for (int i = 0; i < eu; ++i) {
+                int ep = es[i << 3] & 0xFFFF;
+                int d2 = ((ep >>> 8) - ax) * ((ep >>> 8) - ax) + ((ep & 0xFF) - ay) * ((ep & 0xFF) - ay);
+                if (d2 <= 144 && d2 < best) {
+                    best = d2;
+                    tgt = ep;
+                }
+            }
+            if (tgt < 0) {
+                this.escortPhase = 1;
+                System.out.println("[cai] escort phase1 CHOP t=" + game.tickCount);
+                return;
+            }
+            this.m0Target = tgt;
+            this.orderMilitary(game, tgt, false);
+            // 村民原地不动（钉在口袋里最安全）
+            return;
+        }
+
+        if (this.escortPhase == 1) {
+            // 扫树墙前排：每行 y 最西的、西邻可走的木格（只收 y≥57 安全行）。
+            // 可走 = (t & 0xFFF) == 0（引擎 stepUnitMove 的判据：低 12 位全 0，
+            // 虚空/废墟 0x0 与雾 0x8000 都可走）。单位占位（0x2xx）**不算**墙——
+            // v2 把它当前排实锤翻车：军事单位停在西侧走廊，被误判成"墙的前排"
+            // (28,58)，村民对着自己人脚下砍了 8M tick。
+            int[] frontX = new int[64];
+            java.util.Arrays.fill(frontX, -1);
+            boolean breached = true;
+            for (int y = 57; y < 63; ++y) {
+                for (int x = 20; x < 55; ++x) {
+                    int t = game.mapTiles[x + (y << 6)] & 0xFFF;
+                    if ((t & 0x300) == 0x300 && (t & 3) == 1) {
+                        if (x < 50) {
+                            breached = false; // x<50 还有树=隧道没通
+                        }
+                        if (frontX[y] < 0 && (game.mapTiles[(x - 1) + (y << 6)] & 0xFFF) == 0) {
+                            frontX[y] = x;
+                        }
+                    }
+                }
+            }
+            if (breached) {
+                // 隧道区里站着的单位会盖住格下的树（单位占位盖掉资源显示）。
+                // 精确豁免：正在采集/回送（任务字 2/3）且 slot[5]（在采资源格）
+                // 还在 x<50 隧道区内的村民。路过的/袋心闲置的不算。
+                for (int vi = 0; vi < nv; ++vi) {
+                    int o = vill[vi] << 3;
+                    int nibble = slots[o + 7] & 0xF;
+                    if (nibble != 2 && nibble != 3) {
+                        continue;
+                    }
+                    int rt = slots[o + 5] & 0xFFFF;
+                    int rx = rt >>> 8, ry = rt & 0xFF;
+                    if (rx >= 20 && rx < 50 && ry >= 57 && ry < 63) {
+                        breached = false;
+                        break;
+                    }
+                }
+            }
+            if (breached) {
+                this.escortPhase = 2; // 安全行 x<50 已没有树=墙穿了
+                System.out.println("[cai] escort phase2 ESCORT t=" + game.tickCount);
+                return;
+            }
+            // 伪交存点：前排 -3（只写一次；hdr[9]=伐木交存指针，伪造到袋内空地
+            // = 载满回送变"走到袋心闲置"，绕开不可达 TC 的回送 orbit，m1 宏线
+            // 三连 LOSS 的根因修复。本关不需要真实入账）
+            int frontSum = 0, rows = 0, minFront = 99;
+            for (int y = 57; y < 63; ++y) {
+                if (frontX[y] >= 0) {
+                    frontSum += frontX[y];
+                    ++rows;
+                    minFront = Math.min(minFront, frontX[y]);
+                }
+            }
+            // rows==0 = 前排全被站在树上的村民遮住（单位占位盖住木格），不是
+            // 墙穿——穿墙判定只看上面的 breached。hiddenByChopper 同理挡住误判：
+            // 隧道区(x<50, y57..62)里站着我方单位 = 格子下可能还压着树。
+            if (!this.escortHdr9) {
+                game.playerUnitHeaders[0][9] = (Math.max(20, minFront - 3) << 8) | 58;
+                this.escortHdr9 = true;
+                System.out.println("[cai] escort hdr9=" + Math.max(20, minFront - 3) + ",58 t=" + game.tickCount);
+            }
+            // 军事撤出作业走廊：清完西敌后在 (24,54) 蹲守（塔火半径外），
+            // 别站在隧道口挡村民（v2 尸检：骑兵停在 (28,58) 把前排堵死）。
+            this.orderMilitary(game, (24 << 8) | 54, false);
+            // 围栏（m1run2 fence 的移植）：村民出 x[20,52)×y[57,64) 立刻拉回
+            // 袋心——v3 尸检：村民砍完树被引擎"邻格同类续采"链条带进西北林区
+            // 漫游，在 (19,45) 撞上北部敌兵，村民死亡=判负（5 局同点同刻）。
+            // y=56 也不行：敌塔 (49,52) 索敌半径²=16 恰好覆盖 (49,56)。
+            int fenceHome = (Math.max(20, minFront - 3) << 8) | 58;
+            for (int vi = 0; vi < nv; ++vi) {
+                int o = vill[vi] << 3;
+                int pos = slots[o] & 0xFFFF;
+                int px = pos >>> 8, py = pos & 0xFF;
+                if (px < 20 || px >= 52 || py < 57 || py >= 64) {
+                    if ((slots[o + 2] & 0xFFFF) != fenceHome) {
+                        slots[o + 1] = slots[o + 0];
+                        slots[o + 2] = (short) fenceHome;
+                        slots[o + 7] = 0;
+                        slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+                        System.out.println("[cai] escort fence pull v" + vi
+                            + " from " + px + "," + py + " t=" + game.tickCount);
+                    }
+                }
+            }
+            // 卡死检测：前排 50 决策（400t）无进展才允许重发——采集一载计时
+            // 102t（tickUnits case 2 高字节 0x66 倒数），v1 用 3 决策（24t）每
+            // 24t 清零一次装载计时，永远砍不倒一棵树（8M tick 僵局尸检实锤）。
+            if (frontSum == this.escortLastFront) {
+                ++this.escortStall;
+            } else {
+                this.escortStall = 0;
+                this.escortLastFront = frontSum;
+            }
+            boolean reissue = this.escortStall >= 50;
+            // 每村民分配一行（槽序轮转行号，确定性）
+            int[] rowList = new int[6];
+            int nr = 0;
+            for (int y = 57; y < 63; ++y) {
+                if (frontX[y] >= 0 && frontX[y] < 50) {
+                    rowList[nr++] = y;
+                }
+            }
+            for (int vi = 0; vi < nv && nr > 0; ++vi) {
+                int o = vill[vi] << 3;
+                int nibble = slots[o + 7] & 0xF;
+                if (nibble == 2 || nibble == 3) {
+                    continue; // 采集/回送中绝不打断（102t 装载周期内写 slot[7]=0 = 清零）
+                }
+                int y = rowList[vi % nr];
+                int tile = frontX[y] << 8 | y;
+                boolean idle = nibble == 0
+                    && (slots[o + 0] & 0xFFFF) == (slots[o + 2] & 0xFFFF);
+                // 闲置（含回送到伪交存点后的落地闲置）→ 派往当前前排；
+                // 卡死步行者（目标过期）也重派。同格 retask 是 no-op，靠换行重踏入。
+                if (idle || (slots[o + 2] & 0xFFFF) != tile) {
+                    if (!idle && !reissue) {
+                        continue; // 行军中且未到重发阈值：让它走
+                    }
+                    slots[o + 1] = slots[o + 0];
+                    slots[o + 2] = (short) tile;
+                    slots[o + 7] = 0;
+                    slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+                }
+            }
+            if (reissue) {
+                this.escortStall = 0;
+            }
+            this.m0Target = (minFront << 8) | 58;
+            return;
+        }
+
+        // phase 2: 护送全体进堡区 (51,60)
+        this.m0Target = 51 << 8 | 60;
+        for (int vi = 0; vi < nv; ++vi) {
+            int o = vill[vi] << 3;
+            int pos = slots[o] & 0xFFFF;
+            int px = pos >>> 8, py = pos & 0xFF;
+            if (px >= 50 && px < 57 && py >= 57) {
+                continue; // 已进堡区
+            }
+            int tile = 51 << 8 | 60;
+            if ((slots[o + 7] & 0xF) == 1) {
+                continue;
+            }
+            boolean idle = (slots[o + 7] & 0xF) == 0
+                && (slots[o + 0] & 0xFFFF) == (slots[o + 2] & 0xFFFF);
+            if ((slots[o + 2] & 0xFFFF) != tile || idle) {
+                slots[o + 1] = slots[o + 0];
+                slots[o + 2] = (short) tile;
+                slots[o + 7] = 0;
+                slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+            }
+        }
+    }
+
+    /** 撤退点：锚点周围按槽位散开的 3×3（避免同点撤退互相占位——站桩回血
+     *  要求 pos==tgt，到不了靶心格就永远不回血）。 */
+    private int retreatTile(int i) {
+        int ax = this.razeAnchor >>> 8, ay = this.razeAnchor & 0xFF;
+        int x = Math.max(1, Math.min(62, ax + (i % 3) - 1));
+        int y = Math.max(1, Math.min(62, ay + (i / 3) % 3 - 1));
+        return x << 8 | y;
+    }
+
+    /** 全体军事压向目标（不接敌打断）。 */
+    private void orderMilitary(c game, int target, boolean includeEngaged) {        short[] slots = game.playerUnitSlots[0];
+        int units = game.playerUnitHeaders[0][2];
+        for (int i = 0; i < units; ++i) {
+            int o = i << 3;
+            if ((slots[o + 3] & 0xFF) < 2) {
+                continue;
+            }
+            if (!includeEngaged && (slots[o + 7] & 0xF) == 1) {
+                continue;
+            }
+            if ((slots[o + 2] & 0xFFFF) != target) {
+                slots[o + 1] = slots[o + 0];
+                slots[o + 2] = (short) target;
+                slots[o + 7] = 0;
+                slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+            }
+        }
+    }
+}

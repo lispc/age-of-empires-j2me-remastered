@@ -5,6 +5,47 @@
 打 `[ai]` 日志并禁用，不影响游戏）。hook 在 onPaint 帧首，**不受 screenState
 门控**——弹窗态（ss==2）下模拟停走但 AI 照样被调，AI 须自按 -7 关窗。
 
+两个实现：`RuleBasedAi`（随机图，见下）与 `CampaignAi`（战役，见末节）。
+
+## CampaignAi（战役，2026-09-04）
+
+`-Daoe.playerAi=aoe.ai.CampaignAi` + `-Daoe.dev=campaign:N`（N=1..7 对应
+missionIndex 0..6）。批跑：`tools/camloop.sh -m N -n 局数 -t 超时 -k`。
+战役地图每局重掷（z=98 结算重掷种子），camloop 无需种子参数。
+各关胜负条件：反汇编考证在 `docs/research/campaign-mission-scripts.md`
+（工具 `tools/scriptdis.py`）。
+
+成绩（camloop 各 5 局，turbo+BFS，全图读敌表——战役期初许可，诚实化是后话）：
+
+| 关（missionIndex) | 任务 | 成绩 | handler |
+|---|---|---|---|
+| #0 拆堡 | 拆敌 TC | **5/5**（~3k tick） | tickRaze |
+| #1 护送 | 砍树墙送村民进堡，死 1 村民=负 | **5/5**（~96k tick） | tickEscort |
+| #2 经济 | 木/金/石各 >100（严格） | **3/3**（~2.2M tick） | tickGatherQuota |
+| #3 拆家 | 拆光敌 5 建筑 | **5/5**（~4.6k tick） | tickRaze |
+| #4 科技 | 升城堡时代+放置大学 | 待攻（唯一敌开 AI 的关） | 未做 |
+| #5 守城 | 扛 5 波刷兵后全歼 | **5/5**（~5.9k tick） | tickProtectCastle |
+| #6 总攻 | 拆光敌 13 建筑（Keep 塔环+19 兵） | 0/5（僵持/全灭） | tickRaze v4 |
+
+- **#4 翻案**：初判"原版 bug 胜利链自锁"是错的——tf[14]（大学可建标记）在我方
+  **放置**大学时由 c.java:7427 `techFlags[10+n2]=0` 清零，胜利链
+  "升城堡(tf14=1)→放大学(tf14=0)→50t→胜"成立。初判只 grep 了字面量
+  `techFlags[14]`，漏了变量索引写。**data.res 不需要修补**。
+- **#6 瓶颈**：敌 Keep 塔（攻 4/甲 25/索敌 6 格）比我方投石机手长（索敌 4 格），
+  近战啃塔=自杀；且守军 19 兵（5 投石机+9 弓兵）会离巢追击，我方单位
+  分批到达=添油。需要：集结→集团歼游走守军→攻城组拔塔→拆家的阶段机。
+- **战役机制教训**（都踩过坑，写代码前先读）：
+  - 采集一载 = 102 tick 计时（任务字高字节倒数），期间写 slot[7]=0 = 清零
+    重来——重发节流必须远大于 102t（escort v1 用 24t 永远砍不倒树）。
+  - 单位占位（0x2xx）会盖住格下的资源/地形显示，扫描地图要避开或豁免。
+  - 可走判据 = `(t & 0xFFF) == 0`（虚空 0x0/雾 0x8000/已探索 0x4000 都能走；
+    雾下资源 0x83xx 低位非零=挡路）。
+  - 战役敌 aiEnabled=false：守军不追远、不出击，只原地自动接敌——
+    "守军最少优先+打了就跑+站桩回血"是拆建筑关的通关公式。
+  - 站桩回血要 pos==tgt：撤退点必须按槽位散开（同点撤退互相占位永不回血）。
+  - 交存锚点 hdr[8]=TC/hdr[9]=伐木场/hdr[10-11]=采矿场；无 TC 关要伪造
+    hdr[9] 到袋内空地，否则载满回送 orbit。
+
 ## RuleBasedAi
 
 随机图（gameMode=0）Easy/Medium/Expert 通用。**2026-09-04 第六批起默认开

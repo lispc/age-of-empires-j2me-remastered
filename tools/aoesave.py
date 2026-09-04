@@ -115,6 +115,8 @@ class Player:
                 "type": s[3] & 0xFF,
                 "task": TASK_NAMES.get(s[7] & 0xF, s[7] & 0xF),
                 "taskword": s[7] & 0xFFFF,
+                "hp": s[4] & 0xFF,
+                "tgt": ((s[2] >> 8) & 0xFF, s[2] & 0xFF),
             })
         return out
 
@@ -268,7 +270,7 @@ def main(argv):
     elif cmd == "units":
         p = int(argv[3]) if len(argv) > 3 else 0
         for u in s.players[p].units():
-            print("slot%(slot)d (%(tx)d,%(ty)d) t%(type)d %(task)s [w=%(taskword)04x]" % u)
+            print("slot%(slot)d (%(tx)d,%(ty)d) t%(type)d %(task)s hp%(hp)d tgt%(tgt)s [w=%(taskword)04x]" % u)
     elif cmd == "tile":
         print(json.dumps(s.tile(int(argv[3]), int(argv[4])), ensure_ascii=False))
     elif cmd == "json":

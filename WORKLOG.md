@@ -7,6 +7,29 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
+### 战役 AI 攻坚：CampaignAi 一天 5/7 关（2026-09-04，player-ai 分支）
+
+- **做了什么**：规则式玩家 AI 打进战役。盲测基线 0/7（死因：随机图 AI 的 TC 锚定/
+  目标缺失/剧本黑盒三假设在战役全不成立）→ 新建 `aoe/ai/CampaignAi`（按
+  missionIndex 分派 handler）+ `tools/camloop.sh`（战役批跑器）+
+  `tools/scriptdis.py`（任务脚本反汇编器，子代理产出）+
+  `docs/research/campaign-mission-scripts.md`（7 关胜负条件全目录）。
+- **成绩**：#0 拆堡 5/5、#1 护送 5/5、#2 经济 3/3、#3 拆家 5/5、#5 守城 5/5；
+  #6 总攻 0/5（敌 Keep 塔环比投石机手长 2 格+守军 19 兵离巢，需阶段机分兵，
+  下轮做）；#4 待攻。**#4"自锁 bug"翻案**：子代理初判 tf[14] 只 0→1 无回路，
+  复核发现 c.java:7427 `techFlags[10+n2]=0`（变量下标！）在放置大学时清零——
+  胜利链成立，**不需要 patch data.res**（教训：查字段读写要覆盖计算下标）。
+- **机制新考证**（都沉淀在 aoe/ai/README.md 战役节）：采集一载=102t 高字节
+  倒数（重发节流必须 ≫102t，否则永砍不倒树）；可走判据=`(t&0xFFF)==0`
+  （虚空/雾/已探索都能走）；单位占位盖资源显示（扫描要豁免）；站桩回血要
+  pos==tgt（撤退点必须散开）；hdr[8/9/10/11]=TC/伐木/采矿交存指针，无 TC 关
+  伪造 hdr[9] 治回送 orbit；战役敌 aiEnabled=false=守军不追击（拆建筑关公式：
+  守军最少优先+打了就跑）。
+- **编号澄清**：宏线（tools/campaign/）"m1"=missionIndex 1=res111；CampaignAi
+  文档以 missionIndex 为准记「第 N 关」。
+- 验证：camloop 各关批测（日志在 /tmp/aoe-camp/）+ regress 三连绿。
+- commit：（待用户确认后补登）
+
 ### 战役第 4 夜: m1 轮战制首胜(WIN 392912)+尸检三翻案+视频基建+merge×2(2026-09-04)
 
 - **m1 轮战制首轮成功**（sub-agent 单关轮，手册 §12 协议首跑）：**WIN ticks=392912**，
