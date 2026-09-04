@@ -27,7 +27,7 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
 （数据 res 号：m1=104 / m2=105 / m3=106 …；脚本=数据+7，解码器 resdec.py 换号即用。
 地形=数据内嵌 rng 确定性生成（res 106 头两字节），与 mapSeed/RMS 无关，每 boot 同图，
 可离线洪泛侦察——注意 BFS 下虚空可通行、资源格当墙。）
-### m4 大学关（⏳ 五轮 18 boot 全 LOSS 止损（r38-r42）；微调 a-d 全部验证生效，残局 N1-N4 待第 6 轮）
+### m4 大学关（⏳ 六轮 21 boot 全 LOSS 止损（r38-r43）；N1-N4 全生效，dry6 模拟 WIN，残局仅剩 2-3 行）
 - **胜负条件（res 114）**：WIN = 封建→**升城堡完成**（techFlags[14]==1，c.java:6200）
   → **放置 University/type4**（置回 0，c.java:7590）→ 计时 50t → WIN。res 127 初始
   [14]=0 ⇒ University 在城堡前被"已建成"锁死，**顺序不可颠倒**。Univ 25木/25石。
@@ -40,21 +40,30 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   armyValue（断收入用）。
 - **reserve 干涸前提修正（r42）**：「敌 reserve 波 ~ar5700-6000 干涸」**仅当敌村民
   被清**才成立——敌村民存活时 army 滚到 102 且波不断（boot1 实测）。
-- **五轮战况收敛**：r42 微调 a-d 全部实测生效（矿仓 1820 提前 900t/金工 3500 到岗/
-  dry13 模拟 WIN 14550）；实战仍败于三条新死因：①真实木收入仅 sim 一半 W 断炊；
-  ②金路撞波（3 金工 (35,50-53) 迎头撞 wave2 全灭）；③(45,59) 兵营"迷雾格未探索"
-  FAIL 异常（同格同刻 boot1/2 成功，未定位）→ fallback (42,58) 正贴决战位被拆。
-- **定律/教训（r42 新增）**：①**金路/木位=波走廊交点定律**——TC(43,57)→金矿路穿
-  敌波走廊，(32-35,50-53) 必撞区；预防式错峰+离廊岗位唯一解；木位应首波出生就切
-  WOOD_SAFE。②错峰实现陷阱：「路上人数」必须**排除 fleeing 集**（按意图计数困死
-  金工）。③双 Mill 凑城堡门成立（计数≥2）省 10W10S；m4 民兵场上=1 pop。④**sim
-  校准方法学：先跑一次真实 boot 拿节奏锚点再离线迭代**（本轮 sim 收入摇摆 3 次的
-  根因=拿旧参数锚点调新参数）。
-- **第 6 轮残局（r42 定稿，BUGS-m4e.md「制胜残局」）**：N1 木位离廊 / N2 House
-  紧急阀（v≤2）/ N3 B_CANDS 重排（fallback 离决战位）/ N4 查雾格 FAIL 异常——
-  30 分钟可落地，3 boot 预算刷新重试。boot2 实证封建资源 ar~5900 即在轨，**本关可胜**。
-- **现行代驱动**=`tools/campaign/m4edrv.py`+`mocksim4e.py`（v6.4-e：矿仓定律/
-  偶和格断言/静默窗/per-vil 威胁门/微调 a-d）；历代 m4ddrv/m4cdrv/m4bdrv/m4drv。
+- **探索模型三要素（r43/N4 读码定案，全战役通用）**：build 雾判=`mapTiles[t]<0`
+  （c.java:1479）；可建区=①全体单位当前格 3×3（每 tick，revealFogAroundUnit
+  c.java:5978）+ ②**完工建筑**曼哈顿菱形 r3（塔 r6，每 tick 轮询一栋，void_a
+  c.java:5904）。TC 菱形 r3 只有 8 个偶和格——**首建筑要么在这 8 格里，要么先派
+  单位扫堂**（3×3 贴一格开一片）。
+- **dry 假阳性定律（r43 实锤，五轮悬案结案）**：mocksim 无雾模型时"雾格 FAIL"分支
+  永不触发——(45,59) 兵营五轮"时好时坏"全是 dry 假阳性，真实 boot 从未建成过。
+  mocksim 必须与真实判定同构（雾/占格/时代门三件套）；mocksim4f 已补雾模型。
+- **六轮战况**：N1-N4 全部实测生效——N4 修复（开局扫堂 (44,58)）后**兵营 (45,59)
+  三连建成**（956/1017/1098，vs 此前全 fallback）；N1 终版 **WOOD_NEAR 彻底退役**
+  （WOOD_SAFE→House 交存 18 manh 零收入代价）+逃向按侧分流，boot3 零走廊死亡；
+  N3 新序三连 OK。dry6 离线模拟 WIN@12390（camp 2580/封建 6000/城堡 9780/Univ
+  12300，7 波零阵亡 TC 满血）——状态机已达 WIN 形态。
+- **三 boot 死因（每 boot 一个新瓶颈，修复全部在案）**：①探雾民兵被 stray-recall
+  拉回+严格到位判定→矿仓 C=0→G 断炊（修复：豁免 recall+重派）；②波早到（boot 间
+  ±300t 方差！）杀走廊木工——**逃亡路线横穿波线**（修复：避险点/转场全过 d2_line
+  校验，东翼锚点 (49,48) 走廊距线 >9.8 格）；③转金贪婪（`wj>1` 门太松拉走第 2
+  木工→W 饥荒）+m 磨光无 G 补兵（修复一行：`wj>=3`）。
+- **第 7 轮残局（30 分钟级）**：转金门 `len(wj)>1`→`>=3`；`hb_cd 8→3`（emg 冷却
+  800t→300t，boot3 House 拖到 2817 的主因）；（可选）vil 生产门 v≤3 时 W>=10 放宽
+  5。改完 dry 一轮确认仍 WIN 即上机，3 boot 预算刷新。sim 收入仍比真实高 ~30%
+  （1.85 vs 1.4W/100t/vil）——离线 WIN 只证分支正确，节奏以 boot 为准。
+- **现行代驱动**=`tools/campaign/m4fdrv.py`+`mocksim4f.py`（v6.4-f：N1-N4+雾模型；
+  boot 用 **campaign:5**+新鲜 rmsDir→idx4）；历代 m4edrv/m4ddrv/m4cdrv/m4bdrv/m4drv。
 - 操作要点：z=70 完工弹窗 -6 清；t2=2 pop ⇒ House 先行；slots 幽灵槽判活用 state
   JSON；`echo > fifo` 阻塞=进程已退；boot.sh 应保留每次 play.log 副本（r42 boot1/2
   play.log 被覆盖丢失）；aistate 缺敌 pool/波出生时间戳字段（波预测靠 p1mil 计数沿）。

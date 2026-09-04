@@ -951,11 +951,17 @@ fps=30≈12 倍原速）；长 trace 验证+出视频建议 tickms=2 免超时�
 
 **战役专用经验**（m1/m2/m3 实测，r35 尸检 + r37 选关事故勘误）：
 - **boot 选关公式（必须 rmsDir 钉死）**：`campaign:N` 落 missionIndex =
-  campaignProgress(RMS) + N − 1（读码复核 c.java:2968 高亮初值=progress + nav 恰按
-  N−1 次 -4；移植修改已解锁全部 7 关）。实操一律 `-Daoe.rmsDir=<work>/rms`（新鲜
-  目录，progress=0 → campaign:N 落 idx N−1）；不隔离会用 `~/.aoe-desktop` 真实进度
-  落错关，resultHold 的结算写回还会污染用户真实进度（m3 实录：idx5 载入
-  SaveState byte-length mismatch）。回放脚本 campaign-replay.sh 已默认隔离。
+  campaignProgress(RMS) + N − 1（六轮实录再证：新鲜 rmsDir progress=0 下 m4 boot
+  全部 campaign:5→aC=4；m1-m3 录制期真实 RMS progress=1，campaign:1/2/3→aC=1/2/3；
+  r37 事故链=m1/m2 回放 WIN 写回把真实进度推到 3 后 campaign:3→idx5 载入
+  SaveState mismatch）。实操一律 `-Daoe.rmsDir=<work>/rms`，不隔离会落错关且
+  resultHold 结算写回污染用户真实进度。推论：新鲜目录下 campaign:1→idx0（拆堡）、
+  campaign:6→idx5（守城）、campaign:7→idx6（总攻）。回放脚本
+  campaign-replay.sh 已默认隔离。
+- **编号对照（player-ai 合并后定稿）**：战役共 7 关 = missionIndex 0..6 =
+  0拆堡(res110)/1护送/2经济/3拆塔/4升城/5守城/6总攻；**宏线 mN = missionIndex N**
+  （m1=护送起数，idx 0 拆堡关宏线从未打过，是第 7 个目标）。CampaignAi 文档以
+  missionIndex 记「第 N 关」，其 #N = 宏线 mN，无错位。
 - **胜负条件按关解码，别信旧叙事**（r35 实锤）：关卡脚本在 res 111+N
   （N=missionIndex；数据 res=任务号+103，脚本=数据+7），data.res 条目表=偏移
   数组，条件 opcode 7=headers 比较（`headers[p][4]`=p 建筑条目数，m3 WIN=敌楼
@@ -974,6 +980,18 @@ fps=30≈12 倍原速）；长 trace 验证+出视频建议 tickms=2 免超时�
 - **驱动离线 dry-run 纪律（r40 定版）**：上 boot 前用 mock 模拟器把状态机迭代到
   模拟 WIN（r40 九轮离线迭代 → 3 boot 零驱动低级 bug；r38/r39 半数 boot 死于驱动
   bug）。参考实现 tools/campaign/mocksim.py（M4C_DRY 注入口）。
+  **dry 假阳性定律（r43 实锤）**：mocksim 必须与真实判定**同构**（雾模型/占格/
+  时代门三件套），否则该分支在 dry 里永不触发、假 WIN 五轮不自知——m4 兵营
+  (45,59)"迷雾 FAIL"悬案真因。另：sim 收入普遍比真实高 ~30%，离线 WIN 只证
+  分支正确，节奏锚点以真实 boot 为准（先 boot 校准再离线迭代）。
+- **探索模型三要素（r43 读码定案，建位规划通用）**：build 可建判=`mapTiles[t]<0`
+  （c.java:1479）；探明=①全体单位当前格 3×3（每 tick，c.java:5978）+②**完工建筑**
+  曼哈顿菱形 r3（塔 r6，每 tick 轮询一栋，c.java:5904），探索单调。**TC 菱形 r3
+  只罩 8 个偶和格**——开局首建筑候选必须出自这 8 格，或先派单位扫堂贴格开图。
+- **波时方差（r43）**：同图同种子，敌波 1 时刻 boot 间 ±300t——一切"卡时刻"的
+  预防动作按最早值设计。避险点/转场路线必须做 **d2_line 校验**（点到敌 base→TC
+  连线的距离，<9 格即暴露带），否则"逃跑"变"横穿"（boot2 双尸位教训）；绕行走廊
+  用离线锚点中转（m4f 东翼 (49,48)），错峰计数排除卡在锚点者（互堵死锁）。
 - m1 型护送关：口袋被树墙围死时走"砍隧道"（m+16 教程同款）；砍树用 retask 拍到
   前线树格，**趟数在砍完一载时扣（与交存无关）**，隧道不需要交存通路。
   砍树前先 phase0 军事清掉口袋周边固定敌（军事可损耗）。
