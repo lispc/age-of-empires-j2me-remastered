@@ -45,7 +45,9 @@ if [ -n "$VIDEO" ]; then
 fi
 FLAGS="-Daoe.tickms=$MS -Daoe.debug=1 -Daoe.harnessQuiet=1 -Daoe.exitOnResult=1
  -Daoe.saveDir=$WORK/saves -Daoe.mapSeed=8224 -Daoe.devBoot=$DIR/base.aoesave
- -Daoe.devMouse=$FIFO"
+ -Daoe.devMouse=$FIFO -Daoe.bfsPath=1"
+# 回放旗标必须与录制侧同款：bfsPath 决定选路（BFS 缓存 vs DDA），不同则路径
+# 决策漂移、位精确无从谈起。录制目录可放 flags.txt 记录非默认旗标（信息性）。
 [ "$MODE" = "--headless" ] && FLAGS="$FLAGS -Daoe.headless=1"
 [ -n "$VDIR" ] && FLAGS="$FLAGS -Daoe.reveal=1 -Daoe.videoDir=$VDIR"
 

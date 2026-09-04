@@ -124,6 +124,8 @@ LLM 玩家代理的宏层（sel/goto/train/build/gather/rally/sitrep 等 FIFO �
   `retask <slot> <tx> <ty>`（按槽位直写任务目标，复刻 orderMove 三写不经 sel——单位
   移动中 sel 坐标必落空；可用于解"回送中卡死"，2026-09-03 战役局新增）/
   `slots <p>`（槽位表 {i:type@(tx,ty)w任务字} 诊断，只读）/
+  `taskinfo <p> <slot>`（单单位完整槽位行 w1-w7 hex，retask 失效排查——对比任务
+  目标字与状态机字是否吞令，只读，r36 新增）/
   `train <tx> <ty> <n>`（生产建筑排队 n 个，
   pop/canAfford 约束下如实报 k/n）/ `build <tx> <ty> <type>`（直接放置建筑，仍受
   canAfford/上限/占格/雾约束）/ `tile <tx> <ty>`（格诊断：raw/类目/owner/序号/雾/

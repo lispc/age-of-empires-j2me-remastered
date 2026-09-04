@@ -7,6 +7,41 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
+### 战役第 4 夜: m1 轮战制首胜(WIN 392912)+尸检三翻案+视频基建+merge×2(2026-09-04)
+
+- **m1 轮战制首轮成功**（sub-agent 单关轮，手册 §12 协议首跑）：**WIN ticks=392912**，
+  三件套 /tmp/aoe-camp/m1b/{base.aoesave@2720, trace.txt 1656 events, play.log}。
+  制胜配方 m1run2.py：**phase0 军事清西部固定敌 → fence y∈[57,63] 全线禁北漂 →
+  rows 57-59 砍到 x≥50 → 全村民推 (51,60)**。
+- **尸检三翻案**（实测+读码，BUGS-m1.md 全过程存档）：
+  ① 判负=**仅村民(type<2)死亡**（res 111 blk4/5，20 tick 延迟实证 [combat]205364→
+  [result]205384）——"任何单位死亡=判负"作废，军事死亡合法（phase0 实战 1×t3 换双敌）；
+  ② x=44 历史折损真凶=西部固定敌 (15,47)(16,54) 追杀滞留/满载 retask 失灵村民，
+  与塔无关（塔射程 √5≈2.24 非 4，几何+数值双证）；③ 堡垒 TC+四塔全是 p0 我方，
+  胜利=slot0 进 x[50,57)×y[57,64) 闲置 20 tick。**关卡脚本=res 111+N 通式**，
+  解码法沉淀 NOTES.md（m2-m7 通用钥匙）。
+- **merge player-ai ×2**（2efe03c、e876866，快进）：RuleBasedAi v64 迷雾诚实/
+  v56 围城经济；wave8 改名 17 符号（stepUnitMove/revealFogAroundUnit 等）；
+  **devBoot 装载时机钉到首次 aA==6 帧首**（治双跑发散）+ volatile 审计 40+ 字段；
+  bootcheck 新工具；regress 提速 24x（5m12s→13s）。reveal 顺势补齐 **0x4000 暗化位
+  敌单位显隐守卫**（wave8 新考证的第二层雾）。验证 regress+replaycheck+bootcheck 三绿。
+- **视频基建落地**：`-Daoe.reveal=1`（纯 paint 层两处绘制门+单位暗化守卫，全亮渲染）
+  + `-Daoe.videoDir/videoEvery`（帧尾钩子逐帧导出 PNG）+ campaign-replay.sh
+  `--video[=out] --fps=N`（验证通过后 ffmpeg 合成全亮 mp4，30fps≈12 倍原速）。
+  A/B 实拍（黑雾 vs 全亮）+ 合成抽帧验证。
+- **campaign-replay.sh 补 `-Daoe.bfsPath=1`**：回放旗标必须与录制同款（BFS/DDA
+  选路不同则位精确无从谈起）——旧 BFS 时代录制验证差 284 tick 的疑似帮凶之一。
+- **工具入库**：tools/campaign/{m1run2.py 制胜配方, watch-death.sh 被动死讯监视+
+  证据封存（已参数化 workdir）}；手册更新：§8 尸检先查尸位、§11 r35 勘误、§12
+  军事可损耗勘误、NOTES.md m1 档案重写。
+- **效率画像**（round-stats on transcript.jsonl）：111 工具调用（Bash 65=读 28/
+  挖 log 25/py 15），显式 sleep 1260s，sub-agent 总时长 151 min 超 60-90 止损线
+  （尸检验证链+3 attempts 所致）——下轮 brief 强化止损纪律。
+- 事故：无新事故。上轮 m1run.py NameError 三连系修复前旧调用（已入库修复版）。
+  本轮 git add -A 曾把上轮遗留未验证录制带入 211aa91（含 2.2MB 重复 play.log），
+  本 commit 整理入库正式版。
+- commit：本条目对应（回放验证+视频+录制入库同 commit）。
+
 ### wave8 改名批（移动/索敌/伤害/世界 tick/迷雾对/AI 攻势，2026-09-04）
 
 - **改名 17 个符号**（`tools/renamer/wave8.tsv`，AST 改名器）：方法——

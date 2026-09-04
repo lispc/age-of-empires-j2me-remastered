@@ -22,7 +22,7 @@ import sys
 EXCLUDE = {
     "replaytrace", "script", "save", "load", "stopat", "exit", "until",
     "state", "ping", "fields", "dump", "aistate", "sitrep", "strtbl",
-    "dlg", "probe", "count", "tile", "tapk", "slots",
+    "dlg", "probe", "count", "tile", "tapk", "slots", "taskinfo",
 }
 RE_FIFO = re.compile(r"^\[fifo\] ar=(\d+) (.+)$")
 RE_INPUT = re.compile(r"^\[input\] ar=(\d+) key (-?\d+)$")

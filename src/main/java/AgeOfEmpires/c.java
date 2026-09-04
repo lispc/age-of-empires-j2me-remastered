@@ -1074,6 +1074,8 @@ implements CommandListener {
             case "fields": case "save": case "load": case "dump": case "stopat":
             case "count": case "slots":
                 need = 2; break;
+            case "taskinfo":
+                need = 3; break;
             case "state": case "exit": case "sitrep": case "ping": case "aistate":
                 need = 1; break;
             default:
@@ -1435,6 +1437,29 @@ implements CommandListener {
                                 this.playerUnitSlots[pl][off + 7] & 0xFFFF));
                     }
                     System.out.println(sb2);
+                    break;
+                }
+                case "taskinfo": {
+                    // 诊断：taskinfo <p> <slot> —— 单个单位完整槽位行 w1-w7（hex，只读
+                    // 不进 trace）。retask 失效排查（r35：满载滞留村民五连 retask 无回显
+                    // 无效）：对比 word1/2（任务目标）与 word7（状态机）是否吞了令。
+                    int pl = Integer.parseInt(p[1]) & 1;
+                    int si = Integer.parseInt(p[2]);
+                    int ucnt = this.playerUnitHeaders[pl][2];
+                    if (si >= ucnt) {
+                        System.out.println("[devMouse] taskinfo FAIL slot " + si + " >= n=" + ucnt);
+                        break;
+                    }
+                    short[] s3 = this.playerUnitSlots[pl];
+                    int off3 = si << 3;
+                    StringBuilder sb3 = new StringBuilder("[taskinfo] p").append(pl).append(' ').append(si)
+                        .append(" type=").append(s3[off3 + 3] & 0xFF)
+                        .append(" pos=(").append(s3[off3] >>> 8).append(',').append(s3[off3] & 0xFF).append(')');
+                    for (int w = 1; w < 8; ++w) {
+                        sb3.append(" w").append(w).append('=')
+                            .append(Integer.toHexString(s3[off3 + w] & 0xFFFF));
+                    }
+                    System.out.println(sb3);
                     break;
                 }
                 case "state": {
@@ -6551,7 +6576,8 @@ implements CommandListener {
         int n10 = this.playerUnitSlots[n9][n8 + 3] & 0xFF;
         int n11 = n9;
         int n12 = this.playerUnitSlots[n9][n8 + 7] & 0xF;
-        if (n9 != 0 && (s & 0x4000) != 0 && n12 != 1) {
+        // 敌方单位在暗化格(0x4000)上的第二层显隐守卫（wave8 考证）；reveal 全亮时跳过
+        if (n9 != 0 && (s & 0x4000) != 0 && n12 != 1 && !DEV_REVEAL) {
             return;
         }
         int n13 = 0;
