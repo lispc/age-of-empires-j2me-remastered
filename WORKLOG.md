@@ -7,6 +7,41 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
+### #6 总攻关攻克（v8 直攻塔）+ #4 十轮未破 + headless MIDI 卡死修复（2026-09-04 深夜，player-ai）
+
+- **#6 tickFinalAssault v8：5/5 WIN（平均 7330t，最快的一批 7165-7785）**。
+  迭代链：v6（轮换 165/250 + 塔周守军清场 + 孤立塔全员进场）批测 0/3 →
+  尸检定位真根因不是攻城算术而是**野战兵力方差**（4 局野战存活 10/2/2/7，
+  攻城器赔光即判死）→ v7 废除野战直攻塔（守军 aiEnabled=false 不追击，
+  中场守军根本不会加入战斗）单局 WIN → 批测仍 0/3：行军路线撞中场投石机
+  堆，接敌后全员决斗（orderUnit 不打断接敌单位）+ 回家回血往返 700t =
+  添油 → **v8 = 反应式威胁（质心 12 格内最近敌兵全军集火，攻城器 3 格外
+  站桩齐射）+ 就地轮换（healTile：威胁源 7 格外站桩回血）**。
+- **新机制考证（字节码实读，已沉淀进 aoe/ai/README.md 战役节）**：塔/守军
+  瞄准=槽序扫描取射程内最低 slot（不取最近）；站桩回血 +1HP/2t
+  （tickUnits case 0，HP<255 全员上限 255）；战斗态不追人（case 1 只对
+  slot[5] 格原地开火）；贴身接敌=双方互锁；被打报复（resolveAttack 改写
+  受害者 tgt）；伤害统一 攻<<4/甲（塔 64/甲 per 17t，投石机对甲2=112/发，
+  拆建筑同式、建筑 HP 255）；通用"拆敌 TC 即胜"在战役 missionIndex≠0
+  被跳过（onThingDestroyed case 9）——#4 只有大学一条路，rush 不可行。
+- **#4 科技竞速 v7-v16 十轮未破（最佳 ~1/10）**：败因结构=胜需 ~11k tick
+  竞速，敌（Easy+免费资源滴 1000）~8k 起 8+ 兵大波；三塔/机动的花费都
+  拖垮竞速。排除项（勿再试）：塔先于兵营、三塔、采集走廊回避（两次实锤
+  更糟）、全免门出兵、委托 RuleBasedAi（v12：RB 在全雾战役图探图停滞）。
+  候选方向：矿场驻塔（护住走廊上的金/石矿点，flee 峰值 131/500t=经济
+  停摆的实锤）、竞速裸奔赌时点（理论极限 ~7.5k）。工具沉淀：flee 遥测进
+  [cai] 500t 摘要行；camloop 加 -Daoe.aiFog=0（#4 委托实验遗留，无害）。
+- **环境事故与修复（引擎层，值得记住）**：连续 kill 音频初始化中的 java
+  进程后，macOS coreaudiod 进入病态——之后所有 headless 跑都冻在战役
+  intro（Timer 线程死在 com.sun.media.sound 本地库加载，watchdog 实锤）。
+  修复：javax/microedition/media/Player.java 在 aoe.mute/headless 下连
+  MidiSystem 都不初始化（构造/prefetch 直接跳过）。**headless 跑批前再也
+  不会碰音频子系统**。
+- 验证：战役 7 关 × 3 局全量回归 = #0/#1/#2/#3/#5/#6 全 3/3，#4 1/3
+  （符合预期）。regress.sh 待跑（本条目的代码状态 = Player.java +
+  CampaignAi + camloop，c.java 零改动，replaycheck 不需要）。
+- 未推送：本地领先 origin/player-ai（commit 待用户确认）。
+
 ### 战役 AI 攻坚下半场：#4/#6 迭代 + #4 自锁翻案（2026-09-04 傍晚，player-ai）
 
 - **#4 自锁 bug 翻案**（用户已批 patch，动手前复核救回）：子代理称"tf[14] 只
