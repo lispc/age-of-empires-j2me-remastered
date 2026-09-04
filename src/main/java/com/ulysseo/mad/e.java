@@ -32,6 +32,8 @@ extends TimerTask {
             if (!b.boolean_a(this.a)) {
                 this.a.repaint();
                 this.a.serviceRepaints();
+                // dev 视频钩子：渲染完成后导出（-Daoe.videoDir 未启用时 O(1) 返回）
+                ((AgeOfEmpires.c)(Object)b.com_ulysseo_mad_a_a(this.a)).devAfterFrame();
                 return;
             }
         } else {

@@ -695,46 +695,50 @@ implements CommandListener {
     /** boot apply 抛异常时置位（apply 内部有长度/身份校验），devBoot 线程据此报败。 */
     private volatile boolean devBootApplyFailed;
 
-    // ===== replaytrace 的 tick 对齐注入（帧首定点应用，无墙钟/帧相位）=====
-    // replaycheck 视图字段（sel/cursor/cam）flake 的根因（2026-09-04 读码证实）：
-    // 旧实现从 dev-mouse 线程看到 tickCount>=target 就直呼 onKeyPress/mouseA，
-    // 注入落在帧周期的哪个相位由墙钟决定——落在本帧输入消费点之前则本帧生效、
-    // 之后则下一帧生效，A/B 两跑同一事件的效果差 1 tick。对方向键是"光标晚走
-    // 一格"（收敛），但对贴边的 move 是**永久发散**：边缘滚动按帧累计平移镜头，
-    // 生效帧差 1 → 总平移量差一帧 → cam 永久偏开，后续像素拾取格子跟着错
-    // （cam/sel/cursor 的 ±1-2px/一格 diff、方向会翻；模拟层 units/explored
-    // 不受影响——move 不进模拟）。松开走 Canvas.queueSyntheticKeyRelease 的
-    // "paint 完成计数+2"，基准同样是按下时刻的墙钟相位。
-    // 现改为：replaytrace 把事件连同绝对目标 tick 全部先入队（devReplayPending），
-    // paint 线程在帧首（devFrameHousekeeping，tickCount 已 ++、输入消费尚未发生）
-    // 把 tickCount>=target 的事件定点应用——效果 tick 恒等于 target，与入队墙钟、
-    // 帧相位无关。按键松开也 tick 化：帧首 t 按下、帧首 t+1 由帧首逻辑合成松开
-    // （"按下被完整消费一帧"的最小语义），不再走 paint 完成计数。
-    private static final class DevReplayEvent {
-        /** 绝对目标 tick：帧首 tickCount>=tick 时应用。 */
-        final long tick;
-        /** 0=key（a=键码，松开在下一帧首合成）；1=move（a=x, b=y，走 mouseA kind=0）。 */
-        final int kind;
-        final int a;
-        final int b;
-        DevReplayEvent(long tick, int kind, int a, int b) {
-            this.tick = tick;
-            this.kind = kind;
-            this.a = a;
-            this.b = b;
-        }
-    }
-    /** dev-mouse 线程入队、paint 线程帧首出队 → 访问全程 synchronized(this)。
-     *  按目标 tick 不减序入队（trace 文件顺序）。 */
-    private final java.util.ArrayDeque<DevReplayEvent> devReplayPending = new java.util.ArrayDeque<>();
-    /** tick 化的合成松开队列 [releaseTick, keyCode]：仅 paint 线程（帧首）读写，无需同步。 */
-    private final java.util.ArrayDeque<long[]> devReplayReleases = new java.util.ArrayDeque<>();
+    // ===== replaytrace = 调度表式位精确回放（主线 211aa91 版）=====
+    // 事件载入 devTraceTicks/devTraceCmds，由 onPaint 帧首排空段统一定点应用
+    // （与写宏队列 devOpQueue 同路径），注入时机纯 tick 决定—— replaycheck 视图
+    // 字段（sel/cursor/cam）flake 的根因就是旧版 dev 线程墙钟相位注入
+    // （2026-09-04 读码证实：贴边 move 的边缘滚动按帧累计，生效帧差 1 = cam
+    // 永久偏 1-2px）。本分支曾有的 DevReplayEvent/devApplyReplayEvents 实现
+    // 功能上是其子集，2026-09-04 合并主线时删除。
     /** 本次会话进入当前任务用的 nav spec（"-Daoe.dev" 语义）；窗口会话为 null。
      *  dev-nav 线程写、paint 线程（SaveState.capture）读。 */
     public volatile String devLastNavSpec;
     // devToast*：dev/EDT 线程写（devSaveTo/devLoadFrom 的回执），paint 线程读（devDrawToast）。
     private volatile String devToast;
     private volatile long devToastUntil;
+
+    // ===== 视频渲染（-Daoe.videoDir=<dir>，配 -Daoe.videoEvery=N；-Daoe.reveal=1 全亮）=====
+    // 每帧渲染完成后（com.ulysseo.mad.e 的 Timer 循环尾）导出一帧 PNG 到 videoDir。
+    // reveal 只改 renderWorld 两处的绘制门（地表 switch 掩码 / 精灵 s>0 门），纯
+    // paint 层、不碰 mapTiles——模拟与回放确定性不受影响（regress/replaycheck 双验）。
+    static final boolean DEV_REVEAL = System.getProperty("aoe.reveal") != null;
+    private static final String DEV_VIDEO_DIR = System.getProperty("aoe.videoDir");
+    /** 每 N tick 一帧（默认 10 = 0.4 游戏秒；30fps 合成 ≈12 倍原速）。 */
+    private static final int DEV_VIDEO_EVERY = Integer.getInteger("aoe.videoEvery", 10);
+    /** 进过一次任务主视图(6)才开始录——跳过 boot/导航噪声；终局弹窗继续录。 */
+    private boolean devVideoArmed;
+    private int devVideoSeq;
+
+    /** 帧尾钩子：videoDir 启用时按 videoEvery 节奏导出当前帧缓冲为 PNG。
+     *  PNG 编码的墙钟耗时只拖慢 tick 节奏，不改 tick 计数驱动的模拟。 */
+    public void devAfterFrame() {
+        if (DEV_VIDEO_DIR == null) {
+            return;
+        }
+        if (!this.devVideoArmed) {
+            if (this.screenState != 6) {
+                return;
+            }
+            this.devVideoArmed = true;
+        }
+        if (this.tickCount % DEV_VIDEO_EVERY != 0) {
+            return;
+        }
+        var_com_ulysseo_mad_b_a.dumpFramebuffer(
+            String.format("%s/frame_%08d.png", DEV_VIDEO_DIR, ++this.devVideoSeq));
+    }
 
     // ===== 可选 BFS 寻路（-Daoe.bfsPath=1，默认关，关闭时行为与原版逐字节一致）=====
     // 只替换 boolean_b 里"选落点"一步：DDA 直线步进换成"沿 BFS 路径取下一格"；
@@ -919,7 +923,6 @@ implements CommandListener {
             this.devBootPendingRestore = null;
             devApplySnapshot(data, true);
         }
-        this.devApplyReplayEvents();
     }
 
     /** 帧首应用快照（F9 快读与 devBoot 共用）。boot=true 时失败置 devBootApplyFailed。 */
@@ -941,35 +944,6 @@ implements CommandListener {
             }
             System.out.println("[load] apply: " + e);
             this.devToast("Load failed");
-        }
-    }
-
-    /** 帧首定点应用回放事件（replaytrace 的 tick 对齐注入，字段注释见
-     *  devReplayPending）。此刻 tickCount 已 ++、本帧输入消费尚未发生，按下必然
-     *  被本帧完整消费。先兑现到期松开再应用到点事件——同帧既有松开又有新按下
-     *  时必须先松后按（onKeyRelease 全清会抹掉先按的新键）。 */
-    private void devApplyReplayEvents() {
-        while (true) {
-            long[] rel = this.devReplayReleases.peek();
-            if (rel == null || rel[0] > this.tickCount) {
-                break;
-            }
-            this.devReplayReleases.poll();
-            this.onKeyRelease((int) rel[1]);
-        }
-        synchronized (this.devReplayPending) {
-            DevReplayEvent ev;
-            while ((ev = this.devReplayPending.peek()) != null && ev.tick <= this.tickCount) {
-                this.devReplayPending.poll();
-                if (ev.kind == 0) {
-                    this.onKeyPress(ev.a);
-                    // 松开 tick 化：下一帧首合成（"按下完整消费一帧"的最小语义），
-                    // 不走 Canvas 的 paint 完成计数（墙钟相位基准，flake 来源）。
-                    this.devReplayReleases.add(new long[]{this.tickCount + 1, ev.a});
-                } else {
-                    this.mouseA(0, ev.a, ev.b);
-                }
-            }
         }
     }
 
@@ -1047,10 +1021,31 @@ implements CommandListener {
     private volatile long devTraceBaseTick = -1;
     // 上次自动 checkpoint 的 tick(节流用,见 devFrameHousekeeping)
     private boolean devInScript;
+    // 写宏队列：dev 线程入队([fifo] ar= 锚=入队 tick)，模拟线程在每帧 sim 段前
+    // 统一应用。裸写在帧内微位置 play/replay 不同，1479 条累计 ±tick 尾差足以翻转
+    // 终局(m1 录制局实测)；量化到 tick 边界后两侧同路径，回放位精确。
+    private final java.util.Queue<String> devOpQueue = new java.util.concurrent.ConcurrentLinkedQueue<>();
+    private boolean devDraining;
+    // replaytrace 调度表：到期事件在帧首排空段应用（见 onPaint），dev 线程只负责载入
+    private final java.util.ArrayList<Long> devTraceTicks = new java.util.ArrayList<>();
+    private final java.util.ArrayList<String> devTraceCmds = new java.util.ArrayList<>();
+    private int devTracePos;
+    /** 写宏集合：入队量化到帧边界；其余(诊断/控制流/键鼠)保持 dev 线程内联即时。 */
+    private static final java.util.Set<String> DEV_QUEUED_OPS = java.util.Set.of(
+        "sel", "goto", "rally", "retask", "assign", "train", "build", "gather");
 
     /** 执行一条 FIFO 指令；返回 false 表示 exit。 */
     private boolean devMouseCmd(String line) {
+        // 操作录制锚点：每条指令应用瞬间记 tick。会话日志的 [fifo]/[input] 行
+        // 就是精确回放所需的全部信息（tools/mktrace.py 转换、replaytrace `fifo` op 重放）。
         String[] p = line.split("\\s+");
+        if (!this.devDraining && DEV_QUEUED_OPS.contains(p[0])) {
+            // 入队锚用 [fifoQ]（不进 trace）；[fifo] 留给帧首应用锚（mktrace 契约）
+            System.out.println("[fifoQ] ar=" + this.tickCount + " " + line);
+            this.devOpQueue.add(line);
+            return true;
+        }
+        System.out.println("[fifo] ar=" + this.tickCount + " " + line);
         // 各命令最小 token 数（含命令名）：缺参直接拒并回显，否则 AIOOBE 只留
         // 一行笼统异常（r20 裸 rclick 实锤），agent 无从得知正确用法。
         int need;
@@ -1069,11 +1064,15 @@ implements CommandListener {
                 need = 4; break;
             case "rally":
                 need = 3; break;
+            case "retask":
+                need = 4; break;
+            case "hdr9":
+                need = 3; break;
             case "goto":
                 need = 3; break;
             case "key": case "until": case "replaytrace": case "script":
             case "fields": case "save": case "load": case "dump": case "stopat":
-            case "count":
+            case "count": case "slots":
                 need = 2; break;
             case "state": case "exit": case "sitrep": case "ping": case "aistate":
                 need = 1; break;
@@ -1136,6 +1135,40 @@ implements CommandListener {
                         this.clearSelection();
                         System.out.println("[devMouse] sel FAIL (" + tx + "," + ty
                             + ") class=0x" + Integer.toHexString(cls) + " — 空地/资源/雾");
+                    }
+                    break;
+                }
+                case "hdr9": {
+                    // 宏：hdr9 <tx> <ty> —— 直写玩家伐木场交存点指针 hdr[9]（-1=无）。
+                    // 伪造到袋内空地=载满回送变"走到袋心闲置"，绕开不可达 TC 的回送
+                    // orbit（m1 三连 LOSS 根因）。到空地不触发交付钩子，村民停下待重新
+                    // 派工；趟数在砍完一载时已扣，隧道不需要真实入账。
+                    int tx = Integer.parseInt(p[1]) & 0x3F, ty = Integer.parseInt(p[2]) & 0x3F;
+                    this.playerUnitHeaders[0][9] = (short)(tx << 8 | ty);
+                    System.out.println("[devMouse] hdr9 -> (" + tx + "," + ty + ")");
+                    break;
+                }
+                case "retask": {
+                    // 宏：retask <slot> <tx> <ty> —— 按槽位直写任务目标（p0 单位）。
+                    // 与 orderMove 的选中路径同款三写（slot[2]=目标 slot[1]=现位 word7=0），
+                    // 但不经过 sel——orbit 中的单位位置秒变，sel 坐标必落空（m1 录制局实锤）。
+                    // 用途：解"回送中卡死"（目标格设为可达空地，word7 清 0 走过去）与
+                    // 免 sel 派工。落点=资源格时同 assign 触发采集。
+                    int slotIdx = Integer.parseInt(p[1]);
+                    int tx = Integer.parseInt(p[2]) & 0x3F, ty = Integer.parseInt(p[3]) & 0x3F;
+                    short[] tab = this.playerUnitSlots[0];
+                    int off = slotIdx << 3;
+                    if (slotIdx < 0 || slotIdx >= this.playerUnitHeaders[0][2]) {
+                        System.out.println("[devMouse] retask FAIL slot" + slotIdx
+                            + " 越界(n=" + this.playerUnitHeaders[0][2] + ")");
+                    } else {
+                        int w7 = tab[off + 7] & 0xFFFF;
+                        tab[off + 2] = (short)(tx << 8 | ty);
+                        tab[off + 1] = tab[off + 0];
+                        tab[off + 7] = 0;
+                        System.out.println("[devMouse] retask slot" + slotIdx + " ("
+                            + (tab[off] >>> 8) + "," + (tab[off] & 0xFF) + ")w" + Integer.toHexString(w7)
+                            + " -> (" + tx + "," + ty + ")");
                     }
                     break;
                 }
@@ -1385,6 +1418,23 @@ implements CommandListener {
                     System.out.println("[devMouse] count t" + t
                         + " 我=" + this.devCountUnits(0, t)
                         + " 敌=" + this.devCountUnits(1, t));
+                    break;
+                }
+                case "slots": {
+                    // 诊断：打印 p 玩家单位槽位 {i:type@(tx,ty)w任务字}（只读不进 trace）。
+                    // 任务字=word7 hex：低 nibble 0闲置/1行军/2采集(高字节0x66=满载计时)/3回送。
+                    int pl = Integer.parseInt(p[1]) & 1;
+                    int ucnt = this.playerUnitHeaders[pl][2];
+                    StringBuilder sb2 = new StringBuilder("[slots] p" + pl + " n=" + ucnt);
+                    for (int i = 0, off = 0; i < ucnt; ++i, off += 8) {
+                        sb2.append(' ').append(i).append(":t")
+                            .append(this.playerUnitSlots[pl][off + 3] & 0xFF)
+                            .append("@(").append(this.playerUnitSlots[pl][off] >>> 8)
+                            .append(',').append(this.playerUnitSlots[pl][off] & 0xFF)
+                            .append(")w").append(Integer.toHexString(
+                                this.playerUnitSlots[pl][off + 7] & 0xFFFF));
+                    }
+                    System.out.println(sb2);
                     break;
                 }
                 case "state": {
@@ -1742,22 +1792,22 @@ implements CommandListener {
                     System.out.println("[devMouse] dumped " + p[1]);
                     break;
                 case "replaytrace": {
-                    // 确定性回放：trace 全量解析、连同绝对目标 tick 一次入队
-                    // （devReplayPending），paint 线程帧首定点应用（devApplyReplayEvents）
-                    // ——注入时机纯 tick 决定，与 dev 线程墙钟/帧相位无关
-                    // （replaycheck 视图字段 flake 修复，2026-09-04）。行格式（# 注释）：
-                    //   t <相对tick> key <键码>
-                    //   t <相对tick> move <x> <y>
-                    // 相对 tick 的原点：先 load 存档 → 快照 v2 钉住的 tickCount；
-                    // 未 load 则为本指令执行瞬间。可选第三参显式指定原点（双跑对拍
-                    // 时两侧必须一致）。与真实输入同一条游戏内路径（onKeyPress/mouseA
-                    // + tick 化合成松开）。"done" 现表示"全部入队"，事件在目标 tick
-                    // 的帧首生效；目标 tick 已过的事件下一帧首补应用。
+                    // 确定性回放（调度表式）：载入 trace 到 devTraceTicks/Cmds，由模拟
+                    // 循环帧首（onPaint 排空段）统一应用到期事件——与 play 的写宏队列
+                    // 同一条帧首路径，±1 tick 竞态从结构上消失（旧版 dev 线程自旋
+                    // 等待的 application 时刻落在帧内随机位置，1884 事件可累计出
+                    // 284 tick 的终局漂移）。行格式与 mktrace 产出一致：
+                    //   t <相对tick> key <键码> | move <x> <y> | fifo <命令...>
+                    // 相对 tick 原点：load 存档后的 tickCount（快照钉住），可选第三参
+                    // 显式指定。
                     String file = p[1];
                     long base = this.devTraceBaseTick >= 0 ? this.devTraceBaseTick : this.tickCount;
                     if (p.length > 2) {
                         base = Long.parseLong(p[2]);
                     }
+                    this.devTraceTicks.clear();
+                    this.devTraceCmds.clear();
+                    this.devTracePos = 0;
                     int played = 0;
                     try (java.io.BufferedReader tr = new java.io.BufferedReader(
                             new java.io.InputStreamReader(new java.io.FileInputStream(file), "UTF-8"))) {
@@ -1772,25 +1822,34 @@ implements CommandListener {
                                 System.out.println("[devMouse] replaytrace bad line: " + tl);
                                 continue;
                             }
-                            long target = base + Long.parseLong(q[1]);
-                            DevReplayEvent ev;
+                            long at = base + Long.parseLong(q[1]);
                             if ("key".equals(q[2])) {
-                                ev = new DevReplayEvent(target, 0, Integer.parseInt(q[3]), 0);
+                                this.devTraceTicks.add(at);
+                                this.devTraceCmds.add("key " + q[3]);
                             } else if ("move".equals(q[2])) {
-                                ev = new DevReplayEvent(target, 1,
-                                    Integer.parseInt(q[3]), Integer.parseInt(q[4]));
+                                this.devTraceTicks.add(at);
+                                this.devTraceCmds.add("move " + q[3] + " " + q[4]);
+                            } else if ("fifo".equals(q[2])) {
+                                // 宏/输入指令（sel/goto/train/build/retask/...）。控制流指令
+                                // （load/save/replaytrace/script/stopat/exit/until）拒绝——
+                                // 会破坏 tick 锚定或嵌套死循环。
+                                String rest = String.join(" ", java.util.Arrays.copyOfRange(q, 3, q.length));
+                                if ("replaytrace".equals(q[3]) || "script".equals(q[3]) || "load".equals(q[3])
+                                        || "save".equals(q[3]) || "stopat".equals(q[3]) || "exit".equals(q[3])
+                                        || "until".equals(q[3])) {
+                                    System.out.println("[devMouse] replaytrace: 拒绝控制流指令: " + rest);
+                                    continue;
+                                }
+                                this.devTraceTicks.add(at);
+                                this.devTraceCmds.add(rest);
                             } else {
                                 System.out.println("[devMouse] replaytrace unknown op: " + tl);
                                 continue;
                             }
-                            synchronized (this.devReplayPending) {
-                                this.devReplayPending.add(ev);
-                            }
                             ++played;
                         }
                     }
-                    System.out.println("[devMouse] replaytrace done: " + played
-                        + " events queued, base=" + base + ", ar=" + this.tickCount);
+                    System.out.println("[devMouse] replaytrace scheduled: " + played + " events, base=" + base);
                     break;
                 }
                 case "stopat": {
@@ -2388,6 +2447,34 @@ implements CommandListener {
                 }
                 if (this.var_boolean_b) {
                     this.a(graphics, 21, this.screenW - 10, this.screenH - 6, 21, 0, 7, 6, 0, 0);
+                }
+                // dev 写宏帧首排空：任何屏状态都先应用（弹窗态按键类操作不被饿死）
+                if (!this.devOpQueue.isEmpty()) {
+                    this.devDraining = true;
+                    try {
+                        String op;
+                        while ((op = this.devOpQueue.poll()) != null) {
+                            devMouseCmd(op);
+                        }
+                    } finally {
+                        this.devDraining = false;
+                    }
+                }
+                if (this.devTracePos < this.devTraceTicks.size()) {
+                    this.devDraining = true;
+                    try {
+                        while (this.devTracePos < this.devTraceTicks.size()
+                                && this.devTraceTicks.get(this.devTracePos) <= this.tickCount) {
+                            devMouseCmd(this.devTraceCmds.get(this.devTracePos));
+                            ++this.devTracePos;
+                        }
+                    } finally {
+                        this.devDraining = false;
+                    }
+                    if (this.devTracePos >= this.devTraceTicks.size()) {
+                        System.out.println("[devMouse] replaytrace done: " + this.devTracePos
+                            + " events, ar=" + this.tickCount);
+                    }
                 }
                 switch (this.screenState) {
                     case 7: {
@@ -6278,7 +6365,8 @@ implements CommandListener {
                     if ((this.mapTiles[n] & 0xFFF) == 768) {
                         this.drawTileSprite(graphics, 0, n3, n11, 0);
                     } else {
-                        switch (this.mapTiles[n] & 0xF000) {
+                        // reveal：掩掉 0xF000 里的雾位(0x8000)→雾下地形按本体绘制
+                        switch (this.mapTiles[n] & (DEV_REVEAL ? 0x7000 : 0xF000)) {
                             case 0: 
                             case 4096: {
                                 this.drawTileSprite(graphics, 4, n3, n11, 0);
@@ -6333,7 +6421,9 @@ implements CommandListener {
                     n = n6 + (n7 << 6);
                     short s = this.mapTiles[n];
                     int n17 = s & 0x300;
-                    if (s > 0) {
+                    // reveal：雾格(short 负值)也走正向精灵绘制（雾编码占位 0x83xx/0x85xx/
+                    // 0x82xx 的低 12 位与明格同构，资源/建筑/单元三 case 直接复用）
+                    if (s > 0 || DEV_REVEAL) {
                         switch (n17) {
                             case 768: {
                                 if ((this.mapTiles[n] & 3) == 0) break;

@@ -179,6 +179,75 @@
 - **验证**：`./gradlew classes` 绿；`tools/regress.sh` 一次 PASS（未 --update）。
 - commit：未提交（按任务要求不做 git 写操作）。
 
+### 战役攻略第 2 夜: BFS 两硬约束入册, m1 重录受阻(种子重掷+采集不兼容)(2026-09-03)
+
+- **战役地图=种子派生实锤**: 同 saveDir 复用 RMS 三次 boot 三张地形(建筑/敌兵布点
+  固定, 树墙位置变), 且 z=98 结算(胜/败)都写回新种子 → 每局后地图必换; mapSeed pin
+  对战役无效。自洽性靠 base.aoesave 内嵌 nfo(devBoot 恢复种子)——录/回同图 ✓。
+  推论: "重打同一张图"必须 devBoot 读档, 裸 boot 必换图。
+- **BFS×采集不兼容实锤**: bfsPath=1 下 BFS 拒资源格(占用格)终点 → retask 资源格
+  无路径 → 村民 idle 零采集(m1b 隧道 800s 零树倒)。战役采集关须关 BFS; 修法待做
+  (BFS 允许占用格终点/邻格+补步)。军事行军 BFS 未系统验证。
+- m1 重录流程跑通但未收官: 两次 LOSS 均为"落单村民被杀即判负"(脚本严格败北, 第 3 次
+  改为停靠落单村民+双村民砍树时撞上 BFS 约束)。已转 DDA 收尾建议: 下轮用 DDA 原生
+  重录 m1(流程已文档化: 清西部敌→归队→砍隧道 y=57/58→护送入堡)。
+- 工具: /tmp/aoe-camp/lib.py 驱动库(Camp 类: slots/retask/gather_hammer/chop_rows/
+  rally_seq/save_probe 全参数化)——下轮直接复用。
+- commit: 本条目+手册§11.1。
+
+### 战役攻略第 3 夜: hdr9 伪交存根治回送 orbit, m1 重录仍差最后一步(2026-09-03)
+
+- **hdr9 伪交存=本轮最大发明**: `hdr9 <tx> <ty>` 直写玩家伐木场指针 hdr[9]→袋内
+  空地, 载满回送变"走到袋心闲置"(空地不触发交付钩子, 村民停下待重派)——根治了
+  "载满回城不可达 → orbit 漂移 → 被敌杀 → 判负"的死循环。实测: 三行并行砍树稳定
+  运转 22 分钟, 20+ 棵树倒, 零漂移零死亡(此前所有方案 10 分钟内必炸)。
+- **任务清理 SIGHUP 误杀游戏实锤**: 游戏日志无错戛然而止, ar 停在机器跑完的时点
+  ——Bash 工具任务完成时的清理会 SIGHUP 同组后台进程。修复=启动用 nohup+disown
+  (macOS 无 setsid)。历次"神秘死亡"均此因。
+- **BFS 采集链路修正(再修正)**: 第 2 夜"BFS×采集不兼容"结论过强——真因是 ①锤子
+  每轮重发触发离队重算(改"位置 3 轮无进展才重发") ②前排树目标搞错(墙内深处树
+  无可走邻格种子)。前排树+守卫式重发后 BFS 砍树链路成立: BFS 走到隔壁→d0=0 回退
+  DDA→踏入目标格→钩子采集。
+- **m1 重录最后一次尝试记录**: 砍到 x=44(过半)时又折一村民判负(LOSS 197523),
+  疑为敌塔 (49,52) 射程(4)覆盖出口区 y≤56 段——lib.chop_rows 已加塔区围栏
+  (fence 5 元组: xmin,ymin,ymax,xmax,ygate)。最后一次尝试 LOSS 27042 因机器日志
+  全缓冲无法诊断(noheredoc|tail 管道缓冲), 下轮首事: python 直写日志文件不加管道。
+- **下轮 m1 收官清单**: ①机器日志改直写文件 ②核验塔区围栏 ③破墙后护送
+  (retask 全体村民 (51,60)) ④WIN 后 mktrace+campaign-replay 验证位精确回放。
+  工具全就绪: lib.py(chop_rows 围栏版/gather_hammer/rally_seq) + m1run.py 配方
+  (修掉 dict 切片语法错) + NOTES.md 会话笔记。
+- commit: 本条目+hdr9 宏+手册§11.1 BFS 修正。
+
+### 战役攻略第 1 夜: m1 通关+全程录制, 回放基建落地, m2 采集引擎考古(2026-09-03)
+
+- **m1(护送关)通关**: `WIN ticks=90133`。开局口袋被树墙围死(与 m+16 同款),
+  唯一路=南线 y=59 砍 14 棵树开隧道直通我方 Lucina 堡(北线 y=51-53 有敌 3 塔卡口,
+  弃)。砍穿后村民自动走到堡垒触发脚本胜利(z=98, 战役 m1 胜利=脚本路径非 TC 毁)。
+- **回放基建(本轮主产出)**: ①devMouseCmd 入口 `[fifo] ar=<tick>` 录制锚点——会话日志
+  即操作录制; ②replaytrace 新增 `fifo` op(tick 锚定重放宏命令, 控制流指令拒嵌套);
+  ③新宏 `slots <p>`(槽位表含任务字)/`retask <slot> <tx> <ty>`(按槽位直写任务目标,
+  复刻 orderMove 三写, 解 sel 竞态); ④tools/mktrace.py(日志→trace, 排除只读/控制流
+  指令, key/move 原生 op 其余走 fifo 前缀); ⑤tools/campaign-replay.sh(devBoot 直启
+  base 存档+replaytrace, tickms 任意=任意倍速观看, 结果与 tickms 无关)。
+  m1 录制入库 recordings/campaign/m1/{base.aoesave,trace.txt,session.log}。
+- **已知边界(诚实标注)→已解决**: 回放最初为"重演"非位精确——dev 线程裸写在帧内
+  微位置 play/replay 不同, 1479 条累计 ±tick 尾差足以翻转终局(m1 回放三连稳定差
+  一格进堡区)。修复=**写宏队列化**: sel/goto/rally/retask/assign/train/build/gather
+  八类写操作 dev 线程入队([fifo] ar= 锚=入队 tick), 模拟线程每帧 sim 段前统一排空
+  (devOpQueue/devDraining/DEV_QUEUED_OPS, onPaint switch 前排空)——play/replay 同
+  路径后位精确。replaycheck(A/B 对称对拍)双绿 ✓; regress PASS ✓。
+- **m2(经济关 100木/100石/100金)未完, 考据收获大**: 石 186✓(一次 retask 即自动
+  循环), 木 10/金 15 后卡死。**采集引擎边界实测**: ①采集钩子只在"多步行走踏入资源
+  格"时触发, 站资源格上 idle 时同格 retask=no-op, 1 格乒乓不够, 需 2+ 格 approach;
+  ②DDA 长途(30+格)交存走会 stall → 载满回送 orbit → 首趟交付后再不交付(m2 木/金
+  双双如此), 需 waypoint 接力护送状态机(未做); ③雾下资源 kind 0x83xx&3: 0=浆果
+  (不可采集!)1=木 2=金 3=石——m2 村庄周边"森林"实为浆果丛, 真树在西南(10-15,24-32);
+  ④槽位死亡压缩会吞按槽位寻址的宏, 先核对 type; ⑤m2 村民/军队损失不触发判负
+  (败北比"护送死一个"宽松); ⑥载量 hdr[50..52]=木5/金3/石3 每趟, 交存×采集倍率。
+- **事故**: campaign-replay.sh v1 awk 取列错(base 解析成 events=1479)+0 events 假回放
+  还报"一致(0 行)"——对拍必须非空+终局必须复现, 已修; 另一次 replaycheck state 差异
+  系并行回放抢 CPU 的计时扰动, 复跑双绿。
+- commit: 本条目对应。m3-m7 + m2 接力护送机 = 下轮主菜, 工具链已就绪。
 ### RuleBasedAi 第四批：波 1 接战微操（2026-09-03，Expert 天花板定性）
 
 - **做了什么**：v35 = v30 + Expert 门控微操四件套（全在 `aoe/ai/RuleBasedAi.java`）：

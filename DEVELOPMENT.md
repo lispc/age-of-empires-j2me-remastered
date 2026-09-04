@@ -95,6 +95,8 @@ LLM 玩家代理的宏层（sel/goto/train/build/gather/rally/sitrep 等 FIFO �
 | `aoe.exitOnResult=1` | 终局（startMissionBriefing z==98）无条件打印 `[result] WIN|LOSS ticks=N` 后 System.exit(0)——批量脚本契约，格式勿改 |
 | `aoe.mapSeed=N` | 随机图种子覆盖（beginMissionLoad 装载点，N 拆 hi/lo 两字节；不设则逐字节不变） |
 | `aoe.bfsPath=1` | 可选 BFS 寻路（默认关）：`boolean_b` 的 DDA 选落点换成沿缓存 BFS 路径取下一格，落点检查/抵达钩子/扇形回退不变；语义详见 game-mechanics「移动与寻路」 |
+| `aoe.reveal=1` | 渲染无视迷雾（黑雾→地形本体，雾下资源/建筑/单位照画）。**纯 paint 层**：只改 renderWorld 两处绘制门，不碰 mapTiles，模拟/回放确定性不受影响 |
+| `aoe.videoDir=<dir>` + `aoe.videoEvery=N` | 每帧渲染完成后按每 N tick（默认 10=0.4 游戏秒）导出一帧 PNG 到 dir（进过主视图才开始录，终局弹窗继续录）。PNG 编码只拖墙钟不改 tick。合成 mp4：`ffmpeg -framerate 30 -i frame_%08d.png -c:v libx264 -pix_fmt yuv420p`（30fps≈12 倍原速）；campaign-replay.sh `--video` 一条龙 |
 | `aoe.aiFog` | RuleBasedAi 迷雾诚实模式（默认开=只读已探索格敌情/资源，禁读 hdr[1] 统计）：`=0` 回退全图（ailoop `-f`）；`=res`/`=tc` 消融档（资源全图/敌 TC 全图，仅诊断） |
 | `aoe.rmsDir=<dir>` | RecordStore（.nfo）落盘目录重定向（批量实验隔离，防种子写回污染用户数据） |
 
@@ -119,6 +121,9 @@ LLM 玩家代理的宏层（sel/goto/train/build/gather/rally/sitrep 等 FIFO �
   **2026-09-03 修复**：门槛/回显改真单位计数 devCountUnits——原 a(0,t,false) 数建筑
   数组致零移动+回显失真，r31 实锤）/ `count <type>`（双方真单位计数，全军就位判定）/
   `assign <rtx> <rty> [n]`（闲置村民——任务字低 nibble==0——批量绑资源，r32 新增）/
+  `retask <slot> <tx> <ty>`（按槽位直写任务目标，复刻 orderMove 三写不经 sel——单位
+  移动中 sel 坐标必落空；可用于解"回送中卡死"，2026-09-03 战役局新增）/
+  `slots <p>`（槽位表 {i:type@(tx,ty)w任务字} 诊断，只读）/
   `train <tx> <ty> <n>`（生产建筑排队 n 个，
   pop/canAfford 约束下如实报 k/n）/ `build <tx> <ty> <type>`（直接放置建筑，仍受
   canAfford/上限/占格/雾约束）/ `tile <tx> <ty>`（格诊断：raw/类目/owner/序号/雾/
@@ -189,17 +194,14 @@ docs/game-mechanics.md「确定性模型」）。自检：`tools/replaycheck.sh 
 定时器/线程后必跑。实机卡死复现工作流（日志 `[input]` 行 + auto.aoesave → trace →
 `load` + `replaytrace` → `stopat` 冻结验尸）见 WORKLOG.md 2026-09-01「确定性回放落地」。
 
-**注入语义（2026-09-04 起，tick 对齐）**：replaytrace 不再从 dev 线程"见
-tickCount≥target 就直呼 onKeyPress/mouseA"（注入相位由墙钟决定，同一事件 A/B
-两跑可差 1 帧消费——贴边 move 的边缘滚动按帧累计平移镜头，差 1 帧 = cam 永久
-偏 1-2px、sel/cursor 跟着翻，这就是 replaycheck 视图字段 flake 的根因）。现改为
-指令到达即把事件连绝对目标 tick 全量入队（`devReplayPending`），帧首
-（devFrameHousekeeping，tickCount 已 ++、本帧输入消费前）把 tickCount≥target 的
-事件统一定点应用：效果 tick 恒等于 target。key 事件的松开由帧首逻辑在 t+1 合成
-（"按下被完整消费一帧"的最小语义），**不走** Canvas 的 paint 完成计数
-（queueSyntheticKeyRelease 仍服务交互式 FIFO key/tapk/鼠标点击）。`replaytrace done`
-日志现在表示"全部入队"而非"全部生效"；事件未生效前 tick 被 stopat 冻结则剩余
-事件自然丢弃（不再阻塞 600s）。排雷记录第 9 条见 WORKLOG.md 2026-09-04。
+**注入语义（2026-09-04 起，调度表式 tick 对齐）**：replaytrace 把 trace 事件连绝对
+目标 tick 载入调度表（`devTraceTicks/devTraceCmds`），由 onPaint 帧首排空段统一
+应用到期事件（与写宏队列 `devOpQueue` 同一条帧首路径；行格式还支持
+`fifo <宏命令...>` 回放宏，控制流指令拒绝）。旧版从 dev 线程"见 tickCount≥target
+就直呼 onKeyPress/mouseA"的注入相位由墙钟决定，同一事件 A/B 两跑可差 1 帧消费——
+贴边 move 的边缘滚动按帧累计平移镜头，差 1 帧 = cam 永久偏 1-2px、sel/cursor
+跟着翻（replaycheck 视图字段 flake 的根因）。`replaytrace done` 日志在最后一个
+事件于帧首应用后打印。排雷记录第 9 条见 WORKLOG.md 2026-09-04。
 
 ### 存读档
 

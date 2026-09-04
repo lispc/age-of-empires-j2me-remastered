@@ -32,6 +32,22 @@ mouseLastTile
 mouseRclickGrace
 mouseRclickPending
 bgmFramesLeft
+# —— 2026-09-04 补：mediaRequestId（最后请求的 BGM 曲目 id）。与 bgmFramesLeft 同链：
+# 不进存档、由化妆品 RNG 驱动；turbo 化后两次 dump 间仍过数百帧（实测 ~540 tick），
+# bgmFramesLeft 在窗口内烧穿 0 触发 playNextBgm 换曲，id 合法漂移（旧 40ms 节拍
+# 窗口只有 ~25 tick，基本打不到换曲）。——
+mediaRequestId
+# —— 2026-09-04 补：cursorScreenPxX/Y（光标屏幕像素）。renderWorld 每帧开头先置 -64
+# 再扫到光标格时改写——纯渲染派生值，不进存档（真值 = cursorTileX/Y + cameraPxX/Y，
+# 仍在 diff 覆盖内）。fields dump 是 dev 线程异步读，可撞进渲染的 -64→写回窗口
+# （读撕裂）；turbo 高帧率下命中率 ~50%（6 连跑实测 3 次），旧 40ms 节拍只是低概率没暴露。——
+cursorScreenPxX
+cursorScreenPxY
+# —— 2026-09-04 补：static.var_boolean_b（AgeOfEmpires.b 的"媒体请求待处理"标志）。
+# requestMedia 置位、音频系统消费后清位（c.java:2540-2549）——与 mediaRequestId 同一
+# 请求流水线：turbo 窗口内 playNextBgm 置位后，f_after 前是否已被消费取决于音频线程
+# 时序（并行跑 CPU 争抢时实测命中）。化妆品音频态、不进存档。——
+static.var_boolean_b
 # —— 2026-09-02 补：与 aiBuildTimer/aiTrainTimer 同类的 AI 帧计数器；
 # 因 aiEnabled 跨任务泄漏修复（装载统一落默认值）后教学关 aiFreeResInterval
 # 由 0 变 MAX，该计时器开始连续走字，存读两帧间合法漂移 ——

@@ -913,3 +913,94 @@ FAIL 回显都带原因，先读回显再补救。
    c.java:8042-8048——每 `aiFreeResInterval` tick（Easy=MAX 等于关闭、Medium=2500、
    Expert=1000）给**敌方**三桶各加 `hdr[1][57]`（=敌 t1 村民已建数，典型值 ~4）。
    量小但非零，Expert 敌经济是 8× 采集 + 每 1000t 三桶各 +4 的第二条补给线。
+
+## 11. 战役录制/回放协议（2026-09-03 战役攻略第 1 夜新增）
+
+战役（`-Daoe.dev=campaign:N`，共 7 关，res 103..109 任务数据+110..116 触发脚本）。
+录制=会话日志本身：每条 FIFO 指令应用瞬间打 `[fifo] ar=<tick>`，键事件打
+`[input] ar=<tick>`（-Daoe.debug=1）。
+
+**录制规程**：
+1. boot：`-Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1
+   -Daoe.harnessQuiet=1 -Daoe.exitOnResult=1 -Daoe.saveDir=/tmp/... -Daoe.mapSeed=8224
+   -Daoe.devMouse=<fifo>`（harnessQuiet 必开，否则看门狗墙钟乱按污染录制）。
+2. 推掉简报弹窗（key -6）到 aA=6 → `save <work>/base.aoesave`（此刻 ar=回放原点）。
+3. 之后所有写操作只准走可重放宏（retask/goto/sel/rally/train/build/gather/assign/key/
+   move）；tapk（墙钟重试）与 save/load/state/slots 等不进 trace。
+4. 终局 `[result] WIN|LOSS ticks=N` 截断（mktrace --until）。
+5. `tools/mktrace.py <session.log> <baseAr> <dir>/trace.txt --until '[result]'` 生成
+   trace（行语法 `t <rel> key|move|fifo ...`——fifo 前缀别漏，漏了=0 events 假回放）。
+
+**回放**：`tools/campaign-replay.sh <dir> [tickms] [--headless] [--video[=out.mp4]] [--fps=N]`
+——devBoot 直启 base.aoesave → replaytrace 重放。tickms 任意（默认 10=4 倍速），
+事件按 tick 锚定，观看速度不影响进程。对拍要求：`[result]` 必须复现 + 双侧过
+mktrace 过滤后的操作流逐行一致；空流"一致"=假阳性，脚本已防。`--video` 在回放
+同时逐帧导出（`-Daoe.reveal=1` 迷雾全开）并在验证通过后 ffmpeg 合成 mp4（默认
+fps=30≈12 倍原速）；长 trace 验证+出视频建议 tickms=2 免超时。
+
+**位精确机制（调度表式，2026-09-04 定稿）**：录制时写宏在 dev 线程入队打
+`[fifoQ] ar=`（不进 trace），模拟线程每帧 sim 段前排空时打 **`[fifo] ar=`（锚=
+帧首应用 tick，mktrace 契约）**——play 与 replay 共用同一条帧首路径（replaytrace
+把事件载入调度表，由同一排空段按 tick 应用），±1 tick 竞态从结构上消失。
+旧"dev 线程自旋等待"式回放（2026-09-03 早版）1884 事件可累计 284 tick 漂移翻转
+终局，已废弃。键鼠/诊断/控制流仍 dev 线程内联（键是脉冲事件 ±1 帧无害）。
+录制必须用含队列+调度表的二进制（2026-09-04 之后的 build）。
+
+**战役专用经验**（m1/m2 实测）：
+- m1 型护送关：口袋被树墙围死时走"砍隧道"（m+16 教程同款）；砍树用 retask 拍到
+  前线树格，**趟数在砍完一载时扣（与交存无关）**，隧道不需要交存通路。
+- 雾下资源判种 0x83xx&3：**0=浆果不可采集**，1=木 2=金 3=石。村庄边的"森林"可能
+  是浆果丛——先 res 全图对账再规划。
+- 采集钩子只认"多步行走踏入资源格"：单位 idle 在资源格上时，同格 retask 是 no-op，
+  1 格乒乓也不触发，要 2+ 格外的 approach；DDA 长途交存走（30+格）会 stall 断自
+  动循环（首趟交付后不再交付）——经济关需 waypoint 接力护送状态机（待建）。
+- 单位死亡后槽位压缩，按槽位寻址（retask/slots）前先核对 type；战役 m2 损失单位
+  不判负（败北条件比"护送死一个"宽松）。
+- 载量 hdr[50..52]=木5/金3/石3 每趟，交存入账=载量×采集倍率>>8。
+
+### 11.1 战役地图种子与 BFS 两个硬约束（2026-09-03 第 2 夜实测）
+
+- **战役地图=种子派生，`-Daoe.mapSeed` 对战役无效**（建筑/敌兵布点固定出自 res
+  数据，树墙地形随种子变）。同 saveDir 复用 RMS 也不保同图：**z=98 结算（胜/败都算）
+  会写回新种子**——每次带结算的 boot 之后地图必换。录制自洽性不受影响：base.aoesave
+  内嵌 nfo/RMS，devBoot 读档恢复种子 → 回放与录制同图（DDA 时代已实证）。
+  推论：想"重打同一张图"必须在读档后操作（devBoot base.aoesave），别裸 boot。
+- **`-Daoe.bfsPath=1` 与采集：能用，约束三条**。BFS 对墙格目标=从可走邻格反向
+  洪泛、走到隔壁（d0=0 时回退 DDA）由 DDA 踏入目标格触发采集钩子——链路成立。
+  ①目标必须**前排树**（墙内深处树无可走邻格种子 → 不可达停摆），先勘察前沿；
+  ②**不许频繁重发 retask**（触发离队重算，路径缓存永远走不完），改"位置 3 轮无
+  进展才重发"；③村民会因"载满回送不可达 orbit"漂出安全区被杀——根治=
+  **`hdr9 <tx> <ty>` 伪造交存点**：直写 hdr[9] 到袋内空地，回送变"走到袋心闲置"，
+  实测三行并行砍树 22 分钟零漂移零死亡。另：**游戏进程须 nohup+disown 启动**
+  （macOS 无 setsid）——后台任务完成清理会 SIGHUP 同组子进程，游戏无错戛然而止
+  即此因。
+
+## 12. 战役轮战制：sub-agent 单关轮 + 主会话轮间消化（2026-09-04 定稿）
+
+**分工**：一关 = 一轮 = 一个 sub-agent（general-purpose）。sub-agent 只做试玩+录制+
+报告；主会话负责轮间消化（验证回放/出视频/改工具/改文档/commit/push）——**消化完
+才许开下一轮**，改进不推迟。
+
+**主会话启动 sub-agent 指令模板**（按关填槽）：
+1. 先读：AGENTS.md、本手册（§6.1b 宏、§7 陷阱、§8 报告纪律、§11/§11.1 战役协议）、
+   `tools/campaign/README.md` + `NOTES.md`（各关档案/敌情/资源图）、WORKLOG 最新
+   一条战役夜志。
+2. 任务：通关 `-Daoe.dev=campaign:N` 并按 §11 规程产出 tick 锚定录制。
+3. 硬约束：workdir `/tmp/aoe-camp/mN`（不复用旧目录）；`-Daoe.saveDir` 一律 /tmp；
+   游戏进程 nohup+disown；机器日志 python 直写文件（禁 `| tail` 管道缓冲）；
+   m1 型"死亡即判负"关全程禁 rally/接敌；录制用仓库当前 build。
+4. 产物：`/tmp/aoe-camp/mN/{play.log,base.aoesave,trace.txt}`（WIN 时）+
+   `/tmp/aoe-camp/BUGS-mN.md`（增量可被主会话 mid-run 读：当前局面/风险/下一步）。
+5. 报告契约（§8 全文适用）：终局+时间线；「操作经验」；「反思与给主会话的建议」；
+   证据等级标注；与既有结论冲突写明交主会话裁决。
+6. 止损：60-90 分钟或上下文过半即交棒——LOSS 也照常交棒报告，禁止无脑重开整局
+   （重开须换 front 行/路线并在报告里写明依据）。
+
+**主会话轮间消化清单**（下一轮启动前逐项打勾）：
+- [ ] WIN：mktrace → `campaign-replay.sh <dir> 2 --headless --video` 验证终局复现
+  + 出全亮 mp4 → 三件套+视频入 `recordings/campaign/mN/`；
+- [ ] LOSS：读 sub-agent 尸检，定性根因（脚本/战术/工具/地图），改进落地或换路线重录；
+- [ ] 经验并入手册（§11 系列）/ `tools/campaign/NOTES.md` 各关档案；工具缺口当场补
+  （新宏/新脚本进 lib.py 或 FIFO）；
+- [ ] WORKLOG 条目 + commit + push（回归绿为前提）；
+- [ ] `tools/round-stats.py <transcript>` 效率画像附战报。
