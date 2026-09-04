@@ -8,6 +8,10 @@
 回放（任意倍速，事件按 tick 锚定）：
     tools/campaign-replay.sh recordings/campaign/m1 10      # 4 倍速窗口观看
     tools/campaign-replay.sh recordings/campaign/m1 5 --headless   # 无窗口验证
+    tools/campaign-replay.sh recordings/campaign/m1 2 --headless --video   # 验证+全亮视频(默认 fps=30≈12倍速, 输出 <dir>/replay.mp4)
+
+视频 = 回放同时逐帧导出（`-Daoe.reveal=1` 迷雾全开）→ ffmpeg 合成；帧按 tick 锚定，
+tickms 只影响墙钟不影响视频内容。长 trace 验证+出视频建议 tickms=2（免超时）。
 
 战绩：
 - m1 护送关  WIN ticks=90133（砍隧道穿森林护村民入堡）

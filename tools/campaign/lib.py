@@ -185,9 +185,9 @@ class Camp:
                     stuck[u['i']] = 0
                 lastpos[u['i']] = pos
                 if w != 2 and stuck.get(u['i'], 0) >= 3:
-                    near = (u['x'] - fx) ** 2 + (u['y'] - r) ** 2 <= 2
-                    tgt = (fx, r) if not near else (max(xmin, fx - approach_off), r)
-                    self.cmd(f"retask {u['i']} {tgt[0]} {tgt[1]}")
+                    # BFS 时代：邻格状态直发目标树（邻格→d0=0 回退 DDA→踏入→钩子）。
+                    # approach 乒乓会打断这条链（DDA 时代的老经验在 BFS 下反效果）。
+                    self.cmd(f"retask {u['i']} {fx} {r}")
                     time.sleep(0.05)
                     stuck[u['i']] = 0
                     stuck[u['i']] = 0

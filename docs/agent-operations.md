@@ -931,16 +931,20 @@ FAIL 回显都带原因，先读回显再补救。
 5. `tools/mktrace.py <session.log> <baseAr> <dir>/trace.txt --until '[result]'` 生成
    trace（行语法 `t <rel> key|move|fifo ...`——fifo 前缀别漏，漏了=0 events 假回放）。
 
-**回放**：`tools/campaign-replay.sh <dir> [tickms] [--headless]`——devBoot 直启
-base.aoesave → replaytrace 重放。tickms 任意（默认 10=4 倍速），事件按 tick 锚定，
-观看速度不影响进程。对拍要求：`[result]` 必须复现 + 双侧过 mktrace 过滤后的操作流
-逐行一致；空流"一致"=假阳性，脚本已防。
+**回放**：`tools/campaign-replay.sh <dir> [tickms] [--headless] [--video[=out.mp4]] [--fps=N]`
+——devBoot 直启 base.aoesave → replaytrace 重放。tickms 任意（默认 10=4 倍速），
+事件按 tick 锚定，观看速度不影响进程。对拍要求：`[result]` 必须复现 + 双侧过
+mktrace 过滤后的操作流逐行一致；空流"一致"=假阳性，脚本已防。`--video` 在回放
+同时逐帧导出（`-Daoe.reveal=1` 迷雾全开）并在验证通过后 ffmpeg 合成 mp4（默认
+fps=30≈12 倍原速）；长 trace 验证+出视频建议 tickms=2 免超时。
 
-**位精确机制**：写宏（sel/goto/rally/retask/assign/train/build/gather）由 dev 线程
-入队（`[fifo] ar=` 锚=入队 tick），模拟线程每帧 sim 段前统一排空——play 与 replay
-同路径，回放位精确。键鼠/诊断/控制流仍 dev 线程内联（键是脉冲事件 ±1 帧无害）。
-录制必须用含队列的二进制（2026-09-03 之后的 build）；旧录制若发现回放不复现终局，
-用新 build 重放一遍旧 trace 重新生成 session.log/trace.txt（锚点不变）即可升级。
+**位精确机制（调度表式，2026-09-04 定稿）**：录制时写宏在 dev 线程入队打
+`[fifoQ] ar=`（不进 trace），模拟线程每帧 sim 段前排空时打 **`[fifo] ar=`（锚=
+帧首应用 tick，mktrace 契约）**——play 与 replay 共用同一条帧首路径（replaytrace
+把事件载入调度表，由同一排空段按 tick 应用），±1 tick 竞态从结构上消失。
+旧"dev 线程自旋等待"式回放（2026-09-03 早版）1884 事件可累计 284 tick 漂移翻转
+终局，已废弃。键鼠/诊断/控制流仍 dev 线程内联（键是脉冲事件 ±1 帧无害）。
+录制必须用含队列+调度表的二进制（2026-09-04 之后的 build）。
 
 **战役专用经验**（m1/m2 实测）：
 - m1 型护送关：口袋被树墙围死时走"砍隧道"（m+16 教程同款）；砍树用 retask 拍到
@@ -970,3 +974,33 @@ base.aoesave → replaytrace 重放。tickms 任意（默认 10=4 倍速），�
   实测三行并行砍树 22 分钟零漂移零死亡。另：**游戏进程须 nohup+disown 启动**
   （macOS 无 setsid）——后台任务完成清理会 SIGHUP 同组子进程，游戏无错戛然而止
   即此因。
+
+## 12. 战役轮战制：sub-agent 单关轮 + 主会话轮间消化（2026-09-04 定稿）
+
+**分工**：一关 = 一轮 = 一个 sub-agent（general-purpose）。sub-agent 只做试玩+录制+
+报告；主会话负责轮间消化（验证回放/出视频/改工具/改文档/commit/push）——**消化完
+才许开下一轮**，改进不推迟。
+
+**主会话启动 sub-agent 指令模板**（按关填槽）：
+1. 先读：AGENTS.md、本手册（§6.1b 宏、§7 陷阱、§8 报告纪律、§11/§11.1 战役协议）、
+   `tools/campaign/README.md` + `NOTES.md`（各关档案/敌情/资源图）、WORKLOG 最新
+   一条战役夜志。
+2. 任务：通关 `-Daoe.dev=campaign:N` 并按 §11 规程产出 tick 锚定录制。
+3. 硬约束：workdir `/tmp/aoe-camp/mN`（不复用旧目录）；`-Daoe.saveDir` 一律 /tmp；
+   游戏进程 nohup+disown；机器日志 python 直写文件（禁 `| tail` 管道缓冲）；
+   m1 型"死亡即判负"关全程禁 rally/接敌；录制用仓库当前 build。
+4. 产物：`/tmp/aoe-camp/mN/{play.log,base.aoesave,trace.txt}`（WIN 时）+
+   `/tmp/aoe-camp/BUGS-mN.md`（增量可被主会话 mid-run 读：当前局面/风险/下一步）。
+5. 报告契约（§8 全文适用）：终局+时间线；「操作经验」；「反思与给主会话的建议」；
+   证据等级标注；与既有结论冲突写明交主会话裁决。
+6. 止损：60-90 分钟或上下文过半即交棒——LOSS 也照常交棒报告，禁止无脑重开整局
+   （重开须换 front 行/路线并在报告里写明依据）。
+
+**主会话轮间消化清单**（下一轮启动前逐项打勾）：
+- [ ] WIN：mktrace → `campaign-replay.sh <dir> 2 --headless --video` 验证终局复现
+  + 出全亮 mp4 → 三件套+视频入 `recordings/campaign/mN/`；
+- [ ] LOSS：读 sub-agent 尸检，定性根因（脚本/战术/工具/地图），改进落地或换路线重录；
+- [ ] 经验并入手册（§11 系列）/ `tools/campaign/NOTES.md` 各关档案；工具缺口当场补
+  （新宏/新脚本进 lib.py 或 FIFO）；
+- [ ] WORKLOG 条目 + commit + push（回归绿为前提）；
+- [ ] `tools/round-stats.py <transcript>` 效率画像附战报。
