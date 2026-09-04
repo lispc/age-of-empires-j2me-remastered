@@ -51,8 +51,10 @@ public final class CampaignAi implements PlayerAi {
         switch (game.missionIndex) {
             case 0:
             case 3:
-            case 6:
                 this.tickRaze(game);
+                break;
+            case 6:
+                this.tickFinalAssault(game);
                 break;
             case 5:
                 this.tickProtectCastle(game);
@@ -62,6 +64,9 @@ public final class CampaignAi implements PlayerAi {
                 break;
             case 1:
                 this.tickEscort(game);
+                break;
+            case 4:
+                this.tickCastleRace(game);
                 break;
             default:
                 if (this.lastMissionLogged != game.missionIndex) {
@@ -410,6 +415,14 @@ public final class CampaignAi implements PlayerAi {
 
     /** 离 pos 最近、8 格内无敌兵的资源格（kind 1木2金3石）。全图读（战役许可）。 */
     private int nearestSafeResource(c game, int pos, int kind, short[] es, int eu) {
+        return this.nearestSafeResourceOffCorridor(game, pos, kind, es, eu, -1, -1);
+    }
+
+    /** 走廊回避版：skip 敌TC→我TC 走廊两侧 5 格内的资源格——敌 all-in 沿走廊
+     *  直扑我 TC，走廊上的矿=前线（#4 v4 尸检：石矿 (37,40) 正在走廊上，
+     *  4000t 起战场就钉在矿上，经济被拉锯战饿死）。etc=-1 时不回避。 */
+    private int nearestSafeResourceOffCorridor(c game, int pos, int kind, short[] es, int eu,
+            int etc, int mtc) {
         int px = pos >>> 8, py = pos & 0xFF;
         int best = -1, bestD2 = Integer.MAX_VALUE;
         for (int y = 0; y < 64; ++y) {
@@ -417,6 +430,9 @@ public final class CampaignAi implements PlayerAi {
                 int t = game.mapTiles[x + (y << 6)] & 0xFFF;
                 if ((t & 0x300) != 0x300 || (t & 3) != kind) {
                     continue;
+                }
+                if (etc >= 0 && this.distToSegment(x, y, etc >>> 8, etc & 0xFF, mtc >>> 8, mtc & 0xFF) <= 25) {
+                    continue; // 走廊 5 格内（d2≤25）不采
                 }
                 boolean camped = false;
                 for (int j = 0; j < eu; ++j) {
@@ -437,7 +453,23 @@ public final class CampaignAi implements PlayerAi {
                 }
             }
         }
+        if (best < 0 && etc >= 0) {
+            return this.nearestSafeResourceOffCorridor(game, pos, kind, es, eu, -1, -1); // 全在走廊上=不回避
+        }
         return best;
+    }
+
+    /** 点 (px,py) 到线段 (x1,y1)-(x2,y2) 的垂直距离²（近似：投影截断）。 */
+    private int distToSegment(int px, int py, int x1, int y1, int x2, int y2) {
+        int dx = x2 - x1, dy = y2 - y1;
+        int len2 = dx * dx + dy * dy;
+        if (len2 == 0) {
+            return (px - x1) * (px - x1) + (py - y1) * (py - y1);
+        }
+        int t = ((px - x1) * dx + (py - y1) * dy);
+        t = Math.max(0, Math.min(len2, t));
+        int cx = x1 + t * dx / len2, cy = y1 + t * dy / len2;
+        return (px - cx) * (px - cx) + (py - cy) * (py - cy);
     }
 
     // ===== #1 护送关状态 =====
@@ -675,6 +707,480 @@ public final class CampaignAi implements PlayerAi {
         int x = Math.max(1, Math.min(62, ax + (i % 3) - 1));
         int y = Math.max(1, Math.min(62, ay + (i / 3) % 3 - 1));
         return x << 8 | y;
+    }
+
+    // ===== #4 科技冲刺关 =====
+
+    /** #4（res114：胜 = 升城堡时代（tf[14]=1）→ 放置大学（tf[14]=0，c.java:7427
+     *  放置清可建标记）→ 50t → 胜。败 = 通用规则（TC 毁/全灭）。
+     *  唯一敌方开 AI 的关（Easy 档：采集 ×1、攻击阈值 30、训练间隔 200），
+     *  敌 TC(5,26) 真运营，我方 TC(43,57)+2 村民 10/10/10 白手起家。
+     *  打法 = 压缩版经济链：房屋→兵营→（封建）→塔防→磨坊→铁匠铺→（城堡）→
+     *  大学放下即胜。石是瓶颈（链上共需 ~100 石），村民按缺口最大种类分派。
+     *  原语全部照抄 RuleBasedAi  proven 用法（findAiBuildSpot/a/tryResearch/
+     *  queueUnitTraining；放下自动成型 ~32t，不需村民施工）。 */
+    private void tickCastleRace(c game) {
+        int[] hdr = game.playerUnitHeaders[0];
+        int[] recs = game.buildingTable[0];
+        int bc = hdr[4];
+        short[] slots = game.playerUnitSlots[0];
+        int units = hdr[2];
+        // 我方 TC
+        int tc = -1, tcSlot = -1;
+        int houseN = 0, barracksDone = 0, millDone = 0, smithDone = 0, towerN = 0, uc = 0;
+        for (int i = 0; i < bc; ++i) {
+            int o = i << 2;
+            int type = recs[o + 3] & 0xFF;
+            boolean done = (recs[o + 2] & 0xFF) == 255 && (recs[o + 2] & 0x40000000) == 0;
+            if ((recs[o + 2] & 0x40000000) != 0) {
+                ++uc;
+            }
+            if (type == 9) {
+                tc = ((recs[o] >> 8) & 0x3F) << 8 | (recs[o] & 0x3F);
+                tcSlot = i;
+            } else if (type == 11) {
+                ++houseN;
+            } else if (type == 10 && done) {
+                ++barracksDone;
+            } else if (type == 5 && done) {
+                ++millDone;
+            } else if (type == 6 && done) {
+                ++smithDone;
+            } else if (type == 12 && done) {
+                ++towerN;
+            }
+        }
+        if (tc < 0) {
+            return; // TC 没了=败局在路上
+        }
+        int tx = tc >>> 8, ty = tc & 0xFF;
+        int age = hdr[0];
+        // 敌 TC（走廊回避的线段另一端）
+        int etc = -1;
+        int[] er = game.buildingTable[1];
+        for (int i = 0; i < game.playerUnitHeaders[1][4]; ++i) {
+            if ((er[(i << 2) + 3] & 0xFF) == 9) {
+                etc = ((er[i << 2] >> 8) & 0x3F) << 8 | (er[i << 2] & 0x3F);
+                break;
+            }
+        }
+        // —— 防御：敌兵进 TC 12 格 → 全军压上；村民逃命 ——
+        short[] es = game.playerUnitSlots[1];
+        int eu = game.playerUnitHeaders[1][2];
+        int invader = -1, invD2 = Integer.MAX_VALUE;
+        for (int i = 0; i < eu; ++i) {
+            int ep = es[i << 3] & 0xFFFF;
+            int d2 = ((ep >>> 8) - tx) * ((ep >>> 8) - tx) + ((ep & 0xFF) - ty) * ((ep & 0xFF) - ty);
+            if (d2 <= 144 && d2 < invD2) {
+                invD2 = d2;
+                invader = ep;
+            }
+        }
+        if (invader >= 0) {
+            this.m0Target = invader;
+            this.orderMilitary(game, invader, false);
+        }
+        // 村民逃命：敌兵贴身 9 格（TC 保卫战里的入侵者，或路过采集点的散兵）→
+        // 撤到 TC 背敌侧。v1 只在 TC 被围时逃，远征矿工被路过敌军白砍（game1
+        // 尸检：(36,48) 采石村民被割）。
+        for (int i = 0; i < units; ++i) {
+            int o = i << 3;
+            if ((slots[o + 3] & 0xFF) >= 2) {
+                continue;
+            }
+            int pos = slots[o] & 0xFFFF;
+            int px = pos >>> 8, py = pos & 0xFF;
+            int nearE = -1, nearD2 = 81;
+            for (int j = 0; j < eu; ++j) {
+                int ep = es[j << 3] & 0xFFFF;
+                int d2 = ((ep >>> 8) - px) * ((ep >>> 8) - px) + ((ep & 0xFF) - py) * ((ep & 0xFF) - py);
+                if (d2 < nearD2) {
+                    nearD2 = d2;
+                    nearE = ep;
+                }
+            }
+            if (nearE < 0) {
+                continue;
+            }
+            int exx = nearE >>> 8, eyy = nearE & 0xFF;
+            int fx = tx + Integer.signum(tx - exx) * 3;
+            int fy = ty + Integer.signum(ty - eyy) * 3;
+            fx = Math.max(1, Math.min(62, fx));
+            fy = Math.max(1, Math.min(62, fy));
+            int flee = fx << 8 | fy;
+            if ((slots[o + 2] & 0xFFFF) != flee) {
+                slots[o + 1] = slots[o + 0];
+                slots[o + 2] = (short) flee;
+                slots[o + 7] = 0;
+                slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+            }
+        }
+        if (invader >= 0) {
+            return; // TC 战中不搞建设/科研
+        }
+        // —— 科技：封建（兵营前置）→ 城堡（磨坊+铁匠） ——
+        if (age == 0 && barracksDone > 0 && game.canAfford(0, 2, 21)) {
+            if (game.tryResearch(0, tcSlot, 21)) {
+                System.out.println("[cai] research FEUDAL t=" + game.tickCount);
+            }
+        }
+        if (age == 1 && millDone > 0 && smithDone > 0 && game.canAfford(0, 2, 22)) {
+            if (game.tryResearch(0, tcSlot, 22)) {
+                System.out.println("[cai] research CASTLE t=" + game.tickCount);
+            }
+        }
+        // —— 建造链（一次一座，放下自动成型）——
+        // v2 教训：塔必须在敌首波（~3500t）前立起来——塔不吃人口、攻 32/甲，
+        // 是唯一来得及的防御；兵营→塔→封建科研→磨坊→铁匠铺→城堡→大学。
+        boolean popPressure = hdr[2] + hdr[49] >= hdr[3] - 1;
+        int need = -1;
+        if (houseN == 0 && hdr[5] >= 15) {
+            need = 11;                                   // 房屋：人口 + 产村民
+        } else if (barracksDone == 0 && uc == 0 && hdr[5] >= 20 && hdr[7] >= 10) {
+            need = 10;                                   // 兵营：封建前置 + 剑士
+        } else if (barracksDone > 0 && towerN == 0 && uc == 0 && hdr[5] >= 22 && hdr[6] >= 6 && hdr[7] >= 16) {
+            need = 12;                                   // 塔 1：抢在敌首波前
+        } else if (barracksDone > 0 && towerN == 1 && uc == 0 && hdr[5] >= 22 && hdr[6] >= 6 && hdr[7] >= 16) {
+            need = 12;                                   // 塔 2：双塔再攀科技（v5：单塔守不住拉锯）
+        } else if (age >= 1 && millDone == 0 && uc == 0 && hdr[5] >= 15 && hdr[7] >= 10) {
+            need = 5;                                    // 磨坊：城堡前置 1/2
+        } else if (age >= 1 && smithDone == 0 && uc == 0 && hdr[5] >= 25 && hdr[7] >= 20) {
+            need = 6;                                    // 铁匠铺：城堡前置 2/2
+        } else if (age >= 2 && game.techFlags[14] != 0 && uc == 0 && hdr[5] >= 25 && hdr[7] >= 25) {
+            need = 4;                                    // 大学：放下即点亮胜利链
+        } else if (popPressure && houseN < 3 && uc == 0 && hdr[5] >= 15) {
+            need = 11;
+        }
+        if (need >= 0) {
+            int spot = game.findAiBuildSpot(tc);
+            int bx = spot >>> 8, by = spot & 0xFF;
+            if (bx < 64 && by < 64 && (game.mapTiles[bx + (by << 6)] & 0xFFF) == 0) {
+                int rc = game.a(0, need, bx, by, 0x40000000, true);
+                System.out.println("[cai] build type=" + need + " at " + bx + "," + by
+                    + " rc=" + rc + " res=" + hdr[5] + "/" + hdr[6] + "/" + hdr[7]
+                    + " t=" + game.tickCount);
+            }
+        }
+        // —— 训练：村民补到 4（房屋产），剑士若干守家 ——
+        boolean popRoom = hdr[2] + hdr[49] < hdr[3] && hdr[2] + hdr[49] < 26;
+        int vills = 0, milCount = 0;
+        int houseSlot = -1, barracksSlot = -1;
+        for (int i = 0; i < units; ++i) {
+            if ((slots[(i << 3) + 3] & 0xFF) < 2) {
+                ++vills;
+            } else {
+                ++milCount;
+            }
+        }
+        for (int i = 0; i < bc; ++i) {
+            int o = i << 2;
+            int type = recs[o + 3] & 0xFF;
+            boolean done = (recs[o + 2] & 0xFF) == 255 && (recs[o + 2] & 0x40000000) == 0;
+            if (type == 11 && done && houseSlot < 0) {
+                houseSlot = i;
+            } else if (type == 10 && done && barracksSlot < 0) {
+                barracksSlot = i;
+            }
+        }
+        if (popRoom && vills + hdr[66] < 4 && hdr[57] + hdr[66] < hdr[75]
+                && houseSlot >= 0 && game.canAfford(0, 0, 0)) {
+            game.queueUnitTraining(0, 0);
+        }
+        // 守家兵种：封建前长枪兵（t2，5/5/0），封建起剑士（t3）。v2 实测
+        // 敌首波 ~3900t 到家——等剑士（要封建 15/15/15）必然来不及，长枪兵
+        // 兵营一好就得出（game1：3809 封建刚研完村民就被割，0 兵守家）。
+        int meleeType = age >= 1 ? 3 : 2;
+        if (popRoom && barracksSlot >= 0 && milCount < 4
+                && hdr[5] >= 12 && hdr[6] >= 12 && game.canAfford(0, 0, meleeType)) {
+            game.queueUnitTraining(0, meleeType);
+        }
+        // —— 村民采集：分阶段配额（v1 用"总量缺口"全堆木，石启动太晚被一波带走）。
+        //    兵营前 3木1石（攒兵营料）；兵营后 1木1金2石（石是链上瓶颈 ≈100）——
+        //    配额阻尼收敛（+1 缓冲，一次决策最多换 1 人，RuleBasedAi 震荡环教训）。
+        int[] quota = barracksDone > 0 ? new int[]{0, 1, 1, 2} : new int[]{0, 3, 0, 1};
+        int[] have = new int[4];
+        for (int i = 0; i < units; ++i) {
+            int o = i << 3;
+            if ((slots[o + 3] & 0xFF) >= 2) {
+                continue;
+            }
+            int nibble = slots[o + 7] & 0xF;
+            int kind = 0;
+            if (nibble == 2 || nibble == 3) {
+                kind = (slots[o + 7] & 0xF0) >> 4;
+            } else {
+                int tgt = slots[o + 2] & 0xFFFF;
+                int tt = game.mapTiles[(tgt >>> 8) + ((tgt & 0xFF) << 6)] & 0xFFF;
+                if ((tt & 0x300) == 0x300) {
+                    kind = tt & 3;
+                }
+            }
+            if (kind >= 1 && kind <= 3) {
+                ++have[kind];
+            }
+        }
+        int swapped = 0;
+        for (int i = 0; i < units && swapped < 1; ++i) {
+            int o = i << 3;
+            if ((slots[o + 3] & 0xFF) >= 2) {
+                continue;
+            }
+            boolean idle = (slots[o + 7] & 0xF) == 0
+                && (slots[o + 0] & 0xFFFF) == (slots[o + 2] & 0xFFFF);
+            if (!idle) {
+                continue; // 采集循环引擎全自动
+            }
+            int pos = slots[o] & 0xFFFF;
+            // 缺口最大的种类
+            int kind = 0, gap = 0;
+            for (int k = 1; k <= 3; ++k) {
+                if (quota[k] - have[k] > gap) {
+                    gap = quota[k] - have[k];
+                    kind = k;
+                }
+            }
+            if (kind == 0) {
+                break; // 配额满
+            }
+            int tile = this.nearestSafeResourceOffCorridor(game, pos, kind, es, eu, -1, -1);
+            if (tile < 0) {
+                break;
+            }
+            slots[o + 1] = slots[o + 0];
+            slots[o + 2] = (short) tile;
+            slots[o + 7] = 0;
+            slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+            ++have[kind];
+            ++swapped;
+            System.out.println("[cai] assign villager " + i + " kind=" + kind
+                + " -> " + (tile >>> 8) + "," + (tile & 0xFF) + " t=" + game.tickCount);
+        }
+        // 主动再平衡（阻尼：一次决策最多换 1 人，RuleBasedAi 震荡环教训）：
+        // 在岗村民不换工种会把链卡死——v1 兵营完工后配额切 1木1金2石，但 3 个
+        // 木工已在岗无人换金，封建 15 金永远凑不齐（game1 尸检：5751t 0 科研）。
+        if (swapped == 0) {
+            int over = 0, under = 0;
+            for (int k = 1; k <= 3; ++k) {
+                if (have[k] > quota[k]) {
+                    over = k;
+                }
+                if (have[k] < quota[k]) {
+                    under = k;
+                }
+            }
+            if (over != 0 && under != 0) {
+                for (int i = 0; i < units; ++i) {
+                    int o = i << 3;
+                    if ((slots[o + 3] & 0xFF) >= 2) {
+                        continue;
+                    }
+                    int nibble = slots[o + 7] & 0xF;
+                    int kind = 0;
+                    if (nibble == 2 || nibble == 3) {
+                        kind = (slots[o + 7] & 0xF0) >> 4;
+                    } else {
+                        int tgt = slots[o + 2] & 0xFFFF;
+                        int tt = game.mapTiles[(tgt >>> 8) + ((tgt & 0xFF) << 6)] & 0xFFF;
+                        if ((tt & 0x300) == 0x300) {
+                            kind = tt & 3;
+                        }
+                    }
+                    if (kind != over) {
+                        continue;
+                    }
+                    int pos = slots[o] & 0xFFFF;
+                    int tile = this.nearestSafeResourceOffCorridor(game, pos, under, es, eu, -1, -1);
+                    if (tile < 0) {
+                        break;
+                    }
+                    slots[o + 1] = slots[o + 0];
+                    slots[o + 2] = (short) tile;
+                    slots[o + 7] = 0;
+                    slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+                    System.out.println("[cai] rebalance villager " + i + " kind=" + over
+                        + "->" + under + " t=" + game.tickCount);
+                    break;
+                }
+            }
+        }
+    }
+
+    /** #6 总攻关（res116：胜 = 拆光敌 13 建筑；敌 Keep 塔环 + 19 守军）。
+     *  v4 教训：全体 all-in 被塔收 / 攻城组 solo 塔被守军收 / 单位分批到达=添油。
+     *  v5 阶段机：
+     *  0) MUSTER 全员集结出生点（攻城武器最慢，不齐不走）；
+     *  1) SWEEP 集团猎杀离巢守军（敌 aiEnabled=false，守军接敌后才追击——
+     *     把战场定在塔圈外的中场，我 17 兵对 19 兵的野战打赢才谈拆家）；
+     *     守军基本死光（≤4）或 3000t 无斩获 → 转阶段 2；
+     *  2) SIEGE 攻城组（t7/t8/t9）逐座拔塔（塔比投石机手长 2 格，必须轮换
+     *     抗伤：HP<120 撤），近战在塔圈外 8 格戒备护炮（不进塔火）；
+     *     塔全灭后近战进场拆建筑（此时守军已清，塔区惩罚不再需要）。
+     *  全程：HP 过低的单位回锚点散点回血（retreatTile）。 */
+    private int faPhase;                // 0=集结 1=野战 2=攻城/拆家
+    private int faRally = -1;           // 集结点（=出生质心）
+    private int faSweepStartEu = -1;    // 进野战时的敌兵数
+    private int faSweepBestTick;        // 上次野战斩获 tick
+    private int faSweepBestEu = 999;
+
+    private void tickFinalAssault(c game) {
+        short[] slots = game.playerUnitSlots[0];
+        int units = game.playerUnitHeaders[0][2];
+        if (units == 0) {
+            return;
+        }
+        if (this.razeAnchor < 0) {
+            int sx = 0, sy = 0;
+            for (int i = 0; i < units; ++i) {
+                int pos = slots[i << 3] & 0xFFFF;
+                sx += pos >>> 8;
+                sy += pos & 0xFF;
+            }
+            this.razeAnchor = (sx / units) << 8 | (sy / units);
+            this.faRally = this.razeAnchor;
+        }
+        int ax = this.razeAnchor >>> 8, ay = this.razeAnchor & 0xFF;
+        short[] es = game.playerUnitSlots[1];
+        int eu = game.playerUnitHeaders[1][2];
+        int[] eb = game.buildingTable[1];
+        int ebCount = game.playerUnitHeaders[1][4];
+        if (ebCount == 0) {
+            return; // 胜局在路上
+        }
+        // 我方质心
+        int cx = 0, cy = 0;
+        for (int i = 0; i < units; ++i) {
+            int pos = slots[i << 3] & 0xFFFF;
+            cx += pos >>> 8;
+            cy += pos & 0xFF;
+        }
+        cx /= units;
+        cy /= units;
+
+        if (this.faPhase == 0) {
+            // 集结：全员到 rally 3×3 散点；2/3 到位（d2≤16）即转野战
+            int arrived = 0;
+            for (int i = 0; i < units; ++i) {
+                int pos = slots[i << 3] & 0xFFFF;
+                int dx = (pos >>> 8) - (this.faRally >>> 8), dy = (pos & 0xFF) - (this.faRally & 0xFF);
+                if (dx * dx + dy * dy <= 16) {
+                    ++arrived;
+                }
+            }
+            if (arrived * 3 >= units * 2) {
+                this.faPhase = 1;
+                this.faSweepStartEu = eu;
+                this.faSweepBestEu = eu;
+                this.faSweepBestTick = game.tickCount;
+                System.out.println("[cai] fa phase1 SWEEP eu=" + eu + " t=" + game.tickCount);
+            } else {
+                for (int i = 0; i < units; ++i) {
+                    this.orderUnit(game, i, this.retreatTile(i), false);
+                }
+                return;
+            }
+        }
+
+        if (this.faPhase == 1) {
+            // 野战：全军打离我质心最近的敌兵；斩获记录
+            if (eu < this.faSweepBestEu) {
+                this.faSweepBestEu = eu;
+                this.faSweepBestTick = game.tickCount;
+            }
+            if (eu <= 4 || game.tickCount - this.faSweepBestTick > 3000) {
+                this.faPhase = 2;
+                System.out.println("[cai] fa phase2 SIEGE eu=" + eu + " t=" + game.tickCount);
+            } else if (eu > 0) {
+                int tgt = -1, best = Integer.MAX_VALUE;
+                for (int i = 0; i < eu; ++i) {
+                    int ep = es[i << 3] & 0xFFFF;
+                    int d2 = ((ep >>> 8) - cx) * ((ep >>> 8) - cx) + ((ep & 0xFF) - cy) * ((ep & 0xFF) - cy);
+                    if (d2 < best) {
+                        best = d2;
+                        tgt = ep;
+                    }
+                }
+                this.m0Target = tgt;
+                for (int i = 0; i < units; ++i) {
+                    int o = i << 3;
+                    int hp = slots[o + 4] & 0xFF;
+                    if (hp < 90) {
+                        this.orderUnit(game, i, this.retreatTile(i), true); // 残血撤
+                    } else {
+                        this.orderUnit(game, i, tgt, false);
+                    }
+                }
+                return;
+            }
+        }
+
+        // phase 2: 攻城/拆家。攻城组点塔（轮换抗伤），近战护在塔圈 8 格外；
+        // 塔灭后近战进场拆建筑。
+        int towerTarget = -1, towerD2 = Integer.MAX_VALUE;
+        int softTarget = -1, softD2 = Integer.MAX_VALUE;
+        for (int i = 0; i < ebCount; ++i) {
+            int o = i << 2;
+            int bx = (eb[o] >> 8) & 0x3F, by = eb[o] & 0x3F;
+            int d2 = (bx - ax) * (bx - ax) + (by - ay) * (by - ay);
+            if ((eb[o + 3] & 0xFF) == 12) {
+                if (d2 < towerD2) {
+                    towerD2 = d2;
+                    towerTarget = bx << 8 | by;
+                }
+            } else if (d2 < softD2) {
+                softD2 = d2;
+                softTarget = bx << 8 | by;
+            }
+        }
+        this.m0Target = towerTarget >= 0 ? towerTarget : softTarget;
+        for (int i = 0; i < units; ++i) {
+            int o = i << 3;
+            int type = slots[o + 3] & 0xFF;
+            boolean siege = type == 7 || type == 8 || type == 9;
+            int hp = slots[o + 4] & 0xFF;
+            boolean healing = this.razeHealing[i];
+            int retreatAt = siege ? 120 : 90;
+            if (!healing && hp < retreatAt) {
+                this.razeHealing[i] = true;
+                healing = true;
+            } else if (healing && hp >= 220) {
+                this.razeHealing[i] = false;
+                healing = false;
+            }
+            int tgt;
+            if (healing) {
+                tgt = this.retreatTile(i);
+            } else if (siege) {
+                tgt = towerTarget >= 0 ? towerTarget
+                    : (softTarget >= 0 ? softTarget : this.retreatTile(i));
+            } else if (towerTarget < 0) {
+                tgt = softTarget >= 0 ? softTarget : this.retreatTile(i); // 塔清完了，进场拆
+            } else {
+                // 护炮戒备点：塔朝我锚点方向 8 格（塔索敌 6 格之外）
+                int bx = towerTarget >>> 8, by = towerTarget & 0xFF;
+                int dx = ax - bx, dy = ay - by;
+                int m = Math.max(1, Math.max(Math.abs(dx), Math.abs(dy)));
+                int gx = Math.max(1, Math.min(62, bx + dx * 8 / m));
+                int gy = Math.max(1, Math.min(62, by + dy * 8 / m));
+                tgt = gx << 8 | gy;
+            }
+            this.orderUnit(game, i, tgt, healing);
+        }
+    }
+
+    /** 单单位下令：接敌（任务字 1）且非撤退不打断；目标相同不写。 */
+    private void orderUnit(c game, int i, int tgt, boolean force) {
+        short[] slots = game.playerUnitSlots[0];
+        int o = i << 3;
+        if (!force && (slots[o + 7] & 0xF) == 1) {
+            return;
+        }
+        if ((slots[o + 2] & 0xFFFF) == tgt) {
+            return;
+        }
+        slots[o + 1] = slots[o + 0];
+        slots[o + 2] = (short) tgt;
+        slots[o + 7] = 0;
+        slots[o + 3] = (short) (slots[o + 3] & 0xFF);
     }
 
     /** 全体军事压向目标（不接敌打断）。 */
