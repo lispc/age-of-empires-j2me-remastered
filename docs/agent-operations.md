@@ -257,7 +257,7 @@ tail -45 /tmp/aoe-playN/session.log | grep -v '^\[dbg\]'          # 或直接读
   Outpost·塔(20木5金15石)。封建后 8 槽：Lumber/Mining/Mill/Blacksmith/Range(25木10石)/
   Stable(25木10石)/House/Outpost（Barracks 消失，黑暗不建封建补不了，r20 dump）。
 - **建筑 array type 真值表（r20 源码+三锚点实测；r21 tile/dlg 官方名实锤）**：
-  菜单槽名 ↔ `var_int_arr_c` 槽位表一一对应：**1=Mining Camp、5=Mill、6=Blacksmith、
+  菜单槽名 ↔ `actionMenuItemIds` 槽位表一一对应：**1=Mining Camp、5=Mill、6=Blacksmith、
   7=Archery Range、8=Stable、9=TC、10=Barracks、11=House、12=Tower/Outpost**；
   4=（黑暗槽待核）；2/3 菜单不可建未定。锚点：采矿场建出 type1、磨坊 type5、
   房 type11（r20 实测）；case 6 有 6 项研究分支=铁匠铺研究数（c.java:4311）；
@@ -267,7 +267,7 @@ tail -45 /tmp/aoe-playN/session.log | grep -v '^\[dbg\]'          # 或直接读
   type12 塔（r19 误读，r20 勘误；a() case12 登记 projectileTable=可攻击实锤）。
 - **槽位动态 + 数字截断**：已建成建筑从菜单消失、后续前移；数字键 n=key-49 只有 n<W
   才生效，且 ae 映射=键码-47（'1'→action2…'9'→10，r20）。**选槽前必须 dump**：
-  `dump png` 看底栏高亮名，或菜单开着时 `fields t.txt` 读 `var_int_arr_c`（真实槽位
+  `dump png` 看底栏高亮名，或菜单开着时 `fields t.txt` 读 `actionMenuItemIds`（真实槽位
   id 表，r17/r18/r20 标准做法）。
 
 ### 4.3 放置流程（r17/r18 权威菜谱，源码验证）
@@ -277,7 +277,7 @@ tail -45 /tmp/aoe-playN/session.log | grep -v '^\[dbg\]'          # 或直接读
 → 方向键移光标（幽灵跟走）→ key -5    # 落位：selectionMode 1→0 = 成功
 ```
 
-- 落位即付全款；**建筑自动施工**，~1.3 秒完工（j() 每 tick +8；r16 受控实验裁决，
+- 落位即付全款；**建筑自动施工**，~1.3 秒完工（tickBuildings() 每 tick +8；r16 受控实验裁决，
   r15"30k tick 不完工"为误判），无村民参与（triage r2：原版即无施工机制）。远程放置
   成立：幽灵在光标处直接起，村民不必到场（r17）。
 - selectionMode 停在 1 = 落点被挡（树/单位占位/0x300 资源格/迷雾 0x8000 负格），**静默
@@ -434,8 +434,8 @@ Mill 也能凑数**）；第三级 = `a(0,3)>=1`（type3 未定）。
   （60/200——aiAttackThreshold 只是高档）；低于全部门槛则**全程纯被动**（mission 2
   敌 armyval 52，八单位驻防但永不主动）。armyval/门槛可从存档 headers 读——开局面
   先读敌 armyval 判断威胁等级，低威胁关可放心经营。
-- r18 修正：var_int_i（fields 可读：0=被动/1=防御/2=进攻）可以全程=0，来犯者也可能
-  只是近战追击行为——别把"没见 var_int_i 翻转"当"绝对安全"。
+- r18 修正：aiStance（fields 可读：0=被动/1=防御/2=进攻）可以全程=0，来犯者也可能
+  只是近战追击行为——别把"没见 aiStance 翻转"当"绝对安全"。
 - **AI 截击半径 8 格是本作最大团灭圈**（r15 村民#1 之死；**r22 两次 8 秒团灭均在此
   圈**，加粗警告）：村民/落单单位进圈=被弓兵集火点名，行军路线保持距敌城 10 格以上。
 - **敌行军独立于 ai 标志**（r24 实测）：质心向己方漂移=raid 已在路上，别等 ai 翻转
@@ -452,7 +452,7 @@ Mill 也能凑数**）；第三级 = `a(0,3)>=1`（type3 未定）。
   t2 民兵 5金/个，金=兵线唯一命脉。
 - **r20 实证双线反扑**：前锋杀入敌阵触发防御模式后，敌主力回防堵截前锋、同时派 raid
   队绕后直扑我方经济（4 村民全灭）——**接敌的瞬间老家就会挨打，村民必须留兵看家**；
-  我方 13 死换敌 4 死的崩盘即此。敌全程 var_int_i=0（fields 可证）仍会反扑。
+  我方 13 死换敌 4 死的崩盘即此。敌全程 aiStance=0（fields 可证）仍会反扑。
 
 ### 5.4 制胜模板（r18 防御反击案 + r20 修订速攻案）
 
@@ -622,12 +622,12 @@ FAIL 回显都带原因，先读回显再补救。
 - **换关持久化半残**（r32）：建筑阵列跨关保留但 tile 标记被抹（train 报"非己方建筑"，
   build 新楼正常）；敌重滚黑暗时代。
 - **难度机制**（r33 读码+验证局双定案）：难度=Difficulty 页选择器（显示 Easy/
-  Moderate/Hard，横键改选）手选 var_byte_a（3 档）——敌 AI 采集倍率 512/786/2048、
+  Moderate/Hard，横键改选）手选 randomMapDifficulty（3 档）——敌 AI 采集倍率 512/786/2048、
   建造间隔 250/150/100、练兵间隔 20/20/1、首攻门槛 200/60/100、敌开局资源 50/15/15
   vs 20/20/20。**档位选取是种子+流转位置的确定性函数**（r33 验证局 7/7：
-  mapSeed=8224 全部显示 Easy→var_byte_a=0→AI 参数=case 0 三者一致；不同 RMS 种子
+  mapSeed=8224 全部显示 Easy→randomMapDifficulty=0→AI 参数=case 0 三者一致；不同 RMS 种子
   或会话内 rng 推进后重开会得到不同档，故看似抽奖）。**档位地面真值=fields 的
-  var_byte_a/aiTrainInterval**（敌增速只是间接推断）。所谓"m+N 难度梯"主要是
+  randomMapDifficulty/aiTrainInterval**（敌增速只是间接推断）。所谓"m+N 难度梯"主要是
   **敌建筑跨关保留的滚雪球**+AI 经济累积，非逐关调参。
 - `gather <村民tx> <村民ty> <资源tx> <资源ty>`：直绑采集（r23 需求）——资源格须
   已探明（雾中 FAIL，r30 实测雾检明确回显）；站桩村民 sel 自选失败时先 ctile 选中
@@ -656,7 +656,7 @@ FAIL 回显都带原因，先读回显再补救。
   决策前一条 sitrep 替代全量 state 轮询。state 的 fifo.json 也新增
   res/pop/queued/ai 字段（免开存档读资源）。
 - **弹窗纪律（宏时代的头号坑）**：建筑首次放置与完工各有教学/完成弹窗（aA=2），
-  **弹窗期间 j() 不跑=施工/训练/移动全部冻结**。宏 build 后必须 `key -5` 清弹窗再等
+  **弹窗期间 tickBuildings() 不跑=施工/训练/移动全部冻结**。宏 build 后必须 `key -5` 清弹窗再等
   完工（线上格式必须带 `key ` 前缀，裸 `-5` 无效，见 §6.1；
   `tools/aoeops.py build` 已封装此流程）。弹窗态 state/sitrep 可用
   （r21 实测，修正 r16"FIFO 被吞"表述）。**连环弹窗**（r30）：连放多个建筑时
@@ -679,9 +679,9 @@ FAIL 回显都带原因，先读回显再补救。
 ### 6.2 fields（文本内省，免图利器）
 
 `fields /tmp/aoe-playN/f.txt` 导出类静态字段。常用（r17/r18）：
-- `var_int_arr_c`：菜单打开时的真实槽位 id 表（§4.2 的 dump 替代品）；
+- `actionMenuItemIds`：菜单打开时的真实槽位 id 表（§4.2 的 dump 替代品）；
 - `selectionMode`：1=放置臂置中（1→0=落位成功）；`var_int_g`：菜单/面板 arming 态；
-- `cursorTileX/Y`、`cameraPx`、`screenState`、`var_int_i`（AI 攻势 0/1/2）、
+- `cursorTileX/Y`、`cameraPx`、`screenState`、`aiStance`（AI 攻势 0/1/2）、
   `playerUnitHeaders`（含资源）。
 
 ### 6.3 存档直读脚本（复制到本轮目录复用；都是 `python3 X.py <save>` 用法）
@@ -711,7 +711,7 @@ FAIL 回显都带原因，先读回显再补救。
 - [ ] 空地无选中按 -5 = 开暂停/任务菜单（aA=4）；菜单里方向键会移动高亮，**严禁盲按 -5**。
 - [ ] Surrender/Quit **无任何确认**，-5 激活即弃局（triage r12 两次实锤）。误开菜单的恢复法：
       不动方向键直接 -5（默认高亮=Continue=恢复，triage r7/r10）。
-- [ ] 完成弹窗（aA=2）**冻结世界逻辑**（j() 不跑：施工/训练/移动全停，r21 实测）。
+- [ ] 完成弹窗（aA=2）**冻结世界逻辑**（tickBuildings() 不跑：施工/训练/移动全停，r21 实测）。
       放置与完工各有弹窗，宏 build 后必须清弹窗；state/sitrep 弹窗态可用（修正 r16）。
 - [ ] aA=7 挂空放置残毒会劫持后续输入 → `-6` 清（r13/r14）。
 - [ ] -7 多义：弹窗上=关弹窗；**无选中=开暂停菜单（aA=4，r20 一轮踩两次）**；有选中=
@@ -838,14 +838,14 @@ FAIL 回显都带原因，先读回显再补救。
   资源不够直接 `排队 0/n` 拒绝（源码 train case），宏路径无僵尸队列。
 
 - **胜利条件 = 拆毁敌方 TC 即胜；单位全灭是脚本条件的另一路径**（**r30 源码定案**
-  `i()` case 9：敌 TC 毁 → `startMissionBriefing(0,98,0)` 即胜，唯一例外 gameMode=32
+  `onThingDestroyed()` case 9：敌 TC 毁 → `startMissionBriefing(0,98,0)` 即胜，唯一例外 gameMode=32
   链模式且 missionIndex≠0——headless dev 模式 gameMode=0 适用即胜路径；
   **工人/村民不计入**：r30 实测敌 4 工人存活时胜利照弹）。历史案例归位：r26"拆
   TC+Barracks 后弹 aA=12"=TC 即胜路径；r23"敌 0 单位即胜"疑 TC 同期拆毁（不可
   考，不冲突）。敌其余 ~10+ 建筑可留。r20 简报原文"smash all their buildings"
   是任务描述性文字非判定逻辑。23 轮 0 胜的隐性原因之一就是把"拆光建筑"当成了
   硬性条件。
-- **我方 TC 被拆 = 立即败北**（同函数 `i()` case 9 n==0 → 98,1，源码实锤）——
+- **我方 TC 被拆 = 立即败北**（同函数 `onThingDestroyed()` case 9 n==0 → 98,1，源码实锤）——
   r27"TC 拆毁疑独立败北触发器"结案。"0 单位=败北"与"TC 毁=败北"是**两条独立
   判定**，TC 是命根子中的命根子（守家先守 TC）。
 - **TC 不产村民**（r20 源码：case 9 只有升时代分支）；r17"TC 排村民"误报撤案。
@@ -878,11 +878,11 @@ FAIL 回显都带原因，先读回显再补救。
 3. **采集循环 = 自动循环，"一次性绑定"作废**（推翻 r25，§4.5 原表述恢复名誉）。
    交存入账后玩家村民 `slot[2]=slot[5]` 直接写回采集格（c.java:6840），走回即
    续采，无需重派。闲置只在两种情形：① 资源格耗尽且 8 邻域无同 kind 后继
-   （g() case 2 的邻域扫描，c.java:6725-6736；r23"树尽退役"是此分支）；
+   （tickUnits() case 2 的邻域扫描，c.java:6725-6736；r23"树尽退役"是此分支）；
    ② 寻路回退（走不到回退一步停）。"可持续采集=踢矿工循环"仅在这两种情形下
    才需要，正常挂机不需要。
 4. **完工弹窗（z=70）走 a() 原语也会触发，但当前 ailoop 死不了**——触发点在
-   `j()` 完工 tick（c.java:5544：`var_boolean_d`（音效开）且该类型首座完工即弹，
+   `tickBuildings()` 完工 tick（c.java:5544：`var_boolean_d`（音效开）且该类型首座完工即弹，
    与放置路径无关），弹窗期 aA=2 世界逻辑冻结（onPaint 只在 default 分支跑模拟，
    c.java:2152）。ailoop 没冻死纯属侥幸：dev 导航线程的收尾循环
    （devNavToMission 末尾，600ms 周期、30s 墙钟截止）在等 aA==6 期间见到 aA==2

@@ -57,8 +57,8 @@ public final class SaveState {
         // —— 地图格（地形+迷雾+占位）——
         writeShorts(out, g.mapTiles);
         // —— 计数/资源/杂项 int 数组 ——
-        writeInts(out, g.var_int_arr_a);
-        writeInts(out, g.var_int_arr_c);
+        writeInts(out, g.scriptFrameCounters);
+        writeInts(out, g.actionMenuItemIds);
         writeInts(out, g.nfoHighScores);
         writeInts(out, g.var_int_arr_e);
         // —— 每玩家单位/建筑槽位 ——
@@ -86,7 +86,7 @@ public final class SaveState {
         out.writeInt(g.selectedType);
         out.writeInt(g.selectedSlot);
         out.writeInt(g.p);
-        out.writeByte(g.var_byte_a);
+        out.writeByte(g.randomMapDifficulty);
         // v2：tickCount + 全局 RNG 静态（确定性回放锚，见类注释）。RNG 不钉住的话，
         // 读档后的建造掷骰等模拟消费随"读档前听了多少菜单音乐/走了多少 tick"发散。
         out.writeInt(g.tickCount);
@@ -125,8 +125,8 @@ public final class SaveState {
         g.pendingPanelSwitch = in.readInt();
         g.ap = in.readInt();
         readShorts(in, g.mapTiles);
-        readInts(in, g.var_int_arr_a);
-        readInts(in, g.var_int_arr_c);
+        readInts(in, g.scriptFrameCounters);
+        readInts(in, g.actionMenuItemIds);
         readInts(in, g.nfoHighScores);
         readInts(in, g.var_int_arr_e);
         int players = in.readInt();
@@ -154,7 +154,7 @@ public final class SaveState {
         g.selectedType = in.readInt();
         g.selectedSlot = in.readInt();
         g.p = in.readInt();
-        g.var_byte_a = in.readByte();
+        g.randomMapDifficulty = in.readByte();
         // v2：tickCount + 全局 RNG 静态（确定性回放锚，见类注释）
         g.tickCount = in.readInt();
         c.rngStateHi = in.readInt();

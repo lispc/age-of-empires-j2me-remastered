@@ -5,14 +5,14 @@ aiBuildTimer
 aiTrainTimer
 av
 R
-V
+briefingVariant
 keyRepeatFrames
 keyRepeatLast
 keyActionHeld
 devToast
 devToastUntil
 devStableFrames
-var_int_arr_a
+scriptFrameCounters
 var_javax_microedition_lcdui_Image_arr_a
 static.var_int_a
 static.var_javax_microedition_media_Player_a

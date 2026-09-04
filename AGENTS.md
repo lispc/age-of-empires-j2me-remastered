@@ -29,11 +29,14 @@ Age of Empires II (2005 J2ME) → macOS Swing 桌面移植。游戏本体是反�
 export JAVA_HOME=/opt/homebrew/opt/openjdk@17
 ./gradlew classes          # 编译
 tools/regress.sh           # 黄金回归网——任何 commit 前必跑,三连绿才算过
+                            # (~13s/跑,2026-09-04 turbo 化提速 24x)
 tools/regress.sh --update  # 仅在刻意变更行为/改名后重录基线,并在 commit message 说明
 tools/replaycheck.sh       # 确定性回放自检——动过输入路径/定时器/线程后必跑
 tools/bootcheck.sh         # devBoot 双跑对拍自检——动过存档装载/devBoot 时机后必跑
 ```
 
+- **回归分工:谁改谁跑,不重复跑**。子代理做的批次由子代理跑完验证并在报告里
+  给证据,主会话不再机械复跑(2026-09-04 用户拍板)。
 - 回归/golden **必须走默认 240x320**(镜头坐标依赖 screenW;宽视野只经 run.sh 的
   `AOE_WIDTH` 生效)。
 - **编译与跑批之间禁止管道**:`./gradlew classes | tail && tools/ailoop.sh` 的管道

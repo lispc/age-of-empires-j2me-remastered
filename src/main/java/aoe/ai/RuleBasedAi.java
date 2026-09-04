@@ -48,7 +48,7 @@ import AgeOfEmpires.c;
  * - 军事群令 selectUnits(0,-1) 只选军事（type≥2)，村民不受影响；村民单体
  *   改派直接写 slot（引擎 tickAi 同做法）。采集→交存→返矿全自动（§10 定论，
  *   闲置只在资源耗尽时），只需处理真闲置。
- * - 金/石交存自动取 TC+双采矿场最近者（hdr[10]/[11]，int_a c.java:8377）——
+ * - 金/石交存自动取 TC+双采矿场最近者（hdr[10]/[11]，nearestDropOff c.java:8377）——
  *   第二采矿场是引擎原生能力，v40 起用于矿点被蹲转移。
  * - 村民修理免费：走到 HP<255 的自己建筑格自动进 action 4（c.java:7026 不查
  *   UC 位），~0.5 HP/tick/人——v44 起用于修塔（1 人 ≈ 抵消 1 剑士磨塔）。
@@ -178,7 +178,7 @@ public final class RuleBasedAi implements PlayerAi {
     // mapTiles 0x8000=未探索，已探索格上的敌单位/建筑/资源主视图与小地图都照常画
     // （renderWorld 第二遍 `s>0` 门；小地图 stampThumbTile 负值=黑雾、单位点经
     // 3591 行的 0x8000 门刷新）；0x4000 只影响地表贴图明暗，不构成第二层视野。
-    // 故诚实规则 = 已探索=可见。视野来源（p()/l()/void_d/void_a 实读）：单位揭开
+    // 故诚实规则 = 已探索=可见。视野来源（p()/dimFogAroundUnit/revealFogAroundUnit/void_a 实读）：单位揭开
     // 自身 3×3（每 tick + 移动时），建筑轮流揭半径 3、塔半径 6，探索永久累积。
     // 诚实模式下禁读 hdr[1] 全部字段（军值/资源/人口/TC 位=人类看不到的统计）；
     // 敌单位/建筑只认已探索格上的；敌 TC 位置改侦察记忆（见过一次即永久，TC 不动）。
@@ -860,7 +860,7 @@ public final class RuleBasedAi implements PlayerAi {
         // （全场最慢）逃不掉。塔援护 DEFEND 要敌兵进塔 6 格才触发，t8 在 4-8 格
         // 外慢慢磨塔时全军旁观（v31 seed 1000 复盘：外圈 3 塔被 2 台 t8 白拆）。
         // 全军冲=离圈送死，派 ≤2 个最近的快腿近战（t2/3/5/6）直取；敌命中会改写
-        // 我方 slot[2]（d() 反扑语义），靠每决策重投续上。猎手不参与闪避。
+        // 我方 slot[2]（resolveAttack 反扑语义），靠每决策重投续上。猎手不参与闪避。
         java.util.Arrays.fill(this.huntingM, false);
         if (expert && !this.attackMode && myTc >= 0) {
             int huntersLeft = Math.min(4, Math.max(1, milCount / 2));
@@ -920,7 +920,7 @@ public final class RuleBasedAi implements PlayerAi {
 
         // ===== Expert 波 1 接战微操：集火闪避（v31，必须在群令/回撤之后跑） =====
         // 引擎攻击按"格"结算：攻击态 slot[5]=目标格，格上无人则每 tick 校验时
-        // slot[7] 清零重来（g() case 1），敌近战出手需攒 8 tick 装填。被锁定单位
+        // slot[7] 清零重来（tickUnits() case 1），敌近战出手需攒 8 tick 装填。被锁定单位
         // 每决策（8t）横移一步 = 敌装填永远攒不满还要重新走位，我方其余单位原地
         // 继续输出——把 1:1 换血变成 0:N。落点强制留在塔火圈（hdr[12]，封建后 25）
         // 内，防 v2 式被拉出塔圈风筝；自己装填将满（再 1-2t 出手）时让这一击打完。
@@ -1453,7 +1453,7 @@ public final class RuleBasedAi implements PlayerAi {
                 if (stableDone > 0 && stableSlot >= 0 && canTrain(hdr, 5)
                         && queueLen(recs, stableSlot) < 2 && hdr[5] >= 25 && hdr[6] >= 30
                         && game.canAfford(0, 0, 5)) {
-                    game.queueUnitTraining(0, 5);    // 封建产侦察，城堡自动转骑兵（j() case 8）
+                    game.queueUnitTraining(0, 5);    // 封建产侦察，城堡自动转骑兵（tickBuildings() case 8）
                 }
                 if (siegeDone > 0 && siegeSlot >= 0 && canTrain(hdr, 7)
                         && queueLen(recs, siegeSlot) < 1 && hdr[5] >= 40 && hdr[6] >= 60
@@ -1799,7 +1799,7 @@ public final class RuleBasedAi implements PlayerAi {
 
     // ===== 螺旋侦察路点（第六批）=====
     // 以我方 TC 为圆心外扩的正方形环（半径 3,5,…,3+2(rings-1)），环上路点弧距 ≤3 格
-    // ——单位视野=自身 3×3（void_d/l 实读），弧距 3 保证走过即无缝开图。游标全局
+    // ——单位视野=自身 3×3（revealFogAroundUnit/dimFogAroundUnit 实读），弧距 3 保证走过即无缝开图。游标全局
     // 递增、取模环绕复用；村民探路限前 6 环（半径 ≤13，不跑丢），军事侦察/猎寻用
     // 全 16 环（半径 ≤33，覆盖全图）。全确定性：固定环序/周长均分，无 RNG。
     // （SCOUT_RINGS/PROBE_RINGS/SPIRAL_MAX/PROBE_MAX 常量在字段区——JLS 8.3.3 前置）

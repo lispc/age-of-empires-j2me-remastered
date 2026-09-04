@@ -1,0 +1,31 @@
+# wave8：移动/索敌/伤害/抵达钩子/世界 tick/迷雾/AI 攻势/难度档/脚本计时器批次（2026-09-04）
+# 只收录已完全读懂语义的符号。证据：c.java 现场读码（boolean_b 7521 步进器、
+# boolean_a 8067 槽序索敌、B 8040 每玩家每 tick 1 单位节流、j 5883 建筑 tick、
+# c 7176 抵达钩子、d 7273 伤害结算、g 7012 移除入口/g 7060 单位任务链、
+# void_d 5795 点亮/l 5777 暗化、int_a 8551 交存点选择）+ docs/game-mechanics.md
+# §索敌/移动/迷雾节 + RuleBasedAi 注释交叉印证 + d.java 生成器头部注释。
+# ⚠️ 单字母 B/g/j/c/d/l 进注释替换表，apply 后逐条过 diff 看误伤
+# （已知雷区：RuleBasedAi/PlayerAi/d.java 头注释里的 "c.java"/"c 帧首"/"d.a("/"g() 布源"
+#  等指类名/文件/d 类成员的用法，以及指 renderWorld(旧 j(Graphics))/orderMove(旧 d(III))
+#  /startMissionBriefing(旧 g(III)) 的过期引用）。
+# var_boolean_f/var_boolean_b（右下角软键图标开关）与 d.var_int_arr_a（出生点）
+# 本波跳过：前者图标语义未钉死且与 b.var_boolean_b 注释空间撞名；后者与
+# c.var_int_arr_a 同 oldName，注释替换表 putIfAbsent 撞车，留下波。
+# 格式：kind<TAB>owner<TAB>oldName<TAB>params<TAB>newName
+F	AgeOfEmpires.c	var_int_i	-	aiStance
+F	AgeOfEmpires.c	var_byte_a	-	randomMapDifficulty
+F	AgeOfEmpires.c	var_int_arr_a	-	scriptFrameCounters
+F	AgeOfEmpires.c	var_int_arr_c	-	actionMenuItemIds
+F	AgeOfEmpires.d	var_short_arr_a	-	mapTiles
+F	AgeOfEmpires.d	var_int_arr_b	-	seedPoints
+M	AgeOfEmpires.c	boolean_b	(int,int)	stepUnitMove
+M	AgeOfEmpires.c	boolean_a	(int,int)	acquireTarget
+M	AgeOfEmpires.c	B	()	tickAutoEngage
+M	AgeOfEmpires.c	int_a	(int,int,int)	nearestDropOff
+M	AgeOfEmpires.c	g	()	tickUnits
+M	AgeOfEmpires.c	g	(int,int)	removeUnit
+M	AgeOfEmpires.c	j	()	tickBuildings
+M	AgeOfEmpires.c	c	(int,int,int,int)	onUnitArrived
+M	AgeOfEmpires.c	d	(int,int,int,int)	resolveAttack
+M	AgeOfEmpires.c	void_d	(int,int)	revealFogAroundUnit
+M	AgeOfEmpires.c	l	(int,int)	dimFogAroundUnit

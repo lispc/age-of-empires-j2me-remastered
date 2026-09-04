@@ -219,6 +219,49 @@
 i 与其他类同名符号均非本表目标，已用编译+javac 解析+`this.i(`/`var_int_arr_arr_b`
 绝迹 grep 替代验证）。
 
+## 已改名：wave8（2026-09-04，移动/索敌/伤害/世界 tick/迷雾对/AI 攻势批）
+
+证据：c.java 现场读码（含调用点全枚举）+ game-mechanics/unit-stats 既有考证 +
+RuleBasedAi 注释交叉印证；迷雾对方向（reveal vs dim）由 tickMoveTimer 的
+"离开旧格→dim、到达新格→reveal"调用序 + p() 每 tick 全单位 relight + removeUnit
+入口 dim 三处互证。d.java 两字段由类头注释 + c.java 消费点（3612-3625 出生点摆
+TC/村民）钉死。
+
+字段（AgeOfEmpires.c 除注明外）：
+
+| 新名 | 旧名 | 语义 |
+|---|---|---|
+| aiStance | var_int_i | AI 攻势模式：0=种田/1=防御（入侵者进警戒半径²）/2=进攻（军值过阈）；tickAi 扫描完成时写、发令后清 0（fields 可读） |
+| randomMapDifficulty | var_byte_a | 随机图难度档位 0/1/2（菜单脚本 op 66 写；setupMissionEnv 的 gameMode==0 分支读，决定 AI 参数档） |
+| scriptFrameCounters | var_int_arr_a | 任务脚本 4 个帧计数器（每帧 +1、DSL 动作 3 清零、条件 2 做"经过 N×10 tick"判定）；在 regress-noise 里（两 dump 间合法漂移） |
+| actionMenuItemIds | var_int_arr_c | 动作/建造菜单槽位 id 表（buildActionMenu 组装，含 techFlags[36] 塔升级偏移；渲染/支付/排队都经它取条目 id；clearActionMenu 置 null） |
+| mapTiles（AgeOfEmpires.d） | var_short_arr_a | 生成器持有的地图格缓冲引用（= c.mapTiles 同一数组） |
+| seedPoints（AgeOfEmpires.d） | var_int_arr_b | 影响扩散的种源坐标表（x,y 对；g() 随机漫步布源/a(int) 散布，e() 按 var_int_c 个取正影响 +m/距离²） |
+
+方法（AgeOfEmpires.c）：
+
+| 新名 | 旧名 | 语义 |
+|---|---|---|
+| stepUnitMove | boolean_b(int,int) | 单位移动单步进器：DDA 直线步进 + 落点三重检查 + 7 邻格扇形回退 + 占位表更新；落点==目标且被占时触发抵达钩子；BFS 寻路只换"选落点"一步 |
+| acquireTarget | boolean_a(int,int) | 索敌：**槽序第一个**进判定半径者（非最近）；邻接（d²≤1）双方互锁进攻击态，远程（t4/8）圈内直接锁定，其余写 slot[2] 追击 |
+| tickAutoEngage | B() | 索敌节流处理器：每玩家每 tick 只处理 1 个单位（tickCount 轮转起点；原版字节码语义，CFR 曾丢循环出口）；我方单位要站在目标格上才自动接敌 |
+| nearestDropOff | int_a(int,int,int) | 交存点选择：按任务字高 nibble（资源种）在 TC+伐木场/双采矿场中取距离平方最近者；**不是战斗索敌**（deep-dive-2 曾误记） |
+| removeUnit | g(int,int) | 单位死亡/移除唯一入口：[combat] 日志、pop/军值回收、mapTiles 置 0x4000 残迹、槽位尾交换压缩、0 单位+0 建筑判负 |
+| tickUnits | g() | 主单位更新链：两玩家全单位按任务字分发——case 0 闲置回血（tickCount&8 门）/直通移动、case 1 战斗装填与出手、case 2 采集计时与耗尽迁格、case 3 回送移动、case 4 施工 |
+| tickBuildings | j() | 建筑 tick：施工 +8/帧至 255 完工（人口/科技旗标/塔注册投射物池/完工弹窗）、研究进度、训练队列推进与出兵（含时代变形） |
+| onUnitArrived | c(int,int,int,int) | 单位抵达钩子（stepUnitMove 唯一调用点）：资源格→采集、己方建筑→交存/施工修理、敌方建筑/单位→接敌并互锁反击 |
+| resolveAttack | d(int,int,int,int) | 伤害结算：攻×16÷目标护甲（整除），对单位/建筑两路；致死分别走 removeUnit/onThingDestroyed；命中时把受害者 slot[2] 改指攻击者（反扑改写） |
+| revealFogAroundUnit | void_d(int,int) | 点亮单位周围 3×3（清 0x8000 未探索 + 0x4000 暗化）；p() 每 tick 对我方全单位调用，出生/移动到达/雾下战斗单位被画时也调 |
+| dimFogAroundUnit | l(int,int) | 单位离开旧格/死亡时把旧位置 3×3 转"已探明但无人看守"（清 0x8000、置 0x4000 暗化位）；渲染对暗化格上非战斗敌单位跳过绘制 |
+
+注意：①`void_d(int)`（菜单按键处理）与 `l(Graphics)`（渲染）是未改名的同名
+重载，勿混。②renamer 的注释同步对单字母旧名会漏扫（commentSpans 的引号配对
+被注释里的撇号打乱），本波的注释同步全部由人工逐条补齐/回退——唯一自动误伤
+是 tickAutoEngage 体内"原版字节码（方法 B,175…)"的考据注释被改，已人工还原
+（引的是原 jar 方法名）。③0x4000 暗化位会隐藏"暗化格上非战斗中的敌单位"
+（renderWorld 单位段守卫）——与第六批"只切地表明暗"记录在单位维度上冲突，
+以本波读码为准（实测复核留给后续）。
+
 ## 补充结构语义（原 deobfuscation.md 考据，2026-09-03）
 
 **胜负判定双路径**（r30/r31 定案）：①敌 TC 毁→即胜（工人/村民不计入，r30 实测敌
@@ -247,21 +290,26 @@ FIFO 宏清单见 DEVELOPMENT.md；存档解析 `tools/aoesave.py`（只读，�
 ## 半懂（保留旧名，先补注释）
 
 aH（转场计时/激活参数双职责）、ap（返回节点）、var_int_arr_e（当局资源拷贝，
-与 nfoHighScores 的关系待证）、var_int_arr_a[4]（脚本帧计数器，DSL 条件 2 用，
-每帧 +1、动作 3 清零——已并入 AI/DSL 考证）、
+与 nfoHighScores 的关系待证）、
 aI/aB 中的 aB、E/G/x/T/aD 等零散 int、
 ad/J（相机半屏居中偏移，2:1 菱形投影精确推导未考证——只当"半屏修正"用）、
-l(int,int)（在单位周围 3×3 置/清迷雾位 0x4000，重标时机与用途未证）。
+var_boolean_f/var_boolean_b（渲染分发处的左下/右下角图标开关，逐屏置位；图标
+本体语义未钉死，且 var_boolean_b 与 AgeOfEmpires.b 同名静态撞注释空间，wave8 跳过）、
+d.var_int_arr_a（双出生点 x0,y0,x1,y1——c.java:3612-3625 消费点已读，但与
+c.scriptFrameCounters 同 oldName 撞 renamer 注释表，留 wave9）。
 
 （2026-09-01 晚移出：var_boolean_k → randomMap、m → bgmFramesLeft，见 wave6——
 后者"菜单/世界双写入点"经核实是同一职责的两处赋值，非双职责。）
+（2026-09-04 移出：var_int_arr_a → scriptFrameCounters、l(int,int) →
+dimFogAroundUnit，见 wave8。）
 
-迷雾位考证（2026-09-01，曾被字面 grep 误导后由 regress golden 纠正）：
+迷雾位考证（2026-09-01 立案，2026-09-04 wave8 闭环）：
 mapTiles 的 0x8000 = 未探索（装载大面积置位、随探索清除；short 置位后变负，
-stampThumbTile 据此走深色分支 = 黑迷雾）；0x4000 = 二级暗化位（l(int,int) 每帧
-在单位周围置位；世界地块渲染走暗化变体——疑为"当前可见/已探明"两级迷雾，
-细节未证）。0x8000 的置位走 `a(int,int,int,int,int)` 矩形填充的参数间接传入，
-字面 grep "0x8000" 找不到 setter。
+stampThumbTile 据此走深色分支 = 黑迷雾）；0x4000 = 暗化位（已探明但当前无人
+看守）——dimFogAroundUnit 在单位离开旧格/死亡时置位，revealFogAroundUnit 在
+p() 每 tick/单位到达/出生时清除；渲染对暗化格走地表暗化变体，且跳过暗化格上
+非战斗中的敌单位绘制。0x8000 的置位走 `a(int,int,int,int,int)` 矩形填充的参数
+间接传入，字面 grep "0x8000" 找不到 setter。
 
 ## 未考证（保留旧名）
 

@@ -94,7 +94,7 @@ LLM 玩家代理的宏层（sel/goto/train/build/gather/rally/sitrep 等 FIFO �
 | `aoe.playerAi=<全限定类名>` | 玩家 AI 帧首 hook：实现 `aoe.ai.PlayerAi`（`void tick(AgeOfEmpires.c game)`），每帧首调一次，自行节流；装载失败/tick 异常打 `[ai]` 并禁用 |
 | `aoe.exitOnResult=1` | 终局（startMissionBriefing z==98）无条件打印 `[result] WIN|LOSS ticks=N` 后 System.exit(0)——批量脚本契约，格式勿改 |
 | `aoe.mapSeed=N` | 随机图种子覆盖（beginMissionLoad 装载点，N 拆 hi/lo 两字节；不设则逐字节不变） |
-| `aoe.bfsPath=1` | 可选 BFS 寻路（默认关）：`boolean_b` 的 DDA 选落点换成沿缓存 BFS 路径取下一格，落点检查/抵达钩子/扇形回退不变；语义详见 game-mechanics「移动与寻路」 |
+| `aoe.bfsPath=1` | 可选 BFS 寻路（默认关）：`stepUnitMove` 的 DDA 选落点换成沿缓存 BFS 路径取下一格，落点检查/抵达钩子/扇形回退不变；语义详见 game-mechanics「移动与寻路」 |
 | `aoe.reveal=1` | 渲染无视迷雾（黑雾→地形本体，雾下资源/建筑/单位照画）。**纯 paint 层**：只改 renderWorld 两处绘制门，不碰 mapTiles，模拟/回放确定性不受影响 |
 | `aoe.videoDir=<dir>` + `aoe.videoEvery=N` | 每帧渲染完成后按每 N tick（默认 10=0.4 游戏秒）导出一帧 PNG 到 dir（进过主视图才开始录，终局弹窗继续录）。PNG 编码只拖墙钟不改 tick。合成 mp4：`ffmpeg -framerate 30 -i frame_%08d.png -c:v libx264 -pix_fmt yuv420p`（30fps≈12 倍原速）；campaign-replay.sh `--video` 一条龙 |
 | `aoe.aiFog` | RuleBasedAi 迷雾诚实模式（默认开=只读已探索格敌情/资源，禁读 hdr[1] 统计）：`=0` 回退全图（ailoop `-f`）；`=res`/`=tc` 消融档（资源全图/敌 TC 全图，仅诊断） |

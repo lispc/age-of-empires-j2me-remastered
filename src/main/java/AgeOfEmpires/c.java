@@ -18,7 +18,7 @@ package AgeOfEmpires;
  * 证据链见 docs/symbols.md 与 docs/agent-operations.md）。
  *
  * 【状态机】
- *   screenState(aA)   当前屏状态：2=对话框/弹窗（期间 j() 世界循环冻结！）
+ *   screenState       当前屏状态：2=对话框/弹窗（期间世界 tick 冻结：tickUnits/tickBuildings/AI 全停！）
  *                     4=菜单 6=世界视图 8=建造菜单 12=胜利/结算屏
  *   pendingScreenState(am) 待切换屏状态（startMissionBriefing 链）
  *   tickCount(ar)     全局 tick（aoe.tickms=40ms/tick）
@@ -87,7 +87,7 @@ implements CommandListener {
     public int[] nfoHighScores;
     public String[] var_java_lang_String_arr_b;
     public String var_java_lang_String_b;
-    public byte var_byte_a = 0;
+    public byte randomMapDifficulty = 0;
     public int ah;
     public int ay;
     public Font var_javax_microedition_lcdui_Font_a;
@@ -108,7 +108,7 @@ implements CommandListener {
     public int[][] playerUnitHeaders;
     // —— 状态机（速查见 GAME_NOTES.md，完整语义未完全考证，改动前对照 p() 的分发）——
     // screenState: 顶层画面状态，p() 按它分发渲染；E() 在 screenState 变化时构建新画面。
-    // am: 配套的"当前画面"值（boolean_g(n) 直接设置），am==screenState 表示画面稳定。
+    // pendingScreenState: 配套的"当前画面"值（requestStateSwitch(n) 设置），==screenState 表示画面稳定。
     // screenState/pendingScreenState：paint 线程写，dev-nav/dev-mouse/DevHarness
     // 线程轮询（菜单导航/ until /state 全靠它）——volatile 保证可见性。
     public volatile int screenState;
@@ -119,7 +119,7 @@ implements CommandListener {
     // 非零则该种子喂 rngStateLo/Hi 走脚本固定地图。快照 v2 已随档保存。
     public boolean randomMap;
     public int R;
-    // ac: 游戏模式（由菜单脚本动作 65/71/73 设置）：0=教程，16=随机地图，32=战役。
+    // gameMode: 游戏模式（由菜单脚本动作 66/71/73 设置）：0=随机地图，16=教学，32=战役。
     // aC: 当前选中的任务序号（0 起；战役 0..6，随机地图 0..2）。
     public volatile int gameMode;
     public int missionIndex;
@@ -159,7 +159,7 @@ implements CommandListener {
     public int av;
     public int var_int_e;
     public int D;
-    // selection*/var_int_i：paint 线程写（sel/goto/train 宏也从 dev 线程直接读写，
+    // selection*/aiStance：paint 线程写（sel/goto/train 宏也从 dev 线程直接读写，
     // 见 devMouseCmd——那是有意的跨线程宏设计），state/sitrep/goto 从 dev 线程读。
     public volatile int selectionMode;
     public int p;
@@ -167,7 +167,7 @@ implements CommandListener {
     public volatile int selectedType;
     public int selectedSlot;
     public volatile int selectionPlayer;
-    public volatile int var_int_i;
+    public volatile int aiStance;
     public int aQ;
     public Graphics var_javax_microedition_lcdui_Graphics_a;
     public byte[] var_byte_arr_d;
@@ -208,7 +208,7 @@ implements CommandListener {
     public boolean var_boolean_l;
     public int W;
     public int X;
-    public int[] var_int_arr_c;
+    public int[] actionMenuItemIds;
     public int T;
     public int aD;
     public byte[] costTable;
@@ -219,7 +219,7 @@ implements CommandListener {
     // → runScriptActions/skipScriptActions/skipScriptBlock；解释器会在块首字节写"已执行"
     // 标记 = 翻转符号位）。快照存档整体携带。字节 127 = 脚本区结束标记。
     public byte[] missionScript;
-    public int[] var_int_arr_a;
+    public int[] scriptFrameCounters;
     public int var_int_d;
     public int S;
     public int au;
@@ -343,7 +343,7 @@ implements CommandListener {
         this.tickCount = 0;
         this.nfoHighScores = new int[7];
         this.var_int_arr_e = new int[7];
-        this.var_int_arr_a = new int[4];
+        this.scriptFrameCounters = new int[4];
         this.loadNfo();
         int n = this.nfoReadInt(28, 1);
         this.tutorialProgress = n >> 4;
@@ -741,7 +741,7 @@ implements CommandListener {
     }
 
     // ===== 可选 BFS 寻路（-Daoe.bfsPath=1，默认关，关闭时行为与原版逐字节一致）=====
-    // 只替换 boolean_b 里"选落点"一步：DDA 直线步进换成"沿 BFS 路径取下一格"；
+    // 只替换 stepUnitMove 里"选落点"一步：DDA 直线步进换成"沿 BFS 路径取下一格"；
     // 落点三重检查、目标格被占处理（抵达钩子，采集/接敌靠它）、7 邻格扇形回退、
     // 占位表更新全部保留。障碍语义：建筑(0x100)与地形资源/虚空(0x300)当墙，
     // 单位占用(0x200)当可穿（动态障碍由运行时扇形回退处理，与原版兼容）。
@@ -1104,7 +1104,7 @@ implements CommandListener {
                 case "click": {
                     int x = Integer.parseInt(p[1]), y = Integer.parseInt(p[2]);
                     this.mouseA(1, x, y);
-                    Thread.sleep(200);      // 留 ≥1 帧让 j() 完成像素拾取
+                    Thread.sleep(200);      // 留 ≥1 帧让 renderWorld 完成像素拾取
                     this.mouseA(2, x, y);
                     break;
                 }
@@ -1294,7 +1294,7 @@ implements CommandListener {
                             + " — TC/研究类建筑不产兵)");
                     } else {
                         // selectedTrainProduct→单位 type 恒等映射（r20 实测: 0村民/2民兵/3剑士/4弓兵/5侦察）。
-                        // 不走 y()——它依赖菜单态的 var_int_arr_c 槽位表，宏上下文为 null。
+                        // 不走 y()——它依赖菜单态的 actionMenuItemIds 槽位表，宏上下文为 null。
                         int q0 = this.playerUnitHeaders[0][49];
                         int got = 0;
                         for (int i = 0; i < want; ++i) {
@@ -1354,7 +1354,7 @@ implements CommandListener {
                     // 普通 click 的屏幕坐标→tile 映射随镜头缓动漂移（鼠标拾取用的是
                     // 拾取那一刻的相机），远距精确点击不可行；ctile 用实时 cameraPx
                     // 计算，无漂移。
-                    // 坐标基准（第14轮玩家实测钉死）：FIFO mouse 坐标喂给 j() 的拾取
+                    // 坐标基准（第14轮玩家实测钉死）：FIFO mouse 坐标喂给 renderWorld 的拾取
                     // 管线，是**物理帧缓冲空间**（=逻辑×SCALE，默认 480x640），不是
                     // 240x320 逻辑空间——tile 菱形中心 = (32*(tx-ty)-2*camX-64,
                     // 16*(tx+ty)-2*camY+19)。早版用逻辑基准(16/8,+76)导致系统性
@@ -1453,13 +1453,14 @@ implements CommandListener {
                         .append(",\"pop\":[").append(this.playerUnitHeaders[0][2]).append(',')
                         .append(this.playerUnitHeaders[0][3]).append(']')
                         .append(",\"queued\":").append(this.playerUnitHeaders[0][49])
-                        .append(",\"ai\":").append(this.var_int_i);
+                        .append(",\"ai\":").append(this.aiStance);
                     if (this.mapTiles != null) {
                         // explored = 无 0x8000 迷雾位的格子数（装载时大面积置位、随探索
                         // 经矩形填充助手清除；regress golden 开局值 298）。另一迷雾位
-                        // 0x4000 由 l(int,int) 每帧在单位周围置位、渲染走暗化分支——
-                        // 疑为"当前可见/已探明"二级标记，语义未完全考证，勿据字面 grep
-                        // 下结论：0x8000 的置位走参数间接传入（a(int,int,int,int,int)）。
+                        // 0x4000=暗化（已探明但当前不在视野内）：revealFogAroundUnit
+                        // 点亮 3×3 时清除，dimFogAroundUnit 在单位离开/死亡时置位，
+                        // 渲染走暗化分支（wave8 考证闭环，2026-09-04）。
+                        // 0x8000 的置位走参数间接传入（a(int,int,int,int,int)）。
                         int explored = 0;
                         for (int i = 0; i < this.mapTiles.length; ++i) {
                             if ((this.mapTiles[i] & 0x8000) == 0) {
@@ -1651,7 +1652,7 @@ implements CommandListener {
                         .append(this.playerUnitHeaders[0][6]).append('/').append(this.playerUnitHeaders[0][7])
                         .append(" pop=").append(this.playerUnitHeaders[0][2]).append('/').append(this.playerUnitHeaders[0][3])
                         .append(" q=").append(this.playerUnitHeaders[0][49])
-                        .append(" ai=").append(this.var_int_i)
+                        .append(" ai=").append(this.aiStance)
                         .append(" sel=").append(this.selectionMark);
                     int[] mine = new int[16], foe = new int[16];
                     int foeN = 0, foeSx = 0, foeSy = 0;
@@ -1926,7 +1927,7 @@ implements CommandListener {
      *  可用性校验镜像 openBuildingMenu（研究菜单门真正生效的地方——研究菜单
      *  var_boolean_g=false，boolean_k case 2 的 techFlags 过滤对研究菜单不生效，
      *  首批实现误把它当菜单门，导致升时代永远被拒，2026-09-02 玩家 AI 实测暴露）：
-     *  - techFlags[23+techId] != 0 = 该科技已研究（j() 研究完成时置位）→ 拒绝；
+     *  - techFlags[23+techId] != 0 = 该科技已研究（tickBuildings 研究完成时置位）→ 拒绝；
      *  - 升时代（21/22/23）只在 TC(9)、techId == 21+当前时代，且前置建筑达标
      *    （封建：建成兵营≥1；城堡：磨坊+铁匠铺≥2；帝国：城堡≥1）；
      *  - 其余科技按 openBuildingMenu 的建筑类型→可研究科技+时代门槛表。
@@ -2013,11 +2014,11 @@ implements CommandListener {
     // 悬停：只记录拾取结果做高亮，不平移镜头（桌面惯例）。
     // 左键单击：光标/镜头直达点击格并触发确认（等价"移过去 + FIRE"）。
     // 左键拖动：框选本方单位（复刻 h() 的多选）。
-    // 右键：有选中单位时全体移动到鼠标格（复刻 d(0,tx,ty) 指令路径），无选中时取消选择。
+    // 右键：有选中单位时全体移动到鼠标格（复刻 orderMove(0,tx,ty) 指令路径），无选中时取消选择。
     // 鼠标贴窗口边缘（<=14 逻辑像素）：持续向该方向平移（桌面 RTS 惯例）。
-    // 屏幕→格子不做投影换算，而是由 j() 的格子遍历直接做像素拾取（mousePick* / mouseInsideTile）。
+    // 屏幕→格子不做投影换算，而是由 renderWorld 的格子遍历直接做像素拾取（mousePick* / mouseInsideTile）。
     // 鼠标状态字段全部是跨线程的：mouseA 由 EDT（真实鼠标）/dev-mouse（FIFO
-    // move/press/…）线程写，paint 线程（mouseTick/j()）读；拾取结果
+    // move/press/…）线程写，paint 线程（mouseTick/renderWorld）读；拾取结果
     // （mousePickTile/mouseLastTile）反向由 paint 写、EDT/dev 读。一律 volatile
     // （可见性；多字段间的复合一致性依赖"单发输入事件"的天然串行，不上锁）。
     public volatile boolean mouseBandActive;
@@ -2136,8 +2137,8 @@ implements CommandListener {
         }
     }
 
-    /** 每帧（a(Graphics) 开头）：应用 j() 最近一次拾取结果。只看序号不看 pending——
-     *  pending 由 j() 拾取成功时清理；拖动中事件比 tick 密，若在这里等 pending
+    /** 每帧（a(Graphics) 开头）：应用 renderWorld 最近一次拾取结果。只看序号不看 pending——
+     *  pending 由 renderWorld 拾取成功时清理；拖动中事件比 tick 密，若在这里等 pending
      *  归零会被新事件无限饿死。 */
     private void mouseTick() {
         if (this.mousePickSeq != this.mouseAppliedSeq) {
@@ -2496,13 +2497,13 @@ implements CommandListener {
                         if (this.bgmFramesLeft-- <= 0) {
                             this.playNextBgm();
                         }
-                        this.g();
+                        this.tickUnits();
                         this.p();
-                        this.B();
+                        this.tickAutoEngage();
                         this.aimProjectiles();
                         this.tickProjectiles();
                         this.tickAi();
-                        this.j();
+                        this.tickBuildings();
                         this.tickMissionScript();
                         if (this.ag <= 0) break;
                         if (this.var_java_lang_String_a != null) {
@@ -3381,7 +3382,7 @@ implements CommandListener {
                 }
                 if (this.menuTree[n3] != 66) break;
                 this.gameMode = 0;
-                this.var_byte_a = (byte)(n4 & 0xF);
+                this.randomMapDifficulty = (byte)(n4 & 0xF);
             }
         }
     }
@@ -3612,7 +3613,7 @@ implements CommandListener {
             this.a(0, 9, this.var_AgeOfEmpires_d_a.var_int_arr_a[0], this.var_AgeOfEmpires_d_a.var_int_arr_a[1], 255, false);
             this.a(0, 0, this.var_AgeOfEmpires_d_a.var_int_arr_a[0] + 1, this.var_AgeOfEmpires_d_a.var_int_arr_a[1] + 1, false);
             this.a(0, 0, this.var_AgeOfEmpires_d_a.var_int_arr_a[0] - 1, this.var_AgeOfEmpires_d_a.var_int_arr_a[1] + 1, false);
-            if (this.var_byte_a < 2) {
+            if (this.randomMapDifficulty < 2) {
                 this.a(0, 5, this.var_AgeOfEmpires_d_a.var_int_arr_a[0] + 1, this.var_AgeOfEmpires_d_a.var_int_arr_a[1], false);
             }
             this.cursorTileX = this.var_AgeOfEmpires_d_a.var_int_arr_a[0];
@@ -4127,10 +4128,10 @@ implements CommandListener {
             this.aiTrainTimer = 0;
             this.aiBuildTimer = 0;
             AgeOfEmpires.c.a(this.var_java_lang_String_arr_a);
-            this.var_int_arr_a[0] = 0;
-            this.var_int_arr_a[1] = 0;
-            this.var_int_arr_a[2] = 0;
-            this.var_int_arr_a[3] = 0;
+            this.scriptFrameCounters[0] = 0;
+            this.scriptFrameCounters[1] = 0;
+            this.scriptFrameCounters[2] = 0;
+            this.scriptFrameCounters[3] = 0;
             this.costTable = null;
             this.techFlags = null;
             this.missionScript = null;
@@ -4141,7 +4142,7 @@ implements CommandListener {
         this.techFlags = com.ulysseo.mad.c.byte_arr_a(127);
         this.dirTable = com.ulysseo.mad.c.byte_arr_a(123);
         this.devCheckpointedThisMission = false;    // 新任务环境装载,允许一次 auto checkpoint
-        this.var_int_i = 0;
+        this.aiStance = 0;
         for (n2 = 0; n2 < 4096; ++n2) {
             this.mapTiles[n2] = Short.MIN_VALUE;
         }
@@ -4171,10 +4172,10 @@ implements CommandListener {
         this.aiBuildTimer = 0;
         this.aiBuildPhase = 0;
         this.aiBuildTarget = -1;
-        this.var_int_i = 0;
+        this.aiStance = 0;
         if (this.gameMode == 0) {
             this.aiEnabled = true;
-            switch (this.var_byte_a) {
+            switch (this.randomMapDifficulty) {
                 case 0: {
                     this.playerUnitHeaders[0][5] = 200;
                     this.playerUnitHeaders[0][6] = 100;
@@ -4336,20 +4337,20 @@ implements CommandListener {
         this.ag = 0;
         a a2 = new a(99);
         this.var_java_lang_String_a = a2.a(6);
-        this.var_int_arr_c = new int[this.X];
+        this.actionMenuItemIds = new int[this.X];
         this.var_java_lang_String_arr_a = new String[this.X << 1];
         this.W = 0;
         a a3 = new a(this.G);
         for (int i = 0; i < this.X; ++i) {
             if (!this.boolean_k(i) && this.var_boolean_g) continue;
             int n2 = i;
-            this.var_int_arr_c[this.W] = i;
+            this.actionMenuItemIds[this.W] = i;
             if (this.var_int_g == 1 && n2 == 12) {
                 n2 += this.techFlags[36];
                 n2 += this.techFlags[40];
                 n2 += this.techFlags[43];
                 int n3 = this.W;
-                this.var_int_arr_c[n3] = this.var_int_arr_c[n3] + this.techFlags[36];
+                this.actionMenuItemIds[n3] = this.actionMenuItemIds[n3] + this.techFlags[36];
             }
             this.var_java_lang_String_arr_a[this.W << 1] = a3.a(n2 << 1);
             this.var_java_lang_String_arr_a[(this.W << 1) + 1] = a3.a((n2 << 1) + 1);
@@ -4359,7 +4360,7 @@ implements CommandListener {
     }
 
     public final void clearActionMenu() {
-        this.var_int_arr_c = null;
+        this.actionMenuItemIds = null;
         this.var_java_lang_String_a = null;
         AgeOfEmpires.c.a(this.var_java_lang_String_arr_a);
     }
@@ -4401,8 +4402,8 @@ implements CommandListener {
                         }
                         if (n < this.W) {
                             int n6 = 0;
-                            n6 = this.var_int_g == 0 ? (this.playerUnitHeaders[0][3] > this.playerUnitHeaders[0][49] + this.playerUnitHeaders[0][2] ? (this.canAfford(0, this.var_int_g, this.var_int_arr_c[n]) ? 0 : 4) : 4) : (this.canAfford(0, this.var_int_g, this.var_int_arr_c[n]) ? 0 : 4);
-                            this.a(graphics, this.x, n4, n5, this.var_int_arr_c[n] * 36, 0, 36, 36, 0, n6);
+                            n6 = this.var_int_g == 0 ? (this.playerUnitHeaders[0][3] > this.playerUnitHeaders[0][49] + this.playerUnitHeaders[0][2] ? (this.canAfford(0, this.var_int_g, this.actionMenuItemIds[n]) ? 0 : 4) : 4) : (this.canAfford(0, this.var_int_g, this.actionMenuItemIds[n]) ? 0 : 4);
+                            this.a(graphics, this.x, n4, n5, this.actionMenuItemIds[n] * 36, 0, 36, 36, 0, n6);
                             graphics.setColor(0);
                             graphics.fillRect(n4 + 36 - 5, n5 + 36 - 7, 4, 6);
                             int n7 = n + 1;
@@ -4503,7 +4504,7 @@ implements CommandListener {
                 this.a(graphics, this.x, n11 + (n13 << 1), n12, 888, 0, 12, 20, 0, 0);
             }
         }
-        this.a(graphics, this.var_int_arr_c[this.selectedTrainProduct], this.var_java_lang_String_arr_a[this.selectedTrainProduct << 1], this.var_java_lang_String_arr_a[(this.selectedTrainProduct << 1) + 1]);
+        this.a(graphics, this.actionMenuItemIds[this.selectedTrainProduct], this.var_java_lang_String_arr_a[this.selectedTrainProduct << 1], this.var_java_lang_String_arr_a[(this.selectedTrainProduct << 1) + 1]);
         if (!this.var_boolean_a) {
             this.t = this.cursorTileIdx;
             this.pendingScreenState = 6;
@@ -4604,16 +4605,16 @@ implements CommandListener {
     final void y() {
         switch (this.var_int_g) {
             case 0: {
-                if (this.playerUnitHeaders[0][2] + this.playerUnitHeaders[0][49] >= this.playerUnitHeaders[0][3] || !this.canAfford(0, 0, this.var_int_arr_c[this.selectedTrainProduct])) break;
-                this.queueUnitTraining(0, this.var_int_arr_c[this.selectedTrainProduct]);
+                if (this.playerUnitHeaders[0][2] + this.playerUnitHeaders[0][49] >= this.playerUnitHeaders[0][3] || !this.canAfford(0, 0, this.actionMenuItemIds[this.selectedTrainProduct])) break;
+                this.queueUnitTraining(0, this.actionMenuItemIds[this.selectedTrainProduct]);
                 return;
             }
             case 1: {
-                int n = this.var_int_arr_c[this.selectedTrainProduct];
+                int n = this.actionMenuItemIds[this.selectedTrainProduct];
                 if (n > 12) {
                     n = 12;
                 }
-                if (!this.canAfford(0, 1, this.var_int_arr_c[this.selectedTrainProduct])) break;
+                if (!this.canAfford(0, 1, this.actionMenuItemIds[this.selectedTrainProduct])) break;
                 this.selectionMode = 1;
                 this.p = n;
                 this.var_int_d = this.cameraPxX + this.cursorScreenPxX;
@@ -4623,7 +4624,7 @@ implements CommandListener {
                 return;
             }
             case 2: {
-                if (!this.canAfford(0, 2, this.var_int_arr_c[this.selectedTrainProduct])) break;
+                if (!this.canAfford(0, 2, this.actionMenuItemIds[this.selectedTrainProduct])) break;
                 int[] nArray = this.buildingTable[0];
                 int n = this.aD + 2;
                 nArray[n] = nArray[n] | 0x20000000;
@@ -4633,7 +4634,7 @@ implements CommandListener {
                 int[] nArray3 = this.buildingTable[0];
                 int n3 = this.aD + 2;
                 nArray3[n3] = nArray3[n3] & 0xFFFF00FF;
-                this.payCost(0, 2, this.var_int_arr_c[this.selectedTrainProduct]);
+                this.payCost(0, 2, this.actionMenuItemIds[this.selectedTrainProduct]);
             }
         }
     }
@@ -5692,7 +5693,7 @@ implements CommandListener {
     final void p() {
         int n;
         for (n = 0; n < this.playerUnitHeaders[0][2]; ++n) {
-            this.void_d(0, n);
+            this.revealFogAroundUnit(0, n);
         }
         if (this.playerUnitHeaders[0][4] > 0) {
             n = this.tickCount % this.playerUnitHeaders[0][4];
@@ -5774,7 +5775,7 @@ implements CommandListener {
         }
     }
 
-    public final void l(int n, int n2) {
+    public final void dimFogAroundUnit(int n, int n2) {
         int n3 = n2 << 3;
         int n4 = this.playerUnitSlots[n][n3 + 0] >>> 8;
         int n5 = this.playerUnitSlots[n][n3 + 0] & 0xFF;
@@ -5792,7 +5793,7 @@ implements CommandListener {
         }
     }
 
-    final void void_d(int n, int n2) {
+    final void revealFogAroundUnit(int n, int n2) {
         int n3 = n2 << 3;
         int n4 = this.playerUnitSlots[n][n3 + 0];
         int n5 = n4 >>> 8;
@@ -5830,7 +5831,7 @@ implements CommandListener {
             this.randomMap = true;
         }
         for (n2 = 0; n2 < 4; ++n2) {
-            this.var_int_arr_a[n2] = 0;
+            this.scriptFrameCounters[n2] = 0;
         }
         this.playerUnitHeaders[0][0] = byArray[2] & 0xFF;
         this.playerUnitHeaders[0][5] = byArray[3] & 0xFF;
@@ -5880,7 +5881,7 @@ implements CommandListener {
         this.e(0, 64, 64, 0);
     }
 
-    final void j() {
+    final void tickBuildings() {
         for (int i = 0; i < 2; ++i) {
             int n = 0;
             int n2 = 0;
@@ -6444,7 +6445,7 @@ implements CommandListener {
                                 int n18 = (s & 0xC00) >> 10;
                                 int n19 = s & 0xFF;
                                 if ((this.playerUnitSlots[n18][(n19 << 3) + 7] & 0xFF) != 1) break;
-                                this.void_d(n18, n19);
+                                this.revealFogAroundUnit(n18, n19);
                                 this.c(graphics, n3, n11, n);
                             }
                         }
@@ -6830,7 +6831,7 @@ implements CommandListener {
             sArray[n8] = (short)(sArray[n8] | 0x8000);
         }
         if (n == 0) {
-            this.void_d(0, this.playerUnitHeaders[n][2]);
+            this.revealFogAroundUnit(0, this.playerUnitHeaders[n][2]);
         }
         int[] nArray = this.playerUnitHeaders[n];
         nArray[55] = nArray[55] + (this.playerUnitHeaders[n][23 + n2] + this.playerUnitHeaders[n][13 + n2]);
@@ -6996,29 +6997,29 @@ implements CommandListener {
         } else if (this.playerUnitSlots[n][n2 + 0] != this.playerUnitSlots[n][n2 + 2]) {
             n2 >>= 3;
             if (n == 0) {
-                this.l(0, n2);
-                if (this.boolean_b(0, n2)) {
+                this.dimFogAroundUnit(0, n2);
+                if (this.stepUnitMove(0, n2)) {
                     this.void_a(0, n2);
                 }
-                this.void_d(0, n2);
+                this.revealFogAroundUnit(0, n2);
                 return;
             }
-            if (this.boolean_b(n, n2)) {
+            if (this.stepUnitMove(n, n2)) {
                 this.void_a(n, n2);
             }
         }
     }
 
-    public final void g(int n, int n2) {
+    public final void removeUnit(int n, int n2) {
         // 战斗日志(调试基建,第11轮:战斗在日志里完全是黑箱,只能靠 state 前后对比)。
-        // g = 单位死亡/移除唯一入口:含阵营/类型/位置/剩余数,一次战场推演可完整回放。
+        // removeUnit = 单位死亡/移除唯一入口:含阵营/类型/位置/剩余数,一次战场推演可完整回放。
         if (System.getProperty("aoe.debug") != null) {
             short sPos = this.playerUnitSlots[n][n2 << 3];
             System.out.println("[combat] p" + n + " type" + (this.playerUnitSlots[n][(n2 << 3) + 3] & 0xFF)
                 + " died at (" + (sPos >>> 8) + "," + (sPos & 0xFF) + ") ar=" + this.tickCount
                 + " remaining=" + (this.playerUnitHeaders[n][2] - 1));
         }
-        this.l(0, n2);
+        this.dimFogAroundUnit(0, n2);
         int[] nArray = this.playerUnitHeaders[n];
         nArray[2] = nArray[2] - 1;
         int n3 = this.playerUnitHeaders[n][2] << 3;
@@ -7057,7 +7058,7 @@ implements CommandListener {
         }
     }
 
-    final void g() {
+    final void tickUnits() {
         int n = this.tickCount & 8;
         for (int i = 0; i < 2; ++i) {
             int n2 = 0;
@@ -7083,7 +7084,7 @@ implements CommandListener {
                         int n9;
                         int n10 = this.playerUnitSlots[i][n2 + 7] >>> 8;
                         if (--n10 == 0) {
-                            this.playerUnitSlots[i][n2 + 2] = (short)this.int_a(i, (int)this.playerUnitSlots[i][n2 + 0], (int)this.playerUnitSlots[i][n2 + 7]);
+                            this.playerUnitSlots[i][n2 + 2] = (short)this.nearestDropOff(i, (int)this.playerUnitSlots[i][n2 + 0], (int)this.playerUnitSlots[i][n2 + 7]);
                             short[] sArray = this.playerUnitSlots[i];
                             int n11 = n2 + 7;
                             sArray[n11] = (short)(sArray[n11] & 0xF0);
@@ -7144,7 +7145,7 @@ implements CommandListener {
                             short[] sArray = this.playerUnitSlots[i];
                             int n20 = n2 + 7;
                             sArray[n20] = (short)(sArray[n20] & 0xFF);
-                            this.d(i, n2, n9, n8);
+                            this.resolveAttack(i, n2, n9, n8);
                             break;
                         }
                         short[] sArray = this.playerUnitSlots[i];
@@ -7173,7 +7174,7 @@ implements CommandListener {
         }
     }
 
-    final void c(int n, int n2, int n3, int n4) {
+    final void onUnitArrived(int n, int n2, int n3, int n4) {
         int n5 = 0;
         int n6 = n3 + (n4 << 6);
         switch (this.mapTiles[n6] & 0x300) {
@@ -7270,7 +7271,7 @@ implements CommandListener {
         this.playerUnitSlots[n][n2 + 7] = (short)n5;
     }
 
-    final void d(int n, int n2, int n3, int n4) {
+    final void resolveAttack(int n, int n2, int n3, int n4) {
         int n5 = this.playerUnitSlots[n][n2 + 3] & 0xFF;
         int n6 = this.mapTiles[n3] & 0x300;
         switch (n6) {
@@ -7309,7 +7310,7 @@ implements CommandListener {
                     this.playerUnitSlots[n4][n13 + 2] = this.playerUnitSlots[n][n2 + 0];
                     return;
                 }
-                this.g(n4, this.mapTiles[n3] & 0xFF);
+                this.removeUnit(n4, this.mapTiles[n3] & 0xFF);
                 this.playerUnitSlots[n][n2 + 7] = 0;
             }
         }
@@ -7518,7 +7519,7 @@ implements CommandListener {
         nArray4[4] = nArray4[4] - 1;
     }
 
-    final boolean boolean_b(int n, int n2) {
+    final boolean stepUnitMove(int n, int n2) {
         int n3;
         int n4 = this.playerUnitSlots[n][(n2 <<= 3) + 2];
         if (n4 == (n3 = this.playerUnitSlots[n][n2 + 0])) {
@@ -7604,7 +7605,7 @@ implements CommandListener {
                 sArray4[n19] = (short)(sArray4[n19] & 0xFF);
                 this.playerUnitSlots[n][n2 + 2] = s3;
                 this.playerUnitSlots[n][n2 + 0] = s3;
-                this.c(n, n2, n3, n5);
+                this.onUnitArrived(n, n2, n3, n5);
                 return false;
             }
             int n20 = ((this.playerUnitSlots[n][n2 + 6] & 0xFF) << 3) + 16;
@@ -7638,7 +7639,7 @@ implements CommandListener {
     }
 
     /**
-     * BFS 寻路的"选落点"（仅 BFS_PATH 打开时由 boolean_b 调用）。
+     * BFS 寻路的"选落点"（仅 BFS_PATH 打开时由 stepUnitMove 调用）。
      * 返回下一步落点（打包 tx<<8|ty），-1 = 回退原 DDA+扇形行为。
      * 同步策略：到达建议格则推进；被扇形闪避带偏时先沿原路径归队（扇形落点通常
      * 仍在路径上，避免重算风暴），彻底离队才重算。节流/升级：沿路径连续
@@ -7746,7 +7747,7 @@ implements CommandListener {
             queue[tail++] = ttx + (tty << 6);
         } else {
             // 目标格是墙（采集资源/攻击建筑）：以其全部可走邻格为种子，
-            // 走到目标隔壁即算到位，抵达钩子由 boolean_b 原有逻辑接管
+            // 走到目标隔壁即算到位，抵达钩子由 stepUnitMove 原有逻辑接管
             for (int d = 0; d < 8; ++d) {
                 int nx = ttx + BFS_DX[d];
                 int ny = tty + BFS_DY[d];
@@ -8003,7 +8004,7 @@ implements CommandListener {
                             int n10 = this.playerUnitSlots[n8][s + 4] & 0xFF;
                             int n11 = (this.playerUnitHeaders[i][46] << 4) / this.playerUnitHeaders[n8][23 + (this.playerUnitSlots[n8][s + 3] & 0xFF)];
                             if ((n10 -= n11) <= 0) {
-                                this.g(n8, this.mapTiles[n7] & 0xFF);
+                                this.removeUnit(n8, this.mapTiles[n7] & 0xFF);
                                 this.projectileTable[i][n + 1] = 1000;
                                 int[] nArray = this.buildingTable[i];
                                 int n12 = this.projectileTable[i][n + 0] + 3;
@@ -8037,7 +8038,7 @@ implements CommandListener {
         }
     }
 
-    final void B() {
+    final void tickAutoEngage() {
         for (int i = 0; i < 2; ++i) {
             boolean bl = false;
             int n = this.tickCount;
@@ -8048,7 +8049,7 @@ implements CommandListener {
                 int n4;
                 ++n3;
                 if ((this.playerUnitSlots[i][(n4 = n++ % n2 << 3) + 7] & 0xF) != 1 && (this.playerUnitSlots[i][n4 + 6] & 0xFF00) == 0 && (this.playerUnitSlots[i][n4 + 3] & 0xFF) >= 2 && (i != 0 || this.playerUnitSlots[i][n4 + 0] == this.playerUnitSlots[i][n4 + 2])) {
-                    if (!this.boolean_a(i, n4)) {
+                    if (!this.acquireTarget(i, n4)) {
                         this.void_b(i, n4);
                     }
                     bl = true;
@@ -8064,7 +8065,7 @@ implements CommandListener {
         }
     }
 
-    final boolean boolean_a(int n, int n2) {
+    final boolean acquireTarget(int n, int n2) {
         int n3 = this.playerUnitSlots[n][n2 + 3] & 0xFF;
         int n4 = this.playerUnitSlots[n][n2 + 0];
         int n5 = n4 >>> 8;
@@ -8263,11 +8264,11 @@ implements CommandListener {
             n2 = (n5 & 0x7F000000) >> 24;
             n5 &= 0xFFFFFF;
             if (n2 >= n7) {
-                this.var_int_i = 0;
+                this.aiStance = 0;
                 if (n3 < n4 + (n4 >> 2) && n4 >= this.aiAttackThreshold) {
-                    this.var_int_i = 2;
+                    this.aiStance = 2;
                 } else if (n5 <= this.aiGuardRadiusSq) {
-                    this.var_int_i = 1;
+                    this.aiStance = 1;
                 }
                 this.playerUnitHeaders[1][54] = 0xFFFFFF;
             } else {
@@ -8325,7 +8326,7 @@ implements CommandListener {
         n7 = this.playerUnitHeaders[1][2];
         n3 = -1;
         n2 = -1;
-        switch (this.var_int_i) {
+        switch (this.aiStance) {
             case 2: {
                 if (this.playerUnitHeaders[0][8] == -1) break;
                 n3 = (short)(this.playerUnitHeaders[0][8] + (this.tickCount & 1) + ((this.tickCount & 3) - 2 << 8));
@@ -8339,7 +8340,7 @@ implements CommandListener {
                 n4 = n7 - (n5 >>= 3);
             }
         }
-        if (this.var_int_i != 0) {
+        if (this.aiStance != 0) {
             n6 = 0;
             if (n3 >= 0) {
                 n = 0;
@@ -8361,7 +8362,7 @@ implements CommandListener {
                     n6 += 8;
                 }
             }
-            this.var_int_i = 0;
+            this.aiStance = 0;
         }
     }
 
@@ -8548,7 +8549,7 @@ implements CommandListener {
         return true;
     }
 
-    final int int_a(int n, int n2, int n3) {
+    final int nearestDropOff(int n, int n2, int n3) {
         int n4 = this.playerUnitHeaders[n][8];
         if (n4 == -1) {
             return n2;
@@ -8636,7 +8637,7 @@ implements CommandListener {
         n = 0;
         while (n < 4) {
             int n3 = n++;
-            this.var_int_arr_a[n3] = this.var_int_arr_a[n3] + 1;
+            this.scriptFrameCounters[n3] = this.scriptFrameCounters[n3] + 1;
         }
         this.var_int_c = 0;
     }
@@ -8677,7 +8678,7 @@ implements CommandListener {
             }
             case 2: {
                 byte by = this.missionScript[n++];
-                if ((this.missionScript[n++] & 0xFF) * 10 > this.var_int_arr_a[by]) break;
+                if ((this.missionScript[n++] & 0xFF) * 10 > this.scriptFrameCounters[by]) break;
                 return n;
             }
             case 6: {
@@ -8844,7 +8845,7 @@ implements CommandListener {
                 }
                 case 3: {
                     int n4 = this.missionScript[n++];
-                    this.var_int_arr_a[n4] = 0;
+                    this.scriptFrameCounters[n4] = 0;
                     break;
                 }
                 case 126: {
@@ -9246,7 +9247,7 @@ implements CommandListener {
         }
     }
 
-    /** 任务结束结算（g(0, 98, n3)，n3==0 为胜利）：推进解锁计数 aj/aG、
+    /** 任务结束结算（startMissionBriefing(0, 98, n3)，n3==0 为胜利）：推进解锁计数 aj/aG、
      *  写每关高分（nfoHighScores）并持久化 .nfo 字节 28。 */
     // startMissionBriefing(as, dialogScriptId, V)：切到简报/对话框屏。dialogScriptId=对话框脚本 id
     // （62=任务简报 70=难度/链页 74=失败简报 98=胜负结算屏）；V=变体/正文索引

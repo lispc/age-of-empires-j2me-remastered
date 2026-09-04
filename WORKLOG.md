@@ -7,6 +7,43 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
+### wave8 改名批（移动/索敌/伤害/世界 tick/迷雾对/AI 攻势，2026-09-04）
+
+- **改名 17 个符号**（`tools/renamer/wave8.tsv`，AST 改名器）：方法——
+  `boolean_b(int,int)→stepUnitMove`（DDA 步进+扇形回退+BFS 选落点）、
+  `boolean_a(int,int)→acquireTarget`（槽序第一个进圈者，非最近）、
+  `B()→tickAutoEngage`（每玩家每 tick 1 单位索敌节流）、
+  `int_a(int,int,int)→nearestDropOff`（交存点距离²最近者）、
+  `g(int,int)→removeUnit`（单位死亡唯一入口）、`g()→tickUnits`（单位任务链）、
+  `j()→tickBuildings`（施工/研究/训练 tick）、`c(int,int,int,int)→onUnitArrived`
+  （抵达钩子：采集/交存/接敌/修理）、`d(int,int,int,int)→resolveAttack`
+  （攻×16÷甲）、`void_d(int,int)→revealFogAroundUnit`、`l(int,int)→dimFogAroundUnit`；
+  字段——c：`var_int_i→aiStance`、`var_byte_a→randomMapDifficulty`、
+  `var_int_arr_a→scriptFrameCounters`、`var_int_arr_c→actionMenuItemIds`；
+  d（地图生成器）：`var_short_arr_a→mapTiles`、`var_int_arr_b→seedPoints`。
+- **迷雾对方向定案（新考证）**：revealFogAroundUnit 清 0x8000+0x4000=点亮；
+  dimFogAroundUnit 清 0x8000 置 0x4000=离开后转暗化；调用序（tickMoveTimer
+  离开前 dim、到达后 reveal；p() 每 tick 全单位 relight；removeUnit 入口 dim）
+  三处互证。0x4000 另有单位显隐作用（暗化格上非战斗敌单位不画，
+  renderWorld 单位段守卫）——game-mechanics 第六批"只切地表明暗"结论已在
+  文档里打上限定补丁，实测复核留给后续。
+- **跳过**：var_boolean_f/var_boolean_b（右下角图标开关，图标语义未钉死 +
+  与 b.var_boolean_b 撞注释空间）、d.var_int_arr_a（出生点，与
+  c.var_int_arr_a 同 oldName 撞 renamer 注释表，留 wave9）、tickMoveTimer
+  不重改名（现名已贴合 wave3 考证语义）。
+- **注释误伤/漏扫记录**：renamer 的 commentSpans 引号配对会被注释里的撇号
+  打乱，单字母旧名（g/j/c/d/l/B）的注释替换大量漏扫——这反而躲过了
+  "c.java"→"onUnitArrived.java" 级的灾难性误伤；全部注释同步改为人工逐条
+  裁决（~25 处：修正指向、补新名、还原"原版字节码（方法 B,175)"考据注释）。
+  意外收获：清掉一批 wave1/4 遗留过期引用（注释里的 j() 实指 renderWorld、
+  d(0,tx,ty) 实指 orderMove、g(0,98,n3) 实指 startMissionBriefing）。
+- **regress-noise.txt**：var_int_arr_a→scriptFrameCounters 同步；顺带补上 wave7
+  漏改的 V→briefingVariant。golden 未重录（改名不改行为，静态指纹三连绿）。
+- **验证**：gradlew classes 绿；regress 3 连 PASS（静态指纹+存读 roundtrip
+  双干净）；replaycheck 1 跑 PASS（state JSON + 61 行 input 轨迹双一致）。
+  SaveState/RuleBasedAi 交叉引用由 AST 改名器联动，编译即证。
+- commit：未提交（交主会话统一处理）。
+
 ### devBoot 双跑发散修复（装载时机钉帧首）+ tools/bootcheck.sh 常驻自检（2026-09-04）
 
 - **根因（取证链完整）**：devBoot 旧流程 = 菜单导航 → 等"主视图稳定 15×200ms"→

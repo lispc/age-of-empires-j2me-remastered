@@ -21,9 +21,9 @@ implements Runnable {
     public boolean var_boolean_c = false;
     int s;
     int q = 0;
-    int[] var_int_arr_b;
+    int[] seedPoints;
     int[] var_int_arr_a;
-    short[] var_short_arr_a;
+    short[] mapTiles;
     int i;
     int var_int_b;
     int var_int_a;
@@ -55,12 +55,12 @@ implements Runnable {
             this.o = AgeOfEmpires.c.rngStateHi << 8 | AgeOfEmpires.c.rngStateLo;
         }
         this.var_boolean_b = bl;
-        this.var_short_arr_a = sArray;
+        this.mapTiles = sArray;
         this.s = n;
-        this.var_int_arr_b = new int[this.s << 2];
+        this.seedPoints = new int[this.s << 2];
         this.var_int_arr_a = new int[4];
         for (int i = 0; i < 4096; ++i) {
-            this.var_short_arr_a[i] = 768;
+            this.mapTiles[i] = 768;
         }
         this.i = AgeOfEmpires.c.nextRandomInt() & 0x3F;
         this.var_int_b = AgeOfEmpires.c.nextRandomInt() & 0x3F;
@@ -73,7 +73,7 @@ implements Runnable {
     }
 
     public final void d() {
-        this.var_int_arr_b = null;
+        this.seedPoints = null;
         this.var_int_arr_a = null;
     }
 
@@ -123,9 +123,9 @@ implements Runnable {
             }
             default: {
                 for (int i = 0; i < 4096; ++i) {
-                    if ((this.var_short_arr_a[i] & 0xFFF) == 768) continue;
+                    if ((this.mapTiles[i] & 0xFFF) == 768) continue;
                     int n = i;
-                    this.var_short_arr_a[n] = (short)(this.var_short_arr_a[n] | 0x8000);
+                    this.mapTiles[n] = (short)(this.mapTiles[n] | 0x8000);
                 }
                 return true;
             }
@@ -154,8 +154,8 @@ implements Runnable {
             this.i = n2;
             this.var_int_b = n3;
         }
-        this.var_int_arr_b[this.h++] = this.i;
-        this.var_int_arr_b[this.h++] = this.var_int_b;
+        this.seedPoints[this.h++] = this.i;
+        this.seedPoints[this.h++] = this.var_int_b;
         if (this.h >= this.s << 1) {
             this.k = 0;
             this.g = 0;
@@ -191,7 +191,7 @@ implements Runnable {
             }
             n2 = AgeOfEmpires.c.nextRandomInt() & 0x3F;
             n = AgeOfEmpires.c.nextRandomInt() & 0x3F;
-        } while (n2 >= 64 || n >= 64 || this.var_short_arr_a[n2 + (n << 6)] != 0);
+        } while (n2 >= 64 || n >= 64 || this.mapTiles[n2 + (n << 6)] != 0);
         this.var_int_arr_a[0] = n2;
         this.var_int_arr_a[1] = n;
         boolean bl = false;
@@ -209,19 +209,19 @@ implements Runnable {
             int n4 = AgeOfEmpires.c.nextRandomInt() % 15;
             n2 = (AgeOfEmpires.b.int_b(n3) * (20 + n4) >> 16) + this.var_int_arr_a[0];
             n = (AgeOfEmpires.b.c(n3) * (20 + n4) >> 16) + this.var_int_arr_a[1];
-        } while (n2 < 0 || n < 0 || n2 >= 64 || n >= 64 || this.var_short_arr_a[n2 + (n << 6) & 0xFFF] != 0);
+        } while (n2 < 0 || n < 0 || n2 >= 64 || n >= 64 || this.mapTiles[n2 + (n << 6) & 0xFFF] != 0);
         this.var_int_arr_a[2] = n2;
         this.var_int_arr_a[3] = n;
         ++this.q;
     }
 
-    /** f() 死循环逃逸用：行主序找满足"空格（var_short_arr_a==0）且与 (cx,cy)
+    /** f() 死循环逃逸用：行主序找满足"空格（mapTiles==0）且与 (cx,cy)
      *  切比雪夫距离 >= minDist"的第一个格；没有则放宽到任意空格；再没有返回 (0,0)。 */
     private int[] findFreeTile(int cx, int cy, int minDist) {
         int[] fallback = null;
         for (int ty = 0; ty < 64; ++ty) {
             for (int tx = 0; tx < 64; ++tx) {
-                if (this.var_short_arr_a[tx + (ty << 6)] != 0) {
+                if (this.mapTiles[tx + (ty << 6)] != 0) {
                     continue;
                 }
                 if (fallback == null) {
@@ -253,7 +253,7 @@ implements Runnable {
             int n5 = 0;
             int n6 = 0;
             for (n3 = 0; n3 < this.var_int_c; ++n3) {
-                if ((n6 = (n2 = this.k - this.var_int_arr_b[n5++]) * n2 + (n = this.g - this.var_int_arr_b[n5++]) * n) == 0) {
+                if ((n6 = (n2 = this.k - this.seedPoints[n5++]) * n2 + (n = this.g - this.seedPoints[n5++]) * n) == 0) {
                     n4 += this.m;
                     continue;
                 }
@@ -271,21 +271,21 @@ implements Runnable {
             n3 = this.k + (this.g << 6) & 0xFFF;
             if (this.p == 0) {
                 int n7 = n3;
-                this.var_short_arr_a[n7] = (short)(this.var_short_arr_a[n7] & 0xF000);
+                this.mapTiles[n7] = (short)(this.mapTiles[n7] & 0xF000);
                 continue;
             }
-            if (!this.var_boolean_a && (this.var_short_arr_a[n3] & 0xFFF) != 0 || (this.var_short_arr_a[n3] & 0xFFF) == 768) continue;
+            if (!this.var_boolean_a && (this.mapTiles[n3] & 0xFFF) != 0 || (this.mapTiles[n3] & 0xFFF) == 768) continue;
             if (this.p == 768) {
-                this.var_short_arr_a[n3] = 768;
+                this.mapTiles[n3] = 768;
                 continue;
             }
             int n8 = n3;
-            this.var_short_arr_a[n8] = (short)(this.var_short_arr_a[n8] & 0xF000);
+            this.mapTiles[n8] = (short)(this.mapTiles[n8] & 0xF000);
             if ((n4 >>= 8) > 31) {
                 n4 = 31;
             }
             int n9 = n3;
-            this.var_short_arr_a[n9] = (short)(this.var_short_arr_a[n9] | (short)(0x300 | this.p & 0xFF | (n4 <<= 2)));
+            this.mapTiles[n9] = (short)(this.mapTiles[n9] | (short)(0x300 | this.p & 0xFF | (n4 <<= 2)));
         }
     }
 
@@ -293,10 +293,10 @@ implements Runnable {
         for (int i = 0; i < n; ++i) {
             int n2;
             int n3;
-            while (this.var_short_arr_a[(n3 = AgeOfEmpires.c.nextRandomInt() & 0x3F) + ((n2 = AgeOfEmpires.c.nextRandomInt() & 0x3F) << 6) & 0xFFF] != 0) {
+            while (this.mapTiles[(n3 = AgeOfEmpires.c.nextRandomInt() & 0x3F) + ((n2 = AgeOfEmpires.c.nextRandomInt() & 0x3F) << 6) & 0xFFF] != 0) {
             }
-            this.var_int_arr_b[i << 1] = n3;
-            this.var_int_arr_b[(i << 1) + 1] = n2;
+            this.seedPoints[i << 1] = n3;
+            this.seedPoints[(i << 1) + 1] = n2;
         }
     }
 
