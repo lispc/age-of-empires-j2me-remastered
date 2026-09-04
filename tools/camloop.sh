@@ -13,8 +13,10 @@
 # 用法:
 #   tools/camloop.sh [-n 局数] [-m 关卡1..7] [-a AI类名] [-t 每局超时秒] [-k] [-b]
 #                    -k 保留每局日志(默认只留 summary.csv)  -b 开 BFS 寻路(默认开)
+#   C4V=mine|bare|minebare 环境变量 → 透传 -Daoe.c4v(#4 变体批测对照用)
 # 示例:
 #   tools/camloop.sh -m 1 -n 5 -k
+#   C4V=mine tools/camloop.sh -m 5 -n 10
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -81,10 +83,12 @@ while [ $i -le "$N" ]; do
     log="$gdir/game.log"
     BFS_ARG=""
     [ "$BFS" = 1 ] && BFS_ARG="-Daoe.bfsPath=1"
+    C4V_ARG=""
+    [ -n "${C4V:-}" ] && C4V_ARG="-Daoe.c4v=$C4V"
     t0=$SECONDS
     "$JAVA" -Daoe.headless=1 "-Daoe.dev=campaign:$MISSION" -Daoe.turbo=1 -Daoe.noRender=1 \
         -Daoe.mute=1 -Daoe.debug=1 -Daoe.exitOnResult=1 \
-        -Daoe.playerAi="$AI" -Daoe.aiFog=0 ${BFS_ARG:+"$BFS_ARG"} \
+        -Daoe.playerAi="$AI" -Daoe.aiFog=0 ${BFS_ARG:+"$BFS_ARG"} ${C4V_ARG:+"$C4V_ARG"} \
         -Daoe.saveDir="$gdir/saves" -Daoe.rmsDir="$gdir/rms" \
         -Duser.home="$gdir/userhome" \
         -cp "$CP" aoe.Main > "$log" 2>&1 &
