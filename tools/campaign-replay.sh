@@ -45,11 +45,14 @@ if [ -n "$VIDEO" ]; then
 fi
 FLAGS="-Daoe.tickms=$MS -Daoe.debug=1 -Daoe.harnessQuiet=1 -Daoe.exitOnResult=1
  -Daoe.saveDir=$WORK/saves -Daoe.mapSeed=8224 -Daoe.devBoot=$DIR/base.aoesave
- -Daoe.devMouse=$FIFO -Daoe.bfsPath=1"
-# 回放旗标必须与录制侧同款：bfsPath 决定选路（BFS 缓存 vs DDA），不同则路径
-# 决策漂移、位精确无从谈起。录制目录可放 flags.txt 记录非默认旗标（信息性）。
+ -Daoe.devMouse=$FIFO -Daoe.bfsPath=1 -Daoe.turbo=1 -Daoe.fastSim=1"
+# turbo+fastSim：tight-loop 全速模拟，非导出帧跳整幅渲染（渲染→模拟的唯一副作用
+# ——雾中行军单位揭雾——由 fastSim 逐 tick 对账，模拟与全渲染逐字节一致）。
+# 验证从 ~45min(tickms=2 全渲染) 降到分钟级；--video 只是多导出帧+编码。
+# 回放旗标必须与录制侧同款（bfsPath 选路差异会直接破坏位精确；录制目录的
+# flags.txt 记录录制侧非默认旗标，信息性）。
 [ "$MODE" = "--headless" ] && FLAGS="$FLAGS -Daoe.headless=1"
-[ -n "$VDIR" ] && FLAGS="$FLAGS -Daoe.reveal=1 -Daoe.videoDir=$VDIR"
+[ -n "$VDIR" ] && FLAGS="$FLAGS -Daoe.reveal=1 -Daoe.videoDir=$VDIR -Daoe.resultHold=600"
 
 echo "== 回放 $DIR (base=$BASE tickms=$MS $MODE) =="
 java $FLAGS -cp "$CP" aoe.Main > "$WORK/replay.log" 2>&1 &
@@ -76,6 +79,7 @@ for i in $(seq 1 30); do
   kill -0 $PID 2>/dev/null || break
   sleep 2
 done
+[ -n "$VDIR" ] && sleep 6    # resultHold 弹窗帧落盘（turbo 下 600 tick <1s，留足余量）
 kill $PID 2>/dev/null
 echo "---- 终局 ----"
 grep -E '^\[result\]|replaytrace done' "$WORK/replay.log" | tail -3

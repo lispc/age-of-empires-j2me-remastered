@@ -7,6 +7,35 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
+### 战役第 5 夜: 回放提速 25x(turbo+fastSim)+m2 首胜 64077(13.8min 零重开)(2026-09-04)
+
+- **用户反馈驱动的基础设施返工**：①视频没拍到赢弹窗——根因 exitOnResult 在
+  startMissionBriefing 打印 [result] 后立即 System.exit(0)，弹窗一帧未渲染。新增
+  **`-Daoe.resultHold=N`**：打印后穿到结算屏真实渲染 N tick 再退（原语义不变）。
+  ②回放太慢（tickms=2 全渲染 ~45min）——新 **`-Daoe.fastSim=1`**（配 turbo）：非
+  导出帧只跳"世界绘制"，mouseTick/tickCursor/updateCamera 照跑，renderWorld 的
+  揭雾副作用由 devViewportFogTick 逐 tick 对账。关键认知：**onPaint 就是游戏帧
+  函数**（tickCount++/devBoot apply/排空段/tickMissionScript 全在里面），外圈
+  e.run 跳不得；渲染→模拟态的唯一通道=renderWorld 对雾中行军单位的
+  revealFogAroundUnit（且 reveal 模式下它走正向分支会把副作用丢了——已在正向
+  分支补账）。③PNG 编码异步化（像素同步拷贝+工作线程 ImageIO），模拟不等编码。
+  实测：m1 全程回放验证+出视频 **45min→~3min**。
+- **视频不入库**（用户指示）：git rm replay.mp4 + .gitignore `recordings/**/*.mp4`
+  ——派生产物本地再生（46MB blob 已进历史的 bc1... 注意：history 里仍留在
+  ee9a4c4，如需彻底清除要 history rewrite，暂不做）。
+- **m2 经济关轮战制第二胜**：**WIN ticks=64077**，boot→WIN 13.8min 零重开
+  （止损纪律生效：m1 轮 151min→m2 轮 27min）。res 112 解码：三桶**链式锁存**
+  （木>101→金>101→石>101→20t→WIN，严格 101+，不要求同时持有），**无判负块**
+  （村民/军事死亡均合法）。**长途交付 stall 证伪结案**：BFS 下 34 格金矿自动
+  循环 10+ 趟零干预——"waypoint 接力状态机"不需要建（§11 已更新）。
+- 教训入库：采集 retask 必须打**资源簇前排格**（场内孤格=四邻全资源=BFS 不可达
+  停摆）；军事点名清场标准流（sel+goto 每 6s 重发）；timeline.jsonl 数据旁路
+  成为战役轮标配。工具：resdec.py（战役脚本解码器，m3-m7 直接换 res 号复用）
+  入库 tools/campaign/。
+- 效率画像（m2 轮 transcript）：57 调用/显式 sleep 200s/27min——对比 m1 轮
+  111 调用/1260s/151min，"开局先解码"与止损纪律显著生效。
+- commit：本条目对应。
+
 ### 战役 AI 攻坚下半场：#4/#6 迭代 + #4 自锁翻案（2026-09-04 傍晚，player-ai）
 
 - **#4 自锁 bug 翻案**（用户已批 patch，动手前复核救回）：子代理称"tf[14] 只

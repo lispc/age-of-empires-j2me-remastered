@@ -32,8 +32,11 @@ extends TimerTask {
             if (!b.boolean_a(this.a)) {
                 this.a.repaint();
                 this.a.serviceRepaints();
-                // dev 视频钩子：渲染完成后导出（-Daoe.videoDir 未启用时 O(1) 返回）
+                // dev 视频钩子：渲染完成后导出（-Daoe.videoDir 未启用时 O(1) 返回）；
+                // fastSim 的跳帧判定在 c.a(Graphics) 内部（tickCount/排空段都在
+                // onPaint 里，外圈不能跳过整个 paint）；devFrameTail 管 resultHold。
                 ((AgeOfEmpires.c)(Object)b.com_ulysseo_mad_a_a(this.a)).devAfterFrame();
+                ((AgeOfEmpires.c)(Object)b.com_ulysseo_mad_a_a(this.a)).devFrameTail();
                 return;
             }
         } else {

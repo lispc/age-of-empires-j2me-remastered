@@ -717,12 +717,110 @@ implements CommandListener {
     private static final String DEV_VIDEO_DIR = System.getProperty("aoe.videoDir");
     /** 每 N tick 一帧（默认 10 = 0.4 游戏秒；30fps 合成 ≈12 倍原速）。 */
     private static final int DEV_VIDEO_EVERY = Integer.getInteger("aoe.videoEvery", 10);
+    /** 快速模拟（-Daoe.fastSim=1，配 turbo）：非导出帧跳过整幅渲染。渲染不是纯
+     *  paint——renderWorld 对"雾中行军"单位顺手 revealFogAroundUnit（模拟态！），
+     *  跳帧必须由 devViewportFogTick 逐 tick 对账，否则雾位漂移会让回放里依赖
+     *  雾判定的指令（gather/build）与录制分叉。 */
+    private static final boolean DEV_FAST_SIM = System.getProperty("aoe.fastSim") != null;
+    /** 终局保持（-Daoe.resultHold=N）：打印 [result] 后不再立刻 exit，让 z=98 结算
+     *  弹窗真实渲染 N tick 再退（视频要拍到赢/负弹窗；exitOnResult 原语义不变）。 */
+    private static final String DEV_RESULT_HOLD = System.getProperty("aoe.resultHold");
+    private long devExitAtTick;
     /** 进过一次任务主视图(6)才开始录——跳过 boot/导航噪声；终局弹窗继续录。 */
     private boolean devVideoArmed;
     private int devVideoSeq;
+    /** PNG 异步编码：帧像素同步拷走（<1ms），ImageIO.write 在工作线程排队做。 */
+    private java.util.concurrent.ArrayBlockingQueue<int[]> devFramePool;
+    private java.util.concurrent.ArrayBlockingQueue<Object[]> devFrameQueue;
+
+    /** fastSim 判定：本帧是否跳过世界绘制（a(Graphics) 里 mouseTick/tickCursor/
+     *  updateCamera 照跑，renderWorld 换 devViewportFogTick 对账）。 */
+    public boolean devSkipFrameRender() {
+        return DEV_FAST_SIM && (DEV_VIDEO_DIR == null || !this.devVideoArmed
+            || this.tickCount % DEV_VIDEO_EVERY != 0);
+    }
+
+    /** 跳帧时的渲染副作用对账：以与 renderWorld 相同的视口菱形遍历，对"雾格上的
+     *  行军单位"执行同一 revealFogAroundUnit——逐 tick 调用与逐 tick 全渲染等价
+     *  （reveal 幂等，按当时单位位置结算）。仅此一处渲染→模拟态通道。 */
+    public void devViewportFogTick() {
+        if (this.mapTiles == null || this.screenState != 6) {
+            return;     // 非主视图帧录制侧也不跑 renderWorld——对账必须同样缺席
+        }
+        int n6 = this.cameraPxX + (this.cameraPxY << 1);
+        int n7 = (this.cameraPxY << 1) - this.cameraPxX;
+        int n8 = -(n6 & 0x1F) + (n7 & 0x1F);
+        int n9 = (n6 & 0x1F) + (n7 & 0x1F) >> 1;
+        int n10 = n8 - 32;
+        int n11 = 3 - n9;
+        int n12 = 64;
+        int rows = this.viewTileRows;
+        n6 >>= 5;
+        n7 >>= 5;
+        while (rows-- > 0) {
+            int tx = n10 - n12;
+            int cols = this.viewTileCols;
+            int cx = n6;
+            int cy = n7;
+            while (cols-- > 0) {
+                if (((cx | cy) & 0xFFFFFFC0) == 0) {
+                    int n = cx + (cy << 6);
+                    short s = this.mapTiles[n];
+                    if (s < 0 && (s & 0x300) == 512) {
+                        int owner = (s & 0xC00) >> 10;
+                        int idx = s & 0xFF;
+                        if ((this.playerUnitSlots[owner][(idx << 3) + 7] & 0xFF) == 1) {
+                            this.revealFogAroundUnit(owner, idx);
+                        }
+                    }
+                }
+                tx += 64;
+                ++cx;
+                --cy;
+            }
+            if (n12 == 0) {
+                n12 ^= 0x20;
+                n6 -= this.viewTileCols;
+                n7 += this.viewTileCols + 1;
+            } else {
+                n12 = 0;
+                n6 -= this.viewTileCols - 1;
+                n7 += this.viewTileCols;
+            }
+        }
+    }
+
+    /** [result] 后的延迟退出检查（resultHold；devExitAtTick==0 表示未挂起）。 */
+    public void devFrameTail() {
+        if (this.devExitAtTick > 0 && this.tickCount >= this.devExitAtTick) {
+            devFlushVideo();     // 等异步编码队列清空，防 exit/kill 截断尾部 PNG
+            System.out.flush();
+            System.exit(0);
+        }
+    }
+
+    /** 等视频编码队列排空（仅退出路径调用；上限 10s 防卡死）。 */
+    private void devFlushVideo() {
+        if (this.devFrameQueue == null) {
+            return;
+        }
+        long deadline = System.currentTimeMillis() + 10000;
+        while (!this.devFrameQueue.isEmpty() && System.currentTimeMillis() < deadline) {
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                return;
+            }
+        }
+        try {
+            Thread.sleep(300);   // 最后一帧的 ImageIO 收尾
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
 
     /** 帧尾钩子：videoDir 启用时按 videoEvery 节奏导出当前帧缓冲为 PNG。
-     *  PNG 编码的墙钟耗时只拖慢 tick 节奏，不改 tick 计数驱动的模拟。 */
+     *  像素同步拷贝（<1ms）后交工作线程编码——turbo 下模拟不等 PNG。 */
     public void devAfterFrame() {
         if (DEV_VIDEO_DIR == null) {
             return;
@@ -736,8 +834,60 @@ implements CommandListener {
         if (this.tickCount % DEV_VIDEO_EVERY != 0) {
             return;
         }
-        var_com_ulysseo_mad_b_a.dumpFramebuffer(
-            String.format("%s/frame_%08d.png", DEV_VIDEO_DIR, ++this.devVideoSeq));
+        java.awt.image.BufferedImage fb = var_com_ulysseo_mad_b_a.frameBuffer();
+        if (fb == null) {
+            return;
+        }
+        int[] px = ((java.awt.image.DataBufferInt) fb.getRaster().getDataBuffer()).getData();
+        int w = fb.getWidth();
+        int h = fb.getHeight();
+        if (this.devFrameQueue == null) {
+            this.devFramePool = new java.util.concurrent.ArrayBlockingQueue<>(4);
+            this.devFrameQueue = new java.util.concurrent.ArrayBlockingQueue<>(8);
+            for (int i = 0; i < 4; ++i) {
+                this.devFramePool.add(new int[px.length]);
+            }
+            Thread t = new Thread(() -> this.devVideoEncodeLoop(), "video-encode");
+            t.setDaemon(true);
+            t.start();
+        }
+        int[] copy;
+        try {
+            copy = this.devFramePool.take();     // 满了就背压等：帧序不能丢
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return;
+        }
+        System.arraycopy(px, 0, copy, 0, px.length);
+        int seq = ++this.devVideoSeq;
+        try {
+            this.devFrameQueue.put(new Object[]{copy, w, h, String.format("%s/frame_%08d.png", DEV_VIDEO_DIR, seq)});
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private void devVideoEncodeLoop() {
+        while (true) {
+            Object[] job;
+            try {
+                job = this.devFrameQueue.take();
+            } catch (InterruptedException e) {
+                return;
+            }
+            int[] px = (int[]) job[0];
+            int w = (Integer) job[1];
+            int h = (Integer) job[2];
+            String path = (String) job[3];
+            try {
+                java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(w, h, java.awt.image.BufferedImage.TYPE_INT_RGB);
+                System.arraycopy(px, 0, ((java.awt.image.DataBufferInt) img.getRaster().getDataBuffer()).getData(), 0, px.length);
+                javax.imageio.ImageIO.write(img, "png", new java.io.File(path));
+            } catch (Exception e) {
+                System.out.println("[video] encode FAIL " + path + ": " + e);
+            }
+            this.devFramePool.offer(px);
+        }
     }
 
     // ===== 可选 BFS 寻路（-Daoe.bfsPath=1，默认关，关闭时行为与原版逐字节一致）=====
@@ -4104,6 +4254,13 @@ implements CommandListener {
         }
         this.keyActionPulse = 0;
         this.updateCamera();
+        if (this.devSkipFrameRender()) {
+            // fastSim：世界绘制换成揭雾副作用对账——渲染→模拟态的唯一通道是
+            // renderWorld 对"雾中行军单位"的 revealFogAroundUnit，视口/camera/
+            // cursor 演化已在上方照跑，逐 tick 对账后模拟与全渲染逐字节一致。
+            this.devViewportFogTick();
+            return;
+        }
         this.renderWorld(graphics);
         // 移植增强：桌面拖选橡皮筋 + 悬停格高亮（画在世界之上）
         if (this.mouseBandActive) {
@@ -6448,7 +6605,10 @@ implements CommandListener {
                     short s = this.mapTiles[n];
                     int n17 = s & 0x300;
                     // reveal：雾格(short 负值)也走正向精灵绘制（雾编码占位 0x83xx/0x85xx/
-                    // 0x82xx 的低 12 位与明格同构，资源/建筑/单元三 case 直接复用）
+                    // 0x82xx 的低 12 位与明格同构，资源/建筑/单元三 case 直接复用）。
+                    // ⚠ else 分支里"雾中行军单位顺手揭雾"是渲染→模拟态的唯一副作用：
+                    // reveal 走正向时必须在此补账，否则模拟雾位与不 reveal 分叉
+                    // （fastSim 跳帧的 devViewportFogTick 与此处逐 tick 对账同源）。
                     if (s > 0 || DEV_REVEAL) {
                         switch (n17) {
                             case 768: {
@@ -6463,6 +6623,10 @@ implements CommandListener {
                             case 512: {
                                 this.c(graphics, n3, n11, n);
                             }
+                        }
+                        if (s < 0 && n17 == 512
+                            && (this.playerUnitSlots[(s & 0xC00) >> 10][((s & 0xFF) << 3) + 7] & 0xFF) == 1) {
+                            this.revealFogAroundUnit((s & 0xC00) >> 10, s & 0xFF);
                         }
                     } else {
                         switch (n17) {
@@ -9306,7 +9470,14 @@ implements CommandListener {
                 if (System.getProperty("aoe.exitOnResult") != null) {
                     System.out.println("[result] " + (n3 == 0 ? "WIN" : "LOSS") + " ticks=" + this.tickCount);
                     System.out.flush();
-                    System.exit(0);
+                    // resultHold=N：不立刻退——穿到下面的结算屏设置，让 z=98 弹窗
+                    // 真实渲染 N tick 再由 devFrameTail 退出（视频要拍到弹窗）。
+                    // 不带 resultHold 时原语义不变=立刻退出。
+                    if (DEV_RESULT_HOLD != null) {
+                        this.devExitAtTick = this.tickCount + Long.parseLong(DEV_RESULT_HOLD);
+                    } else {
+                        System.exit(0);
+                    }
                 }
                 this.clipTop = 0;
                 this.clipLeft = 0;

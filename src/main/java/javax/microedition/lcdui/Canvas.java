@@ -220,6 +220,14 @@ public abstract class Canvas extends Displayable {
         }
     }
 
+    /** dev 模式：取当前帧缓冲引用（fastSim 视频异步编码用；调用方只做同步像素
+     *  拷贝。帧缓冲重建仅发生在 showNotify 路径，与 headless 视频导出不并发）。 */
+    public java.awt.image.BufferedImage frameBuffer() {
+        synchronized (bufferLock) {
+            return framebuffer;
+        }
+    }
+
     /** 取得（必要时按当前设备倍数重建）设备分辨率的帧缓冲。重建后通知游戏全量重绘。 */
     private void ensureFramebuffer(double deviceScale) {
         if (framebuffer != null && framebufferDeviceScale == deviceScale) {

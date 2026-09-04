@@ -3,3 +3,7 @@ build/
 .DS_Store
 *.iml
 __pycache__/
+
+# 战役回放视频：派生产物体积大(40MB+/关)，不入库——用
+# tools/campaign-replay.sh <dir> 2 --headless --video 本地再生
+recordings/**/*.mp4
