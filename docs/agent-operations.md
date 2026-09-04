@@ -951,8 +951,9 @@ fps=30≈12 倍原速）；长 trace 验证+出视频建议 tickms=2 免超时�
 
 **战役专用经验**（m1/m2/m3 实测，r35 尸检 + r37 选关事故勘误）：
 - **boot 选关公式（必须 rmsDir 钉死）**：`campaign:N` 落 missionIndex =
-  campaignProgress(RMS) + N − 1。实操一律 `-Daoe.rmsDir=<work>/rms`（新鲜目录，
-  progress=0 → campaign:N 落 idx N−1）；不隔离会用 `~/.aoe-desktop` 真实进度
+  campaignProgress(RMS) + N − 1（读码复核 c.java:2968 高亮初值=progress + nav 恰按
+  N−1 次 -4；移植修改已解锁全部 7 关）。实操一律 `-Daoe.rmsDir=<work>/rms`（新鲜
+  目录，progress=0 → campaign:N 落 idx N−1）；不隔离会用 `~/.aoe-desktop` 真实进度
   落错关，resultHold 的结算写回还会污染用户真实进度（m3 实录：idx5 载入
   SaveState byte-length mismatch）。回放脚本 campaign-replay.sh 已默认隔离。
 - **胜负条件按关解码，别信旧叙事**（r35 实锤）：关卡脚本在 res 111+N

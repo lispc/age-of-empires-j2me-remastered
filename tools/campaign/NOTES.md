@@ -27,6 +27,25 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
 （数据 res 号：m1=104 / m2=105 / m3=106 …；脚本=数据+7，解码器 resdec.py 换号即用。
 地形=数据内嵌 rng 确定性生成（res 106 头两字节），与 mapSeed/RMS 无关，每 boot 同图，
 可离线洪泛侦察——注意 BFS 下虚空可通行、资源格当墙。）
+### m4 大学关（⏳ 5 boot 全 LOSS 止损交棒，r38；制胜方案已定，待第 2 轮）
+- **胜负条件（res 114）**：WIN = 封建→**升城堡完成**（techFlags[14]==1，c.java:6200）
+  → **放置 University/type4**（置回 0，c.java:7590）→ 计时 50t → WIN。res 127 初始
+  [14]=0 ⇒ University 在城堡前被"已建成"锁死，**顺序不可颠倒**。Univ 25木/25石。
+  **无判负块**（TC 毁/末单位死通用规则）。纯经济竞速关。
+- **首个战役 AI 关**（aiEnabled=true，threshold=30）：敌每 tick 重算 stance，
+  **一次性派 75% 兵力直扑我 TC±1**，波次随军力增长（wave1=2 军 ar~2400，wave2=4-5
+  军 ar~4100，25k tick 时 24 军含投石机×3）。**n7==0 冻结漏洞**：我方 0 单位时
+  AI stance 扫描整块跳过（c.java:8450）→ AI 永不再出兵（实证 24 军挂机 20k tick）。
+- **反 raid 制胜方案（r38 推荐，待验证）**：wave1 换掉后民兵直扑敌村民集群
+  (12-17,38) 断金木 → 敌 resources<30 后 all-in 永久短路 → 安心 boom 城堡+大学。
+  次选：爆村民硬扛 3-4 波，赶 t8 前放 University。
+- 操作要点：z=70 完工弹窗冻结世界（aA=2 → key -6 清）；build 雾格 FAIL 要候选表
+  重试（TC 视野仅 ~2.5 格）；t2=2 pop ⇒ House 先行；**敌行军走廊=村民坟场**（±7
+  格 aggro，早避险）；**rally 前沿非 TC**（波次幸存者 idle 在击杀点不啃楼）；硬化
+  驱动=tools/campaign/m4drv.py（雾回退 build/同余类光标舞步/combat 去重）。
+- 选关注记：移植修改已**解锁全部 7 关**（c.java:2968），选关器初始高亮=campaignProgress；
+  公式 idx=progress+N−1 经读码复核成立（nav 恰按 N−1 次 -4；r38"progress+N"勘误
+  系其战报笔误，自行撤回）。
 ### m3 拆楼关（✅ WIN ticks=89191，2026-09-04）
 - **胜负条件（res 113，28B）**：WIN = `headers[1][4]==0`（敌建筑表清零=夷平全部
   5 栋敌楼）→ 计时 20t → WIN。**无判负块**——只剩通用规则：我方无建筑常态下
