@@ -27,7 +27,7 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
 （数据 res 号：m1=104 / m2=105 / m3=106 …；脚本=数据+7，解码器 resdec.py 换号即用。
 地形=数据内嵌 rng 确定性生成（res 106 头两字节），与 mapSeed/RMS 无关，每 boot 同图，
 可离线洪泛侦察——注意 BFS 下虚空可通行、资源格当墙。）
-### m4 大学关（⏳ 十一轮 36 boot 全 LOSS 止损（r38-r48）；**金管道吞货墙确认拆除**（三 boot 零吞货+RAID 首杀敌村民 5），新墙=金产能速率（量化墙，结构墙已无），boot2 形态 W=210/S=51/v=8 只差 30-50% 金流量或一座塔）
+### m4 大学关（⏳ 十二轮 39 boot 全 LOSS 止损（r38-r49）；产能杠杆四件套+开局序翻转全生效（m#1 早 1200t/金工 5/塔/campfirst），结构墙保持拆除，现墙=「burst 节奏 vs 兵线爬坡」纯数量竞速+TC 血条预算（掉血 6x 旧估计，n=3 围城只撑 ~900t））
 - **胜负条件（res 114）**：WIN = 封建→**升城堡完成**（techFlags[14]==1，c.java:6200）
   → **放置 University/type4**（置回 0，c.java:7590）→ 计时 50t → WIN。res 127 初始
   [14]=0 ⇒ University 在城堡前被"已建成"锁死，**顺序不可颠倒**。Univ 25木/25石。
@@ -42,8 +42,9 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   armyValue（断收入用）。**reserve 干涸前提（r42 修正）**：「敌 reserve 波
   ~ar5700-6000 干涸」仅当敌村民被清才成立——敌村民存活时 army 滚到 102 波不断
   （r44 boot3 再证 AV 97）。
-- **波 1 方差（r44 勘误，r48 续证）**：17+ 样本跨 **[1168, 3838]**；**连续最早档
-  是常态不是尾部**（6 连 ≤1364）；中晚签也输（3838 局死于产能速率）——战术评估以"1600t 内 n1→4 连击"为默认场景，
+- **波 1 方差（r44 勘误，r49 续证）**：20+ 样本跨 **[1168, 3838]**；**连续最早档
+  是常态不是尾部**（6 连 ≤1364）；**burst 跟波真实存在**（200-450t 间隔到 n=6）
+  ——中晚签也会输（3838 局死于产能速率），burst 局死于级联——战术评估以"1600t 内 n1→4 连击"为默认场景，
   卡时刻一律按 **1168** 设计。同图同种子开局逐 tick 一致而波 1 差 ~2300t
   （疑似 AI 侧非模拟随机，机制未考证）。
 - **探索模型三要素（r43/N4 读码定案，全战役通用）**：build 雾判=`mapTiles[t]<0`
@@ -85,10 +86,10 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   H#1@(30,62) 作木仓房（**需先验证 House 是否 wood 交存点**——nearestDropOff
   读 hdr[9] 指针，与建筑类型的关系未考证）。配套：mocksim 加 M4D_WAVE0=<tick>
   最早抽签压力注入 + hdr9 交存模拟 + 头部「已知分叉点清单」。
-- **现行代驱动**=`tools/campaign/m4kdrv.py`+`mocksim4k.py`（v6.6-k：carry-guard/
-  就近避险/RAID_MIN=2/K5 三重保险/campfirst/carry-flee 吞货模型+对照基线法；
-  boot 用 **campaign:5**+新鲜 rmsDir→idx4）；历代 m4jdrv/m4idrv/m4hdrv/m4gdrv/
-  m4fdrv/m4edrv/m4ddrv/m4cdrv/m4bdrv/m4drv（consolidation 候选：r38-r48 十一代
+- **现行代驱动**=`tools/campaign/m4ldrv.py`+`mocksim4l.py`（v6.7-l2：金工 5/
+  塔提前/B-first/House 预建门/mil_urgent/蓄金钩子/避险观测桩；boot 用
+  **campaign:5**+新鲜 rmsDir→idx4）；历代 m4kdrv/m4jdrv/m4idrv/m4hdrv/m4gdrv/
+  m4fdrv/m4edrv/m4ddrv/m4cdrv/m4bdrv/m4drv（consolidation 候选：r38-r49 十二代
   m4 驱动可择机归并）。
 - 操作要点：z=70 完工弹窗 -6 清；t2=2 pop ⇒ House 先行；slots 幽灵槽判活用 state
   JSON；`echo > fifo` 阻塞=进程已退；boot.sh 应保留每次 play.log 副本（r42 boot1/2
