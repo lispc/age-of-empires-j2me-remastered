@@ -44,8 +44,12 @@ if [ -n "$VIDEO" ]; then
   VDIR="$WORK/frames"; mkdir -p "$VDIR"
 fi
 FLAGS="-Daoe.tickms=$MS -Daoe.debug=1 -Daoe.harnessQuiet=1 -Daoe.exitOnResult=1
- -Daoe.saveDir=$WORK/saves -Daoe.mapSeed=8224 -Daoe.devBoot=$DIR/base.aoesave
- -Daoe.devMouse=$FIFO -Daoe.bfsPath=1 -Daoe.turbo=1 -Daoe.fastSim=1"
+ -Daoe.saveDir=$WORK/saves -Daoe.rmsDir=$WORK/rms -Daoe.mapSeed=8224
+ -Daoe.devBoot=$DIR/base.aoesave -Daoe.devMouse=$FIFO -Daoe.bfsPath=1
+ -Daoe.turbo=1 -Daoe.fastSim=1"
+# rmsDir 必须隔离：战役选关落点 = campaignProgress(RMS) + N − 1，progress 是
+# 全局可变状态——不隔离会用 ~/.aoe-desktop 的真实进度落错关（m3 实录 idx5
+# 载入失败），resultHold 的结算写回还会污染用户真实进度（红线，2026-09-04）。
 # turbo+fastSim：tight-loop 全速模拟，非导出帧跳整幅渲染（渲染→模拟的唯一副作用
 # ——雾中行军单位揭雾——由 fastSim 逐 tick 对账，模拟与全渲染逐字节一致）。
 # 验证从 ~45min(tickms=2 全渲染) 降到分钟级；--video 只是多导出帧+编码。

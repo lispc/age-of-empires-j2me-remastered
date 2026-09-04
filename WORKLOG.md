@@ -7,6 +7,30 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
+### 战役第 6 夜: m3 首胜 89191(拆楼关)+rmsDir 红线事故+选关公式入册(2026-09-04)
+
+- **m3 轮战制第三胜**：**WIN ticks=89191**（51min，止损线内）。res 113 解码：
+  WIN=`headers[1][4]==0`（夷平全部 5 敌楼）→20t；**无判负块**（只剩"最后 1 单位
+  死亡=LOSS"通用规则，实战损 2×t3 照常）。新考据：出生点=虚空口袋，**BFS 下虚空
+  可通行**（源码注释"资源/虚空当墙"误导，c.java:896 应勘误）；敌 idle 守军近圈
+  4-5 格主动 aggro；闲置单位自动啃楼（近战²≤9）——清场即拆楼，零专门波次。
+- **rmsDir 红线事故（本会话主会话自责）**：resultHold 让回放胜利穿到结算写回
+  （loadNfo+campaignProgress+1），而 campaign-replay.sh 未隔离 rmsDir →
+  **把战役进度写进了用户真实 `~/.aoe-desktop/.nfo.rms`（现 progress=2）**——
+  踩"绝不写用户真实存档"红线。已修：脚本 FLAGS 加 `-Daoe.rmsDir=$WORK/rms`；
+  用户存档已备份 `/tmp/aoe-camp/user-rms-backup-20260904/`（现值 progress=2，
+  与"m1/m2 已通"事实一致；**是否重置为 0 留用户决定**）。教训：新功能穿透
+  "批跑跳过写回"的隐式保护时，必须重新审计全部隔离边界。
+- **选关公式入册**：missionIndex = campaignProgress(RMS) + N − 1；录制/回放两侧
+  一律 rmsDir 钉死（NOTES 启动配方已改）。m3 首发boot 载错关烧掉 ~15min——
+  手册写明后此类事故闭环。
+- 工具缺口登记：slots 宏死亡幽灵槽（死后仍报 ~6min）——驱动判活改用 state JSON
+  units/sitrep（手册已写）；`bld <p>` 直读宏待做。
+- 效率画像（m3 轮 transcript）：98 调用/显式 sleep 450s/51min。
+- m3 官方验证：campaign-replay(rmsDir 隔离版) **WIN ticks=89191 复现，58s**，
+  PNG 排空修复后无截断。三件套+视频入库 recordings/campaign/m3/。
+- commit：本条目对应。
+
 ### 战役第 5 夜: 回放提速 25x(turbo+fastSim)+m2 首胜 64077(13.8min 零重开)(2026-09-04)
 
 - **用户反馈驱动的基础设施返工**：①视频没拍到赢弹窗——根因 exitOnResult 在

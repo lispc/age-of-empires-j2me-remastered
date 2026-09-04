@@ -4,9 +4,12 @@
 ```
 java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   -Daoe.harnessQuiet=1 -Daoe.exitOnResult=1 -Daoe.saveDir=<work>/saves \
-  -Daoe.mapSeed=8224 -Daoe.bfsPath=1 -Daoe.devMouse=<work>/fifo \
+  -Daoe.rmsDir=<work>/rms -Daoe.mapSeed=8224 -Daoe.bfsPath=1 -Daoe.devMouse=<work>/fifo \
   -cp build/classes/java/main:build/resources/main aoe.Main > <work>/play.log 2>&1 &
 ```
+- **rmsDir 必须钉到 work（红线，m3 事故）**：战役选关落点 = campaignProgress(RMS)
+  + N − 1，不隔离会用 `~/.aoe-desktop` 的真实进度落错关，resultHold 结算写回还会
+  污染用户真实进度。新鲜 rmsDir progress=0 → `campaign:N` 落 idx N−1。
 - 进任务后 key -6 推简报 → `save <work>/base.aoesave`（此刻 ar=回放原点）
 - 终局 `[result] WIN|LOSS ticks=N`；mktrace --until '[result]'
 - 录制=新二进制(写宏队列化+携带 bfsPath 标志)，回放用同款 flags
@@ -21,6 +24,20 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
 - res 格式 [木,金,石]；读 state JSON: fifo.json {"aA","ar","res","units":[{p,tile,type}...]}
 
 ## 各关档案
+（数据 res 号：m1=104 / m2=105 / m3=106 …；脚本=数据+7，解码器 resdec.py 换号即用。
+地形=数据内嵌 rng 确定性生成（res 106 头两字节），与 mapSeed/RMS 无关，每 boot 同图，
+可离线洪泛侦察——注意 BFS 下虚空可通行、资源格当墙。）
+### m3 拆楼关（✅ WIN ticks=89191，2026-09-04）
+- **胜负条件（res 113，28B）**：WIN = `headers[1][4]==0`（敌建筑表清零=夷平全部
+  5 栋敌楼）→ 计时 20t → WIN。**无判负块**——只剩通用规则：我方无建筑常态下
+  最后 1 单位死亡瞬间=LOSS（红线：不可全灭）；单兵死亡合法（实战损 2×t3 照常）。
+  战役通用"拆 TC 胜"在 campaign 关被关（gameMode 32 && missionIndex≠0）。
+- 地形：出生点=3 个虚空口袋（**BFS 下虚空可通行**，源码注释"资源/虚空当墙"误导
+  ——bfsWalkable 只墙 0x300/0x100）。敌 8 单位+5 楼。
+- 实战：4 波点名清场（敌 idle 守军近圈 4-5 格会主动 aggro 迎击——"idle 不主动"
+  只对远征成立）；清完守军闲置单位自动啃楼（近战²≤9），拆楼零专门波次。
+- 回放提示：官方脚本已补 rmsDir；驱动判活用 state JSON units/sitrep，
+  **slots 宏有死亡幽灵槽**（死后仍报 ~6min，type@坐标 w=0）。
 ### m1 护送关（✅ WIN ticks=392912，2026-09-04 录制；r35 尸检勘误版）
 - **胜负条件（res 111 全量解码 84B；通式 res 111+N，N=missionIndex）**：
   WIN = slot0 在矩形 x[50,57)×y[57,64) **闲置 20 tick**（blk2/3）；

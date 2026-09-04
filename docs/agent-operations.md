@@ -949,12 +949,23 @@ fps=30≈12 倍原速）；长 trace 验证+出视频建议 tickms=2 免超时�
 终局，已废弃。键鼠/诊断/控制流仍 dev 线程内联（键是脉冲事件 ±1 帧无害）。
 录制必须用含队列+调度表的二进制（2026-09-04 之后的 build）。
 
-**战役专用经验**（m1/m2 实测，r35 尸检勘误）：
+**战役专用经验**（m1/m2/m3 实测，r35 尸检 + r37 选关事故勘误）：
+- **boot 选关公式（必须 rmsDir 钉死）**：`campaign:N` 落 missionIndex =
+  campaignProgress(RMS) + N − 1。实操一律 `-Daoe.rmsDir=<work>/rms`（新鲜目录，
+  progress=0 → campaign:N 落 idx N−1）；不隔离会用 `~/.aoe-desktop` 真实进度
+  落错关，resultHold 的结算写回还会污染用户真实进度（m3 实录：idx5 载入
+  SaveState byte-length mismatch）。回放脚本 campaign-replay.sh 已默认隔离。
 - **胜负条件按关解码，别信旧叙事**（r35 实锤）：关卡脚本在 res 111+N
-  （N=missionIndex，data.res 条目表=偏移数组，条件 opcode 7=headers 比较）。
-  m1 实测：WIN=slot0 进堡区矩形闲置 20 tick；LOSS=**村民(type<2)死亡 20 tick 后
-  判负，军事死亡合法**（"任何单位死亡=判负""护送关 TC 毁=判负"均为已证伪旧说；
-  堡垒+四塔全是 p0 我方建筑，护送终点=自家堡垒；塔射程实为 √5≈2.24 格）。
+  （N=missionIndex；数据 res=任务号+103，脚本=数据+7），data.res 条目表=偏移
+  数组，条件 opcode 7=headers 比较（`headers[p][4]`=p 建筑条目数，m3 WIN=敌楼
+  全平）。m1=村民死判负；m2/m3 无判负块（只剩"全灭即负"通用规则）。战役通用
+  "拆 TC 胜"在 campaign 关被关。
+- m1 尸检结论（r35）：WIN=slot0 进堡区矩形闲置 20 tick；LOSS=村民(type<2)死亡
+  20 tick 后判负，军事死亡合法（"任何单位死亡=判负""TC 毁=判负"为已证伪旧说；
+  堡垒+四塔全是 p0 我方建筑；塔射程 √5≈2.24 格，"塔杀"旧归因双错）。
+- m3 实录：出生点=虚空口袋，**BFS 下虚空可通行**（源码"资源/虚空当墙"注释误导）；
+  敌 idle 守军近圈 4-5 格会主动 aggro（"idle 不主动"只对远征成立）；清完守军
+  闲置单位自动啃楼（近战²≤9）。
 - m1 型护送关：口袋被树墙围死时走"砍隧道"（m+16 教程同款）；砍树用 retask 拍到
   前线树格，**趟数在砍完一载时扣（与交存无关）**，隧道不需要交存通路。
   砍树前先 phase0 军事清掉口袋周边固定敌（军事可损耗）。
