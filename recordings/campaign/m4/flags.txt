@@ -1,0 +1,9 @@
+录制侧旗标（boot3, r16）: -Daoe.dev=campaign:5 -Daoe.tickms=10 -Daoe.debug=1
+  -Daoe.harnessQuiet=1 -Daoe.exitOnResult=1 -Daoe.mapSeed=8224 -Daoe.bfsPath=1
+  -Daoe.headless=1; rmsDir/saveDir 隔离 /tmp/aoe-camp/m4p。
+base 说明: base.aoesave = 引擎 auto 存档 ar=581（boot.sh 的 base.aoesave 因
+  aA=2 弹窗未清被拒 [save] refused —— r16 记录缺口），trace 原点=581。
+驱动: m4odrv.py v7.1-p（north_walkers 死锁修复+fleeing 剪枝+塔二 age 门）。
+  另有两支 FIFO 热修脚本的命令已入 trace（同位精确）：bs-hotfix.py（BS@~20k）
+  reseat-miners.py（矿区 FSM 复位，~47k 起）。全部命令均为 [fifo]/[input] 打点。
+终局: [result] WIN ticks=93642（m4 大学关 16 轮 51 boot 首胜）。

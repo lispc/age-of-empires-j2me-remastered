@@ -994,6 +994,14 @@ fps=30≈12 倍原速）；长 trace 验证+出视频建议 tickms=2 免超时�
   速率入模必须 ×90，否则出现"TC 2500t 不掉血"假象；dry 数字反常先查单位制
   再查逻辑。**战术结论依赖伤害模型**：TC 掉血入模后「保兵优于换兵」翻转为
   front-at-parity（dry 多活 2800t）——模型改了，结论要重算。
+  **campaign-replay 早死存档防呆（r53）**：unattended+turbo 下"很快会输的
+  开局存档"会在脚本 grep 轮询期间就 LOSS 退出——echo 写 fifo 永久阻塞。
+  预连接 fifo 写端+盯 [load] applied+显式 base 第三参可缩竞态窗，但对
+  aiEnabled=true 的战役关仍有本质限制（见 NOTES m4「AI 波非确定性」）。
+  **多写者 fifo 安全（r53 实测）**：驱动+旁路热修脚本并行写同一 fifo 一整局
+  零丢失（PIPE_BUF 原子写+行协议）——"旁路脚本做单发补丁"是合法战术。
+  **aistate units[].target 字段**（移动目的地；到位==tile、在途≠tile）是
+  "真在途"判据与死锁检测的钥匙。
   **探针 boot（r47 新实践）**：独立目录+3 条 fifo 命令+state/aistate 轮询
   10 分钟即可定案造价/可建性/入账语义——比纯读码多一层"引擎真做了"的证据，
   机制考证性价比最高（type0 造价与放格即生效即此法定案）。

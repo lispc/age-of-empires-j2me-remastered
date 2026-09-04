@@ -8,6 +8,38 @@
 ## 日志（新在上；只追加，不改旧条目）
 
 
+### 战役第 22 夜: 🏆 m4 大学关首胜 WIN@93642(16 轮 51 boot 零的突破)+AI 波非确定性受控实证(2026-09-05)
+
+- **🏆 m4 首胜：[result] WIN ticks=93642**（r53 boot3）。胜利链：barracks@1961
+  →camp@2880→塔双座→**raid 压制 127 令灭尽敌村民（p1v=0 波断流）**→FEUDAL
+  PAID@8050（16 轮首次 live 研究扣款，舞步零失败码）→BS 热修补城堡门→CASTLE
+  PAID@93128→University@93507 (46,56)→50t→WIN。三件套入
+  recordings/campaign/m4/（base@ar581+trace 952 事件+flags+session.log）。
+- **G 管道双根因修复（v7.1-p）**：①north_walkers 死锁——并发判据把"卡在出生
+  带的在岗者"也算在途，≥2 困住则闲置重派永不开闸（修=只数 target!=tile）；
+  ②fleeing 泄漏——死亡槽位压缩后 slot 复用、死旗永挂（修=每拍与村民槽集求交）。
+  实测 G 从 0-3/3000t → 交付期 1.5-2G/100t。
+- **两新引擎语义（读码）**：①type5(Mill) 全图唯一——「双 Mill 凑城堡门」是
+  dry 假阳性，城堡门=Mill+BS 各一座；②矿仓交存=**完工沿**自动填 hdr[10]/[11]
+  （placement 不写），金/石 dropoff 按距离自动选——「建成后要改派到交存点」
+  的直觉在本引擎多余。均入 game-mechanics。
+- **采集 FSM 停摆发现与现场恢复**：5 金工+2 石工站资源格 action=0 达 26000t
+  （retask 风暴打断返岗钩子+「老 slot 不重发」纪律使其永驻）——reseat-miners.py
+  跳格复位（同簇另一资源格 ≥2 manh）救活，G 恢复爬坡。bs-hotfix.py 同场补 BS
+  城堡门。两脚本入库 tools/campaign/。
+- **⚠️ AI 波时刻非确定性受控实证（r51 疑似→实锤）**：base+trace 逐拍重放、
+  ar 检查点吻合但首战提前 650t——m4（唯一 aiEnabled=true 的战役关）回放不能
+  位精确复现，m1-m3 能过正因 aiEnabled=false。**engine 线索待查：内置 tickAi
+  出兵决策的随机源是否走化妆品流/墙钟**（已开调查任务）；recordings/README
+  的 m4 条目已如实标注。
+- 其余入库：多写者 fifo 安全（PIPE_BUF+行协议，旁路热修脚本=合法战术）/
+  campaign-replay 早死存档防呆/aistate target 字段——均入 §11。NOTES m4 档案
+  转正为 WIN 版（含待内化清单：BS 支路/Mill 门/idle 跳格复位）。
+- 效率画像：85min；回放验证烧 50min（早死存档卡死+turbo 竞态）。证据
+  /tmp/aoe-camp/m4p/（winrec/三件套+win play.log+两热修脚本）。
+- commit：本条目对应。
+
+
 ### 战役第 21 夜: m4 第 15 轮 3 LOSS 但研究舞步三重定案(光标上 TC 连按两次 -5)+无食物考据(2026-09-05)
 
 - **m4 轮 15（r52）未 WIN，止损交棒**：3 boot LOSS 3448/4585/6591，全死于

@@ -24,5 +24,12 @@ tickms 只影响墙钟不影响视频内容。长 trace 验证+出视频建议 t
 - m2 经济关  **WIN ticks=64077**（2026-09-04，三桶链式锁存 >101：木→金→石；
   无判负块；BFS 长途交付 34 格自动循环零 stall）。trace 仅 49 事件——
   尾段为三村民全自动采集循环。
-- m3-m7  待打。
+- m4 大学关  **WIN ticks=93642**（2026-09-05，16 轮 51 boot 首胜：木银行→
+  raid 灭尽敌村民波断流→封建 15/15/15→城堡 20/20/20→University(46,56)→50t）。
+  **⚠️ 本关 trace 只保证录制本体可考，回放不能位精确复现**：m4 是唯一
+  aiEnabled=true 的战役关，敌方 AI 波时刻存在非模拟随机源（r51 升格实证：
+  trace 逐拍重放、ar 检查点吻合但首战提前 650t）——回放会分叉，见
+  tools/campaign/BUGS-m4p/m4pdrv.md 与 WORKLOG 第 22 夜。录制侧含 2 支
+  FIFO 热修脚本（bs-hotfix/reseat-miners，已入库 tools/campaign/）。
+- m3、m5-m7  待打/待录。
 - （旧 DDA 时代 WIN ticks=90133 录制因锚点制度升级已退役，被本表 m1 覆盖。）
