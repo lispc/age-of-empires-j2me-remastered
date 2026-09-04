@@ -94,6 +94,7 @@ LLM 玩家代理的宏层（sel/goto/train/build/gather/rally/sitrep 等 FIFO �
 | `aoe.exitOnResult=1` | 终局（startMissionBriefing z==98）无条件打印 `[result] WIN|LOSS ticks=N` 后 System.exit(0)——批量脚本契约，格式勿改 |
 | `aoe.mapSeed=N` | 随机图种子覆盖（beginMissionLoad 装载点，N 拆 hi/lo 两字节；不设则逐字节不变） |
 | `aoe.bfsPath=1` | 可选 BFS 寻路（默认关）：`boolean_b` 的 DDA 选落点换成沿缓存 BFS 路径取下一格，落点检查/抵达钩子/扇形回退不变；语义详见 game-mechanics「移动与寻路」 |
+| `aoe.aiFog` | RuleBasedAi 迷雾诚实模式（默认开=只读已探索格敌情/资源，禁读 hdr[1] 统计）：`=0` 回退全图（ailoop `-f`）；`=res`/`=tc` 消融档（资源全图/敌 TC 全图，仅诊断） |
 | `aoe.rmsDir=<dir>` | RecordStore（.nfo）落盘目录重定向（批量实验隔离，防种子写回污染用户数据） |
 
 ### FIFO 指令（`-Daoe.devMouse=<fifo>`；逻辑坐标 240x320）
@@ -164,9 +165,10 @@ trace（回放锚）· `[mouse]/[mouseA]/[pick]/[band]` 鼠标链路 · `[trace]
 
 ### 玩家 AI 批量对局
 
-`tools/ailoop.sh -n N -d 难度 -a <AI类名> -s 起始种子 -t 超时 -k -b [-S N]`：批量 headless
+`tools/ailoop.sh -n N -d 难度 -a <AI类名> -s 起始种子 -t 超时 -k -b [-S N] [-x 种子表]`：批量 headless
 turbo 随机图对局 + 胜率统计（`-b` = 透传 `-Daoe.bfsPath=1`；`-k` 留每局日志；
-`-S N` = 透传 `-Daoe.snapshotEvery=N` 周期快照，滚动 8 份，败局尸检用）。
+`-S N` = 透传 `-Daoe.snapshotEvery=N` 周期快照，滚动 8 份，败局尸检用；
+`-x` = 追加跳过种子，叠加在 `tools/ailoop-skip.txt` 退化种子表上，被跳种子不占局数）。
 现实现：`aoe.ai.RuleBasedAi`（规则式，架构与决策依据见 `src/main/java/aoe/ai/README.md`）。
 AI 日志统一 `[ai]` 前缀（assign/build/research/ATTACK/DEFEND/… + 每 500 tick 态势摘要）。
 **注意**：菜单导航耗 tick 是墙钟依赖的，同一种子跨跑 tick 相位不同，单局胜负有

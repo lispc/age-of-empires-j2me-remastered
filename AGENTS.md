@@ -35,6 +35,11 @@ tools/replaycheck.sh       # 确定性回放自检——动过输入路径/定�
 
 - 回归/golden **必须走默认 240x320**(镜头坐标依赖 screenW;宽视野只经 run.sh 的
   `AOE_WIDTH` 生效)。
+- **编译与跑批之间禁止管道**:`./gradlew classes | tail && tools/ailoop.sh` 的管道
+  会把 gradle 退出码吞成 tail 的 0,编译挂了照样拿旧类文件空跑(2026-09-04 八批
+  空转事故,见迭代笔记第五批)。编译独立成行,亲眼确认 BUILD SUCCESSFUL;
+  Edit 的 old_string 必须落在完整行边界(以 `}` 结尾而文件里该 `}` 是
+  `} else if` 前缀 = 子串匹配吃掉换行)。
 - 改名会改变 fields-diff 的字段名:**同步更新 `tools/regress-noise.txt`**。
 
 ## 硬性纪律
