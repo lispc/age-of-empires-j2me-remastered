@@ -27,7 +27,7 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
 （数据 res 号：m1=104 / m2=105 / m3=106 …；脚本=数据+7，解码器 resdec.py 换号即用。
 地形=数据内嵌 rng 确定性生成（res 106 头两字节），与 mapSeed/RMS 无关，每 boot 同图，
 可离线洪泛侦察——注意 BFS 下虚空可通行、资源格当墙。）
-### m4 大学关（⏳ 九轮 30 boot 全 LOSS 止损（r38-r46）；金管道 dry 已通 WIN@12390，最早档首次单兵全歼波+村民零死亡，残墙=波期木银行单点）
+### m4 大学关（⏳ 十轮 33 boot 全 LOSS 止损（r38-r47）；**木银行实证成功**（type0 伐木场，波期 W 入账+村民三连零死亡），墙=金管道 flee 吞货，boot3 中段签底盘 W=245/C=1/v=8 只差一趟金交付）
 - **胜负条件（res 114）**：WIN = 封建→**升城堡完成**（techFlags[14]==1，c.java:6200）
   → **放置 University/type4**（置回 0，c.java:7590）→ 计时 50t → WIN。res 127 初始
   [14]=0 ⇒ University 在城堡前被"已建成"锁死，**顺序不可颠倒**。Univ 25木/25石。
@@ -42,9 +42,10 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   armyValue（断收入用）。**reserve 干涸前提（r42 修正）**：「敌 reserve 波
   ~ar5700-6000 干涸」仅当敌村民被清才成立——敌村民存活时 army 滚到 102 波不断
   （r44 boot3 再证 AV 97）。
-- **波 1 方差（r44 勘误，r46 续证）**：11+ 样本跨 **[1168, 3449]**（r46 三连最早
-  档 1168/1322/1364 证明最早档会连续出现——设计必须全按 1168）——同图同种子
-  开局逐 tick 一致而波 1 差 ~2300t（疑似 AI 侧非模拟随机，机制未考证）。
+- **波 1 方差（r44 勘误，r47 续证）**：14+ 样本跨 **[1168, 3449]**；**连续最早档
+  是常态不是尾部**（5 连 ≤1364）——战术评估以"1600t 内 n1→4 连击"为默认场景，
+  卡时刻一律按 **1168** 设计。同图同种子开局逐 tick 一致而波 1 差 ~2300t
+  （疑似 AI 侧非模拟随机，机制未考证）。
 - **探索模型三要素（r43/N4 读码定案，全战役通用）**：build 雾判=`mapTiles[t]<0`
   （c.java:1479）；可建区=①全体单位当前格 3×3（每 tick，revealFogAroundUnit
   c.java:5978）+ ②**完工建筑**曼哈顿菱形 r3（塔 r6，每 tick 轮询一栋，void_a
@@ -84,10 +85,10 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   H#1@(30,62) 作木仓房（**需先验证 House 是否 wood 交存点**——nearestDropOff
   读 hdr[9] 指针，与建筑类型的关系未考证）。配套：mocksim 加 M4D_WAVE0=<tick>
   最早抽签压力注入 + hdr9 交存模拟 + 头部「已知分叉点清单」。
-- **现行代驱动**=`tools/campaign/m4idrv.py`+`mocksim4i.py`（v6.4-i：风筝/按槽
-  锚定/半程矿仓/m=0 紧急豁免/卫生双保险；boot 用 **campaign:5**+新鲜 rmsDir→
-  idx4）；历代 m4hdrv/m4gdrv/m4fdrv/m4edrv/m4ddrv/m4cdrv/m4bdrv/m4drv
-  （consolidation 候选：r38-r46 九代 m4 驱动可择机归并）。
+- **现行代驱动**=`tools/campaign/m4jdrv.py`+`mocksim4j.py`（v6.5-j：type0 木银行+
+  M4D_WAVE0/WAVEGAP 压力注入；boot 用 **campaign:5**+新鲜 rmsDir→idx4）；
+  历代 m4idrv/m4hdrv/m4gdrv/m4fdrv/m4edrv/m4ddrv/m4cdrv/m4bdrv/m4drv
+  （consolidation 候选：r38-r47 十代 m4 驱动可择机归并）。
 - 操作要点：z=70 完工弹窗 -6 清；t2=2 pop ⇒ House 先行；slots 幽灵槽判活用 state
   JSON；`echo > fifo` 阻塞=进程已退；boot.sh 应保留每次 play.log 副本（r42 boot1/2
   play.log 被覆盖丢失）；aistate 缺敌 pool/波出生时间戳字段（波预测靠 p1mil 计数沿）。
