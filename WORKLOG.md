@@ -1798,3 +1798,18 @@ Enter/Space/X/F1/Esc）退出；方向键/WASD/数字斜向键在全图上平移
 `[void_a]`（键映射）、`[trace]`（boolean_c/g/boolean_g 状态转换）、`[dev]`（自动
 导航）、`[devMouse]`（FIFO 驱动）、`[save]/[load]`（快照存读）、`[probe]`（拾取
 标定）、`[devBoot]`（快照直启）。另有 `mad/e.java` 的 25 帧状态打印（ar/am/aA/aH）。
+
+### 历史手术: main 变基对齐 player-ai 无 mp4 版 + 合流 CampaignAi(2026-09-04)
+
+- player-ai 分支为清除 46MB mp4 blob 重写了历史（我们的 ee9a4c4 在那边被重制为
+  55b6405，逐字节同内容唯缺 replay.mp4；经 `git diff ee9a4c4 55b6405` 核验）。
+  直接 merge 会让 blob 永留 main 历史且日后反向污染 player-ai——故 main 侧执行
+  `git rebase --onto origin/player-ai ee9a4c4 main`：丢弃 ee9a4c4（由 55b6405
+  替代），把 8ba6cc2..2df5e1b 六个 commit 变基上去，WORKLOG 冲突按时间序保留
+  双方条目（CampaignAi 傍晚条目最上）。
+- 变基后核验：`git diff 2df5e1b main` 仅 CampaignAi 相关新增（+1951 行：699+508
+  行 CampaignAi.java/scriptdis.py/camloop.sh/7 关脚本反汇编目录等）；
+  `merge-base --is-ancestor ee9a4c4 main` 不再成立=**mp4 blob 从 main 可达集出局**。
+  编译绿 + regress PASS + replaycheck 双绿（CampaignAi 与 fastSim 共存无恙）。
+- 本节为 Archaeology 锚点：main 的 8ba6cc2..2df5e1b 旧哈希已废弃，对应新哈希见
+  `git log --grep='turbo+fastSim\|m3 拆楼\|m4'`。推送用 --force-with-lease。
