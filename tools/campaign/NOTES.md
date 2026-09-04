@@ -27,19 +27,24 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
 （数据 res 号：m1=104 / m2=105 / m3=106 …；脚本=数据+7，解码器 resdec.py 换号即用。
 地形=数据内嵌 rng 确定性生成（res 106 头两字节），与 mapSeed/RMS 无关，每 boot 同图，
 可离线洪泛侦察——注意 BFS 下虚空可通行、资源格当墙。）
-### m4 大学关（⏳ 六轮 21 boot 全 LOSS 止损（r38-r43）；N1-N4 全生效，dry6 模拟 WIN，残局仅剩 2-3 行）
+### m4 大学关（⏳ 七轮 24 boot 全 LOSS 止损（r38-r44）；收敛链 6538→5712，早期波已能全歼，残局=矿仓储蓄门一行）
 - **胜负条件（res 114）**：WIN = 封建→**升城堡完成**（techFlags[14]==1，c.java:6200）
   → **放置 University/type4**（置回 0，c.java:7590）→ 计时 50t → WIN。res 127 初始
   [14]=0 ⇒ University 在城堡前被"已建成"锁死，**顺序不可颠倒**。Univ 25木/25石。
   res 122：Mill[15,0,10]/BS[25,0,20]——[15][16]=0 锁 Mill/BS 到封建。
   **无判负块**（TC 毁/末单位死通用规则）。纯经济竞速关。
+- **本关生产语义（r44 实证，全游戏通用）**：**村民由 House(type11) 训练，TC 不生产**；
+  兵营(type10)产民兵占 2 pop。村民产能=House 数；"House 先行"=生产建筑先行。
 - **首个战役 AI 关**（threshold=30）：敌每 tick 重算 stance，**一次性派 75% 单位槽**
   （含村民混排）直扑 TC±1。练兵类型按 `tickCount%10` 抽签；**敌会补村民（raid 须
   驻留压制）**。**n7==0 冻结漏洞**：我方 0 单位时 AI 扫描整块跳过 → 永不再出兵。
 - **all-in 门**：`敌 armyValue≥30 且 我<敌×1.25`（c.java:8458）；杀村民不直接减
-  armyValue（断收入用）。
-- **reserve 干涸前提修正（r42）**：「敌 reserve 波 ~ar5700-6000 干涸」**仅当敌村民
-  被清**才成立——敌村民存活时 army 滚到 102 且波不断（boot1 实测）。
+  armyValue（断收入用）。**reserve 干涸前提（r42 修正）**：「敌 reserve 波
+  ~ar5700-6000 干涸」仅当敌村民被清才成立——敌村民存活时 army 滚到 102 波不断
+  （r44 boot3 再证 AV 97）。
+- **波 1 方差（r44 勘误）**：5 样本 **[1173, 2115, 2378, 2575, 3449]**——同图同种子
+  开局逐 tick 一致而波 1 差 950-2300t（疑似 AI 侧非模拟随机，机制未考证）。一切卡
+  时刻的预防按 **1173** 设计。
 - **探索模型三要素（r43/N4 读码定案，全战役通用）**：build 雾判=`mapTiles[t]<0`
   （c.java:1479）；可建区=①全体单位当前格 3×3（每 tick，revealFogAroundUnit
   c.java:5978）+ ②**完工建筑**曼哈顿菱形 r3（塔 r6，每 tick 轮询一栋，void_a
@@ -47,23 +52,24 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   单位扫堂**（3×3 贴一格开一片）。
 - **dry 假阳性定律（r43 实锤，五轮悬案结案）**：mocksim 无雾模型时"雾格 FAIL"分支
   永不触发——(45,59) 兵营五轮"时好时坏"全是 dry 假阳性，真实 boot 从未建成过。
-  mocksim 必须与真实判定同构（雾/占格/时代门三件套）；mocksim4f 已补雾模型。
-- **六轮战况**：N1-N4 全部实测生效——N4 修复（开局扫堂 (44,58)）后**兵营 (45,59)
-  三连建成**（956/1017/1098，vs 此前全 fallback）；N1 终版 **WOOD_NEAR 彻底退役**
-  （WOOD_SAFE→House 交存 18 manh 零收入代价）+逃向按侧分流，boot3 零走廊死亡；
-  N3 新序三连 OK。dry6 离线模拟 WIN@12390（camp 2580/封建 6000/城堡 9780/Univ
-  12300，7 波零阵亡 TC 满血）——状态机已达 WIN 形态。
-- **三 boot 死因（每 boot 一个新瓶颈，修复全部在案）**：①探雾民兵被 stray-recall
-  拉回+严格到位判定→矿仓 C=0→G 断炊（修复：豁免 recall+重派）；②波早到（boot 间
-  ±300t 方差！）杀走廊木工——**逃亡路线横穿波线**（修复：避险点/转场全过 d2_line
-  校验，东翼锚点 (49,48) 走廊距线 >9.8 格）；③转金贪婪（`wj>1` 门太松拉走第 2
-  木工→W 饥荒）+m 磨光无 G 补兵（修复一行：`wj>=3`）。
-- **第 7 轮残局（30 分钟级）**：转金门 `len(wj)>1`→`>=3`；`hb_cd 8→3`（emg 冷却
-  800t→300t，boot3 House 拖到 2817 的主因）；（可选）vil 生产门 v≤3 时 W>=10 放宽
-  5。改完 dry 一轮确认仍 WIN 即上机，3 boot 预算刷新。sim 收入仍比真实高 ~30%
-  （1.85 vs 1.4W/100t/vil）——离线 WIN 只证分支正确，节奏以 boot 为准。
-- **现行代驱动**=`tools/campaign/m4fdrv.py`+`mocksim4f.py`（v6.4-f：N1-N4+雾模型；
-  boot 用 **campaign:5**+新鲜 rmsDir→idx4）；历代 m4edrv/m4ddrv/m4cdrv/m4bdrv/m4drv。
+  mocksim 必须与真实判定同构（雾/占格/时代门三件套）；mocksim4g 已补雾模型。
+  **且 mocksim 波模型结构性偏温和**（真实 all-in AV 滚 97+、250-600t 连发 vs sim
+  波距 700-1500t）——dry WIN 只证分支正确，中盘节奏以 boot 为准。
+- **七轮战况**：r43 N1-N4 全生效（扫堂后兵营 3/3 建成、WOOD_NEAR 退役零走廊死亡）；
+  r44 残局三行+尸检三修落地，**boot3 修复全按设计工作：m#1@1634、House#1@1994、
+  v=5@4083、矿区上人@4731，波 1 晚抽时 TC+m 把前两波全歼（p1m 归零）**——史上最接近。
+- **唯一堵墙=「落地即花」断矿仓**：vil/mil 门各 5W 无蓄积豁免，每趟 5W 落地即花，
+  W 永远够不到矿仓门槛 15 → G=10 初始金耗尽后 m 封顶 2 → all-in 潮（AV 81→97，
+  250-600t 连发）磨光。r44 死因链：boot1=史上最早波 1173+House 死锁（house_emg 门
+  曾依赖 m≥1 互锁，已改 barracks≥1）；boot2=house_emg spam 3 房吃 15W（已加
+  `m≥1 or W≥10`）；boot3=落地即花（上墙）。
+- **第 8 轮残局（一行级）**：vil 门（~737）加矿仓**储蓄门** `(len(camps)>0 or W>=20
+  or not scouted)`——camp@~2500-2700 → 金工到岗 → m#3@~3300 接上 all-in 潮。
+  dry 确认后上机，3 boot 预算刷新。**若 camp 按期落地仍磨光 → 换 RAID_EARLIEST
+  前压**（m=4 主动压敌村民断 AV 滚动，见「reserve 干涸前提」）；塔线 S 不够弃。
+- **现行代驱动**=`tools/campaign/m4gdrv.py`+`mocksim4g.py`（v6.4-g：残局三行+尸检
+  三修；boot 用 **campaign:5**+新鲜 rmsDir→idx4）；历代 m4fdrv/m4edrv/m4ddrv/
+  m4cdrv/m4bdrv/m4drv（consolidation 候选：r38-r44 七代 m4 驱动可择机归并）。
 - 操作要点：z=70 完工弹窗 -6 清；t2=2 pop ⇒ House 先行；slots 幽灵槽判活用 state
   JSON；`echo > fifo` 阻塞=进程已退；boot.sh 应保留每次 play.log 副本（r42 boot1/2
   play.log 被覆盖丢失）；aistate 缺敌 pool/波出生时间戳字段（波预测靠 p1mil 计数沿）。
