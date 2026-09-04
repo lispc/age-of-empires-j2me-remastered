@@ -59,6 +59,18 @@ run_one() {  # $1=A|B  $2=base(仅B用)
   done
   [ "$j" = '"aA":6' ] || { echo "[$tag] FAIL 未进任务"; kill $PID; return 1; }
   sleep 3   # 等自动 checkpoint 落盘、画面彻底稳定
+  # load/save 前必须回到 aA==6（主视图）：任务脚本对话框（campaign:1 的 z=71 实测）
+  # 可能在等待期间弹出——screenState 不在快照里，带着弹窗 load，恢复后弹窗残留，
+  # 回放按键全打到弹窗上 → sel 字段分叉而 [input] 轨迹照一致（2026-09-04 排雷
+  # 第 9 类）。这些 -6 都在基准存档(A)或 load(B)之前，不进对拍。
+  for i in $(seq 1 15); do
+    echo state >&9; sleep 0.4
+    j=$(grep -o '"aA":[0-9]*' "$FIFO.json" 2>/dev/null | head -1)
+    [ "$j" = '"aA":6' ] && break
+    [ "$j" = '"aA":2' ] && echo "key -6" >&9
+    sleep 1
+  done
+  [ "$j" = '"aA":6' ] || { echo "[$tag] FAIL load 前未回主视图 ($j)"; kill $PID; return 1; }
   if [ "$tag" = A ]; then
     # 重试直到写入成功。被拒多半是对话框开着(aA=2)——补一发 -6 关掉再试。
     # 这些 -6 都发生在基准存档之前,会被 B 的 load 整个丢弃,不涉及确定性。
@@ -78,7 +90,15 @@ run_one() {  # $1=A|B  $2=base(仅B用)
     [ -n "$line" ] || { echo "[$tag] FAIL 存档始终被拒"; kill $PID; return 1; }
     base=$(echo "$line" | grep -o 'ar=[0-9]*' | cut -d= -f2)
     echo "$base" > "$WORK/base.txt"
-    # A 也读自己的档:让 A/B 从"含 load 副作用(onShown 重建等)完全一致"的状态出发回放
+    # A 也读自己的档:让 A/B 从"含 load 副作用(onShown 重建等)完全一致"的状态出发回放。
+    # 存档成功到 load 之间弹窗仍可能冒出（同上）——再确认一次 aA==6。
+    for i in $(seq 1 15); do
+      echo state >&9; sleep 0.4
+      j=$(grep -o '"aA":[0-9]*' "$FIFO.json" 2>/dev/null | head -1)
+      [ "$j" = '"aA":6' ] && break
+      [ "$j" = '"aA":2' ] && echo "key -6" >&9
+      sleep 1
+    done
     echo "load $WORK/base.aoesave" >&9
     sleep 1
     echo "replaytrace $TRACE $base" >&9
@@ -103,7 +123,9 @@ run_one() {  # $1=A|B  $2=base(仅B用)
   grep -q "stopped at ar=$STOP" "$LOG" || { echo "[$tag] FAIL 停表超时"; kill $PID; return 1; }
   sleep 0.5; echo state >&9; sleep 0.5
   cp "$FIFO.json" "$WORK/state-$tag.json"
-  grep '^\[input\]' "$LOG" | awk -v b=$base 'split($2,a,"=") && a[2]+0>=b' > "$WORK/input-$tag.txt"
+  # 只取"读档之后"的输入行：load 把 tickCount 倒回 base，load 前现场会话的按键
+  # （关对话框的 -6 等）ar 可能已越过 base，单靠 ar>=base 过滤会把它们混进对拍。
+  awk '/^\[load\] applied/{seen=1; next} seen && /^\[input\]/' "$LOG" > "$WORK/input-$tag.txt"
   kill $PID 2>/dev/null; wait $PID 2>/dev/null
   echo "[$tag] done: stopped at $STOP, $(wc -l < "$WORK/input-$tag.txt") input 行"
 }

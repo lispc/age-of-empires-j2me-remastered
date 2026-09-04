@@ -59,13 +59,16 @@ public abstract class Canvas extends Displayable {
      */
     private final java.util.ArrayList<Integer> pendingKeyReleases = new java.util.ArrayList<>();
     /**
-     * 合成按键（FIFO key / replaytrace）的松开队列：[键码, 最小帧序号]。
+     * 合成按键（FIFO key / tapk / 鼠标点击的合成 -5）的松开队列：[键码, 最小帧序号]。
      * 按下可能落在某帧 paint 的中段（游戏本帧输入已经消费过），若只等"当前帧
      * 结束"就投递松开，脉冲会在下一帧消费前被清零——键被无痕吞掉（FIFO key
      * 实测 ~10-30% 丢失，且 [input] 日志在按下一刻就打，完全看不出丢）。
      * 因此合成键的松开要求"再完整完成一帧"（minSeq = 已完成帧数 + 2）才投递，
      * 保证按下必然被至少一个完整 tick 消费。落点在两帧之间时多held一帧，
      * 脉冲只消费一次、held 重复计数仅 +1，不产生额外移动。
+     * 注意：本机制的 held 时长以按下时刻的墙钟相位为基准（±1 帧漂移）——
+     * 交互式/dev 注入够用；确定性回放（replaytrace）不走这里，改走 c 的
+     * 帧首 tick 对齐注入（devApplyReplayEvents，按下/松开都钉在 tick 上）。
      */
     private final java.util.ArrayList<long[]> pendingSyntheticReleases = new java.util.ArrayList<>();
     /** 已完整完成 paint 的帧数（flushPendingKeyReleases 里推进）。 */

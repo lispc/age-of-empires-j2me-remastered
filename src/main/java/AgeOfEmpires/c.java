@@ -70,8 +70,10 @@ public final class c
 extends com.ulysseo.mad.a
 implements CommandListener {
     public AoeMidlet var_AoeMidlet_a;
-    public int screenW;
-    public int screenH;
+    // volatile 标注 = 跨线程字段（paint/Timer 线程 ↔ EDT/dev 线程），见 AGENTS.md 纪律 5。
+    // screenW/H：EDT（onScreenSizeChanged）写，paint/dev 线程读。
+    public volatile int screenW;
+    public volatile int screenH;
     public int ad;
     public int J;
     public int viewTileCols;
@@ -107,8 +109,10 @@ implements CommandListener {
     // —— 状态机（速查见 GAME_NOTES.md，完整语义未完全考证，改动前对照 p() 的分发）——
     // screenState: 顶层画面状态，p() 按它分发渲染；E() 在 screenState 变化时构建新画面。
     // am: 配套的"当前画面"值（boolean_g(n) 直接设置），am==screenState 表示画面稳定。
-    public int screenState;
-    public int pendingScreenState;
+    // screenState/pendingScreenState：paint 线程写，dev-nav/dev-mouse/DevHarness
+    // 线程轮询（菜单导航/ until /state 全靠它）——volatile 保证可见性。
+    public volatile int screenState;
+    public volatile int pendingScreenState;
     public int aH;
     // 本局是否走随机图生成：任务资源字节[0..1] 是地图 RNG 种子，全零 = 无固定地图
     // → randomMap=true，d.a(9,20,mapTiles,this) 用生成器铺地形，t() 再补城镇中心；
@@ -117,7 +121,7 @@ implements CommandListener {
     public int R;
     // ac: 游戏模式（由菜单脚本动作 65/71/73 设置）：0=教程，16=随机地图，32=战役。
     // aC: 当前选中的任务序号（0 起；战役 0..6，随机地图 0..2）。
-    public int gameMode;
+    public volatile int gameMode;
     public int missionIndex;
     public int dialogScriptId;
     public int I;
@@ -130,19 +134,22 @@ implements CommandListener {
     public int campaignProgress;
     public int tutorialProgress;
     // ar: tick 计数（每帧 +1，80ms 一帧；调试日志里的 ar 就是它）。
-    public int tickCount;
+    // paint 线程单写（++），dev 线程读（ping/stopat/replaytrace/state）。
+    public volatile int tickCount;
     public boolean var_boolean_h;
     public boolean var_boolean_j;
     public byte[] techFlags;
-    public int cameraPxX;
-    public int cameraPxY;
+    // cameraPx/cursorTile/selectedTrainProduct：paint 线程写，dev 线程读
+    // （state/sitrep/ctile/train）。
+    public volatile int cameraPxX;
+    public volatile int cameraPxY;
     public int camTargetX;
     public int camTargetY;
-    public int cursorTileIdx;
+    public volatile int cursorTileIdx;
     public int t;
-    public int cursorTileX;
-    public int cursorTileY;
-    public int selectedTrainProduct;
+    public volatile int cursorTileX;
+    public volatile int cursorTileY;
+    public volatile int selectedTrainProduct;
     public String[] var_java_lang_String_arr_a;
     public int as;
     public int briefingVariant;
@@ -152,13 +159,15 @@ implements CommandListener {
     public int av;
     public int var_int_e;
     public int D;
-    public int selectionMode;
+    // selection*/var_int_i：paint 线程写（sel/goto/train 宏也从 dev 线程直接读写，
+    // 见 devMouseCmd——那是有意的跨线程宏设计），state/sitrep/goto 从 dev 线程读。
+    public volatile int selectionMode;
     public int p;
-    public int selectionMark;
-    public int selectedType;
+    public volatile int selectionMark;
+    public volatile int selectedType;
     public int selectedSlot;
-    public int selectionPlayer;
-    public int var_int_i;
+    public volatile int selectionPlayer;
+    public volatile int var_int_i;
     public int aQ;
     public Graphics var_javax_microedition_lcdui_Graphics_a;
     public byte[] var_byte_arr_d;
@@ -174,9 +183,12 @@ implements CommandListener {
     // ae（瞬时值）和 ab=ax（持续值）；游戏逻辑以 "ab != 0" 为"有键按住"
     // （如 o() 开头 if (ab == 0) return），自身从不清 ab，依赖松开事件
     // void_e 全清。桌面适配层把松开延迟到 paint 之后投递，见 void_e 注释。
-    public int keymapCount;
+    // keymapCount/keyActionEvent 同样被 onKeyPress（EDT/dev 线程）读写、paint 线程
+    // 消费（ae 在帧末清零），与 ab/ax 同理由加 volatile。keymap 是数组（元素
+    // volatile 无意义），由 loadKeymap 整体换引用，不加。
+    public volatile int keymapCount;
     public byte[] keymap;
-    public int keyActionEvent;
+    public volatile int keyActionEvent;
     // volatile：按键状态由 EDT/dev 线程写、游戏 tick 线程读，ARM 弱内存模型下
     // 无同步的跨线程写入可能长期不可见（dev 自动导航曾因此失灵）。
     public volatile int keyActionPulse;
@@ -200,7 +212,7 @@ implements CommandListener {
     public int T;
     public int aD;
     public byte[] costTable;
-    public int var_int_g;
+    public volatile int var_int_g;
     public int var_int_c;
     public int[] var_int_arr_b;
     // 任务脚本字节码（data.res 资源装载；解释器 = tickMissionScript → evalScriptCondition
@@ -217,7 +229,8 @@ implements CommandListener {
     public static int rngStateHi = 12;
     public static int rngStateLo;
     d var_AgeOfEmpires_d_a;
-    public int missionResId;
+    // missionResId：paint 线程写（任务装载），dev 线程读（devLoadFrom 的任务身份校验）。
+    public volatile int missionResId;
     // 菜单/对话框模板字节：a(n, true) 加载 data.res 对话框资源（131=选关）。
     // 树状节点结构，int_c/int_e/int_k/int_i 遍历；节点参数在 +9 起
     // （循环器控件：+9+1 = 选项总数，+9+2 = 当前选中项）。item 激活时执行
@@ -226,12 +239,14 @@ implements CommandListener {
     public byte[] menuTree;
     // H: 子状态/对话框选择器，boolean_d 按 H 加载对应菜单并打补丁：
     // 11=随机地图选关，12=战役选关，1=回主菜单。
-    public int menuScreenId;
+    public volatile int menuScreenId;
     public int pendingPanelSwitch;
     public int ap;
-    public int menuNode;
-    public int menuNodeCount;
-    public int menuHighlight;
+    // menuNode/menuNodeCount/menuHighlight：paint 线程写（菜单引擎），dev-nav 线程
+    // 轮询（devSig/devHiScriptOp——"aR 已是 0 却不退出"类可见性问题即源于此）。
+    public volatile int menuNode;
+    public volatile int menuNodeCount;
+    public volatile int menuHighlight;
     public int var_int_a;
     public int K;
     public boolean aiEnabled = true;
@@ -248,7 +263,9 @@ implements CommandListener {
     public Image[] var_javax_microedition_lcdui_Image_arr_a;
     // 自动重复：ab==L 视为"按住未换键"，s 每 tick +1，s>=5 后动作持续生效。
     public int keyRepeatFrames;
-    public int keyRepeatLast;
+    // keyRepeatLast：双写者（paint 线程记上次动作码；onKeyRelease 从 EDT/dev 线程
+    // 清零）——volatile 只管可见性，两写者语义上不相交（松开即重置），不加锁。
+    public volatile int keyRepeatLast;
     public int mapViewSavedCamX;
     public int mapViewSavedCamY;
     public int mapViewSavedCursorX;
@@ -463,26 +480,21 @@ implements CommandListener {
                     return;
                 }
                 System.out.println("[devBoot] " + path + " -> nav " + spec);
+                // 先挂快照再导航：帧首在首次 aA==6 的那帧立刻 apply（见字段注释），
+                // 消除"稳定轮询墙钟窗口"里跑的 live 段模拟。
+                this.devBootApplyFailed = false;
+                this.devBootPendingRestore = data;
                 devNavToMission(spec);
                 long deadline = System.currentTimeMillis() + 45000;
-                int stable = 0;
-                while (System.currentTimeMillis() < deadline) {
-                    Thread.sleep(200);
-                    if (this.screenState == 6) {
-                        if (++stable >= 15) {
-                            break;
-                        }
-                    } else {
-                        stable = 0;
-                    }
+                while (this.devBootPendingRestore != null
+                        && System.currentTimeMillis() < deadline) {
+                    Thread.sleep(100);
                 }
-                if (this.screenState != 6 || !this.devLoadFrom(path)) {
-                    System.out.println("[devBoot] failed, aA=" + this.screenState);
+                if (this.devBootPendingRestore != null || this.devBootApplyFailed
+                        || this.screenState != 6) {
+                    System.out.println("[devBoot] failed, aA=" + this.screenState
+                        + (this.devBootApplyFailed ? " (apply 异常，见上方 [load] 日志)" : ""));
                     return;
-                }
-                long until = System.currentTimeMillis() + 3000;
-                while (this.devPendingRestore != null && System.currentTimeMillis() < until) {
-                    Thread.sleep(50);
                 }
                 System.out.println("[devBoot] done, aA=" + this.screenState);
             } catch (InterruptedException e) {
@@ -673,10 +685,56 @@ implements CommandListener {
     /** 待写快照路径（仅 devFrameHousekeeping 同线程读写，无需 volatile）。 */
     private String devPendingSnapshotPath;
     private volatile byte[] devPendingRestore;
-    /** 本次会话进入当前任务用的 nav spec（"-Daoe.dev" 语义）；窗口会话为 null。 */
-    public String devLastNavSpec;
-    private String devToast;
-    private long devToastUntil;
+    /** devBoot 待恢复快照：devBootFromSave 在菜单导航**之前**挂入，帧首
+     *  （devFrameHousekeeping）在首次 screenState==6 的那帧立刻 apply——live 段
+     *  长度归零（aA==2 简报/装载态 sim 暂停，只有 aA==6 走模拟），装载时机不再
+     *  墙钟依赖。旧实现等"主视图稳定 15×200ms"再 load，live 段跑了几十 tick
+     *  墙钟决定的模拟，AI 计时器等快照外字段的残留使 devBoot 双跑发散
+     *  （2026-09-02 取证 11 个单位坐标字段；2026-09-04 实锤 aiBuildTimer=L）。 */
+    private volatile byte[] devBootPendingRestore;
+    /** boot apply 抛异常时置位（apply 内部有长度/身份校验），devBoot 线程据此报败。 */
+    private volatile boolean devBootApplyFailed;
+
+    // ===== replaytrace 的 tick 对齐注入（帧首定点应用，无墙钟/帧相位）=====
+    // replaycheck 视图字段（sel/cursor/cam）flake 的根因（2026-09-04 读码证实）：
+    // 旧实现从 dev-mouse 线程看到 tickCount>=target 就直呼 onKeyPress/mouseA，
+    // 注入落在帧周期的哪个相位由墙钟决定——落在本帧输入消费点之前则本帧生效、
+    // 之后则下一帧生效，A/B 两跑同一事件的效果差 1 tick。对方向键是"光标晚走
+    // 一格"（收敛），但对贴边的 move 是**永久发散**：边缘滚动按帧累计平移镜头，
+    // 生效帧差 1 → 总平移量差一帧 → cam 永久偏开，后续像素拾取格子跟着错
+    // （cam/sel/cursor 的 ±1-2px/一格 diff、方向会翻；模拟层 units/explored
+    // 不受影响——move 不进模拟）。松开走 Canvas.queueSyntheticKeyRelease 的
+    // "paint 完成计数+2"，基准同样是按下时刻的墙钟相位。
+    // 现改为：replaytrace 把事件连同绝对目标 tick 全部先入队（devReplayPending），
+    // paint 线程在帧首（devFrameHousekeeping，tickCount 已 ++、输入消费尚未发生）
+    // 把 tickCount>=target 的事件定点应用——效果 tick 恒等于 target，与入队墙钟、
+    // 帧相位无关。按键松开也 tick 化：帧首 t 按下、帧首 t+1 由帧首逻辑合成松开
+    // （"按下被完整消费一帧"的最小语义），不再走 paint 完成计数。
+    private static final class DevReplayEvent {
+        /** 绝对目标 tick：帧首 tickCount>=tick 时应用。 */
+        final long tick;
+        /** 0=key（a=键码，松开在下一帧首合成）；1=move（a=x, b=y，走 mouseA kind=0）。 */
+        final int kind;
+        final int a;
+        final int b;
+        DevReplayEvent(long tick, int kind, int a, int b) {
+            this.tick = tick;
+            this.kind = kind;
+            this.a = a;
+            this.b = b;
+        }
+    }
+    /** dev-mouse 线程入队、paint 线程帧首出队 → 访问全程 synchronized(this)。
+     *  按目标 tick 不减序入队（trace 文件顺序）。 */
+    private final java.util.ArrayDeque<DevReplayEvent> devReplayPending = new java.util.ArrayDeque<>();
+    /** tick 化的合成松开队列 [releaseTick, keyCode]：仅 paint 线程（帧首）读写，无需同步。 */
+    private final java.util.ArrayDeque<long[]> devReplayReleases = new java.util.ArrayDeque<>();
+    /** 本次会话进入当前任务用的 nav spec（"-Daoe.dev" 语义）；窗口会话为 null。
+     *  dev-nav 线程写、paint 线程（SaveState.capture）读。 */
+    public volatile String devLastNavSpec;
+    // devToast*：dev/EDT 线程写（devSaveTo/devLoadFrom 的回执），paint 线程读（devDrawToast）。
+    private volatile String devToast;
+    private volatile long devToastUntil;
 
     // ===== 可选 BFS 寻路（-Daoe.bfsPath=1，默认关，关闭时行为与原版逐字节一致）=====
     // 只替换 boolean_b 里"选落点"一步：DDA 直线步进换成"沿 BFS 路径取下一格"；
@@ -851,20 +909,66 @@ implements CommandListener {
         if (this.devPendingRestore != null) {
             byte[] data = this.devPendingRestore;
             this.devPendingRestore = null;
-            try {
-                aoe.SaveState.apply(this, data);
-                // BFS 路径是纯缓存但带目标记忆:装载后必须失效,否则"装载前 live 段"
-                // 残留的缓存会污染回放确定性(2026-09-02 实测:devBoot 双跑单位错位)
-                if (BFS_PATH) {
-                    java.util.Arrays.fill(this.bfsPathTarget, (short)-1);
+            devApplySnapshot(data, false);
+        }
+        // devBoot 即时恢复：首次 aA==6 的帧首 apply（字段注释见 devBootPendingRestore）。
+        // 必须排在 auto-checkpoint/周期快照**之前**吗？——不必：apply 与捕获同帧首
+        // 串行，boot 帧 aA 刚翻 6，devStableFrames 此帧才计 1，捕获轮不到本帧。
+        if (this.devBootPendingRestore != null && this.screenState == 6) {
+            byte[] data = this.devBootPendingRestore;
+            this.devBootPendingRestore = null;
+            devApplySnapshot(data, true);
+        }
+        this.devApplyReplayEvents();
+    }
+
+    /** 帧首应用快照（F9 快读与 devBoot 共用）。boot=true 时失败置 devBootApplyFailed。 */
+    private void devApplySnapshot(byte[] data, boolean boot) {
+        try {
+            aoe.SaveState.apply(this, data);
+            // BFS 路径是纯缓存但带目标记忆:装载后必须失效,否则"装载前 live 段"
+            // 残留的缓存会污染回放确定性(2026-09-02 实测:devBoot 双跑单位错位)
+            if (BFS_PATH) {
+                java.util.Arrays.fill(this.bfsPathTarget, (short)-1);
+            }
+            // 回放锚：trace 的相对 tick 坐标从这里起算（快照 v2 已钉住 tickCount）
+            this.devTraceBaseTick = this.tickCount;
+            System.out.println("[load] applied (" + data.length + "B) traceBase=" + this.devTraceBaseTick);
+            this.devToast("Loaded");
+        } catch (Exception e) {
+            if (boot) {
+                this.devBootApplyFailed = true;
+            }
+            System.out.println("[load] apply: " + e);
+            this.devToast("Load failed");
+        }
+    }
+
+    /** 帧首定点应用回放事件（replaytrace 的 tick 对齐注入，字段注释见
+     *  devReplayPending）。此刻 tickCount 已 ++、本帧输入消费尚未发生，按下必然
+     *  被本帧完整消费。先兑现到期松开再应用到点事件——同帧既有松开又有新按下
+     *  时必须先松后按（onKeyRelease 全清会抹掉先按的新键）。 */
+    private void devApplyReplayEvents() {
+        while (true) {
+            long[] rel = this.devReplayReleases.peek();
+            if (rel == null || rel[0] > this.tickCount) {
+                break;
+            }
+            this.devReplayReleases.poll();
+            this.onKeyRelease((int) rel[1]);
+        }
+        synchronized (this.devReplayPending) {
+            DevReplayEvent ev;
+            while ((ev = this.devReplayPending.peek()) != null && ev.tick <= this.tickCount) {
+                this.devReplayPending.poll();
+                if (ev.kind == 0) {
+                    this.onKeyPress(ev.a);
+                    // 松开 tick 化：下一帧首合成（"按下完整消费一帧"的最小语义），
+                    // 不走 Canvas 的 paint 完成计数（墙钟相位基准，flake 来源）。
+                    this.devReplayReleases.add(new long[]{this.tickCount + 1, ev.a});
+                } else {
+                    this.mouseA(0, ev.a, ev.b);
                 }
-                // 回放锚：trace 的相对 tick 坐标从这里起算（快照 v2 已钉住 tickCount）
-                this.devTraceBaseTick = this.tickCount;
-                System.out.println("[load] applied (" + data.length + "B) traceBase=" + this.devTraceBaseTick);
-                this.devToast("Loaded");
-            } catch (Exception e) {
-                System.out.println("[load] apply: " + e);
-                this.devToast("Load failed");
             }
         }
     }
@@ -939,7 +1043,8 @@ implements CommandListener {
     private String devFifoPath;
     // 确定性回放锚：load 成功后的 tickCount；replaytrace 的相对 tick 以此为原点
     // （无 load 时以指令执行瞬间为原点）。见 replaytrace 指令与 tools/replaycheck.sh。
-    private long devTraceBaseTick = -1;
+    // paint 线程（帧首 load 应用）写、dev-mouse 线程读。
+    private volatile long devTraceBaseTick = -1;
     // 上次自动 checkpoint 的 tick(节流用,见 devFrameHousekeeping)
     private boolean devInScript;
 
@@ -1637,13 +1742,17 @@ implements CommandListener {
                     System.out.println("[devMouse] dumped " + p[1]);
                     break;
                 case "replaytrace": {
-                    // 确定性回放：按 trace 文件逐行到点注入输入。行格式（# 注释）：
+                    // 确定性回放：trace 全量解析、连同绝对目标 tick 一次入队
+                    // （devReplayPending），paint 线程帧首定点应用（devApplyReplayEvents）
+                    // ——注入时机纯 tick 决定，与 dev 线程墙钟/帧相位无关
+                    // （replaycheck 视图字段 flake 修复，2026-09-04）。行格式（# 注释）：
                     //   t <相对tick> key <键码>
                     //   t <相对tick> move <x> <y>
                     // 相对 tick 的原点：先 load 存档 → 快照 v2 钉住的 tickCount；
                     // 未 load 则为本指令执行瞬间。可选第三参显式指定原点（双跑对拍
-                    // 时两侧必须一致）。事件在 dev-mouse 线程等 tickCount>=目标再
-                    // 走 onKeyPress/mouseA——与真实输入同一条游戏内路径。
+                    // 时两侧必须一致）。与真实输入同一条游戏内路径（onKeyPress/mouseA
+                    // + tick 化合成松开）。"done" 现表示"全部入队"，事件在目标 tick
+                    // 的帧首生效；目标 tick 已过的事件下一帧首补应用。
                     String file = p[1];
                     long base = this.devTraceBaseTick >= 0 ? this.devTraceBaseTick : this.tickCount;
                     if (p.length > 2) {
@@ -1664,32 +1773,24 @@ implements CommandListener {
                                 continue;
                             }
                             long target = base + Long.parseLong(q[1]);
-                            long waitStart = System.currentTimeMillis();
-                            while (this.tickCount < target) {
-                                if (System.currentTimeMillis() - waitStart > 600_000L) {
-                                    System.out.println("[devMouse] replaytrace: tick 停滞，放弃剩余事件");
-                                    tl = null;
-                                    break;
-                                }
-                                Thread.sleep(1);
-                            }
-                            if (tl == null) {
-                                break;
-                            }
+                            DevReplayEvent ev;
                             if ("key".equals(q[2])) {
-                                int kc = Integer.parseInt(q[3]);
-                                this.onKeyPress(kc);
-                                var_com_ulysseo_mad_b_a.queueSyntheticKeyRelease(kc);
+                                ev = new DevReplayEvent(target, 0, Integer.parseInt(q[3]), 0);
                             } else if ("move".equals(q[2])) {
-                                this.mouseA(0, Integer.parseInt(q[3]), Integer.parseInt(q[4]));
+                                ev = new DevReplayEvent(target, 1,
+                                    Integer.parseInt(q[3]), Integer.parseInt(q[4]));
                             } else {
                                 System.out.println("[devMouse] replaytrace unknown op: " + tl);
                                 continue;
                             }
+                            synchronized (this.devReplayPending) {
+                                this.devReplayPending.add(ev);
+                            }
                             ++played;
                         }
                     }
-                    System.out.println("[devMouse] replaytrace done: " + played + " events, ar=" + this.tickCount);
+                    System.out.println("[devMouse] replaytrace done: " + played
+                        + " events queued, base=" + base + ", ar=" + this.tickCount);
                     break;
                 }
                 case "stopat": {
@@ -1856,32 +1957,36 @@ implements CommandListener {
     // 右键：有选中单位时全体移动到鼠标格（复刻 d(0,tx,ty) 指令路径），无选中时取消选择。
     // 鼠标贴窗口边缘（<=14 逻辑像素）：持续向该方向平移（桌面 RTS 惯例）。
     // 屏幕→格子不做投影换算，而是由 j() 的格子遍历直接做像素拾取（mousePick* / mouseInsideTile）。
-    public boolean mouseBandActive;
-    public boolean mouseBandDragging;
-    public boolean mouseBandCorner1Set;
-    public int mouseBandX1;
-    public int mouseBandY1;
-    public int mouseBandX2;
-    public int mouseBandY2;
+    // 鼠标状态字段全部是跨线程的：mouseA 由 EDT（真实鼠标）/dev-mouse（FIFO
+    // move/press/…）线程写，paint 线程（mouseTick/j()）读；拾取结果
+    // （mousePickTile/mouseLastTile）反向由 paint 写、EDT/dev 读。一律 volatile
+    // （可见性；多字段间的复合一致性依赖"单发输入事件"的天然串行，不上锁）。
+    public volatile boolean mouseBandActive;
+    public volatile boolean mouseBandDragging;
+    public volatile boolean mouseBandCorner1Set;
+    public volatile int mouseBandX1;
+    public volatile int mouseBandY1;
+    public volatile int mouseBandX2;
+    public volatile int mouseBandY2;
     private int mouseBandTx1;
     private int mouseBandTy1;
     private int mouseBandTx2;
     private int mouseBandTy2;
-    private int mousePickX = -1;
-    private int mousePickY = -1;
-    private boolean mousePickPending;
-    private int mousePickTile = -1;
-    private int mousePickSeq;
+    private volatile int mousePickX = -1;
+    private volatile int mousePickY = -1;
+    private volatile boolean mousePickPending;
+    private volatile int mousePickTile = -1;
+    private volatile int mousePickSeq;
     private int mouseAppliedSeq;
-    private int mouseLastTile = -1;
-    private int mouseScreenX = -1;
-    private int mouseScreenY = -1;
+    private volatile int mouseLastTile = -1;
+    private volatile int mouseScreenX = -1;
+    private volatile int mouseScreenY = -1;
     private int mouseHighlightTile = -1;
     public int mouseHiX = -1;
     public int mouseHiY = -1;
     private int mouseEdgeTick;
-    private boolean mouseRclickPending;
-    private int mouseRclickGrace;
+    private volatile boolean mouseRclickPending;
+    private volatile int mouseRclickGrace;
 
     @Override
     public void mouseA(int kind, int mx, int my) {

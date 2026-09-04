@@ -7,7 +7,89 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
-### RuleBasedAi 第六批：迷雾诚实模式（2026-09-04，摘掉全图挂）
+### devBoot 双跑发散修复（装载时机钉帧首）+ tools/bootcheck.sh 常驻自检（2026-09-04）
+
+- **根因（取证链完整）**：devBoot 旧流程 = 菜单导航 → 等"主视图稳定 15×200ms"→
+  才挂 load。稳定轮询窗口里模拟已跑几十 tick（**live 段长度墙钟决定**），而
+  aiBuildTimer/aiTrainTimer/aiFreeResTimer 等 AI 计时器**不在快照覆盖内**（
+  setupMissionEnv 装载时清零，live 段按 L 累计），apply 覆写完全世界后这些
+  残留照旧生效 → 首次 AI 建造/训练事件落点偏移 → 单位坐标/地图占位发散
+  （09-02 取证的"11 个单位坐标字段"）。实锤：① stopat base+3000 双跑 diff =
+  仅 p1 单位槽位/headers + mapTiles（下游）；② stopat base+10（apply 刚落）
+  双跑 fields 零实质差异——证明快照覆盖本身完整，种子只在 live 段长度；
+  ③ sim 只在 screenState==6 走（onPaint 的 switch：aA=2/4/5/7… 分支不进
+  tickAi/投射物/脚本，读码证实），简报/装载态天然冻结。
+- **修法（c.java，装载时机而非快照格式，VERSION 不 bump）**：新
+  `devBootPendingRestore`（volatile）——devBootFromSave 在**导航之前**挂入快照
+  字节，`devFrameHousekeeping` 帧首在首次 screenState==6 的那帧立刻 apply
+  （新公共 helper `devApplySnapshot`，F9 的 devPendingRestore 路径同用）——
+  live 段归零，装载时机与墙钟彻底解耦。apply 失败置 `devBootApplyFailed`
+  供 boot 线程报败。顺删旧的 15×200ms 稳定轮询（boot 因此还快了 ~3s）。
+- **验证**：`./gradlew classes` 绿；**bootcheck 5 连 PASS**（state JSON + fields
+  逐字节一致，filters 只滤身份哈希/墙钟噪声行）；regress 3 连 PASS（第 3 轮
+  首轮 cursorScreenPx 抖动属脚本注释已载的"静态点击偶发竞态"，自动重试干净，
+  与本批无关）；replaycheck 3 连 PASS（state 全字段一致，此前 sel/cam 视图
+  flake 亦未再犯）。
+- **新工具 `tools/bootcheck.sh [tick数=3000]`**：造档（random:1 + mapSeed=999
+  固定种子，必须 AI 激活的局才盖得住这类泄漏）→ 同档 devBoot 双跑无输入 →
+  stopat base+3000 → state JSON + fields 双对拍。已登记进 AGENTS.md 构建与
+  验证块 + DEVELOPMENT.md 存读档节。**devBoot 双跑自此恢复为 tick 级确定性
+  证明**（09-02 的禁用结论作废）。
+- commit：未提交（工作树还有上一批 player-ai 基建未提交改动，交主会话统一处理）。
+
+### replaycheck 视图 flake 修复（tick 对齐注入）+ dev 线程跨读字段 volatile 审计（2026-09-04）
+
+- **根因证实（读码+日志实锤，两跳）**：
+  1. 旧 replaytrace 从 dev-mouse 线程"见 tickCount≥target 就直呼 onKeyPress/mouseA"，
+     注入落在帧周期哪个相位由墙钟决定——落在本帧输入消费点前则本帧生效、之后则
+     下帧生效，A/B 两跑同一事件效果差 1 tick。方向键是"光标晚走一格"（收敛），
+     但**贴边 move 的边缘滚动按帧累计平移镜头**，生效帧差 1 = 总平移量差一帧 =
+     cam 永久偏 1-2px，后续像素拾取格子跟着错（sel/cursor 翻转）——正是观测到的
+     "模拟层全同、视图字段 ±1-2px、方向会翻"。合成松开走 Canvas 的 paint 完成
+     计数（+2），基准同样是按下时刻墙钟相位。
+  2. 修完注入后首跑仍挂 sel（6 vs 0，其余全同）：replaycheck **脚本层**坑——
+     B 跑 load 时现场会话正开着任务脚本对话框（campaign:1 的 z=71 简报链，
+     aA=2）；screenState 不在快照里，恢复后弹窗残留，回放前奏的三发 -6 全用来
+     关窗（697 才关），A 跑（aA=6）的三发 -6 则打在世界视图 → selectionMode 分叉
+     而 [input] 轨迹照样一致（注入记录不看是否被弹窗吞）。
+- **修法（c.java）**：replaytrace 改为解析后把事件连绝对目标 tick 全量入队
+  （新 `devReplayPending` / `DevReplayEvent`），paint 线程**帧首**统一定点应用
+  （`devApplyReplayEvents`，挂在 devFrameHousekeeping 末尾：tickCount 已 ++、
+  本帧输入消费前）——效果 tick 恒等于 target，与入队墙钟/帧相位无关。key 的
+  松开 tick 化：帧首 t 按下、帧首 t+1 由帧首逻辑合成 onKeyRelease（"按下被完整
+  消费一帧"的最小语义），不走 paint 完成计数；同帧先兑现到期松开再应用新按下
+  （onKeyRelease 全清会抹掉先按的键）。move 同队列（kind=1 走 mouseA(0)）。
+  仍走 onKeyPress/mouseA 游戏内路径（[input] 轨迹语义不变，ar=应用帧 tick）。
+  `replaytrace done` 现表示"全部入队"；FIFO key/tapk/鼠标点击的合成松开仍走
+  Canvas.queueSyntheticKeyRelease（交互路径，无确定性需求）。
+- **修法（replaycheck.sh，排雷第 9 类）**：load/save 前强制等回 aA==6
+  （aA==2 补 -6，A 的存档成功后到 load 之间再确认一次）；input 对拍改为只取
+  `[load] applied` 之后的行——load 把 tickCount 倒回 base，load 前现场按键的
+  ar 可能已越过 base，单靠 ar>=base 过滤会混入（潜在污染源，顺手堵上）。
+- **volatile 审计（任务②）**：c.java 一批被 EDT/dev 线程写或读、paint 线程
+  消费的标量字段补 volatile——screenW/screenH（EDT sizeChanged 写）、
+  screenState/pendingScreenState、tickCount、cameraPxX/Y、cursorTileX/Y/Idx、
+  selectionMode/Mark/Type/Player、var_int_i/var_int_g、selectedTrainProduct、
+  gameMode/missionResId、menuScreenId/menuNode/menuNodeCount/menuHighlight、
+  keymapCount/keyActionEvent/keyRepeatLast（pulse/held 原本就有）、
+  devTraceBaseTick/devLastNavSpec/devToast(Until)、mouse 系（mouseScreenX/Y、
+  mousePick*/mouseLastTile、mouseBand*、mouseRclick*——EDT 真实鼠标与 dev FIFO
+  都写）。"devNavToMission 收尾循环 aA 已是 6 却不退出"的疑症状与之一致
+  （screenState 当时非 volatile，ARM 弱内存模型下轮询可长期读到陈值），本次
+  根治。keyRepeatLast 是双写者（paint 记值 / onKeyRelease 清零），语义上不相交，
+  只加 volatile 不上锁。
+- **审计中刻意未动**：数组字段（mapTiles/playerUnitHeaders/playerUnitSlots/
+  buildingTable/techFlags/menuTree/nfoData/keymap——元素 volatile 无意义，引用
+  在装载时整体换，有界陈旧窗口存在但未观察到事故，fields 反射 dump 同此）；
+  devMouseCmd 宏（sel/goto/train/build 等）从 dev 线程直接读改游戏状态——既有
+  的"agent 宏"设计，复合操作跨线程不上锁（单发指令天然串行），仅记录。
+- **验证**：replaycheck **6 连 PASS**（campaign×4 + tutorial×2，state JSON 含
+  sel/cursor/cam 全字段 + [input] 轨迹 61 行逐字节一致；修复前基线同机复现过
+  sel 分叉）；regress 三连 PASS（golden 未动——volatile 与帧首注入不改默认路径
+  单线程语义）。未做任何 git 写操作。
+- **文档**：DEVELOPMENT.md「确定性回放」节补注入语义段（帧首定点、t+1 合成
+  松开、done=入队）；FIFO 指令表 replaytrace 行同步。
+
 
 - **目标**：信息收紧——AI 信息政策改为"人类玩家从屏幕上能看到什么"，默认开
   （`-Daoe.aiFog=0` 回退全图，ailoop 新增 `-f` 透传；`AOE_AIFOG=res|tc` 消融档）。

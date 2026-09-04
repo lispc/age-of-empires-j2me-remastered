@@ -51,7 +51,8 @@ LLM 玩家代理的宏层（sel/goto/train/build/gather/rally/sitrep 等 FIFO �
 - `decompiled/` — CFR 原始输出（历史参考）；`decompiled-vf/` — **Vineflower 基准
   oracle**（控制流可疑时先查这里，用法见「不变量与坑」）。
 - `tools/` — **regress.sh**（黄金回归网；`--update` 重录基线）、**renamer/**（AST
-  改名器 + wave1~6.tsv）、**replaycheck.sh**（确定性回放自检）、**vineflower-1.10.1.jar**、
+  改名器 + wave1~6.tsv）、**replaycheck.sh**（确定性回放自检）、**bootcheck.sh**
+  （devBoot 双跑对拍自检）、**vineflower-1.10.1.jar**、
   **cfr.jar**、aoectl（FIFO CLI）、shot.sh/winid.swift。
 
 ## 重构工作流（2026-08-31 起生效）
@@ -138,8 +139,10 @@ LLM 玩家代理的宏层（sel/goto/train/build/gather/rally/sitrep 等 FIFO �
   load 有 mission mismatch 门控会拒载。`auto.aoesave` 自动 checkpoint 写 saveDir。
 - 心跳：`ping` → `[devMouse] pong ar=<tick>`——echo 端一秒判 handler 死活
   （指令雨可把它永久打死：echo 阻塞但主循环照走，r21 实锤），无 pong=重启进程。
-- **确定性回放**：`replaytrace <trace文件> [baseTick]`（到点注入，行格式
-  `t <相对tick> key <键码>` / `t <相对tick> move <x> <y>`）；`stopat <tick>`
+- **确定性回放**：`replaytrace <trace文件> [baseTick]`（行格式
+  `t <相对tick> key <键码>` / `t <相对tick> move <x> <y>`；**tick 对齐注入**：
+  解析后全量入队，paint 线程帧首把 tickCount≥target 的事件定点应用，
+  按下→下一帧首合成松开，无墙钟/帧相位）；`stopat <tick>`
   （冻在精确 tick，对拍取态前必用）
 - `exit`
 
@@ -186,12 +189,33 @@ docs/game-mechanics.md「确定性模型」）。自检：`tools/replaycheck.sh 
 定时器/线程后必跑。实机卡死复现工作流（日志 `[input]` 行 + auto.aoesave → trace →
 `load` + `replaytrace` → `stopat` 冻结验尸）见 WORKLOG.md 2026-09-01「确定性回放落地」。
 
+**注入语义（2026-09-04 起，tick 对齐）**：replaytrace 不再从 dev 线程"见
+tickCount≥target 就直呼 onKeyPress/mouseA"（注入相位由墙钟决定，同一事件 A/B
+两跑可差 1 帧消费——贴边 move 的边缘滚动按帧累计平移镜头，差 1 帧 = cam 永久
+偏 1-2px、sel/cursor 跟着翻，这就是 replaycheck 视图字段 flake 的根因）。现改为
+指令到达即把事件连绝对目标 tick 全量入队（`devReplayPending`），帧首
+（devFrameHousekeeping，tickCount 已 ++、本帧输入消费前）把 tickCount≥target 的
+事件统一定点应用：效果 tick 恒等于 target。key 事件的松开由帧首逻辑在 t+1 合成
+（"按下被完整消费一帧"的最小语义），**不走** Canvas 的 paint 完成计数
+（queueSyntheticKeyRelease 仍服务交互式 FIFO key/tapk/鼠标点击）。`replaytrace done`
+日志现在表示"全部入队"而非"全部生效"；事件未生效前 tick 被 stopat 冻结则剩余
+事件自然丢弃（不再阻塞 600s）。排雷记录第 9 条见 WORKLOG.md 2026-09-04。
+
 ### 存读档
 
 F5/F9 快存快读（quick.aoesave）；自动 checkpoint（auto.aoesave）；FIFO save/load；
 `-Daoe.devBoot` 直启（需 nav spec）。快照 v2 含任务身份/设置镜像/菜单树与脚本指针/
 地图/全部槽位/相机光标选中/**tickCount/RNG 静态**。读档校验任务身份三元组。
 已知边界：窗口会话档（无 nav spec）不支持 boot 直启；任务内菜单多存档槽未做。
+
+**devBoot 恢复时机（2026-09-04 起，钉死帧首）**：快照在菜单导航**之前**挂入
+`devBootPendingRestore`，帧首 housekeeping 在首次 screenState==6 的那帧立刻 apply
+——装载前 live 段归零（aA==2 简报/装载态 sim 暂停，只有 aA==6 走模拟）。旧实现等
+"主视图稳定 15×200ms"再 load，live 段长度墙钟决定，AI 计时器（aiBuild/Train/
+FreeResTimer 等快照外字段）残留使 devBoot 双跑对拍发散（2026-09-02 取证 11 个
+单位坐标字段）。自检：`tools/bootcheck.sh [tick数=3000]`——造档→同档 devBoot 双跑
+（random:1 + 固定 mapSeed，无输入）→ stopat 同一 tick → state JSON + fields 逐字节
+对拍（fields 过滤身份哈希/墙钟噪声行）。
 
 ### 全图视图速查
 
@@ -249,7 +273,8 @@ F5/F9 快存快读（quick.aoesave）；自动 checkpoint（auto.aoesave）；FI
   （`~/Downloads/age_of_empires_ii_240x320-9174.jar`）仲裁；③ 对照 `decompiled/`。
 - **确定性纪律**：模拟外随机一律走 `nextBgmRandomInt`（化妆品流），勿动
   `nextRandomInt`；新模拟代码必须保持 tick 决定（别引入墙钟/线程序依赖）；
-  动过输入路径/定时器/线程后跑 `tools/replaycheck.sh`。
+  动过输入路径/定时器/线程后跑 `tools/replaycheck.sh`；动过 devBoot/存档装载
+  时机后跑 `tools/bootcheck.sh`。
 - **存档目录纪律**：调试/复现会话一律 `-Daoe.saveDir=/tmp/...`，绝不写用户真实
   存档（2026-09-01 覆档事故，见 WORKLOG）；绝不编辑正在运行的脚本文件；动用户
   文件先备份到独立路径。

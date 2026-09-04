@@ -31,6 +31,7 @@ export JAVA_HOME=/opt/homebrew/opt/openjdk@17
 tools/regress.sh           # 黄金回归网——任何 commit 前必跑,三连绿才算过
 tools/regress.sh --update  # 仅在刻意变更行为/改名后重录基线,并在 commit message 说明
 tools/replaycheck.sh       # 确定性回放自检——动过输入路径/定时器/线程后必跑
+tools/bootcheck.sh         # devBoot 双跑对拍自检——动过存档装载/devBoot 时机后必跑
 ```
 
 - 回归/golden **必须走默认 240x320**(镜头坐标依赖 screenW;宽视野只经 run.sh 的
