@@ -27,7 +27,7 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
 （数据 res 号：m1=104 / m2=105 / m3=106 …；脚本=数据+7，解码器 resdec.py 换号即用。
 地形=数据内嵌 rng 确定性生成（res 106 头两字节），与 mapSeed/RMS 无关，每 boot 同图，
 可离线洪泛侦察——注意 BFS 下虚空可通行、资源格当墙。）
-### m4 大学关（⏳ 十三轮 42 boot 全 LOSS 止损（r38-r50）；交棒 1/2/4/5 全落地+伪避险 live 归零+raid 首杀 2 敌村民，单点墙=「G 沙漠」——2 木工 1.59W/100t 供不起 50W 开局台账，camp 最早 3265 vs 目标 2200，缺的不是顺序是 W 收入）
+### m4 大学关（⏳ 十四轮 45 boot 未 WIN 止损（r38-r51）；**G 沙漠墙攻破**（b2 硬序 camp@2000 首次达标，boot2 经济大胜 v=10/W=240）+ **boot3 僵局盘**（m=9+双塔+raid 灭尽敌村民 p1v=0 波断流+20+ 波全防+res 485/33/777=立于不败）——**最后一环=研究舞步 live 化**（14 轮 0 次 paid：TC 菜单要先 sel 选中，无选中 -5=暂停菜单且被当移动指令消费=奇偶锁成因））
 - **胜负条件（res 114）**：WIN = 封建→**升城堡完成**（techFlags[14]==1，c.java:6200）
   → **放置 University/type4**（置回 0，c.java:7590）→ 计时 50t → WIN。res 127 初始
   [14]=0 ⇒ University 在城堡前被"已建成"锁死，**顺序不可颠倒**。Univ 25木/25石。
@@ -42,10 +42,10 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   armyValue（断收入用）。**reserve 干涸前提（r42 修正）**：「敌 reserve 波
   ~ar5700-6000 干涸」仅当敌村民被清才成立——敌村民存活时 army 滚到 102 波不断
   （r44 boot3 再证 AV 97）。
-- **波 1 方差（r44 勘误，r50 续证）**：23+ 样本跨 **[1168, 3838]**；**连续最早档
-  是常态不是尾部**（6 连 ≤1364）；**burst 跟波真实存在且愈演愈烈**（200-450t
-  间隔到 n=6；r50 boot3 1150t 内 n1→5）——中晚签也会输（3838 局死于产能速率），
-  burst 局死于级联——战术评估以"1600t 内 n1→4 连击"为默认场景，
+- **波 1 方差（r44 勘误，r51 续证）**：26+ 样本跨 **[1168, 3838]**；**连续最早档
+  是常态不是尾部**（6 连 ≤1364）；**burst 跟波真实存在且愈演愈烈**（间隔下界
+  193t，到 n=6；r50 boot3 1150t 内 n1→5）——中晚签也会输，burst 局死于级联；
+  但 **raid 灭尽敌村民=波断流**（r51 boot3 实证 20+ 波全防），僵局盘是合法终局路线——战术评估以"1600t 内 n1→4 连击"为默认场景，
   卡时刻一律按 **1168** 设计。同图同种子开局逐 tick 一致而波 1 差 ~2300t
   （疑似 AI 侧非模拟随机，机制未考证）。
 - **探索模型三要素（r43/N4 读码定案，全战役通用）**：build 雾判=`mapTiles[t]<0`
@@ -87,11 +87,12 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   H#1@(30,62) 作木仓房（**需先验证 House 是否 wood 交存点**——nearestDropOff
   读 hdr[9] 指针，与建筑类型的关系未考证）。配套：mocksim 加 M4D_WAVE0=<tick>
   最早抽签压力注入 + hdr9 交存模拟 + 头部「已知分叉点清单」。
-- **现行代驱动**=`tools/campaign/m4mdrv.py`+`mocksim4m.py`（v6.8-m：资源序
-  再平衡/出生白名单/塔前置/front-parity/TC 掉血入模（注意 sim 单位=迭代 90ar，
-  每-tick 速率 ×90）；boot 用 **campaign:5**+新鲜 rmsDir→idx4）；历代
-  m4ldrv/m4kdrv/m4jdrv/m4idrv/m4hdrv/m4gdrv/m4fdrv/m4edrv/m4ddrv/m4cdrv/
-  m4bdrv/m4drv（consolidation 候选：r38-r50 十三代 m4 驱动可择机归并）。
+- **现行代驱动**=`tools/campaign/m4ndrv.py`+`mocksim4n.py`（v6.9-n：b2 硬序
+  bank→兵营/flee_pick/G5 练兵/raid 150t+pinned 分支/RESEARCH_LOCK+光标恢复
+  （待探针验证）/穿敌格死亡模型/M4D_BURST/raid p1av 回写；boot 用
+  **campaign:5**+新鲜 rmsDir→idx4）；历代 m4mdrv/m4ldrv/m4kdrv/m4jdrv/m4idrv/
+  m4hdrv/m4gdrv/m4fdrv/m4edrv/m4ddrv/m4cdrv/m4bdrv/m4drv（consolidation 候选：
+  r38-r51 十四代 m4 驱动可择机归并）。
 - 操作要点：z=70 完工弹窗 -6 清；t2=2 pop ⇒ House 先行；slots 幽灵槽判活用 state
   JSON；`echo > fifo` 阻塞=进程已退；boot.sh 应保留每次 play.log 副本（r42 boot1/2
   play.log 被覆盖丢失）；aistate 缺敌 pool/波出生时间戳字段（波预测靠 p1mil 计数沿）。

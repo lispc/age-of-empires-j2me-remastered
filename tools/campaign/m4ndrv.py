@@ -1,0 +1,1530 @@
+#!/usr/bin/env python3
+"""m4n 制胜驱动 v6.9-n（第 14 轮）= v6.8-m + 「G 沙漠」W 收入墙总攻：
+  ①交棒 1a（缺省 WFIX=a）：PLAN 第 3 席改木——pre-camp seq[2]=WOOD_SAFE[2]，
+     且村民训练门加「pre-camp 且木席<3 放行」（否则 scouted 沿把 v3 钉死在
+     W>=20，boot1 实测 v3 永不出生→G 恒 0）；camp 完工沿第 3+ 木工席转金
+     （carry-guard：回送态等交完再转；保底 2 木工不动）。3 木工 2.4W/100t
+     → camp 提前，且 v3 早在场=camp 落地即金管道开闸。
+  ①'交棒 1b（WFIX=b 对照线）：bank 块提到 camp 前——放格即 hdr[9] 改道，
+     西木 W3 豁免活 → 波期 W 3.7W/100t；金暂对 TC 长途 hauling。
+  ②交棒 2（boot1 直接死因）：TC 警报避险格改 flee_pick——最大化「当前位置→
+     候选避险格直线路径与敌群最小距离」，西侧/TC 侧村民不再被 retask 横穿
+     TC±1（boot1 slot1 @2249 →(52,63) 路线穿火线 →2284 殉于 (42,57)）；
+     且我方全体接战且兵力不劣（engaged）时豁免通勤者——波即死，churn 只添死。
+     南岗三处 side[sl%len] 同步换 flee_pick。
+  ③交棒 4：G 到 5 即练兵——feudal_wait/tower_wait 加 nmil>=3 门（m#3 的
+     5G 优先于封建/塔蓄金，15G 门等 m>=3 再说）。
+  ⑥交棒 6：raid 场势分支——p1mil 全被钉在 TC 10 格内（pinned）且 m>=3 时
+     也放行 raid（burst 局静默窗不存在），raid 分队每拍重申。
+  sim 侧（mocksim4n 同步）：交棒 5①避险/通勤路径穿敌格=死（boot1 盲区入模）；
+     交棒 5②M4D_BURST=<n>/M4D_BURST0 burst 注入（boot3 5101-6135 五连发）；
+     交棒 5③raid 击杀敌村民 p1av-5 回写；WAVE0 种子阈值 2000→2100。
+
+v6.8-m（第 13 轮）= v6.7-l2 + 交棒清单 1/2/4/5 + sim 校准：
+  ①开局资源序 B(20W)→camp(15W)→H(5W)→bank(15W)：house_emg/普通 House 都加
+     「camp_any or W>=20 or camp 门未开」门序断言（boot3 实锤 H#1@1730 连吃
+     5W → camp 永不落地 → 金管道断 2700t=直接死因）；普通 House 块移到 bank 前。
+     里程碑：camp<=2200 / 首金<=3300 / m#3<=4100 / 塔完工<=5500。
+  ②伪避险修复：in_birth_band（y>=58 或 dist(TC)<=4）豁免 d2_line 判据（南北
+     两支）——新训村民出生格 (44,60)/(45,61) d²_to_line=10<81 必吃伪避险，
+     每新村民白折返 200-400t（boot2 slot4-9 连环 6 发实锤）。d2e 近身判据保留。
+  ④塔排程前置：tower_wait 蓄金 S>=15→S>=10（S0 岗继续攒 S，G 蓄到 5 时塔门
+     即开——boot1 塔放格 4852/完工 ~6100 太晚，目标放格<=4300）。
+  ⑤front 门对照结论（dryM1-M4 实测）：TC 掉血修正后「保兵优于换兵」翻轉——
+     m==n 风筝=零战果+TC 全速融化（三线 LOSS@4290，比 front-at-parity 早死
+     ~2800t）；缺省回退 m>=n 接战（M4D_FRONTPLUS=1 可开风筝对照）。
+  sim 侧（mocksim4l 同步）：TC 围城掉血 9/迭代（=0.1/unit/ar，boot3 实测）
+     + 塔仇恨分流 25/迭代（boot1 塔殉实测）+ 木 trip3/石 trip1 对齐 live
+     收入锚点 + 完工里程碑 marks。对照基线：旧驱动三线 LOSS 7080/7080/3660。
+
+v6.7-l2（第 12 轮）= v6.6-k + 产能杠杆四件套（结构墙已拆，攻量化墙）：
+  本轮改动（boot2 形态 W=210 干烧/G 恒 0-5=纯速率败，BUGS-m4k 交棒清单 1-4）：
+  L1 金工 3→4，木岗 3→2：PLAN 重排 [木,木,金,金,石,金,金,石]——S0 提前到第 3
+     训出村民在岗（封建 15S/塔 15S 门早 ~1500t）；旧 PLAN 的第 3 木要到 v8 才
+     成形，实际多数时间就是 2 木，木让 1 人给金=预算 +33% 金产能（W 富余 210）。
+  L2 塔守 TC 提前：旧门 age>=1+BS+S>=60 永不可达（boot2 S=51 干烧到死）——
+     S>=15 即建（20W5G15S）。候选重排 (42,58) 首选：对 TC±1 四格 d²<=5 全覆盖
+     （m1 实测塔射程 √5，(45,57) 罩不住 (42,57)）。塔收益是 dry 盲区（sim 不
+     建模 TC 磨损/真实射程），战果只能 live 验证。
+  L3 campfirst 固化缺省（boot.sh M4D_CAMPFIRST 缺省 1）——dry 早 1800t、live
+     camp 早 1060t、boot3 全程无事故。
+  L4 封建速攻：①W/G/S>=15 即刻付费钩子（生产块之前拦截——旧序民兵 5G 先把 G
+     吃回 10，15G 门永不可达；不等 safe_win，boot3 级联下 safe 窗不存在）；
+     ②静默窗蓄金（W/S 已够且无敌 450t 时民兵暂停训练让 G 攒到 15，m>=1 才蓄
+     防自锁）；③城堡同款速攻钩子（mills+bss>=2 且 20/20/20 即付）。
+  v6.6-k（第 11 轮）= v6.5-j + 金管道抗断 + RAID_MIN=2（+campfirst 开关）：
+  本轮改动（boot3 死因=金管道零完成：flee 折返吞货，BUGS-m4j 交棒清单 1/2/3）：
+  K1 回送态 carry-guard：aistate action==3（word7 低 nibble==3，满载回送）一律
+     不 retask——让最后一趟交完再躲（交存点矿仓 (42,40) 离波线远，交完只多走
+     几格）。覆盖：per-vil 避险入坑 / tc_alarm 避险 / 金饥荒转金（出坑 retask
+     天然安全：避险者无货）。预期 G 从恒 0 → 每波隙 2-3 趟交付。
+  K2 北岗避险目的地就近化：北岗岗位（y<=MINE_YMAX）避险一律去 NORTH_FLEE=
+     (41,41)（非资源格、d2_line≈118>81、距金 4-10 manh 不横穿）——修 v6.4-i
+     遗留的「金矿工避险跑西 (29,62) 横穿全图 20-32 manh」（boot3 G=0 主因
+     之一；石岗旧 SAFE (52,62) 也要 35 manh 同罪）。
+  K3 RAID_MIN 3→2：boot3 的 2950-3553 静默窗（m=2）即有 raid 机会；raid 纪律
+     不变（<=2 兵、禁入 base 区 x<11∧y<33、波出生即回防）。
+  K4 M4D_CAMPFIRST=1（最早档专项，dry 校准后二选一）：开局序矿仓排银行前，
+     扫堂 slot0 完成后顺路北探 (41,41)（villager scout，不依赖民兵静默窗），
+     探明即建矿仓→木银行→兵营（barracks 推 ~200-400t，G 早 ~1000-1500t）。
+     缺省关闭=维持 v6.5-j 顺序。
+  mocksim4j 同步补 carry/flee 相位机 + 走廊波模型（交棒明言：不补则 dry 无真值）。
+
+v6.5-j（第 10 轮）= v6.4-i + 木银行（波期木入账，残墙单点总攻）：
+  读码考证（BUGS-m4j 附录 A，c.java 行号）：
+  - hdr9 宏只写 p0 hdr[9]（木交存指针）；nearestDropOff(8742) 木类(0x10)只在
+    hdr[9] 与 hdr[8](TC) 间取近，金/石走 hdr[10]/[11] —— 无金/石副作用。
+  - 但入账发生在 onUnitArrived(7367) case 256：到站格必须是**己方建筑格**
+    （owner==n 且 word7 低 nibble==3）——hdr9 指空地=不入账（m1 故意如此）。
+    ⇒ 「hdr9 伪造空地交存点」在 m4 不成立（会满载停在野地）。
+  - 完工 switch a() 7544-7548：case 0（伐木场）自动写 hdr[9]=tile；House(11)
+    只加 pop 不写 hdr[9] ⇒ 「H#1 木仓房」也不成立。真木帽（type0）是唯一
+    引擎原生解：放格即 hdr[9]+建筑格生效 → 满载回送进木帽格入账 →
+    slot[2]=slot[5] 自动回树续采（全程零驱动干预，改派吞货无从发生）。
+  - t0 造价 15W/黑暗可建（build 门=techFlags[10]!=0；m4 只锁 [14]Univ/
+    [15]Mill/[16]BS —— 探针 boot 实证）。
+  本轮驱动改动（其余 v6.4-i 逻辑一行不动）：
+  W1 开局 slot1 先探 (29,62)（3×3 照亮 (30,62) 且不坐建造格；d2_line≈166
+     离线），到位才算（探雾定律）；slot0 扫堂照旧。
+  W2 W>=15 且已探明 → build t0 @(30,62)（先于 Barracks：15W<20W 顺位自然）。
+  W3 木帽在位（bank_any=放格即算，hdr[9] 放格即生效）时：西木岗（WOOD_SAFE）
+     豁免宵禁/几何避险（m=0 与 m>=1 两支都豁）——树→帽 4-6 manh 全程离线，
+     FSM 原生回送，波期照常入账。保底：敌贴身 5 格（d2e<25）仍避险。
+  W4 西侧避险格换 (29,62)（PARK_WEST 被木帽占格后不可驻）。
+  W5 mocksim 配套：t0 完工 milestone + M4D_WAVE0=<tick>/M4D_WAVEGAP=<t>
+     最早抽签压力注入 + 头部「已知分叉点清单」。
+
+v6.4-i（第 9 轮）= v6.4-h + BUGS-m4h 交棒残局 0-3：
+  0 boot.sh pkill 旧驱动/僵尸 java + 驱动 ar 倒退守卫（幽灵驱动跨局发令）；
+    僵尸局自判（v=0 且 pop=0 持续 150s → VOID 弃局，不再烧满 2400s）。
+  1a 民兵风筝：敌众我寡 rally 退 TC 东南 KITE(46,60) 拉扯（敌贴 5 格退 KITE2），
+     不做对冲硬拼（boot3 实锤 m 硬拼全灭=经济随崩）；TC 白打可承受。
+  1b mocksim 删 TC 防御虚构分支（TC 无攻击力，r45 定案）。
+  2a 分工按槽锚定：jobs 只清死槽 + 对新增 slot 追加岗位，老 slot 保原 job
+     （军事死亡→槽位压缩→枚举序重建错位，满载金矿工被改派木工，boot3 实锤）。
+  2b 矿仓 CANDS 优先 (42,40)/(40,42)（半程交金+离波线更远），探雾民兵改贴 (41,41)。
+  3 宵禁出坑补丁：敌 ≤2 且全被钉在 TC 10 格内也放行复工（孤敌围城不冻结经济）。
+
+v6.4-h（第 8 轮）= v6.4-e + 残局 N1-N4（r42 定稿，证据 BUGS-m4e/f）。
+
+本轮新增（只做微调，架构不动）：
+  N1 木位离廊：首次敌波出生（或 p1mil 存在）即把走廊木位 (32,52)/(33,51) 全切
+     WOOD_SAFE——旧逻辑等矿仓落成才切，boot3 村民死在切换前的走廊上。
+  N2 House 紧急阀：v<=2 且 ar>1400 时 House 无视 pop_room/camp 门（W>=5 即建）
+     ——boot3 v=1 死锁（House 门与 camp 门互锁，全程 H=0=村民断产）。
+  N3 B_CANDS 重排：[(45,59),(46,58),(42,58)]——fallback 离决战位远点；
+     HOUSE_CANDS 同理把兵营菱形能照到的格提前。
+  N4 雾格兜底：探索模型=每 tick 全体单位 3×3 + 完工建筑轮询曼哈顿菱形 r3
+     （c.java:5876 p() / 5978 revealFogAroundUnit / 5904 void_a；build 判定
+     c.java:1479 mapTiles<0）。TC(43,57) 菱形 r3 照不到 (45,59)(46,58)（d=4）
+     ——boot FAIL 非"异常"，是开局从无单位扫过该处（"boot1/2 同格成功"实为
+     mocksim 无雾模型的 dry 假阳性）。兜底=开局 slot0 先扫堂 (44,58)（3×3 覆盖
+     (45,59)），扫到前重建/闲置重派不动它；民兵探雾改"到位才算"（旧"下令即算"
+     让 boot2 矿仓连吃 3 个雾 FAIL）。mocksim4f 已补同款雾模型防 dry/boot 分叉。
+历史：v6.4-e（矿仓定律/偶和格断言/静默窗/per-vil 威胁门/微调 a-d），
+  v6.3 及更早见 BUGS-m4d/e。DRY 模式（M4D_DRY=1）注入 SIM（mocksim4f.py）。
+
+r40 定稿方案 + 本轮读码升级（证据见 BUGS-m4d.md）：
+  1. 前置 Mining Camp(type1, 15木, 黑暗可建) 建在矿区旁：金/石交存点 =
+     nearestDropOff(TC hdr[8], 矿仓 hdr[10]/hdr[11] 取最近) —— 矿工到岗后不再
+     走暴露走廊（c.java:8743/6157）。
+  2. 全部建筑候选只留偶和格（sum%2==0）：boot3 Barracks(44,59) 奇和格 = 完工吸
+     光标入奇类 → 升时代舞步永久 nopath（本轮复盘新发现的潜在锁）。
+  3. 石矿工第 3-4 村民就位（城堡链 100 石）；金矿工在 Mining Camp 落成后出岗。
+  4. 波次防御：TC 庭院 (44,58) 定点决战（r40 八波全歼）+ 波出生预防回撤；
+     矿工在矿位（off-corridor）不撤，只撤路中段 (42<y<54)。
+  5. raid 弱化保用：m>=4 且静默窗 → <=2 分队压敌矿工（禁入 base 区 x<11∧y<33），
+     波出生即回防；keeper 常驻庭院。
+  6. 塔 = 石富余才建（S>=60，贴 TC），城堡链优先。
+v5 继承：aistate 全量观测 / 弹窗 -6 / TC 血线警报 / PLAN 槽位序重建自愈 /
+  闲置重派 / 金饥荒转金 / cursor_path 修复版升时代舞步 / build 雾格候选链。
+DRY 模式（M4D_DRY=1）：命令注入 SIM（mocksim4d.py），不碰 FIFO。
+"""
+import json
+import os
+import shutil
+import subprocess
+import sys
+import time
+
+DRY = os.environ.get('M4D_DRY') == '1'
+CAMP_FIRST = os.environ.get('M4D_CAMPFIRST') == '1'   # K4：矿仓排银行前+村民北探
+FRONTPLUS = os.environ.get('M4D_FRONTPLUS', '0') == '1'  # ⑤对照缺省关（见下）
+WFIX = os.environ.get('M4D_WFIX', 'b2')  # 交棒 1 三选一：a=3木工席 b/b2=bank 提前
+RESEARCH_LOCK = False    # 升时代舞步进行中（暂停训练/塔，堵 G 竞态扣款）
+WORK = os.environ.get('M4D_WORK', '/tmp/aoe-camp/m4n')
+FIFO = WORK + '/fifo'
+LOG = WORK + '/play.log'
+AISTATE = WORK + '/fifo.aistate.json'
+STATEJ = WORK + '/fifo.json'
+
+TC = (43, 57)
+FRONT = (44, 58)            # TC 庭院决战位（偶和 102）
+KEEPER_SPOT = (44, 58)
+SWEEP = (44, 58)            # 开局扫堂位：3×3 覆盖 (45,59) 兵营位（N4）
+RAID = (15, 40)             # 敌矿工 blob 东缘（base 区外）
+SAFE = [(52, 62), (52, 63), (50, 63)]  # 波时避险点 TC 东南（boot2：旧点位距线
+# <8 格太贴；52,62 起 d2_line>=85 且离 TC 战团 >9）
+KITE = (46, 60)             # 1a 风筝位：TC 东南、波 approach 线外（敌众我寡退此拉扯）
+KITE2 = (44, 63)            # 风筝二段（敌贴 KITE 5 格内换位；离 SAFE/PARK 均 >8 格）
+
+WOOD_NEAR = (32, 52)
+WOOD_NEAR2 = (33, 51)
+WOOD_SAFE = [(28, 58), (27, 59), (28, 57), (29, 56)]   # 前两位避开波走廊 10 格圈（d2e<100 误避险）
+WOOD_SIDE = WOOD_SAFE[:3]   # 西侧避险（boot2：走廊木工逃 WOOD_SAFE，不再横穿波线）
+# r44 boot3 新增：宵禁公园格（西侧）。旧"逃向"WOOD_SIDE=自家树格=无效自逃（村民
+# 波期继续采集→满载上路撞波）。公园格要求：非资源格 + d2_line>81 + 离树 ≤6 格。
+PARK_WEST = (30, 62)
+# v6.5-j 木银行：真伐木场(type0)放格即写 hdr[9]（c.java:7546）+ 自身成建筑格
+# （onUnitArrived case256 入账）——PARK_WEST 本格升级为木帽格。
+WOOD_BANK = (30, 62)        # t0 首选建造格（偶和 92 ✓；d2_line≈164 离线；距西树 4-6 manh）
+# K5（boot1 尸检）：银行格候选串——(30,62) 被占格时顺位补 (32,62)/(28,62)
+# （均偶和、d2_line≥119、距 WOOD_SAFE 树 4-8 manh，hdr[9] 与建筑格收益等同）
+WOOD_BANK_CANDS = [(30, 62), (32, 62), (28, 62)]
+BANK_SCOUT = (29, 62)       # 探明站位：3×3 照亮 (30,62) 且不坐建造格（d2_line≈166）
+WEST_FLEE = (29, 62)        # 西侧避险格（K5 后 pre/post-bank 统一用此格）
+WEST_WOOD = frozenset(WOOD_SAFE)   # 木帽豁免宵禁的西木岗位集合
+WOOD_ALL = set(WOOD_SAFE) | {WOOD_NEAR, WOOD_NEAR2}
+STONE = [(39, 40), (41, 40), (41, 38), (38, 40), (40, 40)]
+GOLD = [(35, 36), (36, 36), (37, 36), (35, 35), (36, 35), (34, 36)]
+
+# 分工计划（v6.7-l 杠杆①：2木4金2石）。boot2 尸检：W=210 干烧、G 恒 0-5 是唯一
+# 败因——木让 1 人给金（金工 3→4，预算 +33% 产能）。槽序讲究：S0 提前到第 3 训出
+# 村民（v5，~2700t 在岗——封建 15S/塔 15S 门早 ~1500t）；G3/S1 在 v7/v8 补位。
+# 旧 PLAN 的第 3 木要到 v8 才成形，多数时间实为 2 木——本表与历史实际形态几乎
+# 无差，只把 v8 的木换成了 v7 的金。（按村民槽位序；金工从槽 2-3 就位——boot1
+# 教训：民兵死光后金=0=永远造不出兵。矿仓只是缩短趟程的经济优化。北岗部署只走
+# 静默窗——boot2 教训。）
+PLAN = [WOOD_SAFE[0], WOOD_SAFE[1], GOLD[0], GOLD[1], STONE[0], GOLD[2],
+        GOLD[3], STONE[1], GOLD[4]]   # v6.7-l2：+GOLD[4]（第 9 村民=第 5 金工）
+
+# 建筑候选——全部偶和格（硬性，见头部说明 2）
+# N3/N4：首选 (45,59) 需开局扫堂（SWEEP 3×3 覆盖）；(46,58) 扫堂照不到=免费
+# FAIL 一跳；(42,58) TC 菱形 r3 恒可建但贴决战位，仅作末位兜底。
+B_CANDS = [(45, 59), (46, 58), (42, 58)]                 # Barracks 20木10石
+# House 首选改兵营菱形照得到的 (44,60)/(46,60)（B 在 (45,59) 时 d=2 已探明）
+HOUSE_CANDS = [(44, 60), (46, 60), (42, 60), (40, 60), (42, 62), (44, 62), (40, 62)]
+CAMP_CANDS = [(42, 40), (40, 42), (36, 40), (36, 38), (38, 42)]   # Mining Camp 15木
+# 2b（r45 残局）：(42,40)/(40,42) 优先——半程交金（4000-4400 静默窗不够跑全程）
+# 且离波线更远（d2_line: (42,40)=150、(40,42)=89 均 >81；(36,40)=69 在暴露带）。
+MILL_CANDS = [(44, 56), (42, 56), (46, 56)]              # Mill 15木10石
+BS_CANDS = [(43, 55), (45, 57), (40, 58)]                # BS 25木20石
+# v6.7-l 杠杆②：塔贴 TC 建造格重排——(42,58) 首选：对 TC±1 四格 d²≤5 全覆盖
+# （m1 实测塔射程 √5≈2.24 格；(45,57) 罩不住 (42,57)，d²=9）。塔 r6 探雾还
+# 顺带照亮北向一路。
+TOWER_CANDS = [(42, 58), (44, 56), (45, 57)]             # Tower 20木5金15石
+UNIV_CANDS = [(46, 56), (44, 56), (42, 56), (40, 58)]    # Univ 25木25石
+
+MIL_TARGET = 8
+VIL_TARGET = 9             # v6.7-l2：8→9（boot1 尸检：H=2 全场=cap15 → m 恒 ≤3
+                           # 对 n=4-5 波，army 32/100——经济人手是第一墙）
+RAID_MIN = 2               # K3：m>=2 即 raid（boot3 的 2950-3553 静默窗即有机会）
+RAID_EARLIEST = 2800
+RAID_MAX = 2
+RAIDCHASE_R2 = 900         # 追 RAID 中心 30 格内的敌村民
+
+NORTH_FLEE = (41, 41)      # K2：北岗避险就近格（非资源、d2_line≈118、距金 4-10 manh）
+CAMP_SCOUT = (41, 41)      # K4：campfirst 村民北探位（矿仓 CANDS 3×3 探明）
+
+ROAD_Y0, ROAD_Y1 = 42, 54  # 路中暴露段：波出生时此段村民回撤
+MINE_YMAX = 42             # y<=42 视为已到矿位（off-corridor，不撤）
+# 东翼绕行走廊（m4f boot1/dry 定案）：波线=敌 base(8,27)→TC(43,57) 的直行线，
+# 各纬度 x≈26-35（y=52→x≈35, y=40→x≈27）——BFS 直连恰好穿线（boot1 尸位于
+# (34-37,47-53) 全在线上）。矿工出门先到东翼锚点再切矿，第二段腿全程距线 >9.8 格
+# → 出门不再依赖静默窗，波爆发期照走。（锚点选 (49,48)：d2_line=116>81，
+# dry4 教训：(47,50) 距线 63<81 会被波出生反复吓跑。）
+NORTH_WAY = (49, 48)
+
+# DRY 注入口
+SIM = None
+
+
+def cmd(c, wait=0.3):
+    if DRY:
+        SIM.handle(c)
+        return
+    try:
+        subprocess.run(['sh', '-c', f"echo '{c}' > {FIFO}"], check=True, timeout=5)
+    except subprocess.TimeoutExpired:
+        print(f'!! FIFO 死锁: {c}（进程可能已退）', flush=True)
+        r = result()
+        print('RESULT_CHECK:', r, flush=True)
+        _copy_playlog()          # r42/m4f 教训：所有退出路径都必须留 play.log 副本
+        sys.exit(2)
+    time.sleep(wait)
+
+
+def tail(n=200):
+    if DRY:
+        return []    # DRY 拒读 play.log（上轮教训：陈旧日志假信号）
+    try:
+        with open(LOG, errors='replace') as f:
+            return f.readlines()[-n:]
+    except FileNotFoundError:
+        return []
+
+
+def result():
+    if DRY:
+        return SIM.result
+    for ln in tail(400):
+        if '[result]' in ln:
+            return ln.strip()
+    return None
+
+
+def aistate():
+    if DRY:
+        return SIM.snapshot()
+    for _ in range(6):
+        try:
+            cmd('aistate', 0.15)
+            time.sleep(0.35)
+            return json.load(open(AISTATE))
+        except Exception:
+            time.sleep(0.4)
+    raise RuntimeError('aistate 无响应')
+
+
+def fifo_state():
+    if DRY:
+        return SIM.ui_state()
+    for _ in range(6):
+        try:
+            cmd('state', 0.1)
+            time.sleep(0.4)
+            return json.load(open(STATEJ))
+        except Exception:
+            time.sleep(0.35)
+    raise RuntimeError('state 无响应')
+
+
+_seen = set()
+
+
+def new_combat():
+    out = []
+    for ln in tail(80):
+        if '[combat]' in ln and ln not in _seen:
+            _seen.add(ln)
+            out.append(ln.strip())
+    return out
+
+
+def cursor_path(cx, cy, tx, ty):
+    """光标方向键路径。NW(-1,-1)/SE(+1,+1) 改 sum、SW(-1,+1)/NE(+1,-1) 改差。
+    nNW-nSE = -(dx+dy)/2；nNE-nSW = (dx-dy)/2。（v4 符号 bug 已修，mocksim 有断言）"""
+    dx, dy = tx - cx, ty - cy
+    if (dx + dy) % 2 != 0 or (dx - dy) % 2 != 0:
+        return None
+    a = -(dx + dy) // 2
+    b = (dx - dy) // 2
+    return ([-1] * max(a, 0) + [-2] * max(-a, 0)
+            + [-4] * max(b, 0) + [-3] * max(-b, 0))
+
+
+def build_fb(cands, btype, tag):
+    for (x, y) in cands:
+        if (x + y) % 2 != 0:
+            print(f'  !! 候选 ({x},{y}) 非偶和格，跳过（纪律）', flush=True)
+            continue
+        cmd(f'build {x} {y} {btype}', 0.3)
+        if DRY:
+            if SIM.last_build_ok:
+                print(f'  build OK ({x},{y}) t{btype} [{tag}]', flush=True)
+                return (x, y)
+            print(f'  build FAIL ({x},{y}) t{btype}', flush=True)
+            continue
+        ls = [ln for ln in tail(25) if 'devMouse] build' in ln]
+        if ls and ' OK ' in ls[-1]:
+            print(f'  build OK ({x},{y}) t{btype} [{tag}]', flush=True)
+            return (x, y)
+        if ls:
+            print(f'  build FAIL ({x},{y}) t{btype}: {ls[-1].strip()[-60:]}', flush=True)
+    return None
+
+
+def dist(a, b):
+    return (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2
+
+
+WAVE_LINE = ((8, 27), (43, 57))   # 敌波走廊线：base→TC（boot1 四尸位点验证）
+
+
+def d2_line(p, a=WAVE_LINE[0], b=WAVE_LINE[1]):
+    """点 p 到波线段 a→b 的距离平方（暴露判据：距线 <9 格=暴露）"""
+    vx, vy = b[0] - a[0], b[1] - a[1]
+    wx, wy = p[0] - a[0], p[1] - a[1]
+    t = (wx * vx + wy * vy) / float(vx * vx + vy * vy)
+    t = max(0.0, min(1.0, t))
+    dx = p[0] - (a[0] + t * vx)
+    dy = p[1] - (a[1] + t * vy)
+    return dx * dx + dy * dy
+
+
+def in_birth_band(t):
+    """②伪避险修复（BUGS-m4l 交棒 2）：出生/TC 东南居住带（House(44,60)/
+    (45,61) 一带 y>=58 或 TC 4 格内）——新训村民出生行程必经此带，出生格本身
+    d²_to_line=10<81，d2_line 判据在此全是伪警报（boot2 slot4-9 连环 6 发，
+    每新村民白折返 200-400t）。d2e 近身判据保留（真危险照躲）。"""
+    return t[1] >= 58 or dist(t, TC) <= 16
+
+
+def seg_d2(p, a, b):
+    """点 p 到线段 a→b 的距离平方（flee_pick 用）"""
+    vx, vy = b[0] - a[0], b[1] - a[1]
+    wx, wy = p[0] - a[0], p[1] - a[1]
+    L2 = vx * vx + vy * vy
+    t = 0.0 if L2 == 0 else max(0.0, min(1.0, (wx * vx + wy * vy) / L2))
+    dx = p[0] - (a[0] + t * vx)
+    dy = p[1] - (a[1] + t * vy)
+    return dx * dx + dy * dy
+
+
+def flee_pick(pos, cands, foes):
+    """交棒 2（boot1 直接死因）：避险格选取 = 最大化「当前位置→候选格直线路径
+    与敌群的最小距离」。旧 SAFE[slot%3] 对西侧/TC 侧村民=路径横穿 TC±1 火线
+    （boot1 slot1 @2249 被派 (52,63)，2284 死于 (42,57) 交叉火力）。
+    无敌时取第一候选。pos/cands 为 (x,y) 元组，foes 为带 tile 的单位列表。"""
+    best, bestd = cands[0], -1.0
+    for s_ in cands:
+        dmin = min((seg_d2(tuple(m['tile']), pos, tuple(s_)) for m in foes),
+                   default=1e9)
+        if dmin > bestd:
+            best, bestd = s_, dmin
+    return best
+
+
+def try_research(tag):
+    """光标舞步升时代（feudal 15/15/15，castle 20/20/20）。扣款>=10/桶 判成功。
+    v6.9-n boot3 尸检：一次失败舞步后光标奇偶类与 TC 永久失配（nopath 坐锁
+    22500ar，G=33 干耗到 35245ar 弃局）——两个对策：
+    ①RESEARCH_LOCK：舞步期间暂停民兵/村民训练与塔建造（堵 G 竞态扣款）；
+    ②CURSOR_LOCK 恢复：造一栋偶和格 House（5W 最廉），完工弹窗把光标吸到
+      完工格（偶和，「奇和格吸光标」机制的镜像利用）→ 下一轮舞步可走。"""
+    global RESEARCH_LOCK
+    RESEARCH_LOCK = True
+    try:
+        return _try_research_inner(tag)
+    finally:
+        RESEARCH_LOCK = False
+
+
+def _try_research_inner(tag):
+    st = fifo_state()
+    if st.get('aA') != 6:
+        return 'aA%d' % st.get('aA')
+    cx, cy = st.get('cursor') or (0, 0)
+    seq = cursor_path(cx, cy, *TC)
+    if seq is None:
+        print(f'{tag}: CURSOR_LOCK cursor=({cx},{cy}) 奇偶失配 → '
+              f'造 House 重置光标', flush=True)
+        build_fb(HOUSE_CANDS, 11, tag + '-cursorfix')
+        return 'cursor_reset'
+    for k in seq:
+        cmd(f'key {k}', 0.22)
+    st2 = fifo_state()
+    if st2.get('aA') == 4:
+        cmd('key -5', 0.5)
+        return 'menu_accident'
+    if st2.get('aA') != 6:
+        return 'aA%d_mid' % st2.get('aA')
+    if tuple(st2.get('cursor') or (0, 0)) != TC:
+        return 'cursor_miss'
+    r0 = st2.get('res')
+    cmd('sel 55 15', 0.3)           # 清选中（FAIL 即清）
+    st3 = fifo_state()
+    if st3.get('aA') != 6:
+        return 'popup_mid'
+    cmd('key -5', 0.35)
+    cmd('key 49', 0.35)
+    cmd('key -5', 0.35)
+    st4 = st3
+    for rnd in range(2):
+        for _ in range(6):
+            time.sleep(0.5 if not DRY else 0)
+            st4 = fifo_state()
+            if st4.get('aA') == 2:
+                cmd('key -6', 0.5)
+                continue
+            r1 = st4.get('res')
+            if r1 and any(r1[i] < r0[i] - 9 for i in range(3)):
+                print(f'{tag}: PAID {r0} -> {r1}', flush=True)
+                return 'paid'
+        if rnd == 0 and st4.get('aA') == 6:
+            cmd('key -5', 0.4)
+    return 'nopay'
+
+
+def _copy_playlog():
+    bootn = os.environ.get('M4F_BOOTN')
+    if not DRY and bootn and os.path.exists(LOG):
+        try:
+            shutil.copy(LOG, f'{WORK}/play-boot{bootn}.log')
+            print(f'play.log 副本 → play-boot{bootn}.log', flush=True)
+        except Exception as e:
+            print(f'!! play.log 副本失败: {e}', flush=True)
+
+
+def main():
+    # r44 教训自检：显式横幅（dry 忘带 M4D_DRY=1 时走 FIFO 还读陈旧 play.log 报假局）
+    print(f'MODE={"DRY(mocksim)" if DRY else "FIFO(live)"} WORK={WORK} '
+          f'VER=v6.9-n WFIX={WFIX} CAMP_FIRST={int(CAMP_FIRST)} '
+          f'FRONTPLUS={int(FRONTPLUS)} RAID_MIN={RAID_MIN} '
+          f'PLAN=2W5G2S{"+第3席木" if WFIX == "a" else ""} B→camp→H→bank',
+          flush=True)
+    if DRY and SIM is None:
+        print('DRY 需要注入 SIM', flush=True)
+        sys.exit(1)
+    a = aistate()
+    print(f"start tick={a['tick']} aA={a['aA']} res={a['players'][0]['res']} "
+          f"tc={a['players'][0]['tcTile']:#06x}", flush=True)
+    if a['players'][0]['tcTile'] != (TC[0] << 8 | TC[1]):
+        print('!! TC 不在预期格，地图代次不对，中止', flush=True)
+        sys.exit(3)
+
+    vslots = [u['slot'] for u in a['units'] if u['p'] == 0 and u['type'] <= 1]
+    jobs = {}
+    # 开局（N4 扫堂）：slot0 先去 (44,58)（TC 菱形内已探明，3×3 覆盖 (45,59)
+    # 兵营位），到位后由闲置重派自然转岗；slot1 直接近木。扫到前所有重派绕开 slot0。
+    sweep_slot = vslots[0] if vslots else None
+    sweeping = bool(vslots)    # False=无村民可扫（或已扫完）
+    cmd(f"retask {vslots[0]} {SWEEP[0]} {SWEEP[1]}", 0.3)
+    bank_slot = vslots[1] if len(vslots) > 1 else None
+    if bank_slot is not None:
+        # W1：slot1 先探木帽格（到位才算——探雾定律），到位后闲置重派自然转岗
+        cmd(f"retask {bank_slot} {BANK_SCOUT[0]} {BANK_SCOUT[1]}", 0.3)
+    print(f'retask 扫堂 slot{sweep_slot} → {SWEEP}（N4）；slot1 → {BANK_SCOUT} '
+          f'探木帽位（W1：先探后建 t0@{WOOD_BANK}）', flush=True)
+
+    last_nv = len(vslots)
+    idle_poll = {}
+    idle_n = {}
+    prev_p1m = 0
+    last_b = False          # Barracks 完成沿（触发槽1 石矿出岗重派）
+    last_camp = False       # 矿仓出现沿（触发槽0/1 分工切换重派）
+    scouted = False         # 矿区已探雾（民兵到位或矿仓已建成）
+    scout_sent = False      # 探雾民兵已派出（到位判定之前为 True）
+    scout_slot = None
+    bank_scouted = False    # W1：木帽格已探明（slot1 到位才算）
+    bank_cd = 0.0
+    bank_dead_logged = False
+    sweeping = True         # N4 扫堂期：slot0 未贴住 (45,59) 前重派绕开它
+    fleeing = set()          # 处于避险状态的村民槽（per-vil，不冻结全局经济）
+    cf_sent = False          # K4：campfirst 村民北探已派出
+    cf_scouted = False       # K4：矿仓位已由村民探明
+    conv_done = False        # 交棒 1a：第 3 木工席转金已执行（camp 完工沿）
+    cg = 0                   # K1：carry-guard 跳过计数（回送态保护观测）
+    mode = 'idle'
+    last_rally = {'t': 0.0, 'md': ''}
+    last_raid = {'t': 0.0, 'tgt': None}
+    raiders = set()
+    now = 0.0
+    it = 0
+    t_end = time.time() + 2400
+    last_line = ''
+    research_cd = 0.0
+    b_cd = m_cd = bs_cd = t_cd = u_cd = mil_cd = vil_cd = hb_cd = c_cd = 0.0
+    rb_cd = 0.0
+    rb2_cd = 0.0
+    last_econ_ar = 0
+    prev_tc_hp = 255
+    tc_alarm = False
+    last_wave_birth = -10**9
+    last_enemy_seen = 0      # 敌军最后一次存在的 ar（raid 静默窗 = ar-此值）
+    last_wave_dead = -10**9  # 波被歼时刻（微调 c：出岗门槛放宽用）
+    prev_had_p1m = False
+    prev_ar = None          # 残局 0：ar 倒退守卫（幽灵驱动检测）
+    zomb0 = None            # 僵尸局计时起点（v=0 且 pop=0）
+    prev_b_n = prev_c_n = prev_h_n = prev_t_n = 0   # v6.8-m 里程碑完工沿
+
+    while DRY and it < 3000 or (not DRY and time.time() < t_end):
+        it += 1
+        now = SIM.clock if (DRY and SIM) else time.time()
+        r = result()
+        if r:
+            print('RESULT:', r, flush=True)
+            break
+        a = aistate()
+        if a.get('aA') == 2:
+            cmd('key -6', 0.45)
+            continue
+        if a.get('aA') != 6:
+            print(f"warn aA={a.get('aA')} 非战斗态", flush=True)
+            time.sleep(0.8 if not DRY else 0)
+            continue
+        p0, p1 = a['players'][0], a['players'][1]
+        W, G, S = p0['res']
+        ar = a['tick']
+        if prev_ar is not None and ar < prev_ar:
+            print(f'!! ar 倒退 {prev_ar}→{ar}：检测到幽灵驱动跨局/异局，立即退出',
+                  flush=True)
+            _copy_playlog()
+            sys.exit(4)
+        prev_ar = ar
+        popu, cap = p0['units'], p0['popCap']
+        queued = p0['trainQueue']
+        myarmy, p1army = p0['armyValue'], p1['armyValue']
+        units = a['units']
+        vils = [u for u in units if u['p'] == 0 and u['type'] <= 1]
+        mymil = [u for u in units if u['p'] == 0 and u['type'] >= 2]
+        p1mil = [u for u in units if u['p'] == 1 and u['type'] >= 2]
+        p1any = [u for u in units if u['p'] == 1]
+        for c in new_combat():
+            print('CMB:', c, flush=True)
+        if len(p1mil) > prev_p1m:
+            last_wave_birth = ar
+            print(f'ar={ar} *** 敌波出生 n={len(p1mil)} ***', flush=True)
+            raiders = set()          # 波出生：raid 分队召回
+        prev_p1m = len(p1mil)
+        if p1mil:
+            last_enemy_seen = ar
+        if not p1mil and prev_had_p1m:
+            last_wave_dead = ar
+            print(f'ar={ar} *** 波已全歼（+300t 矿工可出岗）***', flush=True)
+        prev_had_p1m = bool(p1mil)
+        if not vils and popu == 0:
+            # 僵尸局自判（r45：boot2 白烧 25 分钟）——全员死光且 TC 立=永不判负
+            if zomb0 is None:
+                zomb0 = now
+            elif now - zomb0 > (400 if DRY else 150):
+                print(f'VOID: 僵尸局弃局（v=0 且 pop=0 已 {now - zomb0:.0f}s，'
+                      f'ar={ar}）', flush=True)
+                break
+        else:
+            zomb0 = None
+
+        gate_armed = p1army >= 30 and myarmy < p1army * 1.25
+        # 交棒 6：pinned=敌波全体被钉在 TC 10 格内（围城态）。v6.9-n 提前到
+        # per-vil 威胁块之前计算——北岗避险判据也用它（boot2 尸检）。
+        pinned = bool(p1mil) and all(dist(m['tile'], TC) < 100 for m in p1mil)
+
+        camp_up = any(b['type'] == 1 and not b['uc'] for b in a['buildingRecs']
+                      if b['p'] == 0)
+        camp_any = camp_up or any(b['type'] == 1 and b['uc']
+                                  for b in a['buildingRecs'] if b['p'] == 0)
+        barracks_done = any(b['type'] == 10 and not b['uc']
+                            for b in a['buildingRecs'] if b['p'] == 0)
+        # W2/W3：木帽「放格即算在位」——a() 放格瞬间 hdr[9]=tile 且 mapTiles
+        # 成己方建筑格（c.java:7539/7546），入账链路即刻生效，不必等完工。
+        bank_any = any(b['type'] == 0 for b in a['buildingRecs'] if b['p'] == 0)
+        # K5（boot1 尸检）：pre-bank 避险格也不用 PARK_WEST——它就是银行格！
+        # 波 1 到达后 m=0 避险把木工灌进 (30,62) 本格 → build 占格 FAIL →
+        # 兵营同拍抽走 20W → 银行永不落地（v6.5-j 三轮全成只是抽签运气：
+        # 银行都赶在波 1 抵 TC 前落格）。(29,62) 全程作西避险格。
+        west_flee = WEST_FLEE
+
+        # W1 探明判定（探雾定律：到位才算；单点 Chebyshev≤1）
+        if bank_slot is not None and not bank_scouted:
+            bu = next((u for u in vils if u['slot'] == bank_slot), None)
+            if bu is None:
+                if not bank_dead_logged:
+                    print(f'ar={ar} !! 探帽村民 slot{bank_slot} 消失，'
+                          f'木银行本轮放弃（其余 v6.4-i 逻辑照旧）', flush=True)
+                    bank_dead_logged = True
+                bank_slot = None
+            elif max(abs(bu['tile'][0] - BANK_SCOUT[0]),
+                     abs(bu['tile'][1] - BANK_SCOUT[1])) <= 1:
+                bank_scouted = True
+                print(f'ar={ar} 木帽位已探明（slot{bank_slot} 贴住 {BANK_SCOUT}）',
+                      flush=True)
+
+        # 槽 0/1 动态（boot3 教训：矿仓是"到岗后不再穿走廊"的承重结构，木料
+        # 优先给它——矿仓起before两村民分开）：双木工抢到矿仓款（W≥15），矿仓
+        # 一交款/落成，槽1 才出岗石矿、槽0 转安全木。
+        # N1：首波出生（或敌军在场上）后，走廊木位 (32,52)/(33,51) 永久退役——
+        # 全切 WOOD_SAFE（旧逻辑等矿仓落成才切，boot3 村民死在切换前）。
+        # N1 硬化（boot2）：WOOD_NEAR/WOOD_NEAR2 彻底退役——波 2115 早到（boot 间
+        # 方差 ~300t）把走廊木工双双打死在逃亡路上。WOOD_SAFE 到 House(44,60) 交存
+        # 18 manh，与走廊位到 TC 相当——零收入代价换零暴露。
+        seq = list(PLAN)
+        if not camp_any:
+            seq[0] = WOOD_SAFE[0]
+            seq[1] = WOOD_SAFE[1]
+            if WFIX == 'a':
+                # 交棒 1a：第 3 席 pre-camp 改木（3 木工 2.4W/100t）——camp 落地
+                # 沿由下方转金块改派（carry-guard），金管道不断
+                seq[2] = WOOD_SAFE[2]
+        elif not barracks_done or p0['age'] < 1:
+            # 微调 b 补丁：封建前无石需求（Barracks 10S 开局自带），槽1 留木
+            seq[1] = WOOD_SAFE[1]
+
+        # 民兵探雾（N4 兜底）："下令即算已探"是 boot2 矿仓三连雾 FAIL 的根因——
+        # revealFogAroundUnit 只清民兵当前格 3×3，没到位=没探到。改**到位才算**：
+        # 民兵 Chebyshev≤1 贴住 (41,41)（3×3 同时罩住 2b 新首选 (42,40)/(40,42)）
+        # 才放行矿仓 build。dry1 实锤：旧"路过 (40,42) 邻格即算探明"会让 scouted
+        # 提前触发 → 探雾豁免失效 → stray-recall 当轮把民兵拉回 FRONT → 候选格
+        # 从未探明 → 矿仓 FAIL 死循环 → G=0 → m 恒 2 → all-in 永动 → 僵局。
+        # m4f boot1 教训：stray-recall（离 FRONT>9 即 rally 回庭院）把探雾民兵
+        # 反复拉回，永远到不了 (37,41)，严格判定全程不触发 → 矿仓 C=0 全局 →
+        # G≈3 → 民兵断产 → LOSS。修复：①探雾民兵豁免 stray-recall；
+        # ②静默窗里发现没人贴住矿区 → 重置 scout_sent 重派。
+        if not scout_sent and len(mymil) >= 1 and not p1mil and ar >= 1500 \
+                and not camp_any:
+            far = max(mymil, key=lambda u: dist(u['tile'], TC))
+            cmd(f"retask {far['slot']} 41 41", 0.22)
+            scout_slot = far['slot']
+            scout_sent = True
+            print(f"ar={ar} 民兵探雾 slot{scout_slot} → (41,41)", flush=True)
+        if scout_sent and not scouted:
+            near_mine = any(max(abs(u['tile'][0] - 41), abs(u['tile'][1] - 41)) <= 3
+                            for u in mymil)
+            if not mymil or (not near_mine and not p1mil
+                             and ar - last_enemy_seen > 150):
+                scout_sent = False    # 探雾民兵阵亡/被抽走：重派（波后 150t 即重推）
+        if not scouted and mymil:
+            if any(max(abs(u['tile'][0] - 41), abs(u['tile'][1] - 41)) <= 1
+                   for u in mymil):
+                scouted = True
+                print(f"ar={ar} 矿区已探明（民兵贴住矿仓位）", flush=True)
+
+        # 北岗部署窗（东翼绕行后出门本身安全；唯一残留风险=TC 迎宾段：
+        # 刚出TC 时若波正在抵达（波尾 x40-43,y54-57），距 3-5 格会 aggro——
+        # 放行条件=无敌军 或 波已全部抵达 TC 附近（在打庭院=不在走廊上）。
+        # 静默 450t 保留为第三条或支（兜底）。）
+        def north_ok(u, j):
+            if j[1] > MINE_YMAX:
+                return True
+            if u['tile'][1] <= MINE_YMAX:
+                return True
+            if ar < 1400 and last_wave_birth < 0:
+                return True
+            return (not p1mil
+                    or all(dist(m['tile'], TC) < 200 for m in p1mil)
+                    or ar - last_enemy_seen > 450)
+
+        # 东翼分程：北向岗位且人还在 TC 一带（y>50）→ 先发锚点；到锚点后
+        # 闲置重派自然推进到最终岗位（从 (47,50) 直连矿位全程离波线 ≥10 格）
+        def stage_target(u, j):
+            if j[1] <= MINE_YMAX and u['tile'][1] > 50:
+                return NORTH_WAY
+            return j
+
+        # boot2 尸检：金工 3 人同时走北撞上 wave2 团灭于 (35,50-53)——
+        # 改错峰制：同一时刻只允许 1 人在北向路上（到岗 y<=42 后下一个才出发）
+        def north_walkers():
+            # 并发上限判据（<2 放行）：只数"在途"者——卡在锚点待推进的不算，
+            # 否则两人互堵锚点死锁（dry4 实锤）
+            n = 0
+            for v_ in vils:
+                if v_['slot'] in fleeing:
+                    continue    # 避险者不在路上（dry12 尸检：意图占位困死金工）
+                j_ = jobs.get(v_['slot'])
+                if j_ and j_[1] <= MINE_YMAX and v_['tile'][1] > MINE_YMAX \
+                        and tuple(v_['tile']) != NORTH_WAY:
+                    n += 1
+            return n < 2         # 东翼双车道：放行 2 个并发（m4f：错峰 1 太堵）
+
+        def can_go_north(u, j):
+            if j[1] > MINE_YMAX or u['tile'][1] <= MINE_YMAX:
+                return True
+            return north_ok(u, j) and north_walkers()
+
+        # ---- N4 扫堂判定：slot0 贴住 (45,59)（Chebyshev≤1 = 3×3 覆盖兵营位）
+        # 即扫完；扫堂村民消失（死亡）也放行（fallback (42,58) 恒可建）----
+        if sweeping and vils:
+            su = next((u for u in vils if u['slot'] == sweep_slot), None)
+            if su is None:
+                sweeping = False
+            elif max(abs(su['tile'][0] - B_CANDS[0][0]),
+                     abs(su['tile'][1] - B_CANDS[0][1])) <= 1:
+                sweeping = False
+                print(f"ar={ar} 扫堂完成：({B_CANDS[0][0]},{B_CANDS[0][1]}) 已探明",
+                      flush=True)
+
+        # ---- K4 campfirst 村民北探：扫堂完 slot0 顺路 (41,41)（矿仓位 3×3 探明，
+        # 不依赖民兵静默窗——最早档四连击下民兵探雾永不开窗，boot1/2 实锤）。
+        # 探明即回本岗（wood），金工由 v=3+ 的新增村民按 PLAN 补。----
+        if CAMP_FIRST and not cf_sent and not sweeping and not cf_scouted \
+                and not camp_any and sweep_slot is not None:
+            su0 = next((u for u in vils if u['slot'] == sweep_slot), None)
+            if su0 is not None:
+                cf_sent = True
+                cmd(f"retask {sweep_slot} {CAMP_SCOUT[0]} {CAMP_SCOUT[1]}", 0.22)
+                print(f"ar={ar} campfirst 村民北探 slot{sweep_slot} → "
+                      f"{CAMP_SCOUT}（K4）", flush=True)
+        if CAMP_FIRST and cf_sent and not cf_scouted and sweep_slot is not None:
+            cu0 = next((u for u in vils if u['slot'] == sweep_slot), None)
+            if cu0 is None:
+                print(f'ar={ar} !! campfirst 探员 slot{sweep_slot} 消失，'
+                      f'矿仓门回退民兵探雾链', flush=True)
+                cf_sent = False
+                sweep_slot = None
+            elif max(abs(cu0['tile'][0] - CAMP_SCOUT[0]),
+                     abs(cu0['tile'][1] - CAMP_SCOUT[1])) <= 1:
+                cf_scouted = True
+                # 探明即回本岗（开局面 slot0 job=WOOD_SAFE[0]）：矿仓的价值在
+                # 建筑序（G 早开闸），不在抢木工——cf 首版把 slot0 留金岗会让
+                # 西木只剩 1 人 → W 饥荒 → House/v 永不出 → v-gate 死锁
+                # （dry-stress-cf#1 实锤：v=2 恒 270000ar，W=0，barracks 永不）。
+                jt0 = jobs.get(sweep_slot) or WOOD_SAFE[0]
+                jobs[sweep_slot] = jt0
+                print(f"ar={ar} campfirst 矿仓位已探明（slot{sweep_slot} 贴住 "
+                      f"{CAMP_SCOUT}）→ 回岗 {jt0}", flush=True)
+                cmd(f"retask {sweep_slot} {jt0[0]} {jt0[1]}", 0.22)
+
+        # ---- 分工维护（残局 2a 按槽锚定）：只清死槽 + 对新增 slot 追加岗位，
+        # 老 slot 永不改派不重发——满载（回送态）retask 不可靠且改派吞货，且军事
+        # 死亡压缩枚举序会让整表错位（boot3 实锤：满载金矿工被改派木工，金蒸发）----
+        if len(vils) != last_nv or not jobs or barracks_done != last_b \
+                or camp_any != last_camp \
+                or any(u['slot'] not in jobs for u in vils):
+            live = {u['slot'] for u in vils}
+            for sl in [s for s in jobs if s not in live]:
+                del jobs[sl]       # 死亡槽位清理（在岗者 job 原样保留）
+            have = {}
+            for j in jobs.values():
+                k = tuple(j)
+                have[k] = have.get(k, 0) + 1
+            want = {}
+            for j in seq:
+                want[tuple(j)] = want.get(tuple(j), 0) + 1
+            fresh = [u for u in vils if u['slot'] not in jobs]
+            for u in fresh:
+                # 按 seq 序补最大缺口角色（与列表枚举序无关，死亡压缩不再错位）
+                pick = next((j for j in seq if have.get(tuple(j), 0)
+                             < want[tuple(j)]), seq[len(jobs) % len(seq)])
+                jobs[u['slot']] = pick
+                have[tuple(pick)] = have.get(tuple(pick), 0) + 1
+            last_b = barracks_done
+            last_camp = camp_any
+            last_nv = len(vils)
+            if fresh:
+                print(f'ar={ar} 分工追加(按槽锚定): '
+                      f'{ {u["slot"]: tuple(jobs[u["slot"]]) for u in fresh} }',
+                      flush=True)
+            for u in vils:
+                if u['slot'] in fleeing or (u['slot'] == sweep_slot and sweeping):
+                    continue
+                if u['slot'] == bank_slot and not bank_scouted:
+                    continue       # W1：探帽途中不夺令（扫堂同款保护）
+                if CAMP_FIRST and u['slot'] == sweep_slot and cf_sent \
+                        and not cf_scouted:
+                    continue       # K4：北探途中不夺令
+                if u['slot'] not in fresh:
+                    continue       # 老 slot 不重发（防吞货/防错位）
+                j = jobs.get(u['slot'])
+                if j and can_go_north(u, j):
+                    jt = stage_target(u, j)
+                    cmd(f"retask {u['slot']} {jt[0]} {jt[1]}", 0.22)
+
+        # ---- 交棒 1a：camp 完工沿，第 3+ 木工席转金 ----
+        # 转「在岗最高席」（WS3>WS2>WS1>WS0 取最大席持有者）：2 木在场时转高席、
+        # 保低席木（WS0/WS1 是 PLAN 常设岗），木缺口由 seq 欠缺回填（新村民自
+        # 动补 WS1）；carry-guard：回送态（action==3）不夺令，交完这趟再转。
+        # 转派走北岗门序（can_go_north/stage_target）。
+        if WFIX == 'a' and camp_up and not conv_done:
+            def _seat(u_):
+                t_ = tuple(jobs.get(u_['slot']) or ())
+                for i_ in range(len(WOOD_SAFE) - 1, -1, -1):
+                    if t_ == tuple(WOOD_SAFE[i_]):
+                        return i_
+                return -1
+            wseated = sorted(((_seat(u), u) for u in vils if _seat(u) >= 0),
+                             key=lambda p_: -p_[0])
+            if len(wseated) >= 2:
+                seat_i, cu = wseated[0]
+                if cu.get('action') != 3:
+                    use = {}
+                    for g in GOLD:
+                        use[g] = 0
+                    for j2 in jobs.values():
+                        if tuple(j2) in use:
+                            use[tuple(j2)] += 1
+                    gfree = min(GOLD, key=lambda g: use[g])
+                    jobs[cu['slot']] = gfree
+                    conv_done = True
+                    if can_go_north(cu, gfree):
+                        gt = stage_target(cu, gfree)
+                        cmd(f"retask {cu['slot']} {gt[0]} {gt[1]}", 0.22)
+                    print(f'ar={ar} 交棒1a 第{seat_i + 1}席木工转金 '
+                          f'slot{cu["slot"]} → {gfree}（camp 完工沿）',
+                          flush=True)
+
+        # ---- per-vil 威胁规则（boot1 教训：全局复工门被 TC 营敌卡死=经济冻结）----
+        # 入坑：敌距自身 <10 格或身处路中段且处于波后 450t 窗 → 避险 SAFE；
+        # 出坑：敌距**岗位**全部 >12 格且部署窗允许 → 复工。
+        for u in vils:
+            sl = u['slot']
+            j = jobs.get(sl)
+            if j is None:
+                continue
+            if sl == bank_slot and not bank_scouted:
+                continue       # W1 探帽途中不夺令（压力线波 1 可能早于探明）
+            if CAMP_FIRST and sl == sweep_slot and cf_sent and not cf_scouted:
+                continue       # K4 北探途中不夺令
+            if u.get('action') == 3:
+                cg += 1
+                continue       # K1 回送态（满载回送 word7 低 nibble==3）不 retask：
+                               # 先交完这趟再谈避险（交存点离波线远，多走几格）
+            if sl in fleeing:
+                # W3 出坑侧（K4 伴生修）：木帽在位后西木岗回送全程离线（树→帽
+                # 4-6 manh），与入坑豁免对称——预帽期被围城敌困进避险点的木工
+                # 即刻放行复工（dry-stress-cf 实锤：wave1 钉死 TC 后 len>2 →
+                # clear 永假 → 双木工困死 → W=0 → House/barracks 全冻死锁）。
+                if bank_any and j in WEST_WOOD and can_go_north(u, j):
+                    fleeing.discard(sl)
+                    jt = stage_target(u, j)
+                    cmd(f"retask {sl} {jt[0]} {jt[1]}", 0.22)
+                    idle_n[f'{sl}'] = 0
+                    print(f'ar={ar} 西木出坑(帽豁免) slot{sl} → {jt}', flush=True)
+                    continue
+                # 出坑分岗（r44 boot3 dry5 教训）：木工=敌清+静默 300t（波整个走廊
+                # 行进期都不许送货）；矿工=旧几何判据（矿区离波线 >9 格，波不涉北岗，
+                # dry5 宵禁曾把矿工反复拽停 → G 全程 0 → m=2 裸奔）。
+                if j[1] <= MINE_YMAX:
+                    clear = all(dist(m['tile'], j) > 144 for m in p1mil) if p1mil \
+                        else True
+                elif mymil:
+                    # 残局 3：孤敌围城不冻结经济——敌 ≤2 且全被钉在 TC 10 格内也放行
+                    #（注意 all() 对空 p1mil 恒真，必须 bool() 短路保 300t 静默）
+                    clear = ((not p1mil) and ar - last_enemy_seen > 300) \
+                        or (bool(p1mil) and len(p1mil) <= 2
+                            and all(dist(m['tile'], TC) < 100 for m in p1mil))
+                else:
+                    # m=0 早期紧急：几何出坑（与 m=0 入坑对称，boot1 尸检）
+                    clear = all(dist(m['tile'], j) > 49 for m in p1mil) \
+                        if p1mil else True
+                if clear and can_go_north(u, j):
+                    fleeing.discard(sl)
+                    jt = stage_target(u, j)
+                    cmd(f"retask {sl} {jt[0]} {jt[1]}", 0.22)
+                    idle_n[f'{sl}'] = 0
+                continue
+            if p1mil or ar - last_wave_birth < 450:
+                if j[1] > MINE_YMAX:
+                    # W3 木银行豁免：西木岗+木帽在位 → 树→帽 4-6 manh 全程离线
+                    # （d2_line≥95>81），FSM 原生回送入账零驱动干预——宵禁/几何
+                    # 避险在这里全是负资产（波期收入停摆=残墙本体）。保底：敌真
+                    # 贴身 5 格（aggro 圈内）才避险，其余波期照常采。
+                    if bank_any and j in WEST_WOOD:
+                        if p1mil and min(dist(m['tile'], u['tile'])
+                                         for m in p1mil) < 25:
+                            s = flee_pick(tuple(u['tile']),
+                                          (west_flee,) + tuple(SAFE), p1mil)
+                            fleeing.add(sl)
+                            cmd(f"retask {sl} {s[0]} {s[1]}", 0.22)
+                            idle_n[f'{sl}'] = 0
+                    elif len(mymil) >= 2:
+                        # 南岗宵禁（r44 boot1/2 尸检定案，有兵时维持）：波存活期或
+                        # 波后 450t，木工全员离岗。旧几何判据两个洞：①树上采集者
+                        # 不在暴露带→继续采集→满载上路撞波（满载回送态 retask 失灵
+                        # 救不回，r35+本轮读码：word7=3 时 slot[2] 由 FSM 接管）；
+                        # ②西侧"逃向"WOOD_SIDE=自家树格=no-op 自逃。宵禁把"波期
+                        # 满载"概率归零，代价=波期木收入停摆。
+                        # v6.7-l2：m>=2 才宵禁——m<=1 仍走几何判据（下一支）：
+                        # dry4 实证 m#1 出膛瞬间切宵禁 → 木工整波整波地躲 → W=0
+                        # → 银行永欠款 → W3 豁免永不开 → 死亡螺旋。
+                        s = flee_pick(tuple(u['tile']),
+                                      (west_flee,) + tuple(SAFE), p1mil)
+                        fleeing.add(sl)
+                        cmd(f"retask {sl} {s[0]} {s[1]}", 0.22)
+                        idle_n[f'{sl}'] = 0
+                    else:
+                        # m<=1 早期紧急豁免（boot1 尸检新增；v6.7-l2 扩到 m==1）：
+                        # 最早抽签（波 1@1364 本轮实测）+连波 → 宵禁把 W 冻在 0
+                        # → 民兵永不出世 → TC 被磨平。TC 无攻击力前提下 m<=1 时
+                        # 宵禁收益为负——改用几何判据：敌真近身（7 格）或身处波线
+                        # 上（波存活全程——boot2 尸检：450t 窗太短，满载村民在
+                        # 440t 时死于线尾 (39,54)）才避险；树位离线 >9 格照常砍
+                        # 木，让民兵能在波抵达前出膛、银行能攒到 15W。
+                        danger = False
+                        if p1mil:
+                            d2e = min(dist(m['tile'], u['tile']) for m in p1mil)
+                            # ②居住带豁免 d2l：出生/东南带村民的 d2l 必伪警
+                            danger = d2e < 49 or (d2_line(u['tile']) < 81
+                                                  and not in_birth_band(u['tile']))
+                        if danger:
+                            s = flee_pick(tuple(u['tile']),
+                                          (west_flee,) + tuple(SAFE), p1mil)
+                            fleeing.add(sl)
+                            cmd(f"retask {sl} {s[0]} {s[1]}", 0.22)
+                            idle_n[f'{sl}'] = 0
+                else:
+                    # 北岗矿工：几何判据（波不涉矿区，勿拽停金/石收入）。
+                    # d2e 阈 49（7 格）：敌 aggro 圈 4-5 格、围城敌不追击——
+                    # 旧值 100（10 格）让走廊收尾段（必经 TC 10 格内）反复避险
+                    # （dry2：矿工在 (38-42,50-54) 振荡永远过不去）。
+                    danger = False
+                    if p1mil:
+                        # v6.9-n boot2 尸检：波全被钉在 TC 10 格内（pinned 围城）
+                        # 时北岗零死亡（boot2 v=10 全程存活实证）——d2e<49 判据
+                        # 只对走廊行进波成立；对围城波全是伪警（北向腿 (46,54)
+                        # 距 TC 波 3.6 格必触发 → 金工 30-50% 时间在折返）。
+                        if pinned:
+                            danger = False
+                        else:
+                            d2e = min(dist(m['tile'], u['tile']) for m in p1mil)
+                            # ②居住带豁免 d2l（同南岗支）：新训金工出生在 (44,60)
+                            # 一带，d2l=10<81 必吃一发伪避险+北岗 20-35 manh 折返
+                            danger = d2e < 49 or (d2_line(u['tile']) < 81
+                                                  and ar - last_wave_birth < 450
+                                                  and not in_birth_band(u['tile']))
+                    if danger:
+                        # K2：避险就近格 (41,41)——旧 west_flee/SAFE 对北岗是
+                        # 20-35 manh 横穿（boot3 G=0 主因之一），改后折返 4-10 manh。
+                        s = NORTH_FLEE
+                        fleeing.add(sl)
+                        cmd(f"retask {sl} {s[0]} {s[1]}", 0.22)
+                        idle_n[f'{sl}'] = 0
+                        # v6.7-l2 观测：boot1 金工反复 flee 但格点几何全安全，
+                        # 记录触发现场（d2e/d2_line/波龄/当时位置）供尸检。
+                        d2e_ = min((dist(m['tile'], u['tile']) for m in p1mil),
+                                   default=9e9)
+                        print(f'ar={ar} 北岗避险 slot{sl} job={tuple(j)} '
+                              f'@{tuple(u["tile"])} d2e={d2e_} '
+                              f'd2l={d2_line(u["tile"]):.0f} '
+                              f'波龄={ar - last_wave_birth}', flush=True)
+
+        # ---- 闲置卡死重派（仅非避险村民；扫堂期绕开 slot0、探帽期绕开 slot1
+        # ——到位后本块自然转岗）----
+        for u in vils:
+            sl = u['slot']
+            if sl in fleeing or (sl == sweep_slot and sweeping) \
+                    or (sl == bank_slot and not bank_scouted) \
+                    or (CAMP_FIRST and sl == sweep_slot and cf_sent
+                        and not cf_scouted):
+                continue
+            j = jobs.get(sl)
+            if j is None or u['action'] != 0:
+                continue
+            key = f'{sl}'
+            pos = tuple(u['tile'])
+            if idle_poll.get(key) == pos:
+                idle_n[key] = idle_n.get(key, 0) + 1
+            else:
+                idle_n[key] = 0
+            idle_poll[key] = pos
+            # 锚点/中继点到达即推进（省 2-poll 确认——staged 行军的锁 dwell 是
+            # dry2/3 矿工链卡死的根因之一）
+            if (idle_n[key] >= 2 or pos == tuple(NORTH_WAY)) and pos != tuple(j):
+                if can_go_north(u, j):
+                    jt = stage_target(u, j)
+                    cmd(f"retask {sl} {jt[0]} {jt[1]}", 0.22)
+                idle_n[key] = 0
+
+        # ---- 金饥荒动态转金（仅中盘金断供时；开局金恒 10 不许触发——dry4 教训：
+        # ar510 误抽木工挖金 → Barracks 拖 1300t → 无兵防波）----
+        # v6.9-n（交棒 1a 配套）：option a 的第 3 木工席（WS2，pre-camp）豁免——
+        # 否则 famine 转金在 ar3000+ 把 3 木工拆回 2 木工，camp 提前量归零
+        # （dryA-default 首跑实锤：slot4@3030 被转金 → camp 晚 ~1500t）。
+        if G < 5 and ar > 3000 and now > rb_cd and jobs:
+            wj = [sl for sl, j in jobs.items() if tuple(j) in WOOD_ALL
+                  and not (WFIX == 'a' and not camp_any
+                           and tuple(j) == tuple(WOOD_SAFE[2]))]
+            gj = [sl for sl, j in jobs.items() if tuple(j) in GOLD]
+            if len(gj) < 2 and len(wj) >= 3:
+                sl = None
+                cu = None
+                for cand in reversed(wj):
+                    c_ = next((v for v in vils if v['slot'] == cand), None)
+                    if c_ is not None and c_.get('action') != 3:
+                        sl = cand
+                        cu = c_
+                        break
+                if sl is not None:
+                    use = {}
+                    for g in GOLD:
+                        use[g] = use.get(g, 0)
+                    for g in gj:
+                        use[tuple(jobs[g])] = use.get(tuple(jobs[g]), 0) + 1
+                    gfree = min(GOLD, key=lambda g: use[g])
+                    jobs[sl] = gfree
+                    gt = stage_target(cu, gfree)
+                    cmd(f"retask {sl} {gt[0]} {gt[1]}", 0.22)
+                    rb_cd = now + 12
+                    print(f'ar={ar} 转金: slot{sl} → {gfree} (金工{len(gj) + 1})',
+                          flush=True)
+        # v6.7-l2（boot1 尸检）：W 盈余转金——boot1 终局 W=180/S=81 干烧而 G 恒
+        # 0-6：木银行+矿仓在位后木产能远超建筑链消耗，第 5 金工从 W 富余里出
+        # （W>=60 才转，保 House/兵营/磨坊木款；只挑非回送态者，纪律同上）。
+        if bank_any and W >= 60 and ar > 4000 and now > rb2_cd and jobs:
+            wj = [sl for sl, j in jobs.items() if tuple(j) in WOOD_ALL]
+            gj = [sl for sl, j in jobs.items() if tuple(j) in GOLD]
+            if len(gj) < 5 and len(wj) >= 1:
+                sl = None
+                cu = None
+                for cand in reversed(wj):
+                    c_ = next((v for v in vils if v['slot'] == cand), None)
+                    if c_ is not None and c_.get('action') != 3:
+                        sl = cand
+                        cu = c_
+                        break
+                if sl is not None:
+                    use = {}
+                    for g in GOLD:
+                        use[g] = use.get(g, 0)
+                    for g in gj:
+                        use[tuple(jobs[g])] = use.get(tuple(jobs[g]), 0) + 1
+                    gfree = min(GOLD, key=lambda g: use[g])
+                    jobs[sl] = gfree
+                    gt = stage_target(cu, gfree)
+                    cmd(f"retask {sl} {gt[0]} {gt[1]}", 0.22)
+                    rb2_cd = now + 12
+                    print(f'ar={ar} W盈余转金: slot{sl} → {gfree} '
+                          f'(金工{len(gj) + 1}, W={W})', flush=True)
+
+        # ---- 建筑快照 ----
+        brecs = [b for b in a['buildingRecs'] if b['p'] == 0]
+
+        def done(t):
+            return [b for b in brecs if b['type'] == t and not b['uc']]
+
+        def ucon(t):
+            return any(b['type'] == t and b['uc'] for b in brecs)
+
+        houses = done(11)
+        barracks = done(10)
+        camps = done(1)
+        mills = done(5)
+        bss = done(6)
+        towers = done(12)
+        pop_room = cap - popu - queued
+        # v6.8-m 里程碑完工沿（放格时刻由 build OK 行给出，完工由此打印）
+        if len(barracks) > prev_b_n:
+            print(f'ar={ar} == MILESTONE barracks#{len(barracks)} 完工 ==',
+                  flush=True)
+            prev_b_n = len(barracks)
+        if len(camps) > prev_c_n:
+            print(f'ar={ar} == MILESTONE camp#{len(camps)} 完工 ==', flush=True)
+            prev_c_n = len(camps)
+        if len(houses) > prev_h_n:
+            print(f'ar={ar} == MILESTONE house#{len(houses)} 完工 ==', flush=True)
+            prev_h_n = len(houses)
+        if len(towers) > prev_t_n:
+            print(f'ar={ar} == MILESTONE tower#{len(towers)} 完工 ==', flush=True)
+            prev_t_n = len(towers)
+
+        # ---- TC 血线警报 ----
+        tcrec = [b for b in brecs if b['type'] == 9]
+        tc_hp = tcrec[0]['hp'] if tcrec else 0
+        near_tc = min((dist(m['tile'], TC) for m in p1mil), default=9e9)
+        tc_alarm = bool(p1mil) and (near_tc < 400 or tc_hp < prev_tc_hp - 1)
+        prev_tc_hp = tc_hp
+        if tc_alarm:
+            # TC 遇袭：靠近 TC 的村民进避险（远处岗位照常）；军事回防。
+            # 北岗矿工（金管道）豁免——他们有自己的几何判据（d2e/d2_line），
+            # 且 TC 警报环（144）罩住全部 SAFE 点和北向锚点 (49,48)：不豁免时
+            # 围城期矿工陷入 避险→出坑→再避险 死循环（dry2 实锤，G 全程 0）。
+            # 交棒 2（boot1 直接死因）：①我方全体接战且兵力不劣（engaged）时
+            # 豁免通勤者——波马上全歼（boot1 m2v1 @2314 结束），此时 retask
+            # 村民只会把人派进火线（slot1 @2249 →2284 殉于 (42,57)）；
+            # ②避险格用 flee_pick（直线路径离敌群最远者胜），西侧村民不再
+            # 横穿 TC±1。contact 判据 10 格（<100）——波在走廊上不算接战。
+            engaged = bool(mymil) and bool(p1mil) \
+                and len(mymil) >= len(p1mil) \
+                and min((dist(a_['tile'], b_['tile'])
+                         for a_ in mymil for b_ in p1mil), default=9e9) < 100
+            for u in vils:
+                j = jobs.get(u['slot'])
+                if u.get('action') == 3:
+                    cg += 1
+                    continue       # K1：回送态不 retask（回 TC 交货者不夺令）
+                if bank_any and j is not None and j in WEST_WOOD:
+                    continue       # W3 对称豁免：帽期西木不进 TC 警报环——否则
+                                   # 本块（在威胁块之后）会把出坑豁免刚放行的
+                                   # 木工当拍抓回（dry-stress 实锤：出坑/抓回
+                                   # 每迭代互踢，fleeing 恒 [0,1]，W=0 死锁）
+                if engaged:
+                    continue       # 交棒 2：接战豁免（见上）
+                if u['slot'] not in fleeing and dist(u['tile'], TC) < 144 \
+                        and (j is None or j[1] > MINE_YMAX):
+                    fleeing.add(u['slot'])
+                    s = flee_pick(tuple(u['tile']),
+                                  (west_flee,) + tuple(SAFE), p1mil)
+                    cmd(f"retask {u['slot']} {s[0]} {s[1]}", 0.22)
+                    idle_n[f"{u['slot']}"] = 0
+                    print(f'ar={ar} TC警报避险 slot{u["slot"]} job='
+                          f'{tuple(j) if j else None} @{tuple(u["tile"])} '
+                          f'→{s} hp={tc_hp} engaged={int(engaged)}',
+                          flush=True)
+            if mymil and (not p1mil
+                          or len(mymil) >= len(p1mil) + (1 if FRONTPLUS else 0)) \
+                    and now - last_rally['t'] > 6:
+                # 敌众我寡时不从警报拉 FRONT（=顶进敌团硬拼）——风筝态由 threat 块定位
+                # ⑤FRONTPLUS：m==n 也算寡（保兵优于换兵，boot3 2v2 接战被跟波变 2v3）
+                cmd(f'rally {FRONT[0]} {FRONT[1]}', 0.3)
+                last_rally = {'t': now, 'md': 'front'}
+            if ar % 100 < 12:
+                print(f'ar={ar} !!! TC 遇袭 hp={tc_hp} mode={mode}', flush=True)
+            mode = 'front'
+
+        # ---- 军事调度（threat > raid > 庭院驻守）----
+        threat = bool(p1mil) and near_tc < 1100
+        in_fight = any(u['hp'] < 240 for u in mymil)
+        keeper = None
+        if mymil:
+            keeper = min(mymil, key=lambda u: dist(u['tile'], TC))
+        # 交棒 6：raid 场势分支——p1mil 全被钉在 TC 10 格内（pinned，围城态）
+        # 且 m>=3 时也放行 raid（burst 局波后静默窗不存在；留 2 守 TC，余部
+        # 西压敌村民断收入）。raid_ready 时 raid 分队每拍重申（rally 不竞争：
+        # threat 块在 pinned 时让位）。v6.9-n boot2 尸检：hyper-cascade 局
+        # （12 波/8000ar）波间静默永不满 300t → m>=3 时门槛放宽到 150t。
+        raid_ready = (len(mymil) >= RAID_MIN and ar >= RAID_EARLIEST
+                      and not p1mil and ar - last_enemy_seen > 300
+                      and not tc_alarm and bool(barracks)) \
+            or (len(mymil) >= RAID_MIN + 1 and ar >= RAID_EARLIEST
+                and pinned and bool(barracks)) \
+            or (len(mymil) >= RAID_MIN + 1 and ar >= RAID_EARLIEST
+                and not p1mil and ar - last_enemy_seen > 150
+                and bool(barracks))
+        if threat and mymil and not (pinned and raid_ready):
+            # （pinned 且 raid 就绪才让位 raid；pinned 但 m<3 仍走 front/kite——
+            # m<n 围城期风筝语义不能丢）
+            # ⑤FRONTPLUS（缺省 1）：front 需 m>=n+1——1:1 交换进攻方（有池）赢
+            # （boot1 5840-5966 三连殉），m==n 时风筝等下一发民兵再拦（TC 血条
+            # 预算 n=3 ~900t 内 m#next 出膛即可）。M4D_FRONTPLUS=0 回退旧行为。
+            if len(mymil) >= len(p1mil) + (1 if FRONTPLUS else 0):
+                if in_fight:
+                    mode = 'fight'
+                else:
+                    if last_rally['md'] != 'front' or now - last_rally['t'] > 7:
+                        cmd(f'rally {FRONT[0]} {FRONT[1]}', 0.3)
+                        last_rally = {'t': now, 'md': 'front'}
+                        print(f'ar={ar} FRONT 拦截 (我m={len(mymil)} 敌m={len(p1mil)} '
+                              f'army {myarmy}/{p1army})', flush=True)
+                    mode = 'front'
+            else:
+                # 1a 风筝（r45 残局）：敌众我寡绝不硬拼（boot3 实锤 m 对冲全灭
+                # → 经济随崩）。退 TC 东南 KITE(46,60)——波 approach 线外，敌扑
+                # TC 打不着；敌贴 5 格内再退 KITE2。TC 白打可承受（boot2 实测
+                # 12 围 1470t 未拆动）。等 m 追平（练兵/拣落单）由上支反打。
+                mode = 'kite'
+                kt = KITE2 if any(dist(m['tile'], KITE) < 25 for m in p1mil) \
+                    else KITE
+                if last_rally.get('md') != 'kite' \
+                        or tuple(last_rally.get('pt') or ()) != kt \
+                        or now - last_rally['t'] > 8:
+                    cmd(f'rally {kt[0]} {kt[1]}', 0.3)
+                    last_rally = {'t': now, 'md': 'kite', 'pt': kt}
+                    print(f'ar={ar} KITE 风筝 (我m={len(mymil)} 敌m={len(p1mil)} '
+                          f'→{kt})', flush=True)
+        elif raid_ready and (not in_fight or pinned):
+            mode = 'raid'
+            def in_base_zone(t):
+                return t[0] < 11 and t[1] < 33
+            vtgt = [u for u in p1any if u['type'] < 2
+                    and dist(u['tile'], RAID) < RAIDCHASE_R2
+                    and not in_base_zone(u['tile'])]
+            tgt = None
+            if vtgt:
+                tt = min(vtgt, key=lambda u: dist(u['tile'], RAID))['tile']
+                tgt = tuple(tt)
+            else:
+                tgt = RAID
+            need = (pinned
+                    or last_raid['tgt'] is None
+                    or dist(last_raid['tgt'], tgt) > 16
+                    or now - last_raid['t'] > 12)
+            if need:
+                home = sorted(mymil, key=lambda u: dist(u['tile'], TC))
+                n_home = max(2, len(mymil) - RAID_MAX
+                             if len(mymil) > RAID_MIN else RAID_MIN - 1)
+                send = home[n_home:]
+                if not send:
+                    send = home[-1:]
+                for u in mymil:
+                    if u in send:
+                        cmd(f"retask {u['slot']} {tgt[0]} {tgt[1]}", 0.22)
+                        raiders.add(u['slot'])
+                    elif u['slot'] in raiders or dist(u['tile'], FRONT) > 9:
+                        cmd(f"retask {u['slot']} {FRONT[0]} {FRONT[1]}", 0.22)
+                        raiders.discard(u['slot'])
+                last_raid = {'t': now, 'tgt': list(tgt)}
+                print(f"ar={ar} RAID 分队{len(send)} → ({tgt[0]},{tgt[1]}) "
+                      f"(m={len(mymil)} army {myarmy}/{p1army} "
+                      f"gate={'ARMED' if gate_armed else 'off'})", flush=True)
+        elif mymil and not in_fight:
+            # 驻守庭院（非 threat 态也把离院的散兵拉回，raider/探雾民兵除外）
+            stray = [u for u in mymil
+                     if u['slot'] not in raiders
+                     and not (not scouted and u['slot'] == scout_slot)
+                     and dist(u['tile'], FRONT) > 9]
+            if stray and now - last_rally['t'] > 10:
+                cmd(f'rally {FRONT[0]} {FRONT[1]}', 0.3)
+                last_rally = {'t': now, 'md': 'front'}
+                mode = 'standby'
+            elif not p1mil:
+                mode = 'standby' if mymil else 'idle'
+        elif in_fight:
+            mode = 'fight'
+        else:
+            mode = 'idle'
+
+        # ---- 建筑（v6.7-l2 新序：Barracks 最先——boot2 尸检：最早档波 1@1179，
+        # 旧序 camp→bank→B 让 m#1 迟到 ~1500t（3100 才出膛），m=0 期 TC 被 n=1-2
+        # 白啃 1700t=直接死因。S 开局自带 10、W 到 20 即可开工，m#1 可在波 1 抵达
+        # 前出膛（r46 实证 m#1 单兵全歼波 1）。矿仓/银行顺延 ~300-600t，木银行
+        # 富余局面完全可承受）----
+        # 交棒 1b'（WFIX=b2）：bank 先于 Barracks 的**硬序保证**——W 以 5W 跳变，
+        # boot1 实测 1290→1374 两趟连落 10→20（84ar < 轮询间隔），bank 的 W=15
+        # 窗口被整段跳过 → B 抢跑 → bank 永不落地（b2 首局实锤）。b2 下 bank 门
+        # 提到 B 门之前判定，W>=15 即放格（W=20 时先扣 15 留 5，B 下轮再筹）。
+        if WFIX == 'b2' and bank_slot is not None and bank_scouted \
+                and not bank_any and not ucon(0) and W >= 15 and now > bank_cd:
+            print(f'ar={ar} 建伐木场 t0（木银行先行，res={[W, G, S]}）', flush=True)
+            ok_wb = build_fb(WOOD_BANK_CANDS, 0, 'WB')
+            bank_cd = now + 12
+            if ok_wb:
+                print(f'ar={ar} *** 木银行 {ok_wb} 放格：hdr[9] 已改道，'
+                      f'西木波期照常入账 ***', flush=True)
+            continue
+        if not barracks and not ucon(10) and W >= 20 and S >= 10 and now > b_cd:
+            print(f'ar={ar} 建 Barracks res={[W, G, S]}', flush=True)
+            build_fb(B_CANDS, 10, 'B')
+            b_cd = now + 12
+            continue
+        # N2：v≤2 紧急阀（r42 boot3 v=1 死锁：House 门与 camp 门互锁 → 全程 H=0
+        # → 村民断产）。m>=1 限定=过了开局爆兵期才算"产能崩"（v=2 是开局常态）
+        # 末两行=储蓄门豁免（r44 boot1 尸检）：
+        # a) 矿仓落成前 H#1 之后不得再抢矿仓木款（dry：H#2/H#3 各吃 5W=矿仓晚 2 趟）；
+        # b) 有房且有人口时 house_emg 不得与村民训练抢 5W（boot1：建筑块先于生产块，
+        #    v=1 时 H#2-4 连吃 15W，村民 5428 才训出=同一「落地即花」墙的变体）。
+        # houses==0 豁免保 N2 防死锁语义：首房永远放行。
+        # v6.8-m（交棒 1）门序断言：house_emg 排到 camp 后——boot3 H#1@1730 连吃
+        # 5W 把 W<15 钉死 → camp 永不落地 → 金管道断 2700t=直接死因。矿仓未落地
+        # 且 W<20（买不起 camp+H 双款）时 H 等一拍；W>=20 或 camp 门未开（探雾
+        # 未成，camp 本来就建不了）时不拦——防死锁语义保留。
+        # 首房豁免（len(houses)==0）沿用 r44「首房永远放行」语义：H#1 是村民
+        # 管道 keystone（5W=一趟木），只此一房，非 boot3 的 H#2/H#3 连吃。
+        camp_gate_open = scouted or cf_scouted
+        house_emg = len(vils) <= 2 and ar > 1400 and len(barracks) >= 1 \
+            and (len(mymil) >= 1 or (W >= 10 and (len(mymil) >= 1 or G >= 5))) \
+            and (not camp_gate_open or len(camps) > 0 or len(houses) == 0) \
+            and (len(houses) == 0 or pop_room <= 0) \
+            and (camp_any or W >= 20 or not camp_gate_open
+                 or len(houses) == 0)
+        if house_emg and not ucon(11) and len(houses) < 4 and W >= 5 \
+                and now > hb_cd:
+            print(f'ar={ar} 建 House (EMG v={len(vils)})', flush=True)
+            build_fb(HOUSE_CANDS, 11, 'H')
+            hb_cd = now + 3
+            continue
+        if CAMP_FIRST and not camps and not ucon(1) and W >= 15 \
+                and (bank_any or WFIX not in ('b', 'b2')) \
+                and (bool(barracks) or ucon(10) or W >= 35) \
+                and (scouted or cf_scouted) and now > c_cd:
+            # K4：矿仓先于木银行（G 早开闸）。v6.7-l2：兵营未落定时不得抢 15-19W
+            # （boot2 尸检：W>=15 的矿仓门比 W>=20 的兵营门先触发，兵营"最先"
+            # 形同虚设——m#1 迟到 1500t=最早档直接死因）。
+            # 交棒 1b（WFIX=b）：bank 提到 camp 前——camp 门等 bank_any，先吃
+            # 15W 放格木帽（hdr[9] 即刻改道、西木 W3 豁免活 → 波期 W 3.7W/100t），
+            # camp 的 15W 由放大后的收入 ~400ar 攒齐；金暂对 TC 长途 hauling。
+            print(f'ar={ar} 建 Mining Camp（矿仓先行，res={[W, G, S]}）', flush=True)
+            cv = build_fb(CAMP_CANDS, 1, 'CAMP')
+            c_cd = now + 12
+            if cv:
+                print(f'ar={ar} *** 矿仓 {cv} 落成：金/石本地交存 ***', flush=True)
+            continue
+        # v6.8-m（交棒 1）普通 House 移到 bank 前——开局资源序 B(20W)→camp(15W)
+        # →H(5W)→bank(15W)。House 已带 (camp_any or W>=20) 门：camp 未落地时
+        # W>=20 才放行（扣 5W 后仍够 camp 15W），不会重演「H 吃穿 W → camp 饿死」。
+        if not ucon(11) and len(houses) < 4 and W >= 5 \
+                and (pop_room <= 2 or (bool(barracks) and pop_room <= 4)) \
+                and (camp_any or W >= 20) and now > hb_cd:
+            # v6.7-l2（boot1 尸检）：pop_room<=2 是「事后门」——民兵把 room 填满
+            # 的速度比房子落地快，m 恒被 cap 在 3-4 对 n=4-5 波。有兵营且
+            # room<=4 就预建（cap 15→20→25，m 天花板 6-7）。
+            print(f'ar={ar} 建 House (room={pop_room})', flush=True)
+            build_fb(HOUSE_CANDS, 11, 'H')
+            hb_cd = now + 3
+            continue
+        if bank_slot is not None and bank_scouted and not bank_any \
+                and not ucon(0) and W >= 15 \
+                and ((bool(barracks) or ucon(10) or W >= 35) or WFIX == 'b2') \
+                and now > bank_cd:
+            # W2 木银行——放格即 hdr[9]+建筑格生效，满载回送改道入账后 FSM 自动
+            # 回树（slot[2]=slot[5]），波期木收入与改派吞货同根拔除。
+            # K5：候选串防占格单点。v6.7-l2：让位未落定的兵营（同矿仓门）。
+            # 交棒 1b'（WFIX=b2 对照线）：bank 提到 Barracks 前（v6.5-j 原序，
+            # r12 live 实测 bank@1205/B@1731）——西木 W3 豁免从 ~1500 就活，
+            # 代价 m#1 晚 ~300-500t（n=1-2 波 TC 多扛 ~100-200hp 可承受）。
+            print(f'ar={ar} 建伐木场 t0（木银行）res={[W, G, S]}', flush=True)
+            ok_wb = build_fb(WOOD_BANK_CANDS, 0, 'WB')
+            bank_cd = now + 12
+            if ok_wb:
+                print(f'ar={ar} *** 木银行 {ok_wb} 放格：hdr[9] 已改道，'
+                      f'西木波期照常入账 ***', flush=True)
+                continue
+        if not CAMP_FIRST and not camps and not ucon(1) and W >= 15 \
+                and (bool(barracks) or ucon(10) or W >= 35) \
+                and scouted and now > c_cd:
+            # 矿仓：木 >=15 + 已探雾即建（黑暗可建，15木0石）——
+            # 它是"矿工到岗后永不再走走廊"的承重结构（金/石交存点取最近）
+            print(f'ar={ar} 建 Mining Camp（矿仓，res={[W, G, S]}）', flush=True)
+            cv = build_fb(CAMP_CANDS, 1, 'CAMP')
+            c_cd = now + 12
+            if cv:
+                print(f'ar={ar} *** 矿仓 {cv} 落成：金/石本地交存 ***', flush=True)
+            continue
+        tw_max = 2 if S >= 35 else 1   # v6.7-l2：S 盈余时第二座塔（boot1 S=81 干烧）
+        # v6.9-n boot2 尸检：m<2 时塔让位民兵——塔 5G 一座把 G 池吸干（boot2
+        # G 恒 0-4，TRAIN 兵 6000ar 只开火 2 次），m=0 裸奔被波磨死；塔的
+        # 价值在 m>=2 已能接波之后（替 TC 挨打）。
+        if len(mymil) >= 2 and len(towers) < tw_max and not ucon(12) and S >= 15 \
+                and W >= 20 and G >= 5 and now > t_cd:
+            # L2 塔守 TC（v6.7-l 提前）：旧门 age>=1+BS+S>=60 永不可达（boot2
+            # S=51 干烧到死）。S>=15 即建——1 塔≈常驻 1 民兵的输出（m1 实测塔
+            # 射击存在），把 m=1 局变 m=2 局。塔收益是 dry 盲区（sim 不建模 TC
+            # 磨损/真实射程/塔位覆盖），战果只能 live 验证——dry 不为塔调参。
+            tv = build_fb(TOWER_CANDS, 12, 'T')
+            t_cd = now + 12
+            if tv:
+                print(f'ar={ar} *** 塔 {tv} 放格（守 TC，res={[W, G, S]}）***',
+                      flush=True)
+            continue
+        if p0['age'] >= 1 and len(mills) < 2 and not ucon(5) and W >= 15 \
+                and S >= 10 and now > m_cd:
+            # boot2 路线：双 Mill 凑城堡门（计数>=2，NOTES §4.4），省 BS 的 10W10S
+            build_fb(MILL_CANDS, 5, 'M')
+            m_cd = now + 12
+            continue
+        if p0['age'] >= 2 and not any(b['type'] == 4 for b in brecs) and not ucon(4) \
+                and W >= 25 and S >= 25 and now > u_cd:
+            uv = build_fb(UNIV_CANDS, 4, 'UNIV')
+            u_cd = now + 12
+            if uv:
+                print(f'ar={ar} *** UNIVERSITY {uv} — 50t 后应 WIN ***', flush=True)
+            continue
+
+        # ---- 生产（boot2：村民块前移——民兵别抢断村民的 5 木）----
+        nmil = len(mymil)
+        # v6.7-l2 蓄金判据放宽：不只静默窗——我方场上兵力多于敌波（m>n）时也蓄
+        # （boot1：波每 400-900t 一发，450t 静默窗全场只出现一次，G 永池不起来）。
+        field_ok = not p1mil or nmil > len(p1mil)
+        # L4a 静默/优势蓄金：W/S 已 ≥15 时民兵暂停训练，让 G 攒到 15。m>=3 才蓄
+        # （交棒 4：m#3 的 5G 优先于封建蓄金——G 到 5 即练兵，15G 门等 m>=3
+        # 再说；burst 局 G 恒 0-4 的根因之一就是 m=1-2 时 feudal_wait 把 5G
+        # 扣住不练兵）。m=0 时村民门依赖 nmil>=1，勿自锁。
+        feudal_wait = (not p0['age']) and bool(barracks) and W >= 15 \
+            and S >= 15 and G < 15 and field_ok \
+            and ar - last_enemy_seen > 300 and nmil >= 3
+        # L2b 塔蓄金：塔未放格且 S/W 已近齐时，先把 G 池到 5 让塔落格（boot1：
+        # S=15@4316 就位但 G=4<5，塔拖到 4852、完工 ~6100、6300 即殉职——差一拍
+        # 全无用）。v6.8-m（交棒 4）再提前一拍：S>=10 即开始蓄（S0 岗继续攒 S，
+        # 蓄满 G=5 时 S 通常已 >=15，塔门一开即放格，目标放格<=4300/完工<=5500）。
+        # v6.9-n（交棒 4）：nmil>=3 门同 feudal_wait——塔的 5G 不许卡 m#3。
+        # 塔落格后本条件自解（ucon(12)）。
+        tower_wait = len(towers) < 1 and not ucon(12) and S >= 10 and W >= 20 \
+            and G < 5 and field_ok and ar - last_enemy_seen > 300 and nmil >= 3
+        # L4b 封建速攻：W/G/S >=15 即刻付费（生产块之前拦截——旧序民兵 5G 先把
+        # G 吃回 10，15G 门永不可达）；不等 safe_win（boot3 级联不断，safe 窗
+        # 不存在——早一拍触发是本轮杠杆）。
+        if not p0['age'] and barracks and W >= 15 and G >= 15 and S >= 15 \
+                and now > research_cd:
+            rr = try_research('FEUDAL-RUSH')
+            research_cd = now + (3 if rr == 'paid' else 12)
+            print(f'ar={ar} 封建速攻: {rr}', flush=True)
+            continue
+        # L4c 城堡速攻：门齐即付（同 L4b 逻辑，mills+bss>=2 是硬门照旧）。
+        if p0['age'] == 1 and len(mills) + len(bss) >= 2 and W >= 20 \
+                and G >= 20 and S >= 20 and now > research_cd:
+            rr = try_research('CASTLE-RUSH')
+            research_cd = now + (3 if rr == 'paid' else 12)
+            print(f'ar={ar} 城堡速攻: {rr}', flush=True)
+            continue
+        want_mil = MIL_TARGET if (mode in ('front', 'fight') or p1army >= 15) else 5
+        # ①camp 蓄积门（r44 Keystone 定律在 B→camp 新序下的补全）：camp 门已开
+        # 未落地时 m#3+ 训练让路——否则 W 每攒到 5 就被吃，15W 永不可达
+        # （dryM1 实锤：mil_urgent 连吃 W → camp 零落格 → G=0 → LOSS@4740）。
+        # m#1+m#2 豁免（nmil<2）：开局双兵是 r46 实证配方（m#1@m#2@1911/2079
+        # 接住波 1/2），且 TC 掉血模型下 m=0-1 期 TC 只扛 ~1300-2500ar。
+        camp_saving = (camp_gate_open and not camps and not ucon(1)
+                       and W < 20 and nmil >= 2)
+        # v6.7-l2 开局抢二兵：开局 10G 恰好供 m#1+m#2——队列让 m#2 插到 v3 前面
+        # （m#1@m#2 ~1600/2150 在档 → 波 1 抵达即有 2 兵接战；boot2 尸检：m=0-1
+        # 期 TC 被白啃 1700t 是最早档直接死因）。
+        mil_urgent = bool(barracks) and nmil < 2 and G >= 5 and pop_room >= 2 \
+            and now > mil_cd and not camp_saving
+        nvil_ = len(vils)
+        # 交棒 1a/1b'：pre-camp 训练豁免——scouted 沿把 v3 钉死在 W>=20
+        # （boot1 实锤：v3 永不出生 → G 恒 0 → 金管道断 4100t）。
+        # option a：v3=第 3 木工，在岗木席<3 时 W>=5 放行；
+        # option b2：v3=金工（seq[2]=GOLD[0]），前 3 村民内放行（cap 防
+        # 村民连训吃穿 bank/B 的木款）。
+        _wseats = {tuple(w) for w in WOOD_SAFE}
+        n_wood_seated = sum(1 for j_ in jobs.values() if tuple(j_) in _wseats)
+        if len(houses) and nvil_ < VIL_TARGET and nmil >= 1 \
+                and W >= 5 and pop_room >= 1 and now > vil_cd \
+                and not mil_urgent \
+                and (nmil >= 3 or W >= 10 or nvil_ <= 3) \
+                and (len(camps) > 0 or W >= 20 or not scouted
+                     or (WFIX == 'a' and not camp_any and n_wood_seated < 3)
+                     or (WFIX == 'b2' and not camp_any and nvil_ < 4)):
+            # r44 残局主修复：矿仓储蓄门——scouted 后、矿仓建成前禁止村民小额
+            # 花木（否则每趟 5W 落地即花，15W 矿仓门槛永不可达=boot3 死因）
+            # v6.8-m dry 对照：更严的 (scouted or cf_scouted) 口径（村民也等
+            # camp）让 camp 早 720t 但 首金 晚 >1300t（v3 直接对 TC 长途 hauling
+            # 是 camp 落地前唯一 G 源）——G 管道优先，维持旧口径（dryM6/M7 对比）。
+            # r44 残局主修复：矿仓储蓄门——scouted 后、矿仓建成前禁止村民小额
+            # 花木（否则每趟 5W 落地即花，15W 矿仓门槛永不可达=boot3 死因）
+            # 微调 b：村民与民兵并行排队（dry5 教训：mil_blocked 门让民兵独占
+            # 生产位，村民 540t/个，金工永远晚一班）
+            hx, hy = houses[-1]['tile']
+            cmd(f'train {hx} {hy} 1', 0.3)
+            if DRY:
+                ok = SIM.last_train_ok
+            else:
+                tr = [ln for ln in tail(15) if 'devMouse] train' in ln]
+                ok = bool(tr and '排队 1/1' in tr[-1])
+            if ok:
+                vil_cd = now + 3.0
+                print(f'ar={ar} TRAIN 村民 (v={nvil_})', flush=True)
+        if barracks and nmil < want_mil and not feudal_wait and not tower_wait \
+                and not camp_saving \
+                and W >= (5 if (p1mil or nmil < 3) else 10) \
+                and G >= 5 and pop_room >= 2 and now > mil_cd:
+            bx, by = barracks[0]['tile']
+            cmd(f'train {bx} {by} 1', 0.3)
+            if DRY:
+                ok = SIM.last_train_ok
+            else:
+                tr = [ln for ln in tail(15) if 'devMouse] train' in ln]
+                ok = bool(tr and '排队 1/1' in tr[-1])
+            if ok:
+                mil_cd = now + 5.0
+                print(f'ar={ar} TRAIN 兵 (m={nmil} army {myarmy}/{p1army})',
+                      flush=True)
+        # ---- 升时代 ----
+        safe_win = (not p1mil) or near_tc > 1600
+        if not p0['age'] and barracks and W >= 15 and G >= 15 and S >= 15 \
+                and safe_win and now > research_cd:
+            rr = try_research('FEUDAL')
+            research_cd = now + (3 if rr == 'paid' else 12)
+            print(f'ar={ar} 封建尝试: {rr}', flush=True)
+            continue
+        if p0['age'] == 1 and len(mills) + len(bss) >= 2 and W >= 20 \
+                and G >= 20 and S >= 20 and safe_win and now > research_cd:
+            rr = try_research('CASTLE')
+            research_cd = now + (3 if rr == 'paid' else 12)
+            print(f'ar={ar} 城堡尝试: {rr}', flush=True)
+            continue
+
+        if ar - last_econ_ar >= 250:     # 锚点采样线（sim 校准方法学 §r42：boot 实测优先）
+            print(f'ar={ar} ECON res={[W, G, S]} v={len(vils)} m={nmil} '
+                  f'p1m={len(p1mil)} fleeing={sorted(fleeing)} cg={cg} '
+                  f'jobs={ {k: tuple(v) for k, v in sorted(jobs.items())} }',
+                  flush=True)
+            last_econ_ar = ar
+        st = (f"ar={ar} res={[W, G, S]} pop={popu}/{cap} v={len(vils)} m={nmil} "
+              f"p1m={len(p1mil)} p1v={len(p1any) - len(p1mil)} "
+              f"army {myarmy}/{p1army} gate={'ARMED' if gate_armed else 'off'} "
+              f"age={p0['age']} B={bool(barracks)} C={len(camps)} H={len(houses)} "
+              f"WB={int(bank_any)} M={bool(mills)} BS={bool(bss)} T={len(towers)} mode={mode}")
+        if st != last_line:
+            print(st, flush=True)
+            last_line = st
+        if DRY:
+            SIM.tick_world()
+        else:
+            time.sleep(0.55)
+    else:
+        if not DRY:
+            print('TIMEOUT', flush=True)
+    # r42 教训：boot.sh 覆盖 play.log → boot1/2 证据丢失。驱动退出时留副本。
+    _copy_playlog()
+    print(f'driver end it={it}', flush=True)
+
+
+if __name__ == '__main__':
+    main()
