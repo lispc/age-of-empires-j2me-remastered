@@ -27,7 +27,7 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
 （数据 res 号：m1=104 / m2=105 / m3=106 …；脚本=数据+7，解码器 resdec.py 换号即用。
 地形=数据内嵌 rng 确定性生成（res 106 头两字节），与 mapSeed/RMS 无关，每 boot 同图，
 可离线洪泛侦察——注意 BFS 下虚空可通行、资源格当墙。）
-### m4 大学关（⏳ 四轮 15 boot 全 LOSS 止损（r38-r41）；金道正解=前置矿仓（读码），距 dry-WIN 一步）
+### m4 大学关（⏳ 五轮 18 boot 全 LOSS 止损（r38-r42）；微调 a-d 全部验证生效，残局 N1-N4 待第 6 轮）
 - **胜负条件（res 114）**：WIN = 封建→**升城堡完成**（techFlags[14]==1，c.java:6200）
   → **放置 University/type4**（置回 0，c.java:7590）→ 计时 50t → WIN。res 127 初始
   [14]=0 ⇒ University 在城堡前被"已建成"锁死，**顺序不可颠倒**。Univ 25木/25石。
@@ -37,23 +37,27 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   （含村民混排）直扑 TC±1。练兵类型按 `tickCount%10` 抽签；**敌会补村民（raid 须
   驻留压制）**。**n7==0 冻结漏洞**：我方 0 单位时 AI 扫描整块跳过 → 永不再出兵。
 - **all-in 门**：`敌 armyValue≥30 且 我<敌×1.25`（c.java:8458）；杀村民不直接减
-  armyValue（断收入用）。敌 reserve 波有限（p1v=0 黑屏期 av 只涨 ~20，~ar5700-6000 干涸）。
-- **金道正解=前置矿仓（r41 读码，推翻塔方案）**：`nearestDropOff`（c.java:8743）
-  ——金/石交存点=**TC 与两座 Mining Camp 取最近**（15木0石、黑暗可建，c.java:6157）；
-  木=伐木场 hdr[9]。矿仓建 (36,40) → 矿工永不过暴露走廊。四轮败因链全部收敛为
-  "矿仓没在穿走廊发生前建起来"（r41 boot3：House 抢 5 木 → 矿仓欠款 → 石工穿走廊
-  折损 → 民兵耗尽 → TC 被拆）。
-- **已验证打法**：庭院决战 (44,58) N 波全歼（r40 八波/r41 四连胜）；raid 门
-  militia≥2 拔光敌村民；波出生→北半场预防回撤（**行军 22-29 格/poll，反应式避险
-  永远来不及，只走静默窗**——无敌军且距上次见敌>450t 或首波前自由窗，wave1 出生
-  区间实测 [1300,4900]）；民兵探雾法（死亡合法+stray-recall 拉回）；**TC 无自卫
-  火力**（placement 仅 case 12 注册 projectile——庭院防御=民兵+塔）。
-- **现行代驱动**=`tools/campaign/m4ddrv.py`+`mocksim4d.py`（v6.3：偶和格硬断言/
-  per-vil 威胁复工门/静默窗部署/矿仓最优先）。**下轮微调 a-d 已列 BUGS-m4d.md**
-  （波间隔校准/House 提前一拍/出岗门槛放宽/dry WIN 即 boot）——r41 dry 已 LOSS
-  4650，距 dry-WIN 只差金工出岗时点 ~900t。**不要再改架构。**
-- 定律/纪律：光标 sum 奇偶不变量（奇和格完工=升时代锁死）；研究=付即生效无时长；
-  base save 与驱动同链启动；mocksim 离线迭代到 WIN 才上机。
+  armyValue（断收入用）。
+- **reserve 干涸前提修正（r42）**：「敌 reserve 波 ~ar5700-6000 干涸」**仅当敌村民
+  被清**才成立——敌村民存活时 army 滚到 102 且波不断（boot1 实测）。
+- **五轮战况收敛**：r42 微调 a-d 全部实测生效（矿仓 1820 提前 900t/金工 3500 到岗/
+  dry13 模拟 WIN 14550）；实战仍败于三条新死因：①真实木收入仅 sim 一半 W 断炊；
+  ②金路撞波（3 金工 (35,50-53) 迎头撞 wave2 全灭）；③(45,59) 兵营"迷雾格未探索"
+  FAIL 异常（同格同刻 boot1/2 成功，未定位）→ fallback (42,58) 正贴决战位被拆。
+- **定律/教训（r42 新增）**：①**金路/木位=波走廊交点定律**——TC(43,57)→金矿路穿
+  敌波走廊，(32-35,50-53) 必撞区；预防式错峰+离廊岗位唯一解；木位应首波出生就切
+  WOOD_SAFE。②错峰实现陷阱：「路上人数」必须**排除 fleeing 集**（按意图计数困死
+  金工）。③双 Mill 凑城堡门成立（计数≥2）省 10W10S；m4 民兵场上=1 pop。④**sim
+  校准方法学：先跑一次真实 boot 拿节奏锚点再离线迭代**（本轮 sim 收入摇摆 3 次的
+  根因=拿旧参数锚点调新参数）。
+- **第 6 轮残局（r42 定稿，BUGS-m4e.md「制胜残局」）**：N1 木位离廊 / N2 House
+  紧急阀（v≤2）/ N3 B_CANDS 重排（fallback 离决战位）/ N4 查雾格 FAIL 异常——
+  30 分钟可落地，3 boot 预算刷新重试。boot2 实证封建资源 ar~5900 即在轨，**本关可胜**。
+- **现行代驱动**=`tools/campaign/m4edrv.py`+`mocksim4e.py`（v6.4-e：矿仓定律/
+  偶和格断言/静默窗/per-vil 威胁门/微调 a-d）；历代 m4ddrv/m4cdrv/m4bdrv/m4drv。
+- 操作要点：z=70 完工弹窗 -6 清；t2=2 pop ⇒ House 先行；slots 幽灵槽判活用 state
+  JSON；`echo > fifo` 阻塞=进程已退；boot.sh 应保留每次 play.log 副本（r42 boot1/2
+  play.log 被覆盖丢失）；aistate 缺敌 pool/波出生时间戳字段（波预测靠 p1mil 计数沿）。
 - 选关注记：移植修改已**解锁全部 7 关**（c.java:2968），选关器初始高亮=campaignProgress；
   公式 idx=progress+N−1 经读码复核成立（nav 恰按 N−1 次 -4；r38"progress+N"勘误
   系其战报笔误，自行撤回）。
