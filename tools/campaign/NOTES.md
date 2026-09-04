@@ -27,7 +27,7 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
 （数据 res 号：m1=104 / m2=105 / m3=106 …；脚本=数据+7，解码器 resdec.py 换号即用。
 地形=数据内嵌 rng 确定性生成（res 106 头两字节），与 mapSeed/RMS 无关，每 boot 同图，
 可离线洪泛侦察——注意 BFS 下虚空可通行、资源格当墙。）
-### m4 大学关（⏳ 八轮 27 boot 全 LOSS 止损（r38-r45）；储蓄门已验+村民零死亡达成，新三墙=TC 不攻击/金管道/幽灵驱动）
+### m4 大学关（⏳ 九轮 30 boot 全 LOSS 止损（r38-r46）；金管道 dry 已通 WIN@12390，最早档首次单兵全歼波+村民零死亡，残墙=波期木银行单点）
 - **胜负条件（res 114）**：WIN = 封建→**升城堡完成**（techFlags[14]==1，c.java:6200）
   → **放置 University/type4**（置回 0，c.java:7590）→ 计时 50t → WIN。res 127 初始
   [14]=0 ⇒ University 在城堡前被"已建成"锁死，**顺序不可颠倒**。Univ 25木/25石。
@@ -42,9 +42,9 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   armyValue（断收入用）。**reserve 干涸前提（r42 修正）**：「敌 reserve 波
   ~ar5700-6000 干涸」仅当敌村民被清才成立——敌村民存活时 army 滚到 102 波不断
   （r44 boot3 再证 AV 97）。
-- **波 1 方差（r44 勘误，r45 续证）**：8 样本跨 **[1173, 3449]**（新增 1994/3088；
-  3088 晚抽签局波前完成开局全件=大优）——同图同种子开局逐 tick 一致而波 1 差
-  ~2300t（疑似 AI 侧非模拟随机，机制未考证）。一切卡时刻的预防按 **1173** 设计。
+- **波 1 方差（r44 勘误，r46 续证）**：11+ 样本跨 **[1168, 3449]**（r46 三连最早
+  档 1168/1322/1364 证明最早档会连续出现——设计必须全按 1168）——同图同种子
+  开局逐 tick 一致而波 1 差 ~2300t（疑似 AI 侧非模拟随机，机制未考证）。
 - **探索模型三要素（r43/N4 读码定案，全战役通用）**：build 雾判=`mapTiles[t]<0`
   （c.java:1479）；可建区=①全体单位当前格 3×3（每 tick，revealFogAroundUnit
   c.java:5978）+ ②**完工建筑**曼哈顿菱形 r3（塔 r6，每 tick 轮询一栋，void_a
@@ -69,15 +69,25 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   驱动活进新局发令+误抄 play.log，boot2 真日志被覆写丢失）。附带情报：满载
   （word7 低 nibble=3 回送态）retask 不可靠且**改派吞货**；僵尸局（0 单位但 TC
   立=不判负、TC 掉血极慢）白烧 25 分钟——驱动要自带提前弃局判定。
-- **第 9 轮残局（BUGS-m4h 交棒）**：boot.sh pkill 旧驱动+驱动 ar 倒退守卫；
-  民兵敌众我寡退 (46,60) 风筝不硬拼（TC 掉血慢可承受白打）；jobs 按槽锚定重建
-  （只对新增 slot 追加岗位）；矿仓 CANDS 前移 (42,40)/(40,42) 半程交金，或
-  RAID_MIN=2 静默窗先手压敌村民；宵禁出坑加「孤敌围城」分支一行；mocksim 删
-  TC 防御分支。
-- **现行代驱动**=`tools/campaign/m4hdrv.py`+`mocksim4h.py`（v6.4-h：储蓄门+
-  house_emg 双豁免+宵禁+MODE 横幅；boot 用 **campaign:5**+新鲜 rmsDir→idx4）；
-  历代 m4gdrv/m4fdrv/m4edrv/m4ddrv/m4cdrv/m4bdrv/m4drv（consolidation 候选：
-  r38-r45 八代 m4 驱动可择机归并）。
+- **九轮战况（r46）**：交棒残局 0-3 全落地（卫生双保险零污染/风筝 live 正确/
+  按槽锚定/半程矿仓/宵禁出坑 bool 短路）+新资产 **m=0 紧急豁免**（无兵时几何
+  避险继续经济）。3 boot 全抽最早档（波 1=1364/1322/1168 全 ≤1364）仍 LOSS
+  2826/3490/3652，但 **m#1 首次在最早档出膛并单兵全歼波 1（m4 战史首杀）**、
+  **最早档局首次村民零死亡**（boot3 2/2 存活）。dry3 起 WIN@12390 稳定复现，
+  金管道真实流动（G 14→27、m 冲 8）。mocksim 又修 4 处假阳性（TC 防御/探雾
+  多点判定/雾 reveal 时机/action 语义）。
+- **残墙定性=「波期木银行」单点（r46）**：最早档连发时满载送货在线上触发点被
+  改派吞货 → W 波期恒 0-5 → 民兵只能出生 1 个挡不住 all-in 级联。**几何避险
+  保命不保货，破局只能靠离线交存点**。第 10 轮候选：**首选 hdr9 伪造交存点**
+  （指 (30,62)：偶和✓/d2_line≈164✓/距西树 4-6 manh；**m1 实战引擎级实证**——
+  hdr9+录制+回放全通过，trace 契约支持；注意先让单位扫格探明）；次选开局首建筑
+  H#1@(30,62) 作木仓房（**需先验证 House 是否 wood 交存点**——nearestDropOff
+  读 hdr[9] 指针，与建筑类型的关系未考证）。配套：mocksim 加 M4D_WAVE0=<tick>
+  最早抽签压力注入 + hdr9 交存模拟 + 头部「已知分叉点清单」。
+- **现行代驱动**=`tools/campaign/m4idrv.py`+`mocksim4i.py`（v6.4-i：风筝/按槽
+  锚定/半程矿仓/m=0 紧急豁免/卫生双保险；boot 用 **campaign:5**+新鲜 rmsDir→
+  idx4）；历代 m4hdrv/m4gdrv/m4fdrv/m4edrv/m4ddrv/m4cdrv/m4bdrv/m4drv
+  （consolidation 候选：r38-r46 九代 m4 驱动可择机归并）。
 - 操作要点：z=70 完工弹窗 -6 清；t2=2 pop ⇒ House 先行；slots 幽灵槽判活用 state
   JSON；`echo > fifo` 阻塞=进程已退；boot.sh 应保留每次 play.log 副本（r42 boot1/2
   play.log 被覆盖丢失）；aistate 缺敌 pool/波出生时间戳字段（波预测靠 p1mil 计数沿）。
