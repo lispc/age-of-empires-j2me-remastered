@@ -27,7 +27,7 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
 （数据 res 号：m1=104 / m2=105 / m3=106 …；脚本=数据+7，解码器 resdec.py 换号即用。
 地形=数据内嵌 rng 确定性生成（res 106 头两字节），与 mapSeed/RMS 无关，每 boot 同图，
 可离线洪泛侦察——注意 BFS 下虚空可通行、资源格当墙。）
-### m4 大学关（⏳ 两轮 9 boot 全 LOSS 止损交棒（r38+r39）；反 raid 核心成立，距 WIN 差 30s）
+### m4 大学关（⏳ 三轮 12 boot 全 LOSS 止损（r38/r39/r40）；失败链已收敛到金道暴露，第 4 轮方案=纯防守 boom）
 - **胜负条件（res 114）**：WIN = 封建→**升城堡完成**（techFlags[14]==1，c.java:6200）
   → **放置 University/type4**（置回 0，c.java:7590）→ 计时 50t → WIN。res 127 初始
   [14]=0 ⇒ University 在城堡前被"已建成"锁死，**顺序不可颠倒**。Univ 25木/25石。
@@ -35,21 +35,28 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   **无判负块**（TC 毁/末单位死通用规则）。纯经济竞速关。
 - **首个战役 AI 关**（threshold=30）：敌每 tick 重算 stance，**一次性派 75% 单位槽**
   （含村民混排，c.java:8523——天然添油利于集中防御）直扑 TC±1。练兵类型按
-  `tickCount%10` 抽签、失败逐 tick 重试（c.java:8496）；**敌会补村民（raid 必须驻留
-  压制，一次屠杀不永久**，实测 p1v 0→1 复训）。**n7==0 冻结漏洞**：我方 0 单位时
-  AI 扫描整块跳过 → 永不再出兵（24 军挂机 20k tick 实证）——但不可利用到 0 单位（=判负）。
+  `tickCount%10` 抽签、失败逐 tick 重试；**敌会补村民（raid 须驻留压制）**。
+  **n7==0 冻结漏洞**：我方 0 单位时 AI 扫描整块跳过 → 永不再出兵——不可利用到 0 单位（=判负）。
 - **all-in 门（r39 修正）**：`敌 armyValue≥30 且 我<敌×1.25`（c.java:8458），aistate
-  可监控。**杀村民不直接减 armyValue**（练兵/死亡时才 ±cost）——作用是断收入；
-  敌初期 ~100 金储备可支撑 wave1 后 3000+ tick 爆兵（armyValue 冲 81），需再扛 2-3 波。
-- **两轮战况**：r39 boot4 最接近——raid 拔光敌村民、敌金剩 4，但我 TC 在敌最后一波
-  （t4 弓+t5 侦察）下 ar=5676 被拆，**差 ~30s 敌即全境停机**。
-- **第 3 轮修正案（r39 定稿）**：金矿×4 起步；raid 提前到 militia≥3；TC 庭院 (44,58)
-  集中决战（不 piecemeal——敌含 t4 弓远程，前沿接敌 3:1 亏损）；TC 常备 1 民兵兜底；
-  封建后贴 TC 补 1 塔治残余远程。现行代驱动=`tools/campaign/m4bdrv.py`
-  （aistate 全量观测/预防性撤离 ar≥1400/定点拦截/RESUME 热换模式）；上代=m4drv.py。
-- 操作要点：z=70 完工弹窗 -6 清；build 雾格 FAIL 候选表重试；t2=2 pop ⇒ House 先行；
-  敌行军走廊=村民坟场（±7 格 aggro）；`echo > fifo` 阻塞=进程已退（查 [result] 别重试）；
-  **驱动先离线 dry-run（mock aistate）再上 boot**（r39 两 boot 死于驱动 bug 非战术）。
+  可监控；杀村民不直接减 armyValue——作用是断收入。敌 ~100 金储备续航 3000+ tick。
+- **三轮战况收敛**：r39 boot4 距 WIN 30s（敌金剩 4）；r40 raid 门降 militia≥2 后
+  1851t 即拔光敌村民（p1v 1→0，敌经济黑屏 3000t、av 只涨 ~20=reserve 波有限，
+  r39 实测 ~ar5700-6000 干涸）——**中盘死因=金道暴露**（金矿 (34-36,34-37) 在敌
+  走廊上游，TC↔金线离走廊 ~5.4 格，矿工到不了岗）+ 石矿工是第 7-8 村民从未到岗
+  （age 恒 0）。庭院决战 8 波全歼 ✓（前沿 piecemeal 3:1 亏损已根除）。
+- **第 4 轮方案（r40 定稿，按证据优先级）**：**纯防守 boom**——初始 10 金只出
+  keeper+1 民兵，全部石木投封建→Mill→**塔×2 护金道**（塔位金道/走廊鞍部 (37,44)±，
+  非贴 TC）→庭院吃 reserve 波（波有限，~5700-6000t 干涸）→ 敌停机后安心城堡+大学。
+  次选：m≥4 后 2 分队轮换压制复训村民。
+- **定律/纪律**：①**光标 sum 奇偶不变量**——方向键 (dx+dy) 恒偶，建筑候选只留
+  偶和格（**奇和格完工吸住光标=升时代永久锁死**）；②驱动上机前 mocksim 离线迭代
+  （r40 九轮离线到模拟 WIN，3 boot 零驱动 bug——纪律直接生效）；③vd 反应式避险
+  无效（敌 29 格/poll），改"波出生→北半场预防回撤"；④raid 禁入敌 base 区
+  （x<11∧y<33 有 guard），复训村民等它走到矿上再杀；⑤base save 与驱动启动同一
+  命令链（迟 1s=100t 裸奔）。现行代驱动=`tools/campaign/m4cdrv.py`+离线模拟器
+  `mocksim.py`（M4C_DRY 注入口）；上代 m4bdrv.py/m4drv.py。
+- 操作要点：z=70 完工弹窗 -6 清；t2=2 pop ⇒ House 先行；slots 幽灵槽判活用 state
+  JSON；`echo > fifo` 阻塞=进程已退；`save <裸名>` 落 saveDir（绝对路径）。
 - 选关注记：移植修改已**解锁全部 7 关**（c.java:2968），选关器初始高亮=campaignProgress；
   公式 idx=progress+N−1 经读码复核成立（nav 恰按 N−1 次 -4；r38"progress+N"勘误
   系其战报笔误，自行撤回）。
