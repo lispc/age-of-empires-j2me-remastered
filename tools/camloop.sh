@@ -6,6 +6,9 @@
 #   - 战役地图种子每局重掷(z=98 结算重掷,mapSeed pin 无效)——无需种子参数,
 #     重复跑即方差采样;同图重打请用 devBoot 读档(tools/campaign/README.md);
 #   - 默认 AI = aoe.ai.CampaignAi。
+#   - 全图读（-Daoe.aiFog=0）：战役期初允许全图读（CampaignAi 既定方针）；只有
+#     #4 委托的 RuleBasedAi 实例真正消费这个开关（诚实模式会在全雾图里先探图，
+#     2 村民探到猴年马月），其余 handler 不读该属性。
 #
 # 用法:
 #   tools/camloop.sh [-n 局数] [-m 关卡1..7] [-a AI类名] [-t 每局超时秒] [-k] [-b]
@@ -81,7 +84,7 @@ while [ $i -le "$N" ]; do
     t0=$SECONDS
     "$JAVA" -Daoe.headless=1 "-Daoe.dev=campaign:$MISSION" -Daoe.turbo=1 -Daoe.noRender=1 \
         -Daoe.mute=1 -Daoe.debug=1 -Daoe.exitOnResult=1 \
-        -Daoe.playerAi="$AI" ${BFS_ARG:+"$BFS_ARG"} \
+        -Daoe.playerAi="$AI" -Daoe.aiFog=0 ${BFS_ARG:+"$BFS_ARG"} \
         -Daoe.saveDir="$gdir/saves" -Daoe.rmsDir="$gdir/rms" \
         -Duser.home="$gdir/userhome" \
         -cp "$CP" aoe.Main > "$log" 2>&1 &

@@ -25,6 +25,7 @@ public final class CampaignAi implements PlayerAi {
     private int nextDecide;
     private int lastLog;
     private int lastMissionLogged = -1;
+    private int fleeCount;              // #4 逃命遥测（500t 摘要行消费后清零）
 
     // ===== #0 拆堡关状态 =====
     private int m0Target = -1;          // 当前攻击目标（打包 tx<<8|ty）；-1=未定位
@@ -79,8 +80,9 @@ public final class CampaignAi implements PlayerAi {
             int units = game.playerUnitHeaders[0][2];
             int ebld = game.playerUnitHeaders[1][4];
             System.out.println("[cai] t=" + t + " m" + game.missionIndex
-                + " units=" + units + " ebld=" + ebld + " tgt="
+                + " units=" + units + " ebld=" + ebld + " flee=" + this.fleeCount + " tgt="
                 + (this.m0Target >= 0 ? (this.m0Target >>> 8) + "," + (this.m0Target & 0xFF) : "?"));
+            this.fleeCount = 0;
         }
     }
 
@@ -472,6 +474,38 @@ public final class CampaignAi implements PlayerAi {
         return (px - cx) * (px - cx) + (py - cy) * (py - cy);
     }
 
+    /** 塔位锚点（移植 RuleBasedAi.corridorAnchor/stanceTile）：敌 TC 已知 → 走廊
+     *  阶梯（钳走廊 60% 内，避免压进敌警戒圈/白送在建塔）；未知 → 东侧 dist 格。 */
+    private static int corridorAnchor(int myTc, int enemyTc, int dist) {
+        if (enemyTc >= 0) {
+            return stanceTile(myTc, enemyTc, Math.min(dist, corridorLen(myTc, enemyTc) * 3 / 5));
+        }
+        int x = Math.max(1, Math.min(62, (myTc >>> 8) + dist));
+        int y = Math.max(1, Math.min(62, myTc & 0xFF));
+        return x << 8 | y;
+    }
+
+    /** from→to 方向 dist 格处的点（Chebyshev 归一，钳图界内）。 */
+    private static int stanceTile(int fromPacked, int toPacked, int dist) {
+        int fx = fromPacked >>> 8, fy = fromPacked & 0xFF;
+        int dx = (toPacked >>> 8) - fx, dy = (toPacked & 0xFF) - fy;
+        int m = Math.max(Math.abs(dx), Math.abs(dy));
+        if (m == 0) {
+            return fromPacked;
+        }
+        int ax = Math.max(1, Math.min(62, fx + dx * dist / m));
+        int ay = Math.max(1, Math.min(62, fy + dy * dist / m));
+        return ax << 8 | ay;
+    }
+
+    private static int corridorLen(int myTc, int enemyTc) {
+        if (enemyTc < 0) {
+            return Integer.MAX_VALUE;
+        }
+        int dx = (enemyTc >>> 8) - (myTc >>> 8), dy = (enemyTc & 0xFF) - (myTc & 0xFF);
+        return Math.max(Math.abs(dx), Math.abs(dy));
+    }
+
     // ===== #1 护送关状态 =====
     private int escortPhase;            // 0=清西敌 1=砍隧道 2=护送
     private int escortAnchor = -1;      // 村民口袋质心（首帧记录）
@@ -718,7 +752,11 @@ public final class CampaignAi implements PlayerAi {
      *  打法 = 压缩版经济链：房屋→兵营→（封建）→塔防→磨坊→铁匠铺→（城堡）→
      *  大学放下即胜。石是瓶颈（链上共需 ~100 石），村民按缺口最大种类分派。
      *  原语全部照抄 RuleBasedAi  proven 用法（findAiBuildSpot/a/tryResearch/
-     *  queueUnitTraining；放下自动成型 ~32t，不需村民施工）。 */
+     *  queueUnitTraining；放下自动成型 ~32t，不需村民施工）。
+     *  v12 实验记录（委托 RuleBasedAi）：0/5 且死得更快（~6400）——RB 在全雾
+     *  战役图里探图停滞（aiFog=0 后经济也起不来：2 村民开局比随机图穷太多），
+     *  且 RB 不知道大学胜利链。结论：委托路线否决，回手写 handler。
+     *  RB 本体的兑现方式改为"抄教训"：塔先立、逃命不失业、配额阻尼。 */
     private void tickCastleRace(c game) {
         int[] hdr = game.playerUnitHeaders[0];
         int[] recs = game.buildingTable[0];
@@ -728,6 +766,8 @@ public final class CampaignAi implements PlayerAi {
         // 我方 TC
         int tc = -1, tcSlot = -1;
         int houseN = 0, barracksDone = 0, millDone = 0, smithDone = 0, towerN = 0, uc = 0;
+        int lumberN = 0, miningN = 0;
+        int lumberSlot = -1, miningSlot = -1, towerSlot = -1;
         for (int i = 0; i < bc; ++i) {
             int o = i << 2;
             int type = recs[o + 3] & 0xFF;
@@ -748,6 +788,19 @@ public final class CampaignAi implements PlayerAi {
                 ++smithDone;
             } else if (type == 12 && done) {
                 ++towerN;
+                if (towerSlot < 0) {
+                    towerSlot = i;
+                }
+            } else if (type == 0) {
+                ++lumberN;
+                if (done && lumberSlot < 0) {
+                    lumberSlot = i;
+                }
+            } else if (type == 1) {
+                ++miningN;
+                if (done && miningSlot < 0) {
+                    miningSlot = i;
+                }
             }
         }
         if (tc < 0) {
@@ -813,10 +866,23 @@ public final class CampaignAi implements PlayerAi {
                 slots[o + 2] = (short) flee;
                 slots[o + 7] = 0;
                 slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+                ++this.fleeCount; // 逃命遥测：进 500t 摘要行（收入崩盘的早期信号）
             }
         }
         if (invader >= 0) {
-            return; // TC 战中不搞建设/科研
+            // TC 战中只补塔（战中补塔=255HP 仇恨海绵，敌军索敌优先打塔，
+            // RuleBasedAi 同款纪律），科研/训练/再平衡停摆。
+            if (uc == 0 && towerN < 2 && hdr[5] >= 22 && hdr[6] >= 6 && hdr[7] >= 16) {
+                int anchor = corridorAnchor(tc, etc, towerN == 0 ? 4 : 6);
+                int spot = game.findAiBuildSpot(anchor);
+                int bx = spot >>> 8, by = spot & 0xFF;
+                if (bx < 64 && by < 64 && (game.mapTiles[bx + (by << 6)] & 0xFFF) == 0) {
+                    game.a(0, 12, bx, by, 0x40000000, true);
+                    System.out.println("[cai] build type=12 (threat) at " + bx + "," + by
+                        + " t=" + game.tickCount);
+                }
+            }
+            return; // TC 战中不搞科研/训练/再平衡
         }
         // —— 科技：封建（兵营前置）→ 城堡（磨坊+铁匠） ——
         if (age == 0 && barracksDone > 0 && game.canAfford(0, 2, 21)) {
@@ -829,19 +895,54 @@ public final class CampaignAi implements PlayerAi {
                 System.out.println("[cai] research CASTLE t=" + game.tickCount);
             }
         }
+        // 采集科技 + WatchTower（v7 移植 RuleBasedAi）：竞速链优先（上面两条），
+        // 富余再投产能科技——GM +3金/载、DBA +5木/载、WT 塔甲 10→15 都是长跑正收益。
+        if (age >= 1) {
+            if (miningSlot >= 0 && game.canAfford(0, 2, 5) && game.tryResearch(0, miningSlot, 5)) {
+                System.out.println("[cai] research GoldMining t=" + game.tickCount);
+            }
+            if (lumberSlot >= 0 && game.canAfford(0, 2, 3) && game.tryResearch(0, lumberSlot, 3)) {
+                System.out.println("[cai] research DoubleBitAxe t=" + game.tickCount);
+            }
+            if (towerSlot >= 0 && game.canAfford(0, 2, 13) && game.tryResearch(0, towerSlot, 13)) {
+                System.out.println("[cai] research WatchTower t=" + game.tickCount);
+            }
+            if (miningSlot >= 0 && towerN < 2 && game.canAfford(0, 2, 9)
+                    && game.tryResearch(0, miningSlot, 9)) {
+                System.out.println("[cai] research StoneMining t=" + game.tickCount);
+            }
+        }
         // —— 建造链（一次一座，放下自动成型）——
         // v2 教训：塔必须在敌首波（~3500t）前立起来——塔不吃人口、攻 32/甲，
-        // 是唯一来得及的防御；兵营→塔→封建科研→磨坊→铁匠铺→城堡→大学。
+        // 是唯一来得及的防御。
+        // v7 移植 RuleBasedAi 全套经济：伐木/采矿场贴资源（交存点砍半跑路），
+        // 塔改走廊锚点（朝敌 TC 阶梯，钳走廊 60% 内）。
+        // v8-v16 迭代史（塔先于兵营/三塔/走廊回避采集/全免门出兵 全部 0/5，
+        // 全部回滚）：敌有免费资源滴（1000）+ 连续 raid，2 村民开局的收入
+        // 经不起任何"等"——v7 的均衡链（房→伐木→兵营→塔1→采矿→塔2→磨坊→
+        // 铁匠铺→大学）是实测最优（2/5），任何单边倾斜都让某条资源线断供。
+        // 关卡天花板待破：胜需 ~11k tick 跑完竞速，敌 ~8k 起的大波需要第三塔
+        // 或机动兵力，但两者的花费都会拖垮竞速——见 WORKLOG 2026-09-04。
         boolean popPressure = hdr[2] + hdr[49] >= hdr[3] - 1;
-        int need = -1;
+        int need = -1, anchor = tc;
         if (houseN == 0 && hdr[5] >= 15) {
             need = 11;                                   // 房屋：人口 + 产村民
+        } else if (lumberN == 0 && uc == 0 && hdr[5] >= 20
+                && this.nearestSafeResource(game, tc, 1, es, eu) >= 0) {
+            need = 0;                                    // 伐木场：贴着最近木
+            anchor = this.nearestSafeResource(game, tc, 1, es, eu);
         } else if (barracksDone == 0 && uc == 0 && hdr[5] >= 20 && hdr[7] >= 10) {
             need = 10;                                   // 兵营：封建前置 + 剑士
         } else if (barracksDone > 0 && towerN == 0 && uc == 0 && hdr[5] >= 22 && hdr[6] >= 6 && hdr[7] >= 16) {
-            need = 12;                                   // 塔 1：抢在敌首波前
+            need = 12;                                   // 走廊塔 1：抢在敌首波前
+            anchor = corridorAnchor(tc, etc, 4);
+        } else if (miningN == 0 && uc == 0 && hdr[5] >= 20
+                && this.nearestSafeResource(game, tc, 2, es, eu) >= 0) {
+            need = 1;                                    // 采矿场：贴着最近金
+            anchor = this.nearestSafeResource(game, tc, 2, es, eu);
         } else if (barracksDone > 0 && towerN == 1 && uc == 0 && hdr[5] >= 22 && hdr[6] >= 6 && hdr[7] >= 16) {
-            need = 12;                                   // 塔 2：双塔再攀科技（v5：单塔守不住拉锯）
+            need = 12;                                   // 走廊塔 2：双塔再攀科技
+            anchor = corridorAnchor(tc, etc, 6);
         } else if (age >= 1 && millDone == 0 && uc == 0 && hdr[5] >= 15 && hdr[7] >= 10) {
             need = 5;                                    // 磨坊：城堡前置 1/2
         } else if (age >= 1 && smithDone == 0 && uc == 0 && hdr[5] >= 25 && hdr[7] >= 20) {
@@ -851,8 +952,8 @@ public final class CampaignAi implements PlayerAi {
         } else if (popPressure && houseN < 3 && uc == 0 && hdr[5] >= 15) {
             need = 11;
         }
-        if (need >= 0) {
-            int spot = game.findAiBuildSpot(tc);
+        if (need >= 0 && anchor >= 0) {
+            int spot = game.findAiBuildSpot(anchor);
             int bx = spot >>> 8, by = spot & 0xFF;
             if (bx < 64 && by < 64 && (game.mapTiles[bx + (by << 6)] & 0xFFF) == 0) {
                 int rc = game.a(0, need, bx, by, 0x40000000, true);
@@ -886,16 +987,19 @@ public final class CampaignAi implements PlayerAi {
                 && houseSlot >= 0 && game.canAfford(0, 0, 0)) {
             game.queueUnitTraining(0, 0);
         }
-        // 守家兵种：封建前长枪兵（t2，5/5/0），封建起剑士（t3）。v2 实测
-        // 敌首波 ~3900t 到家——等剑士（要封建 15/15/15）必然来不及，长枪兵
-        // 兵营一好就得出（game1：3809 封建刚研完村民就被割，0 兵守家）。
-        int meleeType = age >= 1 ? 3 : 2;
-        if (popRoom && barracksSlot >= 0 && milCount < 4
+        // 守家兵种：军费让位科技链——城堡时代前只用便宜长枪（5/5 vs 剑士
+        // 5/10，省的金全进封建/城堡 40G），帽 2；城后再补剑士到 4。防御主力
+        // 是双走廊塔（不吃人口），兵只是补刀。W12/G12 附加门防军费挤塔料
+        // （v13 全免门开局即训，10G 正好挤死塔 2 金门——0/5 实锤回滚）。
+        int meleeType = age >= 2 ? 3 : 2;
+        int meleeCap = age >= 2 ? 4 : 2;
+        if (popRoom && barracksSlot >= 0 && milCount < meleeCap
                 && hdr[5] >= 12 && hdr[6] >= 12 && game.canAfford(0, 0, meleeType)) {
             game.queueUnitTraining(0, meleeType);
         }
         // —— 村民采集：分阶段配额（v1 用"总量缺口"全堆木，石启动太晚被一波带走）。
-        //    兵营前 3木1石（攒兵营料）；兵营后 1木1金2石（石是链上瓶颈 ≈100）——
+        //    兵营前 3木1石（攒兵营料）；兵营后 1木1金2石（石是链上瓶颈 ≈100）。
+        //    v9/v14 三段制实验（按塔进度分段）实测不优回滚（见建造链注释迭代史）。
         //    配额阻尼收敛（+1 缓冲，一次决策最多换 1 人，RuleBasedAi 震荡环教训）。
         int[] quota = barracksDone > 0 ? new int[]{0, 1, 1, 2} : new int[]{0, 3, 0, 1};
         int[] have = new int[4];
@@ -1007,20 +1111,23 @@ public final class CampaignAi implements PlayerAi {
 
     /** #6 总攻关（res116：胜 = 拆光敌 13 建筑；敌 Keep 塔环 + 19 守军）。
      *  v4 教训：全体 all-in 被塔收 / 攻城组 solo 塔被守军收 / 单位分批到达=添油。
-     *  v5 阶段机：
-     *  0) MUSTER 全员集结出生点（攻城武器最慢，不齐不走）；
-     *  1) SWEEP 集团猎杀离巢守军（敌 aiEnabled=false，守军接敌后才追击——
-     *     把战场定在塔圈外的中场，我 17 兵对 19 兵的野战打赢才谈拆家）；
-     *     守军基本死光（≤4）或 3000t 无斩获 → 转阶段 2；
-     *  2) SIEGE 攻城组（t7/t8/t9）逐座拔塔（塔比投石机手长 2 格，必须轮换
-     *     抗伤：HP<120 撤），近战在塔圈外 8 格戒备护炮（不进塔火）；
-     *     塔全灭后近战进场拆建筑（此时守军已清，塔区惩罚不再需要）。
-     *  全程：HP 过低的单位回锚点散点回血（retreatTile）。 */
-    private int faPhase;                // 0=集结 1=野战 2=攻城/拆家
+     *  v5 阶段机（集结→野战→攻城）：野战赢则攻城输在塔火力刀锋局。
+     *  v6 攻城细化：轮换 165/250、塔周守军清场、孤立塔全员进场——但批测 0/3，
+     *  尸检定位真根因=野战兵力方差（4 局野战存活 10/2/2/7，攻城器赔光即判死）。
+     *  v7 废除野战：守军不追击（aiEnabled=false，只经 resolveAttack 报复回咬），
+     *  中场守军永远不会加入塔区战斗——集结完直接拔塔，塔周 8 格守军由 defTarget
+     *  就地集火清算。机制依据（字节码实读）：
+     *  - 塔瞄准=槽序扫描（aimProjectiles 取射程内最低 slot），伤害 64/甲 per 17t，
+     *    索敌 6 格（我方攻城器程 4，进场必挨打）；
+     *  - 站桩回血 +1/2t（tickUnits case0：闲+pos==tgt+(tickCount&8)!=0，HP<255）；
+     *  - 单位战斗态不追人（tickUnits case1 只对 slot[5] 格原地开火）；
+     *  - 被打会报复（resolveAttack 把受害者 tgt 改写成攻击者位置）。
+     *  攻城阶段：孤立塔（10 格内无第二塔）全员进场（近战 slot 低=天然肉盾+可观
+     *  拆塔 DPS）；集群塔近战 8 格外戒备只留攻城组轮换（HP<165 撤/250 归队）；
+     *  塔全灭后近战进场拆软建筑。 */
+    private int faPhase;                // 0=集结 2=攻城/拆家（v7 废除野战阶段 1）
     private int faRally = -1;           // 集结点（=出生质心）
-    private int faSweepStartEu = -1;    // 进野战时的敌兵数
-    private int faSweepBestTick;        // 上次野战斩获 tick
-    private int faSweepBestEu = 999;
+    private int lastFa2Log;             // fa2 快照节流
 
     private void tickFinalAssault(c game) {
         short[] slots = game.playerUnitSlots[0];
@@ -1046,6 +1153,39 @@ public final class CampaignAi implements PlayerAi {
         if (ebCount == 0) {
             return; // 胜局在路上
         }
+
+        if (this.faPhase == 0) {
+            // 集结：全员到 rally 3×3 散点；2/3 到位（d2≤16）即转攻城
+            int arrived = 0;
+            for (int i = 0; i < units; ++i) {
+                int pos = slots[i << 3] & 0xFFFF;
+                int dx = (pos >>> 8) - (this.faRally >>> 8), dy = (pos & 0xFF) - (this.faRally & 0xFF);
+                if (dx * dx + dy * dy <= 16) {
+                    ++arrived;
+                }
+            }
+            if (arrived * 3 >= units * 2) {
+                this.faPhase = 2;
+                System.out.println("[cai] fa phase2 SIEGE(direct) t=" + game.tickCount);
+            } else {
+                for (int i = 0; i < units; ++i) {
+                    this.orderUnit(game, i, this.retreatTile(i), false);
+                }
+                return;
+            }
+        }
+
+        // v7：野战阶段整体废除。守军不追击（aiEnabled=false，只有被打才经
+        // resolveAttack 报复性回咬），中场守军根本不会加入塔区战斗——v6 系列
+        // 的野战是用我方攻城器的命去换一堆不会动的靶子（实测 4 局野战存活
+        // 10/2/2/7，全看遭遇阵型）。
+        // v8 修复 v7 暴露的两个结构性缺陷：
+        //  1) 行军路线撞中场投石机堆：行进间被咬住后全员决斗（orderUnit 不打断
+        //     接敌单位），添油式减员。→ 反应式威胁：质心 12 格内最近敌兵 =
+        //     全军焦点（非接敌单位；接敌的保持决斗保装填），从包边缘一口口吃；
+        //  2) 回家回血=永久添油（敌 mangonel 集火 18.7/t，回家往返 700t+）。
+        //     → 就地轮换：退到威胁源 7 格外站桩回血（healTile），已脱险原地站。
+
         // 我方质心
         int cx = 0, cy = 0;
         for (int i = 0; i < units; ++i) {
@@ -1056,65 +1196,6 @@ public final class CampaignAi implements PlayerAi {
         cx /= units;
         cy /= units;
 
-        if (this.faPhase == 0) {
-            // 集结：全员到 rally 3×3 散点；2/3 到位（d2≤16）即转野战
-            int arrived = 0;
-            for (int i = 0; i < units; ++i) {
-                int pos = slots[i << 3] & 0xFFFF;
-                int dx = (pos >>> 8) - (this.faRally >>> 8), dy = (pos & 0xFF) - (this.faRally & 0xFF);
-                if (dx * dx + dy * dy <= 16) {
-                    ++arrived;
-                }
-            }
-            if (arrived * 3 >= units * 2) {
-                this.faPhase = 1;
-                this.faSweepStartEu = eu;
-                this.faSweepBestEu = eu;
-                this.faSweepBestTick = game.tickCount;
-                System.out.println("[cai] fa phase1 SWEEP eu=" + eu + " t=" + game.tickCount);
-            } else {
-                for (int i = 0; i < units; ++i) {
-                    this.orderUnit(game, i, this.retreatTile(i), false);
-                }
-                return;
-            }
-        }
-
-        if (this.faPhase == 1) {
-            // 野战：全军打离我质心最近的敌兵；斩获记录
-            if (eu < this.faSweepBestEu) {
-                this.faSweepBestEu = eu;
-                this.faSweepBestTick = game.tickCount;
-            }
-            if (eu <= 4 || game.tickCount - this.faSweepBestTick > 3000) {
-                this.faPhase = 2;
-                System.out.println("[cai] fa phase2 SIEGE eu=" + eu + " t=" + game.tickCount);
-            } else if (eu > 0) {
-                int tgt = -1, best = Integer.MAX_VALUE;
-                for (int i = 0; i < eu; ++i) {
-                    int ep = es[i << 3] & 0xFFFF;
-                    int d2 = ((ep >>> 8) - cx) * ((ep >>> 8) - cx) + ((ep & 0xFF) - cy) * ((ep & 0xFF) - cy);
-                    if (d2 < best) {
-                        best = d2;
-                        tgt = ep;
-                    }
-                }
-                this.m0Target = tgt;
-                for (int i = 0; i < units; ++i) {
-                    int o = i << 3;
-                    int hp = slots[o + 4] & 0xFF;
-                    if (hp < 90) {
-                        this.orderUnit(game, i, this.retreatTile(i), true); // 残血撤
-                    } else {
-                        this.orderUnit(game, i, tgt, false);
-                    }
-                }
-                return;
-            }
-        }
-
-        // phase 2: 攻城/拆家。攻城组点塔（轮换抗伤），近战护在塔圈 8 格外；
-        // 塔灭后近战进场拆建筑。
         int towerTarget = -1, towerD2 = Integer.MAX_VALUE;
         int softTarget = -1, softD2 = Integer.MAX_VALUE;
         for (int i = 0; i < ebCount; ++i) {
@@ -1131,31 +1212,67 @@ public final class CampaignAi implements PlayerAi {
                 softTarget = bx << 8 | by;
             }
         }
-        this.m0Target = towerTarget >= 0 ? towerTarget : softTarget;
+        int towersNear = 0; // 目标塔 10 格内的第二塔（集群判定；塔程 6 + 余量）
+        if (towerTarget >= 0) {
+            int ttx = towerTarget >>> 8, tty = towerTarget & 0xFF;
+            for (int i = 0; i < ebCount; ++i) {
+                int o = i << 2;
+                if ((eb[o + 3] & 0xFF) != 12) {
+                    continue;
+                }
+                int bx = (eb[o] >> 8) & 0x3F, by = eb[o] & 0x3F;
+                if (bx == ttx && by == tty) {
+                    continue;
+                }
+                int d2 = (bx - ttx) * (bx - ttx) + (by - tty) * (by - tty);
+                if (d2 <= 100) {
+                    ++towersNear;
+                }
+            }
+        }
+        // 反应式威胁：质心 12 格内最近敌兵（塔周守军/行军拦截都在此列）
+        int threat = -1, threatD2 = Integer.MAX_VALUE;
+        for (int i = 0; i < eu; ++i) {
+            int ep = es[i << 3] & 0xFFFF;
+            int d2 = ((ep >>> 8) - cx) * ((ep >>> 8) - cx) + ((ep & 0xFF) - cy) * ((ep & 0xFF) - cy);
+            if (d2 <= 144 && d2 < threatD2) {
+                threatD2 = d2;
+                threat = ep;
+            }
+        }
+        this.m0Target = threat >= 0 ? threat : (towerTarget >= 0 ? towerTarget : softTarget);
+        boolean meleeJoins = threat < 0 && towerTarget >= 0 && towersNear == 0;
+        int threatSrc = threat >= 0 ? threat : towerTarget;
+        int cPacked = cx << 8 | cy;
         for (int i = 0; i < units; ++i) {
             int o = i << 3;
             int type = slots[o + 3] & 0xFF;
             boolean siege = type == 7 || type == 8 || type == 9;
             int hp = slots[o + 4] & 0xFF;
             boolean healing = this.razeHealing[i];
-            int retreatAt = siege ? 120 : 90;
+            int retreatAt = siege ? 165 : 120;
             if (!healing && hp < retreatAt) {
                 this.razeHealing[i] = true;
                 healing = true;
-            } else if (healing && hp >= 220) {
+            } else if (healing && hp >= 250) {
                 this.razeHealing[i] = false;
                 healing = false;
             }
             int tgt;
             if (healing) {
-                tgt = this.retreatTile(i);
+                tgt = this.healTile(game, threatSrc, slots[o] & 0xFFFF, i);
+            } else if (threat >= 0) {
+                // 焦点集火：近战贴上（贴身互锁），攻城器 3 格外站桩齐射（程 4 内）
+                tgt = siege ? stanceTile(threat, cPacked, 3) : threat;
             } else if (siege) {
                 tgt = towerTarget >= 0 ? towerTarget
                     : (softTarget >= 0 ? softTarget : this.retreatTile(i));
             } else if (towerTarget < 0) {
                 tgt = softTarget >= 0 ? softTarget : this.retreatTile(i); // 塔清完了，进场拆
+            } else if (meleeJoins) {
+                tgt = towerTarget; // 孤立塔：全员进场，近战 slot 低吃塔火
             } else {
-                // 护炮戒备点：塔朝我锚点方向 8 格（塔索敌 6 格之外）
+                // 集群塔戒备点：塔朝我锚点方向 8 格（塔索敌 6 格之外）
                 int bx = towerTarget >>> 8, by = towerTarget & 0xFF;
                 int dx = ax - bx, dy = ay - by;
                 int m = Math.max(1, Math.max(Math.abs(dx), Math.abs(dy)));
@@ -1165,10 +1282,55 @@ public final class CampaignAi implements PlayerAi {
             }
             this.orderUnit(game, i, tgt, healing);
         }
+        // 攻城尸检打点（临时）：每 ~512t 全军槽位快照——塔火力/轮换/卡死定位用。
+        if (System.getProperty("aoe.debug") != null && game.tickCount - this.lastFa2Log >= 512) {
+            this.lastFa2Log = game.tickCount;
+            StringBuilder sb = new StringBuilder("[cai] fa2 t=" + game.tickCount
+                + " tower=" + (towerTarget >= 0 ? (towerTarget >>> 8) + "," + (towerTarget & 0xFF) : "-")
+                + " near=" + towersNear
+                + " threat=" + (threat >= 0 ? (threat >>> 8) + "," + (threat & 0xFF) : "-"));
+            for (int i = 0; i < units; ++i) {
+                int o = i << 3;
+                sb.append(' ').append(i).append(":t").append(slots[o + 3] & 0xFF)
+                    .append('@').append(slots[o] >>> 8).append(',').append(slots[o] & 0xFF)
+                    .append('>').append((slots[o + 2] & 0xFFFF) >>> 8).append(',')
+                    .append((slots[o + 2] & 0xFFFF) & 0xFF)
+                    .append(" c>").append((slots[o + 5] & 0xFFFF) >>> 8).append(',')
+                    .append((slots[o + 5] & 0xFFFF) & 0xFF)
+                    .append(" hp").append(slots[o + 4] & 0xFF)
+                    .append(" w").append(Integer.toHexString(slots[o + 7] & 0xFFFF))
+                    .append(this.razeHealing[i] ? " HEAL" : "");
+            }
+            sb.append(" |E|");
+            for (int i = 0; i < eu; ++i) {
+                int o = i << 3;
+                sb.append(' ').append(i).append(":t").append(es[o + 3] & 0xFF)
+                    .append('@').append((es[o] & 0xFFFF) >>> 8).append(',').append(es[o] & 0xFF)
+                    .append(" hp").append(es[o + 4] & 0xFF)
+                    .append(" w").append(Integer.toHexString(es[o + 7] & 0xFFFF));
+            }
+            System.out.println(sb);
+        }
     }
 
-    /** 单单位下令：接敌（任务字 1）且非撤退不打断；目标相同不写。 */
-    private void orderUnit(c game, int i, int tgt, boolean force) {
+    /** 治疗点（v8 就地轮换）：威胁源 7 格外站桩回血；单位已在 8 格外=原地站；
+     *  落点不可走 → 回锚点散点（retreatTile）。回家回血=添油（敌投石机集火
+     *  18.7/t 下 700t 往返=编制永远不齐）。 */
+    private int healTile(c game, int src, int pos, int i) {
+        if (src >= 0) {
+            int dx = (pos >>> 8) - (src >>> 8), dy = (pos & 0xFF) - (src & 0xFF);
+            if (dx * dx + dy * dy >= 64) {
+                return pos; // 已脱险：原地站桩（pos==tgt 才回血）
+            }
+            int h = stanceTile(src, pos, 7);
+            if ((game.mapTiles[(h >>> 8) + ((h & 0xFF) << 6)] & 0xFFF) == 0) {
+                return h;
+            }
+        }
+        return this.retreatTile(i);
+    }
+
+    /** 单单位下令：接敌（任务字 1）且非撤退不打断；目标相同不写。 */    private void orderUnit(c game, int i, int tgt, boolean force) {
         short[] slots = game.playerUnitSlots[0];
         int o = i << 3;
         if (!force && (slots[o + 7] & 0xF) == 1) {
