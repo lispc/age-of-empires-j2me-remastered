@@ -1030,6 +1030,16 @@ fps=30≈12 倍原速）；长 trace 验证+出视频建议 tickms=2 免超时�
   全亮 mp4。合成：`ffmpeg -framerate 30 -i frames/frame_%08d.png -c:v libx264
   -pix_fmt yuv420p -crf 20 -movflags +faststart out.mp4`。旁路热修脚本的
   aistate 轮询要容忍宿主退出（except 静默续等，勿 raise 自毁留误导 traceback）。
+  **远程单位没有对单位攻击手段（r59 粗体）**：闲置远程只自动索敌**建筑**
+  （²≤16 塔优先），对敌单位仅相邻才开打——**集火杀伤=近战贴身，宏路线没有
+  远程点杀**。守城/攻城配方的战力分配必须按这条来。
+  **blocked-arrival 改写（r59）**：retask 到不可达/被占格，走到隔壁后引擎把
+  slot[2] 改写为自身 pos →「同目标不复发」门被击穿→重发风暴→路径缓存永不算
+  完→冻结；aistate 里 target==tile 即"闲置在自身格"信号。
+  **retask 高频重发=路径重算洗缓存**（§11.1 村民条对军事同样成立）。
+  **attach 重挂（r59）**：驱动崩溃但 java 活着时原地重挂驱动合法且不烧 boot
+  （trace 契约=play.log 的 [fifo] 流）；anchor 类"首拍定终身"的量需支持
+  env 注入（如 M6_ANCHOR=x,y）。
   **探针 boot（r47 新实践）**：独立目录+3 条 fifo 命令+state/aistate 轮询
   10 分钟即可定案造价/可建性/入账语义——比纯读码多一层"引擎真做了"的证据，
   机制考证性价比最高（type0 造价与放格即生效即此法定案）。
