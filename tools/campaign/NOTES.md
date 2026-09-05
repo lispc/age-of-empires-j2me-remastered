@@ -106,7 +106,16 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
 - 选关注记：移植修改已**解锁全部 7 关**（c.java:2968），选关器初始高亮=campaignProgress；
   公式 idx=progress+N−1 经读码复核成立（nav 恰按 N−1 次 -4；r38"progress+N"勘误
   系其战报笔误，自行撤回）。
-### m3 拆楼关（✅ WIN ticks=89191，2026-09-04）
+### m3 拆家关（✅ 现行录制 WIN ticks=2874，2026-09-06 r69 重录；旧"点名+自动啃"录制 89191 留档 recordings/campaign/m3-chew/）
+- **环路配方（r69）**：近战集火直攻守军（retask 风暴禁律三件套）→ 战间
+  HEAL 检查点（150hp 以下先撤后战）→ 2 弓兵帖扫白嫖 4 软楼+HEAL 期继续帖 →
+  哨塔近战轮换啃（hp<150 撤近撤退点、≥240 归队）。WIN@2874（31×），损
+  4×t3+1×t5。微操四定律（retask 风暴/带伤冲锋/堆栈 4 槽/HEAL 期帖扫）与
+  敌弓 dps 勘误见 game-mechanics §微操四定律。
+- **驱动**=`tools/campaign/m3v2drv.py`+`m3v2-boot.sh`（沉淀守卫/批量指令/
+  塔轮换/战间 HEAL）。以下为旧配方档案（历史样本）：
+
+### m3 拆楼关（✅ WIN ticks=89191，2026-09-04；已被 r69 环路配方取代）
 - **胜负条件（res 113，28B）**：WIN = `headers[1][4]==0`（敌建筑表清零=夷平全部
   5 栋敌楼）→ 计时 20t → WIN。**无判负块**——只剩通用规则：我方无建筑常态下
   最后 1 单位死亡瞬间=LOSS（红线：不可全灭）；单兵死亡合法（实战损 2×t3 照常）。

@@ -1,0 +1,4 @@
+mapSeed=8224
+bfsPath=1
+rmsDir=<work>/rms  # 选关公式: missionIndex=progress+N-1, 必须隔离
+tickms=10
