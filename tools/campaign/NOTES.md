@@ -27,7 +27,7 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
 （数据 res 号：m1=104 / m2=105 / m3=106 …；脚本=数据+7，解码器 resdec.py 换号即用。
 地形=数据内嵌 rng 确定性生成（res 106 头两字节），与 mapSeed/RMS 无关，每 boot 同图，
 可离线洪泛侦察——注意 BFS 下虚空可通行、资源格当墙。）
-### m4 大学关（✅ **WIN ticks=93642**（r53，2026-09-05）——16 轮 51 boot 零的突破！胜利链=木银行→b2 序→僵局盘（m=9/双塔/raid 灭尽敌村民波断流）→封建 15/15/15→BS 热修城堡门→城堡 20/20/20→University(46,56)→50t。三件套入 recordings/campaign/m4/；⚠️ 回放不能位精确复现（AI 波非模拟随机实证））
+### m4 大学关（✅ **WIN@93642（r53 首胜）+ WIN@19112（r58 重录，v4 档回放位精确 drift=0 + 全亮胜利视频 65s）**——16 轮 51+4 boot；波抽签（相位×规模二元组）是本关唯一难度）
 - **胜负条件（res 114）**：WIN = 封建→**升城堡完成**（techFlags[14]==1，c.java:6200）
   → **放置 University/type4**（置回 0，c.java:7590）→ 计时 50t → WIN。res 127 初始
   [14]=0 ⇒ University 在城堡前被"已建成"锁死，**顺序不可颠倒**。Univ 25木/25石。
