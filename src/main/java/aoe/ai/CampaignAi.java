@@ -656,23 +656,42 @@ public final class CampaignAi implements PlayerAi {
     }
 
     // ===== #1 护送关状态 =====
-    private int escortPhase;            // 0=清西敌 1=砍隧道 2=护送
+    private int escortPhase;            // 0=清西敌 1=走廊清扫 2=护送走环路
     private int escortAnchor = -1;      // 村民口袋质心（首帧记录）
-    private boolean escortHdr9;         // 伪交存点已写
-    private int escortStall;            // 砍树无进展计数
-    private int escortLastFront = -1;   // 上次的前排 x 合计
+    private int escortSweepIdx;         // 当前清扫点下标
+    private int escortWalkIdx;          // 当前护送路径点下标
+    private int escortWalkStall;        // 护送无进展计数（重发用）
+    private int escortLastWalkPos = -1;
+
+    /** 环路清扫点（m1 mapdump 定版 2026-09-05）：覆盖路径 d2≤64 的全部 14 名
+     *  守敌的集群质心，沿环路从口袋排到堡区。同簇近邻合并：(22,26)∈(23,27)、
+     *  (36,23)∈(37,22)、(48,25)∈(49,24)。 */
+    private static final int[] ESCORT_SWEEP = {
+        (16 << 8) | 54, (15 << 8) | 47, (23 << 8) | 27, (25 << 8) | 21,
+        (32 << 8) | 17, (37 << 8) | 22, (49 << 8) | 24, (54 << 8) | 19,
+        (49 << 8) | 33, (61 << 8) | 45, (60 << 8) | 55,
+    };
+    /** 护送环路路径点（149 格大路环，塔火 d2>16 全程规避，逐格 BFS 验证）。
+     *  每腿 ≤15 格且全程开阔地，贪心寻路也能走；终点 (53,60) 在胜利区内。 */
+    private static final int[] ESCORT_WALK = {
+        (27 << 8) | 54, (18 << 8) | 55, (19 << 8) | 46, (19 << 8) | 36,
+        (23 << 8) | 30, (26 << 8) | 23, (31 << 8) | 18, (38 << 8) | 21,
+        (47 << 8) | 22, (51 << 8) | 28, (60 << 8) | 29, (60 << 8) | 39,
+        (60 << 8) | 49, (56 << 8) | 55, (53 << 8) | 60,
+    };
 
     /** #1 护送关（res111：胜 = p0 单位#0 静止位于 x[50,57)×y[57,64) 持续 20t；
      *  负 = 任一村民（type<2）死亡。军事死亡合法——res111 解码，m1run2 已验证）。
-     *  移植 m1run2.py 配方（宏时代已通关的战术）：
-     *  0) 军事清掉口袋西侧固定敌（村民乱漂撞敌=判负，先拔钉子）；
-     *  1) 砍隧道：树墙 = 东侧大片木格；每行"前排"= 最西且西邻可走的木格。
-     *     只砍 y≥57 的安全行——敌塔 (48,50)(50,50)(49,52) 塔火半径 4 覆盖
-     *     北行（y≤56），南行安全。3 村民 1 人 1 行，砍穿 x≥50 为止；
-     *  2) 伪交存点 hdr[9]=(前排-3, 58)：根治载满回送 orbit（m1 时代 r35 教训）；
-     *  3) 砍穿后全体村民 retask (51,60) 进堡区。
-     *  纪律：村民全程不得进 y<57（塔区）；卡死 3 决策（24t）无进展才重发
-     *  （频繁重发触发 BFS 离队重算，m1run 的 gather_hammer 教训）。 */
+     *  v2 环路护送（2026-09-05，取代 96k tick 砍树墙——mapdump 实测森林西侧
+     *  有一条 149 格开阔环路绕到堡区，全程可避开敌塔 (50,48)(52,49)(50,50)
+     *  索敌²=16）：
+     *  0) 军事清掉口袋 12 格内固定敌（村民乱漂撞敌=判负，先拔钉子）；
+     *  1) 军事沿环路逐点清扫守敌（ESCORT_SWEEP），村民钉口袋围栏——
+     *     守敌是接近触发（5-8 格 aggro），不清干净村民路过必死
+     *     （村民 512 速跑不过 1024 剑士）；
+     *  2) 只送 slot0（胜利单位）沿 ESCORT_WALK 走完全程，军事拖后一个
+     *     路径点当保镖；其余村民留口袋（暴露面 ×1 而非 ×3）。
+     *  纪律：村民全程不得进塔火；护送卡死 400t 重发当前腿。 */
     private void tickEscort(c game) {
         short[] slots = game.playerUnitSlots[0];
         int units = game.playerUnitHeaders[0][2];
@@ -716,7 +735,7 @@ public final class CampaignAi implements PlayerAi {
             }
             if (tgt < 0) {
                 this.escortPhase = 1;
-                System.out.println("[cai] escort phase1 CHOP t=" + game.tickCount);
+                System.out.println("[cai] escort phase1 SWEEP t=" + game.tickCount);
                 return;
             }
             this.m0Target = tgt;
@@ -726,85 +745,15 @@ public final class CampaignAi implements PlayerAi {
         }
 
         if (this.escortPhase == 1) {
-            // 扫树墙前排：每行 y 最西的、西邻可走的木格（只收 y≥57 安全行）。
-            // 可走 = (t & 0xFFF) == 0（引擎 stepUnitMove 的判据：低 12 位全 0，
-            // 虚空/废墟 0x0 与雾 0x8000 都可走）。单位占位（0x2xx）**不算**墙——
-            // v2 把它当前排实锤翻车：军事单位停在西侧走廊，被误判成"墙的前排"
-            // (28,58)，村民对着自己人脚下砍了 8M tick。
-            int[] frontX = new int[64];
-            java.util.Arrays.fill(frontX, -1);
-            boolean breached = true;
-            for (int y = 57; y < 63; ++y) {
-                for (int x = 20; x < 55; ++x) {
-                    int t = game.mapTiles[x + (y << 6)] & 0xFFF;
-                    if ((t & 0x300) == 0x300 && (t & 3) == 1) {
-                        if (x < 50) {
-                            breached = false; // x<50 还有树=隧道没通
-                        }
-                        if (frontX[y] < 0 && (game.mapTiles[(x - 1) + (y << 6)] & 0xFFF) == 0) {
-                            frontX[y] = x;
-                        }
-                    }
-                }
-            }
-            if (breached) {
-                // 隧道区里站着的单位会盖住格下的树（单位占位盖掉资源显示）。
-                // 精确豁免：正在采集/回送（任务字 2/3）且 slot[5]（在采资源格）
-                // 还在 x<50 隧道区内的村民。路过的/袋心闲置的不算。
-                for (int vi = 0; vi < nv; ++vi) {
-                    int o = vill[vi] << 3;
-                    int nibble = slots[o + 7] & 0xF;
-                    if (nibble != 2 && nibble != 3) {
-                        continue;
-                    }
-                    int rt = slots[o + 5] & 0xFFFF;
-                    int rx = rt >>> 8, ry = rt & 0xFF;
-                    if (rx >= 20 && rx < 50 && ry >= 57 && ry < 63) {
-                        breached = false;
-                        break;
-                    }
-                }
-            }
-            if (breached) {
-                this.escortPhase = 2; // 安全行 x<50 已没有树=墙穿了
-                System.out.println("[cai] escort phase2 ESCORT t=" + game.tickCount);
-                return;
-            }
-            // 伪交存点：前排 -3（只写一次；hdr[9]=伐木交存指针，伪造到袋内空地
-            // = 载满回送变"走到袋心闲置"，绕开不可达 TC 的回送 orbit，m1 宏线
-            // 三连 LOSS 的根因修复。本关不需要真实入账）
-            int frontSum = 0, rows = 0, minFront = 99;
-            for (int y = 57; y < 63; ++y) {
-                if (frontX[y] >= 0) {
-                    frontSum += frontX[y];
-                    ++rows;
-                    minFront = Math.min(minFront, frontX[y]);
-                }
-            }
-            // rows==0 = 前排全被站在树上的村民遮住（单位占位盖住木格），不是
-            // 墙穿——穿墙判定只看上面的 breached。hiddenByChopper 同理挡住误判：
-            // 隧道区(x<50, y57..62)里站着我方单位 = 格子下可能还压着树。
-            if (!this.escortHdr9) {
-                game.playerUnitHeaders[0][9] = (Math.max(20, minFront - 3) << 8) | 58;
-                this.escortHdr9 = true;
-                System.out.println("[cai] escort hdr9=" + Math.max(20, minFront - 3) + ",58 t=" + game.tickCount);
-            }
-            // 军事撤出作业走廊：清完西敌后在 (24,54) 蹲守（塔火半径外），
-            // 别站在隧道口挡村民（v2 尸检：骑兵停在 (28,58) 把前排堵死）。
-            this.orderMilitary(game, (24 << 8) | 54, false);
-            // 围栏（m1run2 fence 的移植）：村民出 x[20,52)×y[57,64) 立刻拉回
-            // 袋心——v3 尸检：村民砍完树被引擎"邻格同类续采"链条带进西北林区
-            // 漫游，在 (19,45) 撞上北部敌兵，村民死亡=判负（5 局同点同刻）。
-            // y=56 也不行：敌塔 (49,52) 索敌半径²=16 恰好覆盖 (49,56)。
-            int fenceHome = (Math.max(20, minFront - 3) << 8) | 58;
+            // 围栏：村民钉口袋（清扫期村民出袋=白给;出 x[20,52)×y[57,64) 拉回）
             for (int vi = 0; vi < nv; ++vi) {
                 int o = vill[vi] << 3;
                 int pos = slots[o] & 0xFFFF;
                 int px = pos >>> 8, py = pos & 0xFF;
                 if (px < 20 || px >= 52 || py < 57 || py >= 64) {
-                    if ((slots[o + 2] & 0xFFFF) != fenceHome) {
+                    if ((slots[o + 2] & 0xFFFF) != this.escortAnchor) {
                         slots[o + 1] = slots[o + 0];
-                        slots[o + 2] = (short) fenceHome;
+                        slots[o + 2] = (short) this.escortAnchor;
                         slots[o + 7] = 0;
                         slots[o + 3] = (short) (slots[o + 3] & 0xFF);
                         System.out.println("[cai] escort fence pull v" + vi
@@ -812,74 +761,120 @@ public final class CampaignAi implements PlayerAi {
                     }
                 }
             }
-            // 卡死检测：前排 50 决策（400t）无进展才允许重发——采集一载计时
-            // 102t（tickUnits case 2 高字节 0x66 倒数），v1 用 3 决策（24t）每
-            // 24t 清零一次装载计时，永远砍不倒一棵树（8M tick 僵局尸检实锤）。
-            if (frontSum == this.escortLastFront) {
-                ++this.escortStall;
-            } else {
-                this.escortStall = 0;
-                this.escortLastFront = frontSum;
+            if (this.escortSweepIdx >= ESCORT_SWEEP.length) {
+                this.escortPhase = 2; // 走廊清完=可以走人
+                System.out.println("[cai] escort phase2 WALK t=" + game.tickCount);
+                return;
             }
-            boolean reissue = this.escortStall >= 50;
-            // 每村民分配一行（槽序轮转行号，确定性）
-            int[] rowList = new int[6];
-            int nr = 0;
-            for (int y = 57; y < 63; ++y) {
-                if (frontX[y] >= 0 && frontX[y] < 50) {
-                    rowList[nr++] = y;
+            int sp = ESCORT_SWEEP[this.escortSweepIdx];
+            int sx = sp >>> 8, sy = sp & 0xFF;
+            // 清扫点 8 格内有敌 → 全体军事集火最近的（军事死亡合法）
+            short[] es = game.playerUnitSlots[1];
+            int eu = game.playerUnitHeaders[1][2];
+            int tgt = -1, best = Integer.MAX_VALUE;
+            for (int i = 0; i < eu; ++i) {
+                int ep = es[i << 3] & 0xFFFF;
+                int d2 = ((ep >>> 8) - sx) * ((ep >>> 8) - sx)
+                    + ((ep & 0xFF) - sy) * ((ep & 0xFF) - sy);
+                if (d2 <= 64 && d2 < best) {
+                    best = d2;
+                    tgt = ep;
                 }
             }
-            for (int vi = 0; vi < nv && nr > 0; ++vi) {
-                int o = vill[vi] << 3;
-                int nibble = slots[o + 7] & 0xF;
-                if (nibble == 2 || nibble == 3) {
-                    continue; // 采集/回送中绝不打断（102t 装载周期内写 slot[7]=0 = 清零）
+            if (tgt >= 0) {
+                this.m0Target = tgt;
+                this.orderMilitary(game, tgt, false);
+                return;
+            }
+            // 无敌：军事质心到点（d2≤16）才推进下一点
+            int mcx = 0, mcy = 0, mc = 0;
+            for (int i = 0; i < units; ++i) {
+                int o = i << 3;
+                if ((slots[o + 3] & 0xFF) < 2) {
+                    continue;
                 }
-                int y = rowList[vi % nr];
-                int tile = frontX[y] << 8 | y;
-                boolean idle = nibble == 0
-                    && (slots[o + 0] & 0xFFFF) == (slots[o + 2] & 0xFFFF);
-                // 闲置（含回送到伪交存点后的落地闲置）→ 派往当前前排；
-                // 卡死步行者（目标过期）也重派。同格 retask 是 no-op，靠换行重踏入。
-                if (idle || (slots[o + 2] & 0xFFFF) != tile) {
-                    if (!idle && !reissue) {
-                        continue; // 行军中且未到重发阈值：让它走
-                    }
-                    slots[o + 1] = slots[o + 0];
-                    slots[o + 2] = (short) tile;
-                    slots[o + 7] = 0;
-                    slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+                int pos = slots[o] & 0xFFFF;
+                mcx += pos >>> 8;
+                mcy += pos & 0xFF;
+                ++mc;
+            }
+            if (mc > 0) {
+                mcx /= mc;
+                mcy /= mc;
+                if ((mcx - sx) * (mcx - sx) + (mcy - sy) * (mcy - sy) <= 16) {
+                    ++this.escortSweepIdx;
+                    System.out.println("[cai] escort sweep " + this.escortSweepIdx
+                        + "/" + ESCORT_SWEEP.length + " t=" + game.tickCount);
+                    return;
                 }
             }
-            if (reissue) {
-                this.escortStall = 0;
-            }
-            this.m0Target = (minFront << 8) | 58;
+            this.m0Target = sp;
+            this.orderMilitary(game, sp, false);
             return;
         }
 
-        // phase 2: 护送全体进堡区 (51,60)
-        this.m0Target = 51 << 8 | 60;
-        for (int vi = 0; vi < nv; ++vi) {
+        // phase 2: 护送 slot0（胜利单位）走环路进堡区；其余村民钉袋心
+        int wo = vill[0] << 3;
+        int wpos = slots[wo] & 0xFFFF;
+        int wx = wpos >>> 8, wy = wpos & 0xFF;
+        for (int vi = 1; vi < nv; ++vi) {
             int o = vill[vi] << 3;
             int pos = slots[o] & 0xFFFF;
             int px = pos >>> 8, py = pos & 0xFF;
-            if (px >= 50 && px < 57 && py >= 57) {
-                continue; // 已进堡区
-            }
-            int tile = 51 << 8 | 60;
-            if ((slots[o + 7] & 0xF) == 1) {
-                continue;
-            }
-            boolean idle = (slots[o + 7] & 0xF) == 0
-                && (slots[o + 0] & 0xFFFF) == (slots[o + 2] & 0xFFFF);
-            if ((slots[o + 2] & 0xFFFF) != tile || idle) {
+            if ((px < 20 || px >= 52 || py < 57 || py >= 64)
+                    && (slots[o + 2] & 0xFFFF) != this.escortAnchor) {
                 slots[o + 1] = slots[o + 0];
-                slots[o + 2] = (short) tile;
+                slots[o + 2] = (short) this.escortAnchor;
                 slots[o + 7] = 0;
                 slots[o + 3] = (short) (slots[o + 3] & 0xFF);
             }
+        }
+        // 保镖：walker 8 格内有敌 → 军事拦截（含接敌中的）；否则拖后一路径点跟随
+        {
+            short[] es = game.playerUnitSlots[1];
+            int eu = game.playerUnitHeaders[1][2];
+            int danger = -1, dbest = Integer.MAX_VALUE;
+            for (int i = 0; i < eu; ++i) {
+                int ep = es[i << 3] & 0xFFFF;
+                int d2 = ((ep >>> 8) - wx) * ((ep >>> 8) - wx)
+                    + ((ep & 0xFF) - wy) * ((ep & 0xFF) - wy);
+                if (d2 <= 64 && d2 < dbest) {
+                    dbest = d2;
+                    danger = ep;
+                }
+            }
+            if (danger >= 0) {
+                this.orderMilitary(game, danger, true);
+            } else {
+                this.orderMilitary(game,
+                    ESCORT_WALK[Math.max(0, this.escortWalkIdx - 1)], false);
+            }
+        }
+        // walker 逐路径点推进；卡死 50 决策（400t）重发当前腿
+        if (this.escortWalkIdx < ESCORT_WALK.length) {
+            int wp = ESCORT_WALK[this.escortWalkIdx];
+            int d2 = (wx - (wp >>> 8)) * (wx - (wp >>> 8))
+                + (wy - (wp & 0xFF)) * (wy - (wp & 0xFF));
+            if (d2 <= 2) {
+                ++this.escortWalkIdx;
+                System.out.println("[cai] escort walk " + this.escortWalkIdx
+                    + "/" + ESCORT_WALK.length + " t=" + game.tickCount);
+            } else {
+                if (wpos == this.escortLastWalkPos) {
+                    ++this.escortWalkStall;
+                } else {
+                    this.escortWalkStall = 0;
+                    this.escortLastWalkPos = wpos;
+                }
+                if ((slots[wo + 2] & 0xFFFF) != wp || this.escortWalkStall >= 50) {
+                    slots[wo + 1] = slots[wo + 0];
+                    slots[wo + 2] = (short) wp;
+                    slots[wo + 7] = 0;
+                    slots[wo + 3] = (short) (slots[wo + 3] & 0xFF);
+                    this.escortWalkStall = 0;
+                }
+            }
+            this.m0Target = ESCORT_WALK[Math.min(this.escortWalkIdx, ESCORT_WALK.length - 1)];
         }
     }
 

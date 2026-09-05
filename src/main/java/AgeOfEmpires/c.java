@@ -1234,6 +1234,8 @@ implements CommandListener {
                 need = 4; break;
             case "gather":
                 need = 5; break;
+            case "mapdump":
+                need = 2; break;   // mapdump <file> [x0 y0 x1 y1]
             case "assign":
                 need = 4; break;
             case "rally":
@@ -1978,6 +1980,63 @@ implements CommandListener {
                     }
                     System.out.println("[devMouse] fields dumped to " + p[1]);
                     break;
+                case "mapdump": {
+                    // 地图 ASCII dump(AI 战术规划读图用,纯调试面):
+                    //   '.'=可走 'T'=木 'G'=金 'S'=石 '#'=障碍(低12位非空的非资源)
+                    //   覆盖层:'H'=我方建筑 'B'=敌建筑 'v'=我方村民 'm'=我方军事 'e'=敌兵
+                    int x0 = p.length > 5 ? Integer.parseInt(p[2]) : 0;
+                    int y0 = p.length > 5 ? Integer.parseInt(p[3]) : 0;
+                    int x1 = p.length > 5 ? Integer.parseInt(p[4]) : 63;
+                    int y1 = p.length > 5 ? Integer.parseInt(p[5]) : 63;
+                    try (java.io.PrintWriter w = new java.io.PrintWriter(p[1], "UTF-8")) {
+                        char[][] grid = new char[64][64];
+                        for (int y = y0; y <= y1 && y < 64; ++y) {
+                            for (int x = x0; x <= x1 && x < 64; ++x) {
+                                int t = this.mapTiles[x + (y << 6)] & 0xFFF;
+                                char ch = '.';
+                                if ((t & 0x300) == 0x300) {
+                                    ch = (t & 3) == 1 ? 'T' : (t & 3) == 2 ? 'G' : 'S';
+                                } else if (t != 0) {
+                                    ch = '#';
+                                }
+                                grid[y][x] = ch;
+                            }
+                        }
+                        for (int pl = 0; pl < 2; ++pl) {
+                            int[] br = this.buildingTable[pl];
+                            int bn = this.playerUnitHeaders[pl][4];
+                            for (int i = 0; i < bn; ++i) {
+                                int o = i << 2;
+                                int bx = br[o] & 0x3F, by = (br[o] >> 8) & 0x3F;
+                                if (bx >= x0 && bx <= x1 && by >= y0 && by <= y1) {
+                                    grid[by][bx] = pl == 0 ? 'H' : 'B';
+                                }
+                            }
+                            short[] sl = this.playerUnitSlots[pl];
+                            int un = this.playerUnitHeaders[pl][2];
+                            for (int i = 0; i < un; ++i) {
+                                int o = i << 3;
+                                int pos = sl[o] & 0xFFFF;
+                                int ux = pos >>> 8, uy = pos & 0xFF;
+                                if (ux >= x0 && ux <= x1 && uy >= y0 && uy <= y1) {
+                                    boolean vill = (sl[o + 3] & 0xFF) < 2;
+                                    grid[uy][ux] = pl == 0 ? (vill ? 'v' : 'm') : 'e';
+                                }
+                            }
+                        }
+                        w.println("# mapdump x[" + x0 + "," + x1 + "] y[" + y0 + "," + y1
+                            + "] .=可走 T=木 G=金 S=石 #=障碍 H/B=我/敌建筑 v/m/e=我村民/我军事/敌兵");
+                        for (int y = y0; y <= y1 && y < 64; ++y) {
+                            w.print(y < 10 ? " " + y : y);
+                            for (int x = x0; x <= x1 && x < 64; ++x) {
+                                w.print(grid[y][x]);
+                            }
+                            w.println();
+                        }
+                    }
+                    System.out.println("[devMouse] mapdump written to " + p[1]);
+                    break;
+                }
                 case "save":
                     // 裸文件名（无路径分隔）统一解析到 saveDir——落 CWD 曾把仓库根
                     // 弄出裸 s14（r21 事故源，agent 建议采纳）。

@@ -138,7 +138,10 @@ LLM 玩家代理的宏层（sel/goto/train/build/gather/rally/sitrep 等 FIFO �
   全部单位无截断（slot/tile/prevTile/target/type/hp/action/sel）/全部建筑记录/explored；
   不动 state 的 golden 契约）/
   `until <aA> [秒]` / `probe x y`（只拾取）/ `dump <png>`（同步导帧）/ `fields <txt>`
-  （标量静态字段；数组实例字段如 costTable 不在内）
+  （标量静态字段；数组实例字段如 costTable 不在内）/
+  `mapdump <file> [x0 y0 x1 y1]`（地图 ASCII dump：.=可走 T=木 G=金 S=石
+  #=障碍 H/B=我/敌建筑 v/m/e=我村民/我军事/敌兵——AI 战术规划读图用，
+  2026-09-05 m1 环路护送定线用它在 30 秒内找到了砍树墙外的大路）
 - 编排：`script <文件>`（批量，支持 `sleep 毫秒`、#注释）
 - 考古：`strtbl <表> <条目|all>`（打印 data.res 字符串表条目）/
   `dlg <z> <v>`（强制开结算/简报对话框复现渲染问题）
