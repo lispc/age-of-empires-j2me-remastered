@@ -43,7 +43,7 @@ run_one() {  # $1=A|B  $2=base(仅B用)
   local FIFO="$WORK/fifo-$tag" LOG="$WORK/run-$tag.log"
   rm -f "$FIFO"; mkfifo "$FIFO"
   mkdir -p "$WORK/rms-$tag"
-  java -Daoe.headless=1 "-Daoe.dev=$MODE:$MISSION" -Daoe.devMouse="$FIFO" \
+  java -Dapple.awt.UIElement=true -Daoe.headless=1 "-Daoe.dev=$MODE:$MISSION" -Daoe.devMouse="$FIFO" \
        -Daoe.tickms=40 -Daoe.debug=1 -Daoe.harnessQuiet=1 -Daoe.saveDir="$WORK/saves-$tag" \
        -Daoe.rmsDir="$WORK/rms-$tag" \
        -cp "$CP" aoe.DevHarness "" 420 > "$LOG" 2>&1 &

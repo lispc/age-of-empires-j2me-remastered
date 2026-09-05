@@ -55,7 +55,7 @@ FLAGS="-Daoe.tickms=$MS -Daoe.debug=1 -Daoe.harnessQuiet=1 -Daoe.exitOnResult=1
 # 验证从 ~45min(tickms=2 全渲染) 降到分钟级；--video 只是多导出帧+编码。
 # 回放旗标必须与录制侧同款（bfsPath 选路差异会直接破坏位精确；录制目录的
 # flags.txt 记录录制侧非默认旗标，信息性）。
-[ "$MODE" = "--headless" ] && FLAGS="$FLAGS -Daoe.headless=1"
+[ "$MODE" = "--headless" ] && FLAGS="$FLAGS -Daoe.headless=1 -Dapple.awt.UIElement=true"
 [ -n "$VDIR" ] && FLAGS="$FLAGS -Daoe.reveal=1 -Daoe.videoDir=$VDIR -Daoe.resultHold=600"
 
 echo "== 回放 $DIR (base=$BASE tickms=$MS $MODE) =="

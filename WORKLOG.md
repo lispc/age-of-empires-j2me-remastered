@@ -7,6 +7,17 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
+### headless 批测进程不再抢 macOS 焦点（2026-09-05，player-ai）
+
+- **问题**：批测每局起一个新 JVM，macOS 把它注册成 `type="Foreground"` 应用
+  （lsappinfo 实测），程序坞图标闪动 + 抢桌面焦点 + 搞坏输入法。
+- **修复**：所有 headless 启动脚本统一加 `-Dapple.awt.UIElement=true`
+  （camloop/ailoop/regress/bootcheck/replaycheck/campaign-replay +
+  campaign/*-boot 5 个）。改后实测 `type="UIElement"`——无程序坞图标、
+  不进 Cmd-Tab、不抢焦点。headless 代码路径本就不创建 JFrame
+  （Display.java:27），UIElement 是纯窗口层 hint，不进 golden 指纹。
+- 验证：ailoop 批测中 lsappinfo 取证前后对照 + 批测结果正常产出；
+  regress 绿。文档型脚本（DEVELOPMENT.md 调试入口的手抄命令）未动。
 
 ### ailoop 接 devPhase + wave9 改名 + 未来任务建议文档（2026-09-05，player-ai）
 

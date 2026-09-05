@@ -172,7 +172,7 @@ while [ $i -le "$N" ]; do
         PHASE_ARG="-Daoe.devPhase=$(( (i - 1) * ${PHASE_STEP:-7} ))"
     fi
     t0=$SECONDS
-    "$JAVA" -Daoe.headless=1 "-Daoe.dev=random:$DIFF" -Daoe.turbo=1 -Daoe.noRender=1 \
+    "$JAVA" -Dapple.awt.UIElement=true -Daoe.headless=1 "-Daoe.dev=random:$DIFF" -Daoe.turbo=1 -Daoe.noRender=1 \
         -Daoe.mute=1 -Daoe.debug=1 -Daoe.exitOnResult=1 "-D$SEED_PROP=$seed" \
         ${AI_ARG:+"$AI_ARG"} ${BFS_ARG:+"$BFS_ARG"} ${SNAP_ARG:+"$SNAP_ARG"} ${FOG_ARG:+"$FOG_ARG"} ${PHASE_ARG:+"$PHASE_ARG"} \
         -Daoe.saveDir="$gdir/saves" -Daoe.rmsDir="$gdir/rms" \

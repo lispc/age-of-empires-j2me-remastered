@@ -23,7 +23,7 @@ rm -rf "$W/rms" "$W/saves" "$W/frames"; rm -f "$W/fifo" "$W/fifo.json" "$W/fifo.
 mkdir -p "$W/saves" "$W/rms" "$W/frames"
 mkfifo "$W/fifo"
 nohup /opt/homebrew/opt/openjdk@17/bin/java \
-  -Daoe.headless=1 -Daoe.dev=campaign:5 -Daoe.tickms=10 -Daoe.debug=1 \
+  -Dapple.awt.UIElement=true -Daoe.headless=1 -Daoe.dev=campaign:5 -Daoe.tickms=10 -Daoe.debug=1 \
   -Daoe.harnessQuiet=1 -Daoe.exitOnResult=1 \
   -Daoe.reveal=1 -Daoe.videoDir=$W/frames -Daoe.resultHold=600 \
   -Daoe.saveDir=$W/saves -Daoe.rmsDir=$W/rms -Daoe.mapSeed=8224 -Daoe.bfsPath=1 \
