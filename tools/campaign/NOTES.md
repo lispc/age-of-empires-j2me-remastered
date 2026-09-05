@@ -258,14 +258,33 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   冲车盾（ramshield_spot 扫描窗西扩 sx≥0 修 C2 西缘盲区）；守军死亡判定改
   [combat] 差分。预算全押盾+围杀组合，钓鱼降辅助。工具：mapdump FIFO 指令
   （r64 主线侧引入）可做 S4 漂移监测与帖位可走性核对。
+- **七轮战况（r65，v7.0→v7.2 三 boot 全 stall + 两次接管）**：**帖扫机制
+  实证=本轮最大产出**——boot2「安全区洪泛帖网」70 秒白拿 10 座（eb 11→1）
+  射击期零损，**六轮「清口袋猫」前提是伪命题：m6 胜利不需要杀任何守军**。
+  堡垒结构完全测绘：塔(5,7)/(6,4)/(2,8)+双猫+TC 联防，塔程²6 内 4 单位 1.5s
+  团灭；(2,5) 射箭场=结构性最后目标（双猫 TRIG20 火圈∪西翼地形双覆盖，双猫
+  互保封死一切盾位）——**必须双猫全灭才开锁**。reprisal 走位=帖网头号杀伤；
+  drag 诱猫证伪移除（猫停杀点=帖网内）；S1 巢穴 0-3 损=纯方差；S2 引离成立
+  （1:3 两 boot 复现）但兜底仍漏塔程²6（v7.3 留守豁免）。[combat] 死亡差分
+  +幽灵过滤+mapdump 漂移监测/BAD_TILES 全程零故障。
+- **第 21 轮配方（r65 交棒，行号级）**：把 m6 当攻城器械问题不当歼灭问题。
+  ①sweep_claims 塔优先排序（`key=(0 if ty==12 else 1, y, x)`）；②近战保全
+  （S1 hops 再南移 y≥49/S2 兜底 kite 出塔程²6 且 melee≥3 才打/团杀 gate
+  melee≥4）；③顺序定死：团杀猫 A（开火圈）→盾决斗猫 B→帖扫收尾 (2,5)；
+  ④**冲车啃塔未标定**——r47 式 10 分钟探针先定 DPS，可行则 3 冲车啃平堡垒
+  核绕过猫问题。3 boot 全押顺序链。
 - **mapdump 地图真值（r64 尾声探针局，m6f/deliver/map-*.txt）**：西廊永久
   排除——唯一南北通道 x8 列 y22-28 贴中场猫 d²=20 火圈零余量，**东廊是唯一
   路线**；S1 南线 hops 逐格可走核对 ✓；守军 19 布点与 probe-layout ±1 格
-  吻合。mapdump 建议变体（future-tasks 登记）：叠加守军射程圈直接画 d²16/20。
-- **现行代驱动**=`tools/campaign/m6fdrv.py`（v6.7：+S1 南线/冲车盾/ram_sweep
-  猫圈豁免/S5→S6 'done' 转段/S4 漂移监测/import 闸）+ `m6-zone-calc.py` +
-  `m6-probe-layout.json`（敌 19 全量布点，顺序版）+ 早期代 m6edrv(v6.4)/
-  m6ddrv(v6.2)/m6cdrv(v5.5) + `m6b-boot.sh`。
+  吻合（注意：图内 H/B 建筑层有转置 bug，已修于 player-ai e76762a——旧图
+  涉建筑位需心算）。mapdump 建议变体（future-tasks 登记）：叠加守军射程圈
+  直接画 d²16/20。
+- **现行代驱动**=`tools/campaign/m6gdrv.py`（v7.x：+S2 引离状态机/顶廊帖扫
+  sweep_safe 三层口径+sweep_region 洪泛+sweep_claims/[combat] 死亡差分
+  ghosts/盾两段式 sx≥0/mapdump 集成+BAD_TILES/M6_STAGE 断点续跑/v7.3 留守
+  豁免）+ `m6-drysweep.py`（帖扫链 dry 闸）+ `m6fdrv.py`（v6.7）+
+  `m6-zone-calc.py` + `m6-probe-layout.json`（敌 19 全量布点，顺序版）+
+  早期代 m6edrv(v6.4)/m6ddrv(v6.2)/m6cdrv(v5.5) + `m6b-boot.sh`。
 - 历代：m6adrv.py（v4）+m6a-boot.sh。
 - 操作要点：驱动崩溃 java 活着时**原地重挂驱动合法不烧 boot**（trace 契约=
   play.log 的 [fifo] 流）；retask 高频重发对军事=洗路径缓存（§11.1 村民条
