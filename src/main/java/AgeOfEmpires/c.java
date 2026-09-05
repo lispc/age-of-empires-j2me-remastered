@@ -663,6 +663,12 @@ implements CommandListener {
 
     // ===== dev 效率工具：autoDismiss / HUD / 快照存档（F5/F9、FIFO、自动 checkpoint）=====
     private static final boolean DEV_AUTO_DISMISS = System.getProperty("aoe.autoDismiss") != null;
+    /** 相位 pin（-Daoe.devPhase=N）：战役/任务地图其实恒定（res 103-109 脚本种子
+     *  字节全非零），批测方差的真来源是菜单导航的墙钟轮询——tickCount 从 JVM 启动
+     *  连续计数不随任务重置，进关相位（敌 AI tickCount%10 选兵、&8 回血等）随负载
+     *  漂移。N≥0 时，首次进入主视图（screenState 4→6）的帧首把 tickCount 拨到 N：
+     *  同一 N = 完全可复现的一局；不同 N = 可控相位采样。devBoot 读档时不拨。 */
+    private static final int DEV_PHASE = Integer.getInteger("aoe.devPhase", -1);
     static final boolean DEV_HUD = System.getProperty("aoe.devHud") != null;
     static final boolean DEV_NO_RENDER = System.getProperty("aoe.noRender") != null;
     private static final boolean DEV_AUTO_CHECKPOINT =
@@ -995,6 +1001,12 @@ implements CommandListener {
 
     /** 每帧帧首（EDT）：存档请求串行化 + autoDismiss + 自动 checkpoint。 */
     private void devFrameHousekeeping() {
+        // 相位 pin：菜单(4)→主视图(6)边的首帧把 tickCount 拨到 devPhase。
+        // devMissionSeen 只在 screenState==4 复位，弹窗往返(2↔6)不会重拨。
+        if (DEV_PHASE >= 0 && !this.devMissionSeen && this.screenState == 6
+                && this.devBootPendingRestore == null) {
+            this.tickCount = DEV_PHASE;
+        }
         if (this.screenState == 6) {
             this.devMissionSeen = true;
         } else if (this.screenState == 4) {

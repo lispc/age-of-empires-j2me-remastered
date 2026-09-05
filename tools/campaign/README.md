@@ -36,5 +36,9 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   -cp build/classes/java/main:build/resources/main aoe.Main > <work>/play.log 2>&1 &
 ```
 必须 **nohup+disown**（后台任务清理会 SIGHUP 误杀游戏，macOS 无 setsid）。
-地图种子：战役地图随种子派生且 z=98 结算重掷——同图重打必须 devBoot 读 base 存档。
+地图种子：战役地图**恒定**（res 103-109 脚本种子字节全非零，spawnMission 读到
+非零即固定图，从不重掷；z=98 写回 nfo 种子只发生在随机图 gameMode 0）。批测
+方差来自进关相位（tickCount 不随任务重置+菜单导航墙钟漂移）——用
+`-Daoe.devPhase=N` pin（camloop 默认逐局相位）；同图同 tick 重打用 devBoot 读
+base 存档。
 长跑机器日志直写文件（nohup python3 -u ... > run.log），别接 tail 管道（缓冲致盲）。

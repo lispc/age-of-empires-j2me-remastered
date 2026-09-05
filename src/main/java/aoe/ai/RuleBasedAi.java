@@ -88,6 +88,7 @@ public final class RuleBasedAi implements PlayerAi {
     private static final int[] TOWER_DIST_EXPERT = {3, 5, 7, 9, 11};
 
     private int nextDecide;
+    private int prevTick;               // 回溯检测（devPhase 拨钟/读档）
     private int lastAttackOrder = -100000;
     private int lastDefendOrder = -100000;
     private int lastStanceOrder = -100000;
@@ -214,6 +215,12 @@ public final class RuleBasedAi implements PlayerAi {
 
     @Override
     public void tick(c game) {
+        if (game.tickCount < this.prevTick) {
+            // tickCount 回溯（-Daoe.devPhase 拨钟/devBoot 读旧档）：节流器按旧钟面
+            // 积攒会冻结 AI（t<nextDecide 恒真）——CampaignAi 同款修复。
+            this.nextDecide = 0;
+        }
+        this.prevTick = game.tickCount;
         if (game.tickCount < this.nextDecide) {
             return;
         }

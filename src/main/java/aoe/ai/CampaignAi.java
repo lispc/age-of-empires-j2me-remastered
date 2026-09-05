@@ -24,6 +24,7 @@ public final class CampaignAi implements PlayerAi {
 
     private int nextDecide;
     private int lastLog;
+    private int prevTick;               // 回溯检测（devPhase 拨钟/读档）
     private int lastMissionLogged = -1;
     private int fleeCount;              // #4 逃命遥测（500t 摘要行消费后清零）
 
@@ -36,6 +37,14 @@ public final class CampaignAi implements PlayerAi {
     @Override
     public void tick(c game) {
         int t = game.tickCount;
+        if (t < this.prevTick) {
+            // tickCount 回溯（-Daoe.devPhase 拨钟/读档）：节流器按旧钟面积攒会
+            // 冻结 AI——nextDecide 在菜单阶段已随 tickCount 涨到 ~3200，拨回 0
+            // 后 t<nextDecide 恒真，整局 AI 空转（devPhase=0 首批 0/6 全灭实证）。
+            this.nextDecide = 0;
+            this.lastLog = 0;
+        }
+        this.prevTick = t;
         if (t < this.nextDecide) {
             return;
         }
@@ -506,6 +515,18 @@ public final class CampaignAi implements PlayerAi {
         return Math.max(Math.abs(dx), Math.abs(dy));
     }
 
+    /** #4 塔锚点（v17 实验）：mine 变体驻矿——塔 1 护最近金矿、塔 2 护最近石矿
+     *  （塔程 6 罩住矿工，敌 raid 打矿即吃塔火）；找不到安全矿格回退走廊阶梯。 */
+    private int towerAnchor4(c game, int tc, int etc, int towerN, short[] es, int eu, int dist) {
+        if (C4_MINE) {
+            int mine = this.nearestSafeResource(game, tc, towerN == 0 ? 2 : 3, es, eu);
+            if (mine >= 0) {
+                return mine;
+            }
+        }
+        return corridorAnchor(tc, etc, dist);
+    }
+
     // ===== #1 护送关状态 =====
     private int escortPhase;            // 0=清西敌 1=砍隧道 2=护送
     private int escortAnchor = -1;      // 村民口袋质心（首帧记录）
@@ -745,6 +766,19 @@ public final class CampaignAi implements PlayerAi {
 
     // ===== #4 科技冲刺关 =====
 
+    /** #4 变体开关（批测对照用，-Daoe.c4v=mine/bare/tower1st，逗号分隔）：
+     *  mine = 矿场驻塔——塔锚点取金/石矿点而非走廊阶梯（v17 实测 0/10 证伪：
+     *         塔离 TC 无人守门早亡；留档可回放）。
+     *  bare = 竞速裸奔——砍掉塔 2（v17 实测 2/20，不优于双塔；留档）。
+     *  tower1st = 采矿场排到塔 1 后（v25 实测 0/20 证伪：采矿场晚了金/石
+     *         断供，全线 5.5-6.8k 早亡；留档）。
+     *  （已烘焙为默认的胜出变体：v18 战中不停摆、v21/22 塔圈逃命豁免、
+     *    v23 塔前兵帽 1、v24 kite-flee。） */
+    private static final String C4V = System.getProperty("aoe.c4v", "");
+    private static final boolean C4_MINE = C4V.contains("mine");
+    private static final boolean C4_BARE = C4V.contains("bare");
+    private static final boolean C4_TOWER1ST = C4V.contains("tower1st"); // v25 0/20 证伪:采矿场晚于塔=金/石断供
+
     /** #4（res114：胜 = 升城堡时代（tf[14]=1）→ 放置大学（tf[14]=0，c.java:7427
      *  放置清可建标记）→ 50t → 胜。败 = 通用规则（TC 毁/全灭）。
      *  唯一敌方开 AI 的关（Easy 档：采集 ×1、攻击阈值 30、训练间隔 200），
@@ -768,6 +802,7 @@ public final class CampaignAi implements PlayerAi {
         int houseN = 0, barracksDone = 0, millDone = 0, smithDone = 0, towerN = 0, uc = 0;
         int lumberN = 0, miningN = 0;
         int lumberSlot = -1, miningSlot = -1, towerSlot = -1;
+        int[] towerPos = new int[4]; // 已成型塔位（v21 逃命豁免用）
         for (int i = 0; i < bc; ++i) {
             int o = i << 2;
             int type = recs[o + 3] & 0xFF;
@@ -787,6 +822,9 @@ public final class CampaignAi implements PlayerAi {
             } else if (type == 6 && done) {
                 ++smithDone;
             } else if (type == 12 && done) {
+                if (towerN < 4) {
+                    towerPos[towerN] = ((recs[o] >> 8) & 0x3F) << 8 | (recs[o] & 0x3F);
+                }
                 ++towerN;
                 if (towerSlot < 0) {
                     towerSlot = i;
@@ -836,6 +874,17 @@ public final class CampaignAi implements PlayerAi {
         // 村民逃命：敌兵贴身 9 格（TC 保卫战里的入侵者，或路过采集点的散兵）→
         // 撤到 TC 背敌侧。v1 只在 TC 被围时逃，远征矿工被路过敌军白砍（game1
         // 尸检：(36,48) 采石村民被割）。
+        // v21：敌兵在已成塔索敌圈内 → 不逃——逃=102t 采集计时清零，
+        // 敌露营 (36,49) 矿线时逃命乒乓=金/石收入归零（败局尸检：flee 峰值
+        // 57-126/500t，res 长期 0/1/2）。塔 64/甲 per 17t 几百 tick 清一个露营者，
+        // 村民扛这一刀换采集不断线。
+        // v22：豁免圈 d2 16→25（对齐 WatchTower 索敌²）——v21 差 1 格没罩住
+        // 石矿 (36,48)（塔 (37,52) 到石矿 d2=17），石匠照样逃命乒乓，4.4k tick
+        // 攒不出铁匠铺料。
+        // v24 kite-flee（同相位成对 6/20 vs 站桩 4/20，只翻正不翻负，默认采用）：
+        // 塔圈内**贴身**敌（d2≤4）短跳到塔的背敌侧 2 格——留在塔圈内（敌追=
+        // 继续吃塔火），往返 3-5 格而非 20+ 格回 TC；非贴身不逃（塔清场）；
+        // 塔背侧不可走才站桩赌塔先清场。
         for (int i = 0; i < units; ++i) {
             int o = i << 3;
             if ((slots[o + 3] & 0xFF) >= 2) {
@@ -856,11 +905,32 @@ public final class CampaignAi implements PlayerAi {
                 continue;
             }
             int exx = nearE >>> 8, eyy = nearE & 0xFF;
-            int fx = tx + Integer.signum(tx - exx) * 3;
-            int fy = ty + Integer.signum(ty - eyy) * 3;
-            fx = Math.max(1, Math.min(62, fx));
-            fy = Math.max(1, Math.min(62, fy));
-            int flee = fx << 8 | fy;
+            int covTower = -1;
+            for (int t = 0; t < towerN && t < 4; ++t) {
+                int dx = (towerPos[t] >>> 8) - exx, dy = (towerPos[t] & 0xFF) - eyy;
+                if (dx * dx + dy * dy <= 25) {
+                    covTower = towerPos[t];
+                    break;
+                }
+            }
+            if (covTower >= 0 && nearD2 > 4) {
+                continue; // 塔圈内非贴身:不逃,塔清场
+            }
+            int flee;
+            if (covTower >= 0) {
+                // kite:敌→塔方向越过塔 2 格
+                int d = Math.max(Math.abs((covTower >>> 8) - exx), Math.abs((covTower & 0xFF) - eyy));
+                flee = stanceTile(nearE, covTower, d + 2);
+                if ((game.mapTiles[(flee >>> 8) + ((flee & 0xFF) << 6)] & 0xFFF) != 0) {
+                    continue; // 塔背侧不可走:站桩赌塔先清场
+                }
+            } else {
+                int fx = tx + Integer.signum(tx - exx) * 3;
+                int fy = ty + Integer.signum(ty - eyy) * 3;
+                fx = Math.max(1, Math.min(62, fx));
+                fy = Math.max(1, Math.min(62, fy));
+                flee = fx << 8 | fy;
+            }
             if ((slots[o + 2] & 0xFFFF) != flee) {
                 slots[o + 1] = slots[o + 0];
                 slots[o + 2] = (short) flee;
@@ -871,9 +941,9 @@ public final class CampaignAi implements PlayerAi {
         }
         if (invader >= 0) {
             // TC 战中只补塔（战中补塔=255HP 仇恨海绵，敌军索敌优先打塔，
-            // RuleBasedAi 同款纪律），科研/训练/再平衡停摆。
-            if (uc == 0 && towerN < 2 && hdr[5] >= 22 && hdr[6] >= 6 && hdr[7] >= 16) {
-                int anchor = corridorAnchor(tc, etc, towerN == 0 ? 4 : 6);
+            // RuleBasedAi 同款纪律）。
+            if (uc == 0 && towerN < (C4_BARE ? 1 : 2) && hdr[5] >= 22 && hdr[6] >= 6 && hdr[7] >= 16) {
+                int anchor = this.towerAnchor4(game, tc, etc, towerN, es, eu, towerN == 0 ? 4 : 6);
                 int spot = game.findAiBuildSpot(anchor);
                 int bx = spot >>> 8, by = spot & 0xFF;
                 if (bx < 64 && by < 64 && (game.mapTiles[bx + (by << 6)] & 0xFFF) == 0) {
@@ -882,7 +952,12 @@ public final class CampaignAi implements PlayerAi {
                         + " t=" + game.tickCount);
                 }
             }
-            return; // TC 战中不搞科研/训练/再平衡
+            // v18：塔满编后战中不再停摆——敌 raid 从 ~6k 起常驻 TC 12 格内，
+            // 一刀切 return 把科研/训练/再平衡冻到败北（g1 尸检：塔被冻 2.5k tick，
+            // 竞速链完全停摆）。塔未满编时才冻结链、资源优先塔。
+            if (towerN < (C4_BARE ? 1 : 2)) {
+                return;
+            }
         }
         // —— 科技：封建（兵营前置）→ 城堡（磨坊+铁匠） ——
         if (age == 0 && barracksDone > 0 && game.canAfford(0, 2, 21)) {
@@ -935,14 +1010,15 @@ public final class CampaignAi implements PlayerAi {
             need = 10;                                   // 兵营：封建前置 + 剑士
         } else if (barracksDone > 0 && towerN == 0 && uc == 0 && hdr[5] >= 22 && hdr[6] >= 6 && hdr[7] >= 16) {
             need = 12;                                   // 走廊塔 1：抢在敌首波前
-            anchor = corridorAnchor(tc, etc, 4);
+            anchor = this.towerAnchor4(game, tc, etc, 0, es, eu, 4);
         } else if (miningN == 0 && uc == 0 && hdr[5] >= 20
+                && (!C4_TOWER1ST || towerN >= 1)
                 && this.nearestSafeResource(game, tc, 2, es, eu) >= 0) {
             need = 1;                                    // 采矿场：贴着最近金
             anchor = this.nearestSafeResource(game, tc, 2, es, eu);
-        } else if (barracksDone > 0 && towerN == 1 && uc == 0 && hdr[5] >= 22 && hdr[6] >= 6 && hdr[7] >= 16) {
+        } else if (barracksDone > 0 && towerN == 1 && !C4_BARE && uc == 0 && hdr[5] >= 22 && hdr[6] >= 6 && hdr[7] >= 16) {
             need = 12;                                   // 走廊塔 2：双塔再攀科技
-            anchor = corridorAnchor(tc, etc, 6);
+            anchor = this.towerAnchor4(game, tc, etc, 1, es, eu, 6);
         } else if (age >= 1 && millDone == 0 && uc == 0 && hdr[5] >= 15 && hdr[7] >= 10) {
             need = 5;                                    // 磨坊：城堡前置 1/2
         } else if (age >= 1 && smithDone == 0 && uc == 0 && hdr[5] >= 25 && hdr[7] >= 20) {
@@ -991,8 +1067,12 @@ public final class CampaignAi implements PlayerAi {
         // 5/10，省的金全进封建/城堡 40G），帽 2；城后再补剑士到 4。防御主力
         // 是双走廊塔（不吃人口），兵只是补刀。W12/G12 附加门防军费挤塔料
         // （v13 全免门开局即训，10G 正好挤死塔 2 金门——0/5 实锤回滚）。
+        // v19/v20 限兵保塔金均 0/10 回滚（首波 ~6k 无兵补刀死得更快）——
+        // 早期长枪是承重墙。v23 穿针：塔前帽 1（5G，给塔留足 6G），塔立后帽 2——
+        // n=20 尸检：早死桶 6/20 全是塔 1 未立（两轮长枪把 G 从 13 吃到 <6，
+        // 恰逢 5.3k 首波露营金矿线，塔金永远凑不齐），但塔前全面禁兵又死首波。
         int meleeType = age >= 2 ? 3 : 2;
-        int meleeCap = age >= 2 ? 4 : 2;
+        int meleeCap = age >= 2 ? 4 : (towerN >= 1 ? 2 : 1);
         if (popRoom && barracksSlot >= 0 && milCount < meleeCap
                 && hdr[5] >= 12 && hdr[6] >= 12 && game.canAfford(0, 0, meleeType)) {
             game.queueUnitTraining(0, meleeType);

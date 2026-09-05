@@ -3,8 +3,13 @@
 #
 # 与 ailoop 的差异:
 #   - -Daoe.dev=campaign:<N> 进战役第 N 关(1..7,对应 missionIndex 0..6);
-#   - 战役地图种子每局重掷(z=98 结算重掷,mapSeed pin 无效)——无需种子参数,
-#     重复跑即方差采样;同图重打请用 devBoot 读档(tools/campaign/README.md);
+#   - 战役地图是**恒定**的(res 103-109 脚本种子字节全非零,地图从不重掷);
+#     批间方差的真来源是菜单导航墙钟漂移造成的**进关相位**(tickCount 从 JVM
+#     启动连续计数、不随任务重置,敌 AI tickCount%10 选兵等相位随负载漂移)。
+#     camloop 默认给第 i 局传 -Daoe.devPhase=(i-1)*PHASE_STEP(PHASE_STEP 默认 7,
+#     覆盖 %10/%8/%4 联合周期):同相位必同结果(可复现),A/B 变体逐相位对比,
+#     灵敏度远超独立抽样;PHASE_STEP=off 恢复旧的墙钟漂移行为;
+#   - 同图重打亦可用 devBoot 读档(tools/campaign/README.md);
 #   - 默认 AI = aoe.ai.CampaignAi。
 #   - 全图读（-Daoe.aiFog=0）：战役期初允许全图读（CampaignAi 既定方针）；只有
 #     #4 委托的 RuleBasedAi 实例真正消费这个开关（诚实模式会在全雾图里先探图，
@@ -13,8 +18,11 @@
 # 用法:
 #   tools/camloop.sh [-n 局数] [-m 关卡1..7] [-a AI类名] [-t 每局超时秒] [-k] [-b]
 #                    -k 保留每局日志(默认只留 summary.csv)  -b 开 BFS 寻路(默认开)
+#   C4V=mine|bare|minebare 环境变量 → 透传 -Daoe.c4v(#4 变体批测对照用)
+#   PHASE_STEP=N(默认 7)|off → 相位步进;off 恢复墙钟漂移
 # 示例:
 #   tools/camloop.sh -m 1 -n 5 -k
+#   C4V=mine tools/camloop.sh -m 5 -n 10
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -23,7 +31,7 @@ JAVA=/opt/homebrew/opt/openjdk@17/bin/java
 CP=build/classes/java/main:build/resources/main
 
 N=5; MISSION=1; AI=aoe.ai.CampaignAi; TIMEOUT=300; KEEP=0; BFS=1
-usage() { sed -n '2,17p' "$0"; exit "${1:-1}"; }
+usage() { sed -n '2,20p' "$0"; exit "${1:-1}"; }
 while getopts "n:m:a:t:kbh" opt; do
     case $opt in
         n) N=$OPTARG ;; m) MISSION=$OPTARG ;; a) AI=$OPTARG ;;
@@ -81,10 +89,16 @@ while [ $i -le "$N" ]; do
     log="$gdir/game.log"
     BFS_ARG=""
     [ "$BFS" = 1 ] && BFS_ARG="-Daoe.bfsPath=1"
+    C4V_ARG=""
+    [ -n "${C4V:-}" ] && C4V_ARG="-Daoe.c4v=$C4V"
+    PHASE_ARG=""
+    if [ "${PHASE_STEP:-7}" != "off" ]; then
+        PHASE_ARG="-Daoe.devPhase=$(( (i - 1) * ${PHASE_STEP:-7} ))"
+    fi
     t0=$SECONDS
     "$JAVA" -Daoe.headless=1 "-Daoe.dev=campaign:$MISSION" -Daoe.turbo=1 -Daoe.noRender=1 \
         -Daoe.mute=1 -Daoe.debug=1 -Daoe.exitOnResult=1 \
-        -Daoe.playerAi="$AI" -Daoe.aiFog=0 ${BFS_ARG:+"$BFS_ARG"} \
+        -Daoe.playerAi="$AI" -Daoe.aiFog=0 ${BFS_ARG:+"$BFS_ARG"} ${C4V_ARG:+"$C4V_ARG"} ${PHASE_ARG:+"$PHASE_ARG"} \
         -Daoe.saveDir="$gdir/saves" -Daoe.rmsDir="$gdir/rms" \
         -Duser.home="$gdir/userhome" \
         -cp "$CP" aoe.Main > "$log" 2>&1 &
