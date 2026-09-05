@@ -26,6 +26,11 @@ public final class CampaignAi implements PlayerAi {
     private int lastLog;
     private int prevTick;               // 回溯检测（devPhase 拨钟/读档）
     private int zeroUnitTicks;          // 僵尸局投降计时（0 单位且无产能路径）
+    // #2 经济关看门狗状态（卡死村民强制重派）
+    private final int[] gqStuckPos = new int[26];
+    private final int[] gqStuckTgt = new int[26];
+    private final int[] gqStuckTick = new int[26];
+    private int gqSkipTile = -1;
     private int lastMissionLogged = -1;
     private int fleeCount;              // #4 逃命遥测（500t 摘要行消费后清零）
 
@@ -387,9 +392,30 @@ public final class CampaignAi implements PlayerAi {
                 clearTarget = ep;
             }
         }
-        // 军事下令（不接敌打断）
+        // 村民补员（2026-09-05 phase-0 stall 尸检：本 handler 无训练逻辑，
+        // 单位被蹲点敌兵磨到 0 后房屋+木料在也永远补不了人 → 僵尸局）。
         short[] slots = game.playerUnitSlots[0];
         int units = hdr0[2];
+        int vills = 0;
+        for (int i = 0; i < units; ++i) {
+            if ((slots[(i << 3) + 3] & 0xFF) < 2) {
+                ++vills;
+            }
+        }
+        boolean popRoom = hdr0[2] + hdr0[49] < hdr0[3] && hdr0[2] + hdr0[49] < 26;
+        if (popRoom && vills + hdr0[66] < 4 && hdr0[57] + hdr0[66] < hdr0[75]
+                && game.canAfford(0, 0, 0)) {
+            int[] mb2 = game.buildingTable[0];
+            for (int i = 0; i < hdr0[4]; ++i) {
+                int o = i << 2;
+                if ((mb2[o + 3] & 0xFF) == 11 && (mb2[o + 2] & 0xFF) == 255
+                        && (mb2[o + 2] & 0x40000000) == 0) {
+                    game.queueUnitTraining(0, 0);
+                    break;
+                }
+            }
+        }
+        // 军事下令（不接敌打断）
         if (clearTarget >= 0) {
             this.m0Target = clearTarget;
             for (int i = 0; i < units; ++i) {
@@ -411,19 +437,39 @@ public final class CampaignAi implements PlayerAi {
             if ((slots[o + 3] & 0xFF) >= 2) {
                 continue; // 军事
             }
+            int pos = slots[o] & 0xFFFF;
             boolean idle = (slots[o + 7] & 0xF) == 0
                 && (slots[o + 0] & 0xFFFF) == (slots[o + 2] & 0xFFFF);
             if (!idle) {
-                continue; // 采集循环引擎全自动
+                // 卡死看门狗（phase-0 stall 实锤：村民被派往被蹲资源点，永不
+                // 到达=永不 idle=永不再分派，最后一人在 tgt=53,40 挂数百万
+                // tick）：目标格不变且位置漂移 ≤1 格持续 600t → 强制重派
+                // （跳过当前目标格）。位置判据带容差防往返抖动漏检。
+                int tgt0 = slots[o + 2] & 0xFFFF;
+                int dxp = (pos >>> 8) - (this.gqStuckPos[i] >>> 8);
+                int dyp = (pos & 0xFF) - (this.gqStuckPos[i] & 0xFF);
+                boolean stuck = tgt0 == this.gqStuckTgt[i]
+                    && Math.max(Math.abs(dxp), Math.abs(dyp)) <= 1;
+                if (stuck && game.tickCount - this.gqStuckTick[i] >= 600) {
+                    this.gqStuckTick[i] = game.tickCount;
+                    this.gqSkipTile = tgt0;
+                    idle = true; // 落入下方分派
+                } else if (!stuck) {
+                    this.gqStuckPos[i] = pos;
+                    this.gqStuckTgt[i] = tgt0;
+                    this.gqStuckTick[i] = game.tickCount;
+                }
+                if (!idle) {
+                    continue; // 采集循环引擎全自动
+                }
             }
-            int pos = slots[o] & 0xFFFF;
             // 缺口最大优先，找不到安全格退次缺
             for (int kTry = 0; kTry < 3; ++kTry) {
                 int kind = this.maxNeedKind(need);
                 if (kind == 0) {
                     break;
                 }
-                int tile = this.nearestSafeResource(game, pos, kind, es, eu);
+                int tile = this.nearestSafeResourceEx(game, pos, kind, es, eu);
                 if (tile >= 0) {
                     slots[o + 1] = slots[o + 0];
                     slots[o + 2] = (short) tile;
@@ -435,6 +481,7 @@ public final class CampaignAi implements PlayerAi {
                 }
                 need[kind] = 0; // 该种类无安全格，本决策退而求其次
             }
+            this.gqSkipTile = -1;
         }
     }
 
@@ -509,9 +556,51 @@ public final class CampaignAi implements PlayerAi {
         return best;
     }
 
+    /** 看门狗版资源搜索（#2 经济关卡死修复）：排除 gqSkipTile（卡死现报
+     *  目标格），找不到回退普通最近安全搜索。 */
+    private int nearestSafeResourceEx(c game, int pos, int kind, short[] es, int eu) {
+        if (this.gqSkipTile < 0) {
+            return this.nearestSafeResource(game, pos, kind, es, eu);
+        }
+        int px = pos >>> 8, py = pos & 0xFF;
+        int best = -1, bestD2 = Integer.MAX_VALUE;
+        for (int y = 0; y < 64; ++y) {
+            for (int x = 0; x < 64; ++x) {
+                int t = game.mapTiles[x + (y << 6)] & 0xFFF;
+                if ((t & 0x300) != 0x300 || (t & 3) != kind) {
+                    continue;
+                }
+                int packed = x << 8 | y;
+                if (packed == this.gqSkipTile) {
+                    continue;
+                }
+                boolean camped = false;
+                for (int j = 0; j < eu; ++j) {
+                    int ep = es[j << 3] & 0xFFFF;
+                    int dx = (ep >>> 8) - x, dy = (ep & 0xFF) - y;
+                    if (dx * dx + dy * dy <= 64) {
+                        camped = true;
+                        break;
+                    }
+                }
+                if (camped) {
+                    continue;
+                }
+                int d2 = (x - px) * (x - px) + (y - py) * (y - py);
+                if (d2 < bestD2) {
+                    bestD2 = d2;
+                    best = packed;
+                }
+            }
+        }
+        if (best < 0) {
+            return this.nearestSafeResource(game, pos, kind, es, eu);
+        }
+        return best;
+    }
+
     /** 点 (px,py) 到线段 (x1,y1)-(x2,y2) 的垂直距离²（近似：投影截断）。 */
-    private int distToSegment(int px, int py, int x1, int y1, int x2, int y2) {
-        int dx = x2 - x1, dy = y2 - y1;
+    private int distToSegment(int px, int py, int x1, int y1, int x2, int y2) {        int dx = x2 - x1, dy = y2 - y1;
         int len2 = dx * dx + dy * dy;
         if (len2 == 0) {
             return (px - x1) * (px - x1) + (py - y1) * (py - y1);

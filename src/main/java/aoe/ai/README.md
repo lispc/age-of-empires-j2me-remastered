@@ -21,7 +21,7 @@ missionIndex 0..6）。批跑：`tools/camloop.sh -m N -n 局数 -t 超时 -k`�
 |---|---|---|---|
 | #0 拆堡 | 拆敌 TC | **5/5**（~3k tick） | tickRaze |
 | #1 护送 | 砍树墙送村民进堡，死 1 村民=负 | **5/5**（~96k tick） | tickEscort |
-| #2 经济 | 木/金/石各 >100（严格） | **2/3**（phase 0 确定性 stall：1 单位卡死无看门狗+units=0 不判负，见下） | tickGatherQuota |
+| #2 经济 | 木/金/石各 >100（严格） | **3/3**（看门狗+补员修复后 ~28k tick；修复前 2.2M tick 且 phase 0 stall，见下） | tickGatherQuota |
 | #3 拆家 | 拆光敌 5 建筑 | **5/5**（~4.6k tick） | tickRaze |
 | #4 科技 | 升城堡时代+放置大学 | **9/20**（v26：双塔+战中不停摆+塔圈逃命豁免+塔前兵帽1+kite-flee+村民围攻独狼，见下"待攻"） | tickCastleRace |
 | #5 守城 | 扛 5 波刷兵后全歼 | **5/5**（~5.9k tick） | tickProtectCastle |
@@ -42,7 +42,9 @@ missionIndex 0..6）。批跑：`tools/camloop.sh -m N -n 局数 -t 超时 -k`�
   战役图停滞，0/5 且死得更快）/矿场驻塔（v17 mine 0/10——塔离 TC 无人守门
   早亡）/竞速裸奔砍塔 2（v17 bare 2/20，不优于双塔）/塔前禁兵或金门抬 18
   （v19/v20 均 0/10——早期长枪是首波承重墙）/采矿场排到塔后（v25 tower1st
-  0/20——交存点晚了金/石断供，全线 5.5-6.8k 早亡）；rush 不可行（通用 TC
+  0/20——交存点晚了金/石断供，全线 5.5-6.8k 早亡）/围攻放宽到塔圈外
+  （v29 8/20+1 stall 回滚——中盘拉村民离岗打游击反而饿死经济，且慢速
+  村民追移动 raider 永远差 1 格形成追逐僵局）；rush 不可行（通用 TC
   拆毁胜利在战役 missionIndex≠0 被跳过，c.java onThingDestroyed case 9——
   #4 只有大学一条路）。**当前配方**（默认路径，C4V 空）：双走廊塔 +
   战中不停摆（塔满编后 invader 不冻结竞速链）+ 塔圈逃命豁免（d2≤25 不逃）
@@ -98,7 +100,9 @@ missionIndex 0..6）。批跑：`tools/camloop.sh -m N -n 局数 -t 超时 -k`�
     （`if (n7!=0)`）——我方 0 单位时敌军永不动工，TC 站着也没人拆，
     units=0 永不终局（实测 t=25M）。批测侧解法 = AI 投降（exitOnResult
     下 0 单位+无产能路径持续 500t → [result] LOSS 退出，CampaignAi.tick
-    首部）。
+    首部）。另一形态 = handler 把卡死单位当"在忙"（#2 经济关 phase-0：
+    村民永不到达=永不 idle=永不再分派）——解法 = 位置漂移 ≤1 格且 600t
+    的看门狗强制重派 + handler 内补村民训练。
 
 ## RuleBasedAi
 
