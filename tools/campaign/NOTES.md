@@ -244,11 +244,24 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
 - 新认知：敌方 aistate slot 死亡压缩——守军追踪按 tile 不按 slot（hp 回升=
   槽位重排伪象）；引擎 BFS 每 hop 偏 1-2 格（行军 hop 需 2-3 格密化+冻结跳级
   守卫）；被打报复直射 112/发（猫）是宏线唯一远程对单位输出，可发展诱饵钓杀。
-- **现行代驱动**=`tools/campaign/m6edrv.py`（v6.4：v6.2+v6.3 五修+三修
-  auto-home 掉血口径/TRIG-RNG 射程口径分离/S1 hops 东移）+ `m6-zone-calc.py`
-  （安全帖/会合区计算器）+ `m6ddrv.py`（v6.2）+ `m6cdrv.py`（v5.5）+
-  `analyze_m6c.py`（离线安全区分析器）+ `m6-probe-layout.json`（守军 19 全量
-  布点）+ `m6b-boot.sh`。
+- **六轮战况（r64，v6.5→v6.7 三 boot 全 LOSS，eb 仍 11）**：帖诱反杀 v1 的
+  「中箭拉回」被 reprisal 覆盖 retask 证伪（饵追进口袋死猫口）——手册旧结论
+  （r61 炮火下硬钉拉不住）没逐条过新状态机，配方级教训。重大收货：①敌 19
+  布点全钉死（东缘弓×3=spawn 非漂移，margin 外可永久无视；**只要清口袋 2 猫**
+  ）；②**S1 南线**（y≥48）巢穴零暴露、1弓换3净赚，巢穴问题关闭；③aistate
+  死亡幽灵——[combat] 是唯一死亡真源；④猫对猫先手必胜/猫装填 256 全场最慢/
+  冲车盾「盾先猫后」方向正确但 boot3 没来得及正确执行一次。六轮 13 boot 全
+  折在「口袋 2 猫 + TC 封锁」同一点。
+- **第 20 轮配方（r64 交棒）**：核心=「守军自投罗网」——S2 门钉改引离（不打
+  塔下混战）；S5 方阵常驻（离线帖表二选一，不动态重算）+ 双饵轮换（饵用近战/
+  征服者等死了不亏的棋子，职责=挨第一箭引 reprisal 撞 envelope）；猫=盾先猫后
+  冲车盾（ramshield_spot 扫描窗西扩 sx≥0 修 C2 西缘盲区）；守军死亡判定改
+  [combat] 差分。预算全押盾+围杀组合，钓鱼降辅助。工具：mapdump FIFO 指令
+  （r64 主线侧引入）可做 S4 漂移监测与帖位可走性核对。
+- **现行代驱动**=`tools/campaign/m6fdrv.py`（v6.7：+S1 南线/冲车盾/ram_sweep
+  猫圈豁免/S5→S6 'done' 转段/S4 漂移监测/import 闸）+ `m6-zone-calc.py` +
+  `m6-probe-layout.json`（敌 19 全量布点，顺序版）+ 早期代 m6edrv(v6.4)/
+  m6ddrv(v6.2)/m6cdrv(v5.5) + `m6b-boot.sh`。
 - 历代：m6adrv.py（v4）+m6a-boot.sh。
 - 操作要点：驱动崩溃 java 活着时**原地重挂驱动合法不烧 boot**（trace 契约=
   play.log 的 [fifo] 流）；retask 高频重发对军事=洗路径缓存（§11.1 村民条
