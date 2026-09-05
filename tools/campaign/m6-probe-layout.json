@@ -1,0 +1,964 @@
+{
+ "tick": 780,
+ "aA": 6,
+ "gameMode": 32,
+ "techFlags": [
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  1,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  1,
+  1,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+  0,
+  0,
+  1,
+  0,
+  0,
+  1,
+  0,
+  0,
+  0
+ ],
+ "players": [
+  {
+   "age": 2,
+   "units": 17,
+   "popCap": 0,
+   "buildings": 0,
+   "res": [
+    0,
+    0,
+    0
+   ],
+   "tcTile": -1,
+   "hq9": -1,
+   "trainQueue": 0,
+   "armyValue": 162,
+   "produced": 17,
+   "lost": 0,
+   "built": 0,
+   "buildingsLost": 0,
+   "deliveries": 0
+  },
+  {
+   "age": 0,
+   "units": 19,
+   "popCap": 5,
+   "buildings": 13,
+   "res": [
+    25,
+    25,
+    25
+   ],
+   "tcTile": -1,
+   "hq9": -1,
+   "trainQueue": 0,
+   "armyValue": 192,
+   "produced": 19,
+   "lost": 0,
+   "built": 13,
+   "buildingsLost": 0,
+   "deliveries": 0
+  }
+ ],
+ "explored": 54,
+ "units": [
+  {
+   "p": 0,
+   "slot": 0,
+   "tile": [
+    14,
+    56
+   ],
+   "prevTile": [
+    14,
+    56
+   ],
+   "target": [
+    14,
+    56
+   ],
+   "type": 3,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 0,
+   "slot": 1,
+   "tile": [
+    14,
+    57
+   ],
+   "prevTile": [
+    14,
+    57
+   ],
+   "target": [
+    14,
+    57
+   ],
+   "type": 3,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 0,
+   "slot": 2,
+   "tile": [
+    15,
+    55
+   ],
+   "prevTile": [
+    15,
+    55
+   ],
+   "target": [
+    15,
+    55
+   ],
+   "type": 3,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 0,
+   "slot": 3,
+   "tile": [
+    15,
+    56
+   ],
+   "prevTile": [
+    15,
+    56
+   ],
+   "target": [
+    15,
+    56
+   ],
+   "type": 3,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 0,
+   "slot": 4,
+   "tile": [
+    15,
+    57
+   ],
+   "prevTile": [
+    15,
+    57
+   ],
+   "target": [
+    15,
+    57
+   ],
+   "type": 3,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 0,
+   "slot": 5,
+   "tile": [
+    9,
+    58
+   ],
+   "prevTile": [
+    9,
+    58
+   ],
+   "target": [
+    9,
+    58
+   ],
+   "type": 8,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 0,
+   "slot": 6,
+   "tile": [
+    10,
+    58
+   ],
+   "prevTile": [
+    10,
+    58
+   ],
+   "target": [
+    10,
+    58
+   ],
+   "type": 8,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 0,
+   "slot": 7,
+   "tile": [
+    11,
+    58
+   ],
+   "prevTile": [
+    11,
+    58
+   ],
+   "target": [
+    11,
+    58
+   ],
+   "type": 8,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 0,
+   "slot": 8,
+   "tile": [
+    11,
+    57
+   ],
+   "prevTile": [
+    11,
+    57
+   ],
+   "target": [
+    11,
+    57
+   ],
+   "type": 7,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 0,
+   "slot": 9,
+   "tile": [
+    10,
+    57
+   ],
+   "prevTile": [
+    10,
+    57
+   ],
+   "target": [
+    10,
+    57
+   ],
+   "type": 7,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 0,
+   "slot": 10,
+   "tile": [
+    10,
+    56
+   ],
+   "prevTile": [
+    10,
+    56
+   ],
+   "target": [
+    10,
+    56
+   ],
+   "type": 7,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 0,
+   "slot": 11,
+   "tile": [
+    14,
+    58
+   ],
+   "prevTile": [
+    14,
+    58
+   ],
+   "target": [
+    14,
+    58
+   ],
+   "type": 4,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 0,
+   "slot": 12,
+   "tile": [
+    14,
+    59
+   ],
+   "prevTile": [
+    14,
+    59
+   ],
+   "target": [
+    14,
+    59
+   ],
+   "type": 4,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 0,
+   "slot": 13,
+   "tile": [
+    15,
+    59
+   ],
+   "prevTile": [
+    15,
+    59
+   ],
+   "target": [
+    15,
+    59
+   ],
+   "type": 4,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 0,
+   "slot": 14,
+   "tile": [
+    15,
+    58
+   ],
+   "prevTile": [
+    15,
+    58
+   ],
+   "target": [
+    15,
+    58
+   ],
+   "type": 4,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 0,
+   "slot": 15,
+   "tile": [
+    16,
+    59
+   ],
+   "prevTile": [
+    16,
+    59
+   ],
+   "target": [
+    16,
+    59
+   ],
+   "type": 4,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 0,
+   "slot": 16,
+   "tile": [
+    16,
+    57
+   ],
+   "prevTile": [
+    16,
+    57
+   ],
+   "target": [
+    16,
+    57
+   ],
+   "type": 9,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 1,
+   "slot": 0,
+   "tile": [
+    33,
+    43
+   ],
+   "prevTile": [
+    33,
+    43
+   ],
+   "target": [
+    33,
+    43
+   ],
+   "type": 4,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 1,
+   "slot": 1,
+   "tile": [
+    31,
+    41
+   ],
+   "prevTile": [
+    31,
+    41
+   ],
+   "target": [
+    31,
+    41
+   ],
+   "type": 4,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 1,
+   "slot": 2,
+   "tile": [
+    33,
+    41
+   ],
+   "prevTile": [
+    33,
+    41
+   ],
+   "target": [
+    33,
+    41
+   ],
+   "type": 4,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 1,
+   "slot": 3,
+   "tile": [
+    18,
+    15
+   ],
+   "prevTile": [
+    18,
+    15
+   ],
+   "target": [
+    18,
+    15
+   ],
+   "type": 4,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 1,
+   "slot": 4,
+   "tile": [
+    19,
+    14
+   ],
+   "prevTile": [
+    19,
+    14
+   ],
+   "target": [
+    19,
+    14
+   ],
+   "type": 4,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 1,
+   "slot": 5,
+   "tile": [
+    4,
+    9
+   ],
+   "prevTile": [
+    4,
+    9
+   ],
+   "target": [
+    4,
+    9
+   ],
+   "type": 4,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 1,
+   "slot": 6,
+   "tile": [
+    6,
+    7
+   ],
+   "prevTile": [
+    6,
+    7
+   ],
+   "target": [
+    6,
+    7
+   ],
+   "type": 4,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 1,
+   "slot": 7,
+   "tile": [
+    8,
+    5
+   ],
+   "prevTile": [
+    8,
+    5
+   ],
+   "target": [
+    8,
+    5
+   ],
+   "type": 4,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 1,
+   "slot": 8,
+   "tile": [
+    18,
+    14
+   ],
+   "prevTile": [
+    18,
+    14
+   ],
+   "target": [
+    18,
+    14
+   ],
+   "type": 4,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 1,
+   "slot": 9,
+   "tile": [
+    29,
+    57
+   ],
+   "prevTile": [
+    29,
+    57
+   ],
+   "target": [
+    29,
+    57
+   ],
+   "type": 3,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 1,
+   "slot": 10,
+   "tile": [
+    26,
+    30
+   ],
+   "prevTile": [
+    26,
+    30
+   ],
+   "target": [
+    26,
+    30
+   ],
+   "type": 3,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 1,
+   "slot": 11,
+   "tile": [
+    27,
+    29
+   ],
+   "prevTile": [
+    27,
+    29
+   ],
+   "target": [
+    27,
+    29
+   ],
+   "type": 3,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 1,
+   "slot": 12,
+   "tile": [
+    28,
+    28
+   ],
+   "prevTile": [
+    28,
+    28
+   ],
+   "target": [
+    28,
+    28
+   ],
+   "type": 3,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 1,
+   "slot": 13,
+   "tile": [
+    32,
+    16
+   ],
+   "prevTile": [
+    32,
+    16
+   ],
+   "target": [
+    32,
+    16
+   ],
+   "type": 3,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 1,
+   "slot": 14,
+   "tile": [
+    13,
+    23
+   ],
+   "prevTile": [
+    13,
+    23
+   ],
+   "target": [
+    13,
+    23
+   ],
+   "type": 8,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 1,
+   "slot": 15,
+   "tile": [
+    14,
+    22
+   ],
+   "prevTile": [
+    14,
+    22
+   ],
+   "target": [
+    14,
+    22
+   ],
+   "type": 8,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 1,
+   "slot": 16,
+   "tile": [
+    12,
+    24
+   ],
+   "prevTile": [
+    12,
+    24
+   ],
+   "target": [
+    12,
+    24
+   ],
+   "type": 8,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 1,
+   "slot": 17,
+   "tile": [
+    5,
+    5
+   ],
+   "prevTile": [
+    5,
+    5
+   ],
+   "target": [
+    5,
+    5
+   ],
+   "type": 8,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  },
+  {
+   "p": 1,
+   "slot": 18,
+   "tile": [
+    3,
+    7
+   ],
+   "prevTile": [
+    3,
+    7
+   ],
+   "target": [
+    3,
+    7
+   ],
+   "type": 8,
+   "hp": 255,
+   "action": 0,
+   "sel": false
+  }
+ ],
+ "buildingRecs": [
+  {
+   "p": 1,
+   "slot": 0,
+   "type": 9,
+   "tile": [
+    4,
+    4
+   ],
+   "hp": 255,
+   "uc": false
+  },
+  {
+   "p": 1,
+   "slot": 1,
+   "type": 3,
+   "tile": [
+    4,
+    2
+   ],
+   "hp": 255,
+   "uc": false
+  },
+  {
+   "p": 1,
+   "slot": 2,
+   "type": 10,
+   "tile": [
+    2,
+    1
+   ],
+   "hp": 255,
+   "uc": false
+  },
+  {
+   "p": 1,
+   "slot": 3,
+   "type": 7,
+   "tile": [
+    1,
+    3
+   ],
+   "hp": 255,
+   "uc": false
+  },
+  {
+   "p": 1,
+   "slot": 4,
+   "type": 4,
+   "tile": [
+    2,
+    5
+   ],
+   "hp": 255,
+   "uc": false
+  },
+  {
+   "p": 1,
+   "slot": 5,
+   "type": 2,
+   "tile": [
+    2,
+    3
+   ],
+   "hp": 255,
+   "uc": false
+  },
+  {
+   "p": 1,
+   "slot": 6,
+   "type": 6,
+   "tile": [
+    5,
+    1
+   ],
+   "hp": 255,
+   "uc": false
+  },
+  {
+   "p": 1,
+   "slot": 7,
+   "type": 8,
+   "tile": [
+    1,
+    1
+   ],
+   "hp": 255,
+   "uc": false
+  },
+  {
+   "p": 1,
+   "slot": 8,
+   "type": 12,
+   "tile": [
+    2,
+    8
+   ],
+   "hp": 255,
+   "uc": false
+  },
+  {
+   "p": 1,
+   "slot": 9,
+   "type": 12,
+   "tile": [
+    5,
+    7
+   ],
+   "hp": 255,
+   "uc": false
+  },
+  {
+   "p": 1,
+   "slot": 10,
+   "type": 12,
+   "tile": [
+    6,
+    4
+   ],
+   "hp": 255,
+   "uc": false
+  },
+  {
+   "p": 1,
+   "slot": 11,
+   "type": 12,
+   "tile": [
+    26,
+    28
+   ],
+   "hp": 255,
+   "uc": false
+  },
+  {
+   "p": 1,
+   "slot": 12,
+   "type": 12,
+   "tile": [
+    22,
+    50
+   ],
+   "hp": 255,
+   "uc": false
+  }
+ ]
+}
