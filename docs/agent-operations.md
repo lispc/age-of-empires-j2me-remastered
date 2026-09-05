@@ -1024,6 +1024,12 @@ fps=30≈12 倍原速）；长 trace 验证+出视频建议 tickms=2 免超时�
   起点就相等）——逃盲区姿势=A′（按录制日志精确复刻 pre-apply 轨迹）vs B′
   （devBoot）apply 后立即逐字段对拍。**mktrace 已修 key 双记**（[fifo]+[input]
   两路各打一行，同 tick 同 key 去重）。
+  **直播局视频三旗标（r57 验证）**：`-Daoe.reveal=1 -Daoe.videoDir=<dir>
+  -Daoe.resultHold=600` 与驱动+多写者热修脚本共存零冲突（reveal 纯 paint 层；
+  PNG 异步编码不拖 tick，253 帧/20s 无背压）——不必等回放，WIN 局本身即可出
+  全亮 mp4。合成：`ffmpeg -framerate 30 -i frames/frame_%08d.png -c:v libx264
+  -pix_fmt yuv420p -crf 20 -movflags +faststart out.mp4`。旁路热修脚本的
+  aistate 轮询要容忍宿主退出（except 静默续等，勿 raise 自毁留误导 traceback）。
   **探针 boot（r47 新实践）**：独立目录+3 条 fifo 命令+state/aistate 轮询
   10 分钟即可定案造价/可建性/入账语义——比纯读码多一层"引擎真做了"的证据，
   机制考证性价比最高（type0 造价与放格即生效即此法定案）。

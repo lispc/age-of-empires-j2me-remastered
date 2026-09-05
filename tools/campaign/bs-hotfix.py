@@ -52,7 +52,13 @@ def build_fb(cands, btype, tag):
 def main():
     deadline = time.time() + 1500
     while time.time() < deadline:
-        a = aistate()
+        try:
+            a = aistate()
+        except Exception:
+            # 宿主 java 退出后 fifo 无读者、echo 必超时——静默续等同
+            # reseat-miners（r57：赛后自毁 traceback 是日志噪声不是故障）
+            time.sleep(3)
+            continue
         p0 = a['players'][0]
         Wq, Gq, Sq = p0['res']
         brecs = [b for b in a['buildingRecs'] if b['p'] == 0]
