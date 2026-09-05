@@ -437,6 +437,19 @@
   AIOOBE 兜底），唯一真伪影就是本次咬人的这一处。审计方法（javap 对照原 jar）值得
   对任何"反编译输出可疑"的循环复用。
 
+## 确定性模型（2026-09-05 r54 AI 波调查定案）
+
+- **tickAi 全路径零 RNG/零墙钟/零集合迭代**——AI 波时刻跨 boot 方差的根因
+  不是 AI 随机：①快照 v3 以前不保存 AI 大脑（三计时器/stance/建造相位/采集
+  缓存 var_short_a/b/c/脚本事件日志），apply 前同任务重载被 setupMissionEnv
+  清零 → 读档局 AI 时钟静默归零（v4 起随档，旧档不可再生）；②任务装载不复位
+  全局 tickCount（仅 app 启动清零），boot 菜单导航的墙钟等待使任务起点相位
+  跨 boot 漂移，而练兵抽签（tickCount%10 c.java:8496）/索敌轮转/揭雾轮询/
+  回血 &8 等消费绝对相位 → fresh-boot 波时刻按相位聚类是**原作特性**。
+- **apply 帧模拟曾被跳过**：apply→onShown 置全量重画标志，onPaint 全量分支
+  帧首早退只渲染——恢复后的世界相对 tickCount 永久年轻 1 tick（已修：apply
+  后清标志）。
+
 ## 存档（.nfo）
 
 - 【已验证】`nfoData`（314 字节），`loadNfo()` 读写 RecordStore `.nfo`

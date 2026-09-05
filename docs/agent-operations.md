@@ -994,6 +994,12 @@ fps=30≈12 倍原速）；长 trace 验证+出视频建议 tickms=2 免超时�
   速率入模必须 ×90，否则出现"TC 2500t 不掉血"假象；dry 数字反常先查单位制
   再查逻辑。**战术结论依赖伤害模型**：TC 掉血入模后「保兵优于换兵」翻转为
   front-at-parity（dry 多活 2800t）——模型改了，结论要重算。
+  **bootcheck 已知损坏（r54 记录）**：对 aoe.Main 发 stopat 会取消唯一非守护
+  java.util.Timer 线程 → JVM 退场 → 管道 SIGPIPE（exit 141）——与快照 v4 无关
+  的既有问题，修复候选=改用 DevHarness（非守护 main 驻留）。**验证脚本的
+  退出码一律落文件再读**（管道 $? 是 tail 的）。replaycheck 已补 rmsDir 隔离
+  （r54；此前裸写真实 ~/.aoe-desktop RMS，同值写回零污染但属卫生缺口，且
+  tutorialProgress 变化会埋选关雷）。
   **campaign-replay 早死存档防呆（r53）**：unattended+turbo 下"很快会输的
   开局存档"会在脚本 grep 轮询期间就 LOSS 退出——echo 写 fifo 永久阻塞。
   预连接 fifo 写端+盯 [load] applied+显式 base 第三参可缩竞态窗，但对

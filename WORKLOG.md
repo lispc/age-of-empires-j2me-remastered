@@ -8,6 +8,34 @@
 ## 日志（新在上；只追加，不改旧条目）
 
 
+### 战役第 23 夜: 引擎调查定案 AI 波方差双根因+快照 v4(修复)+bootcheck 损坏记录(2026-09-05)
+
+- **AI 波时刻方差根因定案（调查 sub-agent，读码+受控实验）**：假设池①化妆品流
+  ②墙钟④集合迭代全部证伪——**tickAi 全路径零 RNG**。真根因两案分立：
+  ①**移植缺陷已修**=快照 v3 丢 AI 大脑字段（apply 前同任务重载被
+  setupMissionEnv 清零 → 回放 AI 时钟归零波漂移；实验指纹=回放侧 AI 首练恰在
+  base+200=aiTrainInterval）+ **apply 帧模拟被全量重画标志跳过**（世界永久年轻
+  1 tick，±1 摆动被 m4 AI 级联放大）；②**原作特性不修**=任务装载不复位全局
+  tickCount、boot 导航墙钟等待 → 相位跨 boot 漂移 × 模拟消费绝对相位
+  （tickCount%10 练兵抽签等）→ fresh-boot 波 1 按相位聚类（4 连 boot 实测
+  T0=423/420/390/412、波 1=2213/1996/1884/1986）。A/B 恢复等价性：修复后
+  活进程续跑 vs devBoot 恢复 **sim 态差异=0、决策流逐事件一致、波 1 同 tick**。
+- **引擎修复入库（116 行两文件）**：SaveState VERSION 3→4（13 AI 字段+3 short
+  采集缓存+脚本事件日志前缀，v2/v3 旧档向后兼容，快照 +49B）+ devApplySnapshot
+  清全量重画标志。regress/replaycheck 双绿（golden 未动）。
+- **bootcheck exit 141 = 既有损坏（与本修复无关）**：stopat 取消唯一非守护
+  Timer 线程 → JVM 退场 → SIGPIPE。修复候选=DevHarness 驻留（记录在案，另行
+  处理）。**replaycheck 补 rmsDir 隔离**（此前裸写真实 ~/.aoe-desktop，同值
+  写回零污染但属卫生缺口）——复跑双绿。
+- **对 m4 录制的影响**：现存 recordings/campaign/m4 是 v3 档，AI 脑状态录制
+  瞬间就没捕获、不可再生——**永远无法位精确回放**；须用 v4 构建重录（已开
+  重录+回放验证+全亮视频任务）。NOTES「AI 波非确定性」段落按本报告改写；
+  game-mechanics 新增「确定性模型」节。
+- 调查侧经验：管道退出码会被 tail 吃掉（落文件再读）；DevHarness+exec 9>fifo
+  是 freeze-and-inspect 可靠姿势；tickms=2 探针必过冲（对拍须 ≥40）。
+- commit：本条目对应（含引擎修复与 replaycheck 卫生）。
+
+
 ### 战役第 22 夜: 🏆 m4 大学关首胜 WIN@93642(16 轮 51 boot 零的突破)+AI 波非确定性受控实证(2026-09-05)
 
 - **🏆 m4 首胜：[result] WIN ticks=93642**（r53 boot3）。胜利链：barracks@1961

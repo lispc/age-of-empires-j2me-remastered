@@ -1084,6 +1084,13 @@ implements CommandListener {
             if (BFS_PATH) {
                 java.util.Arrays.fill(this.bfsPathTarget, (short)-1);
             }
+            // apply→onShown 会置全量重画标志,而 onPaint 的全量重画分支在帧首
+            // 早退(只渲染,不跑模拟链)——apply 帧的模拟因此被跳过,恢复后的世界
+            // 相对 tickCount 标签永久年轻 1 tick(实测:恢复点后所有 AI 计时器/
+            // scriptFrameCounters 恒 -1,回放事件整体 +1 漂移)。清掉标志让 apply
+            // 帧照常跑模拟,世界与标签即时对齐;代价仅是放弃一帧强制全量重画
+            // (mapThumbStampRow 已在 apply() 里重置,小地图照常重盖)。
+            AgeOfEmpires.b.var_boolean_a = false;
             // 回放锚：trace 的相对 tick 坐标从这里起算（快照 v2 已钉住 tickCount）
             this.devTraceBaseTick = this.tickCount;
             System.out.println("[load] applied (" + data.length + "B) traceBase=" + this.devTraceBaseTick);
