@@ -1000,6 +1000,12 @@ fps=30≈12 倍原速）；长 trace 验证+出视频建议 tickms=2 免超时�
   退出码一律落文件再读**（管道 $? 是 tail 的）。replaycheck 已补 rmsDir 隔离
   （r54；此前裸写真实 ~/.aoe-desktop RMS，同值写回零污染但属卫生缺口，且
   tutorialProgress 变化会埋选关雷）。
+  **campaign-replay 对 aiEnabled=true 的战役关必死锁（r55 实锤）**：
+  unattended 局活不过脚本 2s 轮询窗，echo 写 fifo 无读者永久阻塞——缩窗无用，
+  用 tools/campaign/replay-probe.py（预握 fifo 写端+10ms 轮询 devBoot done）。
+  对拍口径：key 事件录制侧走 [input] ar=、回放侧走 [fifo] ar=，两流合并后
+  逐 tick 对拍；aistate 顶层键是 tick 不是 ar。旁路脚本（热修）的 echo 在
+  宿主 java 死后会变僵尸——subprocess 加 timeout 兜底。
   **campaign-replay 早死存档防呆（r53）**：unattended+turbo 下"很快会输的
   开局存档"会在脚本 grep 轮询期间就 LOSS 退出——echo 写 fifo 永久阻塞。
   预连接 fifo 写端+盯 [load] applied+显式 base 第三参可缩竞态窗，但对

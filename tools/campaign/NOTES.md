@@ -93,6 +93,13 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   复位；boot 用 **campaign:5**+新鲜 rmsDir→idx4）；历代 m4odrv/m4ndrv/m4mdrv/
   m4ldrv/m4kdrv/m4jdrv/m4idrv/m4hdrv/m4gdrv/m4fdrv/m4edrv/m4ddrv/m4cdrv/
   m4bdrv/m4drv（consolidation 候选：r38-r53 十六代 m4 驱动可择机归并）。
+- **重录工具链（r55）**：`m4q-boot.sh`（base 落盘竞态修复版：aA==6 才 save+
+  文件 >12KB 校验、aA!=6 才 -6——弹窗迟到 ~100t，先推完再存有竞态窗，4/4
+  成功）；`replay-probe.py`/`replay-verify.py`（紧竞态回放验证——
+  campaign-replay.sh 对 m4 这类**必死锁**：unattended 局活不过 2s 轮询窗，
+  echo 无读者永久阻塞）；fixture `m4q-lossrec/`。对拍口径：key 事件录制侧
+  `[input] ar=`、回放侧 `[fifo] ar=`，两流合并后逐 tick 对拍；aistate 顶层
+  键是 `tick` 非 `ar`；LOSS 局止损 <90s 墙钟——boot 预算按墙钟管更合理。
 - 操作要点：z=70 完工弹窗 -6 清；t2=2 pop ⇒ House 先行；slots 幽灵槽判活用 state
   JSON；`echo > fifo` 阻塞=进程已退；boot.sh 应保留每次 play.log 副本（r42 boot1/2
   play.log 被覆盖丢失）；aistate 缺敌 pool/波出生时间戳字段（波预测靠 p1mil 计数沿）。
