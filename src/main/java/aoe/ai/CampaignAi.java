@@ -1147,10 +1147,25 @@ public final class CampaignAi implements PlayerAi {
         // 早期长枪是承重墙。v23 穿针：塔前帽 1（5G，给塔留足 6G），塔立后帽 2——
         // n=20 尸检：早死桶 6/20 全是塔 1 未立（两轮长枪把 G 从 13 吃到 <6，
         // 恰逢 5.3k 首波露营金矿线，塔金永远凑不齐），但塔前全面禁兵又死首波。
+        // v27/v28 时代科研储备（同相位成对 9/20 = 基线、胜局平均快 1-3k、
+        // 零反向翻转，默认采用）：塔立后补兵三门抬到"下一时代成本+5"
+        // （封建 20/20/20、城堡 25/25/25）——科研判定先于训练，但长枪门
+        // W12/G12 < 封建 15/15/15，拉锯战里补一个长枪 5G 就把封建金永远压在
+        // 15 以下（g5 尸检：双塔 3.9/4.1k 全活整局，FEUDAL 从未研出，长枪
+        // 补员循环是唯一的金出口）。剃头兜底：milCount==0 按原门补 1 个
+        // （v27 无兜底时相位 63 被剃头后无人看门翻负 8/20）。
         int meleeType = age >= 2 ? 3 : 2;
         int meleeCap = age >= 2 ? 4 : (towerN >= 1 ? 2 : 1);
+        int wGate = 12, gGate = 12, sGate = 0;
+        if (age < 2 && towerN >= 1 && milCount > 0) {
+            int reserve = age == 0 ? 15 : 20;
+            wGate = reserve + 5;
+            gGate = reserve + 5;
+            sGate = reserve + 5;
+        }
         if (popRoom && barracksSlot >= 0 && milCount < meleeCap
-                && hdr[5] >= 12 && hdr[6] >= 12 && game.canAfford(0, 0, meleeType)) {
+                && hdr[5] >= wGate && hdr[6] >= gGate && hdr[7] >= sGate
+                && game.canAfford(0, 0, meleeType)) {
             game.queueUnitTraining(0, meleeType);
         }
         // —— 村民采集：分阶段配额（v1 用"总量缺口"全堆木，石启动太晚被一波带走）。
