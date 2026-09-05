@@ -8,6 +8,22 @@
 ## 日志（新在上；只追加，不改旧条目）
 
 
+### ailoop 接 devPhase + wave9 改名 + 未来任务建议文档（2026-09-05，player-ai）
+
+- **ailoop 相位 pin**（PHASE_STEP 默认 7，off 关）：随机图批测同样有进关
+  相位漂移（菜单导航墙钟）。验证：自检 PASS + n=4 两遍逐局全同
+  （22773/18436/STALL/12817）。意外发现：**seed 1002 Easy 确定性 STALL**
+  （两遍复现），疑似随机图版僵尸局，已登记 future-tasks。
+- **wave9 改名**（renamer AST）：`void_a()`→`pickAiBuildTarget`（敌 AI 建造
+  规划：aiBuildOrder 配对表扫描）、`int_b(int)`→`aiScarcestResource`（敌 AI
+  村民最缺资源种类：木/石份额 <1/3 优先否则金，返回 0x300|kind 喂
+  findNearbyResource）。重载按参数表定位无串扰；注释误伤一例（RuleBasedAi
+  视野来源清单里的 "void_a" 指的是别的重载）已人工删除。symbols.md 已登记。
+- **docs/future-tasks.md 新建**：#4 剩余相位桶、Expert 攻坚（先读主线
+  r45/46 防线经验）、假僵局判据移植、units=0 不判负归属考证、改名债务
+  流程、批测卫生。
+- regress 三连绿（改名为纯标识符替换，方法名不进 golden 指纹）。
+
 ### #2 经济关看门狗修复（28k tick，快 80×）+ v29 围攻放宽证伪 + camloop 超时定案（2026-09-05，player-ai）
 
 - **#2 phase-0 stall 修复**：tickGatherQuota 双重缺陷——①村民只在
