@@ -258,6 +258,20 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   冲车盾（ramshield_spot 扫描窗西扩 sx≥0 修 C2 西缘盲区）；守军死亡判定改
   [combat] 差分。预算全押盾+围杀组合，钓鱼降辅助。工具：mapdump FIFO 指令
   （r64 主线侧引入）可做 S4 漂移监测与帖位可走性核对。
+- **八轮战况（r66，v8.0→v8.0c 探针+3 boot，WIN@30067 ✅ 结案）**：探针定案
+  冲车啃塔（3 冲车 528t 平 255hp 塔/合计 0.483hp/t/塔火仅 0.15——零损换塔）。
+  boot1/2 烧在同一机制：**帖位恰 d²25 被闲时守军 aggro**（全兵种统一 4-5 格
+  圈，边界语义=≤25），8 死/10s reprisal spiral ×2；v8.0c 帖位双闸（tier1
+  洪泛连通+帖 d²>25 严格）一次修复。boot3：y0 驻+帖（BFS 直线）→帖扫波1+2
+  →守军被引动+reprisal 相邻战清袋（双猫+3弓全灭全是副产品）→BAD 重建式
+  refresh 逐波解锁→eb 13→0，my=3 生还。**胜利仍然不需要设计内歼灭**。
+  717 事件 replay-verify 位精确 PASS+campaign-replay 终局对拍一致；三件套
+  入 recordings/campaign/m6/（注意：交付时 session.log 一度错打包成驱动日志，
+  已换正主 play.log）。
+- **攻城关通用配方沉淀（r66 交棒 §「下一步」，供拆堡关直接套用）**：开工
+  三件套=mapdump 真值→离线 claims 推演（L0-L3 解锁链）→探针标定交换比；
+  帖位双闸 v8.0c 直抄；啃塔预算 0.16hp/t/车（255hp≈530 车-tick）；RAMCHEW
+  出动闸=claims+eb 冻结 2×M6_STALL；BFS 不保安全路径——驻地与帖同线。
 - **七轮战况（r65，v7.0→v7.2 三 boot 全 stall + 两次接管）**：**帖扫机制
   实证=本轮最大产出**——boot2「安全区洪泛帖网」70 秒白拿 10 座（eb 11→1）
   射击期零损，**六轮「清口袋猫」前提是伪命题：m6 胜利不需要杀任何守军**。

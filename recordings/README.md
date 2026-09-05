@@ -35,6 +35,13 @@ tickms 只影响墙钟不影响视频内容。长 trace 验证+出视频建议 t
   （剑士西/弓兵北/骑士南/冲车北/投石机南，间隔 500-700t）再全歼——LOSS=城堡
   被毁、WIN=p1 单位数==0 且 c0≥20；制胜配方=「单点集火+簇驻+接战门」，
   96 条写宏流回放逐 tick 一致）。回放验证 ✓（probe 模式）。
+- m6 总攻关  **WIN ticks=30067**（2026-09-06 r66 攻克，十轮 27 boot；制胜
+  配方=「帖位双闸帖扫」——y0 行驻军+帖、洪泛连通+帖 d²>25 严格 aggro 外，
+  白拿 12 座后守军被引动、reprisal 相邻战清袋、BAD refresh 逐波解锁，my=3
+  生还；冲车啃塔探针定案 0.16hp/t/车 作兜底未上主线）。717 事件
+  replay-verify 位精确 PASS + campaign-replay 终局对拍一致；本地
+  replay.mp4=全亮胜利视频 3031 帧。十轮配方演进（standoff→决斗梯→帖诱
+  反杀→自投罗网→帖扫+攻城器械）见 tools/campaign/NOTES.md m6 档案。
 - （旧 DDA 时代 WIN ticks=90133 录制因锚点制度升级已退役，被本表 m1 覆盖。）
 
 **2026-09-06 全量复验**（player-ai 合并后构建，campaign-replay 紧竞态版）：
