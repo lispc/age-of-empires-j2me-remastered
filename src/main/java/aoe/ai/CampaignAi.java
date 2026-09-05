@@ -940,7 +940,9 @@ public final class CampaignAi implements PlayerAi {
             }
             if (type == 9) {
                 tc = ((recs[o] >> 8) & 0x3F) << 8 | (recs[o] & 0x3F);
-                tcSlot = i;
+                tcSlot = o;   // tryResearch 要的是原始偏移(i<<2),不是记录序号——
+                              // 此前传 i,TC 恰为 0 号记录才没炸;采集科技/WT 全部
+                              // 因此静默失败(v30 尸检:0/20 局研出 WT)。
             } else if (type == 11) {
                 ++houseN;
             } else if (type == 10 && done) {
@@ -955,17 +957,17 @@ public final class CampaignAi implements PlayerAi {
                 }
                 ++towerN;
                 if (towerSlot < 0) {
-                    towerSlot = i;
+                    towerSlot = o;
                 }
             } else if (type == 0) {
                 ++lumberN;
                 if (done && lumberSlot < 0) {
-                    lumberSlot = i;
+                    lumberSlot = o;
                 }
             } else if (type == 1) {
                 ++miningN;
                 if (done && miningSlot < 0) {
-                    miningSlot = i;
+                    miningSlot = o;
                 }
             }
         }
@@ -1137,17 +1139,23 @@ public final class CampaignAi implements PlayerAi {
         }
         // 采集科技 + WatchTower（v7 移植 RuleBasedAi）：竞速链优先（上面两条），
         // 富余再投产能科技——GM +3金/载、DBA +5木/载、WT 塔甲 10→15 都是长跑正收益。
+        // v31 城堡竞速锁（v30 实证：锁槽修复后副业科技 8/20 局研出但 9/20→7/20——
+        // game10/19 磨坊/铁匠未立时,攒给城堡的 20/20/20 被 GM/WT 小口抽干,
+        // 城堡永远差一口气翻车）：城堡未研且前置未齐时,副业科技只在
+        // "城堡+本项+缓冲"仍付得起(35/30/35)才投;城堡落地后放开。
         if (age >= 1) {
-            if (miningSlot >= 0 && game.canAfford(0, 2, 5) && game.tryResearch(0, miningSlot, 5)) {
+            boolean castleLock = age == 1 && game.techFlags[45] == 0
+                    && (hdr[5] < 35 || hdr[6] < 30 || hdr[7] < 35);
+            if (!castleLock && miningSlot >= 0 && game.canAfford(0, 2, 5) && game.tryResearch(0, miningSlot, 5)) {
                 System.out.println("[cai] research GoldMining t=" + game.tickCount);
             }
-            if (lumberSlot >= 0 && game.canAfford(0, 2, 3) && game.tryResearch(0, lumberSlot, 3)) {
+            if (!castleLock && lumberSlot >= 0 && game.canAfford(0, 2, 3) && game.tryResearch(0, lumberSlot, 3)) {
                 System.out.println("[cai] research DoubleBitAxe t=" + game.tickCount);
             }
-            if (towerSlot >= 0 && game.canAfford(0, 2, 13) && game.tryResearch(0, towerSlot, 13)) {
+            if (!castleLock && towerSlot >= 0 && game.canAfford(0, 2, 13) && game.tryResearch(0, towerSlot, 13)) {
                 System.out.println("[cai] research WatchTower t=" + game.tickCount);
             }
-            if (miningSlot >= 0 && towerN < 2 && game.canAfford(0, 2, 9)
+            if (!castleLock && miningSlot >= 0 && towerN < 2 && game.canAfford(0, 2, 9)
                     && game.tryResearch(0, miningSlot, 9)) {
                 System.out.println("[cai] research StoneMining t=" + game.tickCount);
             }
