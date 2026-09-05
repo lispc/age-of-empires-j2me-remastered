@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""r16 win 对拍（campaign-replay.sh 的紧竞态版）：
+"""用法: replay-verify.py <missionDir> [baseTick] [预期result子串]
+r16 win 对拍（campaign-replay.sh 的紧竞态版）：
 原脚本 grep 轮询 2s + echo 才发 replaytrace——turbo 下 unattended 游戏
 几百 tick/s，等发令时早已被波拆掉（r16 实测 LOSS@4095，脚本卡死在
 fifo echo 上）。本版：①提前 open fifo 写端（握住管道）；②10ms 轮询
@@ -11,11 +12,12 @@ import subprocess
 import sys
 import time
 
-DIR = '/tmp/aoe-camp/m4q/lossrec'
+DIR = sys.argv[1] if len(sys.argv) > 1 else '/tmp/aoe-camp/m4q/lossrec'
+BASE = int(sys.argv[2]) if len(sys.argv) > 2 else 641
+EXPECT = sys.argv[3] if len(sys.argv) > 3 else '[result] LOSS ticks=5359'
 REPO = ('/Users/zhangzhuo/repos/personal/age-of-empires-j2me-remastered')
-BASE = 641
 MS = '10'
-WORK = '/tmp/aoe-camp/m4q/replay-work'
+WORK = '/tmp/rv-work-' + os.path.basename(DIR.rstrip('/'))
 
 shutil.rmtree(WORK, ignore_errors=True)
 os.makedirs(WORK + '/saves')
@@ -88,4 +90,5 @@ with open(WORK + '/replay.log', 'r', errors='replace') as f:
         elif '[result]' in ln:
             result = ln.strip()
 print(f'对拍: applied fifo={n_fifo} input={n_input} | {result}', flush=True)
-print('预期: [result] LOSS ticks=5359（boot4 原局）', flush=True)
+print(f'预期: {EXPECT}', flush=True)
+print('VERDICT:', 'PASS' if result.replace('[result] ', '').strip() in EXPECT else 'FAIL', flush=True)

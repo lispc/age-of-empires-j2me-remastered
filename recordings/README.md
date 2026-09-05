@@ -36,3 +36,12 @@ tickms 只影响墙钟不影响视频内容。长 trace 验证+出视频建议 t
   被毁、WIN=p1 单位数==0 且 c0≥20；制胜配方=「单点集火+簇驻+接战门」，
   96 条写宏流回放逐 tick 一致）。回放验证 ✓（probe 模式）。
 - （旧 DDA 时代 WIN ticks=90133 录制因锚点制度升级已退役，被本表 m1 覆盖。）
+
+**2026-09-06 全量复验**（player-ai 合并后构建，campaign-replay 紧竞态版）：
+m1/m2/m3/m4/m5 五套三件套**全部位精确复现 WIN**（操作流逐 tick 一致）。
+两处工具修复由本次复验暴露：①campaign-replay 发令改紧竞态（提前握 fifo 写端
++10ms 轮询 devBoot done 即发——旧版 2-3s 轮询在 turbo 下迟到数百 tick，短局
+m5 直接打成另一结局）；②回放前用快照 nfoData 原字节播种隔离 RMS（m2/m3 是
+rms 隔离纪律定立前录的档，快照 progress=1 而新鲜 rms progress=0 会让
+campaign:N 落错关，apply 即 byte[] length mismatch）。m2/m3 旧视频先于现行
+base，已用修后脚本重渲染；m5 全亮视频首次生成（314 帧）。

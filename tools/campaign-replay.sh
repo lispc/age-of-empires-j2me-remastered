@@ -39,6 +39,27 @@ case "$BASE" in ''|*[!0-9]*) echo "FAIL: $DIR/trace.txt base 行解析失败: '$
 
 WORK=$(mktemp -d /tmp/aoe-replay-XXXXXX)
 FIFO="$WORK/fifo"; mkfifo "$FIFO"
+# 用快照里的 nfoData 原字节播种隔离 RMS（.nfo 记录1=314B，byte28 低 nibble=
+# campaignProgress）：m2/m3 等 rms 隔离纪律定立前录的档，快照 progress=1，
+# 新鲜 rms progress=0 会让 campaign:N 落错关（missionIndex=N-1）——装载的
+# missionScript 与快照不符，apply 报 byte[] length mismatch 即炸（m2 实录）。
+# 播种=复刻录制环境；对新纪律录的档（progress=0）零影响。
+mkdir -p "$WORK/rms"
+python3 - "$DIR/base.aoesave" "$WORK/rms" <<'PYEOF'
+import struct, sys, os
+d = open(sys.argv[1], 'rb').read()
+rmsdir = sys.argv[2]
+off = 8                                   # magic + version
+n = struct.unpack_from('>i', d, off)[0]; off += 4 + n      # nav 串
+off += 12 + 1                             # gameMode/missionIndex/missionResId + randomMap
+nfo_len = struct.unpack_from('>i', d, off)[0]; off += 4
+nfo = d[off:off + nfo_len]
+assert nfo_len == 314, f"nfoData 长度异常 {nfo_len}"
+with open(os.path.join(rmsdir, '.nfo.rms'), 'wb') as f:
+    f.write(struct.pack('>iii', 1, 1, len(nfo)))
+    f.write(nfo)
+print(f"rms 播种: progress={nfo[28] & 0xF} tutorial={nfo[28] >> 4}")
+PYEOF
 VDIR=""
 if [ -n "$VIDEO" ]; then
   VDIR="$WORK/frames"; mkdir -p "$VDIR"
@@ -61,22 +82,34 @@ FLAGS="-Daoe.tickms=$MS -Daoe.debug=1 -Daoe.harnessQuiet=1 -Daoe.exitOnResult=1
 echo "== 回放 $DIR (base=$BASE tickms=$MS $MODE) =="
 java $FLAGS -cp "$CP" aoe.Main > "$WORK/replay.log" 2>&1 &
 PID=$!
-# 等 devBoot 完成装载（读档→nav→覆写快照状态）
-OK=""
-for i in $(seq 1 120); do
-  grep -q '\[devBoot\] done' "$WORK/replay.log" && { OK=1; break; }
-  grep -q '\[devBoot\] failed' "$WORK/replay.log" && break
-  sleep 2
-done
-[ -n "$OK" ] || { echo "FAIL: devBoot 未完成"; tail -5 "$WORK/replay.log"; kill $PID 2>/dev/null; exit 1; }
-# devBoot 落地即 base 快照状态（aA=6 无弹窗）——不发任何额外输入，避免污染对拍流
-echo "replaytrace $DIR/trace.txt $BASE" > "$FIFO"
-# 等回放完成 + 终局（trace 时长/4 = 4 倍速墙钟秒，给足余量）
-for i in $(seq 1 600); do
-  grep -q 'replaytrace done' "$WORK/replay.log" && break
-  kill -0 $PID 2>/dev/null || break     # exitOnResult 可能先退
-  sleep 3
-done
+# 发令用紧竞态版（r16+m5 实录）：本脚旧版 grep 轮询 2-3s 才 echo replaytrace，
+# turbo 下游戏每秒几百 tick——发令迟到几百 tick，短局（m5 全局 2936t）直接
+# 打成另一个结局。此 python 块：提前握住 fifo 写端 + 10ms 轮询 [devBoot] done
+# 瞬间发令（与 tools/campaign/replay-verify.py 同款，m5 位精确复现验证过）。
+python3 - "$FIFO" "$WORK/replay.log" "$DIR/trace.txt" "$BASE" <<'PYEOF'
+import sys, time
+fifo, logp, trace, base = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+fw = open(fifo, 'w')          # 阻塞到游戏侧 reader 打开（启动即连，无竞态）
+armed = sent = False
+t0 = time.time()
+while time.time() - t0 < 600:
+    try:
+        with open(logp, errors='replace') as f:
+            txt = f.read()
+    except FileNotFoundError:
+        time.sleep(0.01); continue
+    if not armed and '[devBoot] done' in txt:
+        armed = True
+        fw.write(f'replaytrace {trace} {base}\n'); fw.flush()
+        sent = True
+        print('replaytrace 已发送（紧竞态）', flush=True)
+    if sent and ('replaytrace done' in txt or '[result]' in txt):
+        break
+    if '[devBoot] failed' in txt:
+        print('FAIL: devBoot failed', flush=True); sys.exit(1)
+    time.sleep(0.01)
+fw.close()
+PYEOF
 # 尾局等待: 最后事件到 [result] 之间还有几百 tick 的行军/结算, 给足时间
 for i in $(seq 1 30); do
   grep -q '^\[result\]' "$WORK/replay.log" && break
