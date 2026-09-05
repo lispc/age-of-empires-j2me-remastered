@@ -1,0 +1,10 @@
+m4v 录制旗标（r58，boot4=WIN 局同款）
+-Daoe.headless=1 -Daoe.dev=campaign:5 -Daoe.tickms=10 -Daoe.debug=1
+-Daoe.harnessQuiet=1 -Daoe.exitOnResult=1
+-Daoe.reveal=1 -Daoe.videoDir=$W/frames -Daoe.resultHold=600
+-Daoe.saveDir=$W/saves -Daoe.rmsDir=$W/rms -Daoe.mapSeed=8224 -Daoe.bfsPath=1
+-Daoe.devMouse=$W/fifo
+驱动: m4pdrv.py v7.1-p (M4D_WORK=$W M4D_CAMPFIRST=1 M4D_WFIX=b2)
+热修: bs-hotfix.py + reseat-miners.py（boot 链自动拉起）
+BASE_AR=513（boot4 的 base.aoesave 锚点，mktrace/replay 用）
+合成: ffmpeg -framerate 30 -i frames/frame_%08d.png -c:v libx264 -pix_fmt yuv420p -crf 20 -movflags +faststart m4v-win.mp4

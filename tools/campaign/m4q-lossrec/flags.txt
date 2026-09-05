@@ -1,0 +1,11 @@
+录制侧旗标（boot4, r55 m4q LOSS 管线验证局）: -Daoe.dev=campaign:5 -Daoe.tickms=10
+  -Daoe.debug=1 -Daoe.harnessQuiet=1 -Daoe.exitOnResult=1 -Daoe.mapSeed=8224
+  -Daoe.bfsPath=1 -Daoe.headless=1; rmsDir/saveDir 隔离 /tmp/aoe-camp/m4q。
+base 说明: base.aoesave = 手动 save@ar=641（aA=6 弹窗全清后落盘，12307B，
+  快照 v4 档=AI 大脑随档）——r53 的 aA=2 拒存缺口已由 m4q/boot.sh 修复。
+驱动: m4pdrv.py v7.1-p + 两支 FIFO 热修脚本自 boot 即挂（本局均未触发）。
+终局: [result] LOSS ticks=5359（波 1@~1400 n1 / 波 2@2827 n2 / 波 3@3226 n3 /
+  波 4@4764 n3，m=2 被 n=3 击穿）。
+本目录用途: 管线验证样本，非 WIN 交付。回放=命令通道位精确（38/38 逐 tick
+  一致）、回放自身确定（三次运行同 LOSS@4498），但 AI 相对录制漂移 -861t，
+  详见 deliver/NOTES-deliver.txt。

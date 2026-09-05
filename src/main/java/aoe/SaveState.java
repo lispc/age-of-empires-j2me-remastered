@@ -19,11 +19,21 @@ import java.io.IOException;
  * 会就地置位，如 House 建成 techFlags[0]=1 解锁村民训练）。不持久化的话，
  * 读档后所有已解锁的生产/研究槽回退到资源模板（玩家第6轮实report：读档局
  * '*' 生产菜单空，无法出兵）。
- * 覆写点只在 EDT 帧首（payCost.p() 里消费 pending 字节），避免和渲染遍历打架。
+ * v4（2026-09-05）：末尾新增 AI 大脑字段（aiEnabled/三计时器/建造相位/stance/
+ * 调参组）+ 采集目标缓存（var_short_a/b/c，findNearbyResource 的记忆格，
+ * tickAi 村民重派/onUnitArrived 直接消费）+ 任务脚本事件日志（var_int_c/
+ * var_int_arr_b 已用前缀，脚本条件 5"某槽位单位类型"的查询源）。
+ * apply 前的"同任务重载"会跑 setupMissionEnv 把 AI 字段全部重置为
+ * 初值（计时器归零、stance=0、建造相位回 0），而世界数组又原样覆写回来——
+ * 结果 AI 的经济/军事时钟被静默清零，出兵波时刻漂移（m4 首战提前 650t、
+ * 战役回放不复现终局；tickAi 是唯一 aiEnabled 消费方，故 m1-m3 回放不受影响）。
+ * var_short 缓存与事件日志同理：活进程里已积累、重载后归零/清空，恢复不完整
+ * 时 AI 村民去采不同的格、脚本条件 5 失忆——A/B 对拍实测引发 ~200t 级发散。
+ * 覆写点只在 EDT 帧首（payCost.p() 里消费 pending 字段），避免和渲染遍历打架。
  */
 public final class SaveState {
     static final int MAGIC = 0x414F4531;    // "AOE1"
-    static final int VERSION = 3;
+    static final int VERSION = 4;
 
     private SaveState() {
     }
@@ -94,6 +104,30 @@ public final class SaveState {
         out.writeInt(c.rngStateLo);
         // v3：科技/建造解锁位（建筑建成/研究完成就地置位，见类注释）
         writeBytes(out, g.techFlags);
+        // v4：AI 大脑字段（tickAi 每帧消费；不恢复则读档后 AI 经济/军事时钟被
+        // setupMissionEnv 的初值静默清零，出兵/建造/训练时刻全漂，见类注释）
+        out.writeBoolean(g.aiEnabled);
+        out.writeInt(g.aiStance);
+        out.writeInt(g.aiTrainTimer);
+        out.writeInt(g.aiBuildTimer);
+        out.writeInt(g.aiFreeResTimer);
+        out.writeInt(g.aiBuildPhase);
+        out.writeInt(g.aiBuildTarget);
+        out.writeInt(g.aiBuildInterval);
+        out.writeInt(g.aiTrainInterval);
+        out.writeInt(g.aiAttackThreshold);
+        out.writeInt(g.aiGuardRadiusSq);
+        out.writeInt(g.aiFreeResInterval);
+        out.writeInt(g.aiGatherMultiplier);
+        // v4 续：采集目标缓存 + 任务脚本事件日志已用前缀
+        out.writeShort(g.var_short_a);
+        out.writeShort(g.var_short_b);
+        out.writeShort(g.var_short_c);
+        int eventCount = g.var_int_arr_b != null ? g.var_int_c : -1;
+        out.writeInt(eventCount);
+        for (int i = 0; i < eventCount * 3; ++i) {
+            out.writeInt(g.var_int_arr_b[i]);
+        }
         out.flush();
         return bos.toByteArray();
     }
@@ -163,6 +197,38 @@ public final class SaveState {
             // v3：科技/建造解锁位。v2 旧档没有此段——保持装载模板不动（旧档
             // 读回来与当年行为一致，只是那时还没有发现这个回退问题）。
             readBytes(in, g.techFlags);
+        }
+        if (version >= 4) {
+            // v4：AI 大脑字段。旧档（v2/v3）没有此段——保持 setupMissionEnv 的
+            // 初值（与旧版行为一致）。
+            g.aiEnabled = in.readBoolean();
+            g.aiStance = in.readInt();
+            g.aiTrainTimer = in.readInt();
+            g.aiBuildTimer = in.readInt();
+            g.aiFreeResTimer = in.readInt();
+            g.aiBuildPhase = in.readInt();
+            g.aiBuildTarget = in.readInt();
+            g.aiBuildInterval = in.readInt();
+            g.aiTrainInterval = in.readInt();
+            g.aiAttackThreshold = in.readInt();
+            g.aiGuardRadiusSq = in.readInt();
+            g.aiFreeResInterval = in.readInt();
+            g.aiGatherMultiplier = in.readInt();
+            g.var_short_a = in.readShort();
+            g.var_short_b = in.readShort();
+            g.var_short_c = in.readShort();
+            int evtCount = in.readInt();
+            if (evtCount < 0) {
+                // 任务环境尚未装配（理论不可达：apply 前必跑同任务重载）——保持现状
+            } else {
+                if (g.var_int_arr_b == null || g.var_int_arr_b.length < evtCount * 3) {
+                    throw new IOException("event log capacity mismatch (" + evtCount + ")");
+                }
+                for (int i = 0; i < evtCount * 3; ++i) {
+                    g.var_int_arr_b[i] = in.readInt();
+                }
+                g.var_int_c = evtCount;
+            }
         }
         // 强制下一帧全量重画 + 小地图重新盖章（探索可能有变化）
         g.mapThumbStampRow = 0;

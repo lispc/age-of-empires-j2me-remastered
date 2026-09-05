@@ -27,7 +27,7 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
 （数据 res 号：m1=104 / m2=105 / m3=106 …；脚本=数据+7，解码器 resdec.py 换号即用。
 地形=数据内嵌 rng 确定性生成（res 106 头两字节），与 mapSeed/RMS 无关，每 boot 同图，
 可离线洪泛侦察——注意 BFS 下虚空可通行、资源格当墙。）
-### m4 大学关（⏳ 九轮 30 boot 全 LOSS 止损（r38-r46）；金管道 dry 已通 WIN@12390，最早档首次单兵全歼波+村民零死亡，残墙=波期木银行单点）
+### m4 大学关（✅ **WIN@93642（r53 首胜）+ WIN@19112（r58 重录，v4 档回放位精确 drift=0 + 全亮胜利视频 65s）**——16 轮 51+4 boot；波抽签（相位×规模二元组）是本关唯一难度）
 - **胜负条件（res 114）**：WIN = 封建→**升城堡完成**（techFlags[14]==1，c.java:6200）
   → **放置 University/type4**（置回 0，c.java:7590）→ 计时 50t → WIN。res 127 初始
   [14]=0 ⇒ University 在城堡前被"已建成"锁死，**顺序不可颠倒**。Univ 25木/25石。
@@ -42,9 +42,12 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   armyValue（断收入用）。**reserve 干涸前提（r42 修正）**：「敌 reserve 波
   ~ar5700-6000 干涸」仅当敌村民被清才成立——敌村民存活时 army 滚到 102 波不断
   （r44 boot3 再证 AV 97）。
-- **波 1 方差（r44 勘误，r46 续证）**：11+ 样本跨 **[1168, 3449]**（r46 三连最早
-  档 1168/1322/1364 证明最早档会连续出现——设计必须全按 1168）——同图同种子
-  开局逐 tick 一致而波 1 差 ~2300t（疑似 AI 侧非模拟随机，机制未考证）。
+- **波 1 方差（r44 勘误，r51 续证）**：26+ 样本跨 **[1168, 3838]**；**连续最早档
+  是常态不是尾部**（6 连 ≤1364）；**burst 跟波真实存在且愈演愈烈**（间隔下界
+  193t，到 n=6；r50 boot3 1150t 内 n1→5）——中晚签也会输，burst 局死于级联；
+  但 **raid 灭尽敌村民=波断流**（r51 boot3 实证 20+ 波全防），僵局盘是合法终局路线——战术评估以"1600t 内 n1→4 连击"为默认场景，
+  卡时刻一律按 **1168** 设计。同图同种子开局逐 tick 一致而波 1 差 ~2300t
+  （疑似 AI 侧非模拟随机，机制未考证）。
 - **探索模型三要素（r43/N4 读码定案，全战役通用）**：build 雾判=`mapTiles[t]<0`
   （c.java:1479）；可建区=①全体单位当前格 3×3（每 tick，revealFogAroundUnit
   c.java:5978）+ ②**完工建筑**曼哈顿菱形 r3（塔 r6，每 tick 轮询一栋，void_a
@@ -84,10 +87,19 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   H#1@(30,62) 作木仓房（**需先验证 House 是否 wood 交存点**——nearestDropOff
   读 hdr[9] 指针，与建筑类型的关系未考证）。配套：mocksim 加 M4D_WAVE0=<tick>
   最早抽签压力注入 + hdr9 交存模拟 + 头部「已知分叉点清单」。
-- **现行代驱动**=`tools/campaign/m4idrv.py`+`mocksim4i.py`（v6.4-i：风筝/按槽
-  锚定/半程矿仓/m=0 紧急豁免/卫生双保险；boot 用 **campaign:5**+新鲜 rmsDir→
-  idx4）；历代 m4hdrv/m4gdrv/m4fdrv/m4edrv/m4ddrv/m4cdrv/m4bdrv/m4drv
-  （consolidation 候选：r38-r46 九代 m4 驱动可择机归并）。
+- **首胜驱动**=`tools/campaign/m4pdrv.py`+`mocksim4p.py`（v7.1-p：north_walkers
+  target 判据/fleeing 每拍求交/tw_max age 门/pinned 豁免+热修脚本 bs-hotfix.py
+  与 reseat-miners.py；**待内化**：BS 建造支路/Mill 门 len(mills)<1/idle 跳格
+  复位；boot 用 **campaign:5**+新鲜 rmsDir→idx4）；历代 m4odrv/m4ndrv/m4mdrv/
+  m4ldrv/m4kdrv/m4jdrv/m4idrv/m4hdrv/m4gdrv/m4fdrv/m4edrv/m4ddrv/m4cdrv/
+  m4bdrv/m4drv（consolidation 候选：r38-r53 十六代 m4 驱动可择机归并）。
+- **重录工具链（r55）**：`m4q-boot.sh`（base 落盘竞态修复版：aA==6 才 save+
+  文件 >12KB 校验、aA!=6 才 -6——弹窗迟到 ~100t，先推完再存有竞态窗，4/4
+  成功）；`replay-probe.py`/`replay-verify.py`（紧竞态回放验证——
+  campaign-replay.sh 对 m4 这类**必死锁**：unattended 局活不过 2s 轮询窗，
+  echo 无读者永久阻塞）；fixture `m4q-lossrec/`。对拍口径：key 事件录制侧
+  `[input] ar=`、回放侧 `[fifo] ar=`，两流合并后逐 tick 对拍；aistate 顶层
+  键是 `tick` 非 `ar`；LOSS 局止损 <90s 墙钟——boot 预算按墙钟管更合理。
 - 操作要点：z=70 完工弹窗 -6 清；t2=2 pop ⇒ House 先行；slots 幽灵槽判活用 state
   JSON；`echo > fifo` 阻塞=进程已退；boot.sh 应保留每次 play.log 副本（r42 boot1/2
   play.log 被覆盖丢失）；aistate 缺敌 pool/波出生时间戳字段（波预测靠 p1mil 计数沿）。
@@ -150,3 +162,64 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
 - tools/mktrace.py <log> <base> <out> --until '[result]'；tools/campaign-replay.sh <dir> [tickms] [--headless] [--video]
 - 验证回放: campaign-replay 出"终局对拍 一致 ✓ + 操作流对拍"才算录制合格；
   **回放旗标必须与录制同款（bfsPath/mapSeed）**——脚本已默认 bfsPath=1
+
+### m5 守城关（✅ WIN ticks=2936（r56，2026-09-05 首轮 4 boot）——宏线 5/7）
+- **胜负（res115 解码+实战双证）**：LOSS=我方城堡(type3)被毁（blk8）；WIN=
+  p1 单位数==0（blk6，由末波块#5 启用）→ c0≥20 → 胜。**必须扛完 5 波再全歼**，
+  中途 p1=0 不触发。
+- **波次**（全冲城堡 (37,47)，间隔=脚本 c0 链 10/+500/+500/+500/+700，**确定性
+  无方差**——与 m4 的抽签世界相反）：w1 4×t3 剑士 西 (13,42-43)；w2 6×t4 弓兵
+  北 (39,7-10)；w3 3×t6 骑士 南 (37-38,61-62)；w4 4×t7 冲车 北 (39-40,7-8)；
+  w5 3×t8 投石机 南 (37-38,61-62)。base@397 口径实测出生沿：w2@~830/w3@~1340/
+  w4@~1830/w5@~2530。**间隔 500t < 单波战斗时长时会重叠**（w3 在 w2 清场期已抵
+  城堡脚下）。aiEnabled=false → 位精确回放可达（已实证，96 条写宏流逐 tick 一致）。
+- **布阵**（spawn108，时代2）：城堡 type3 @(37,47) + 5×t6 骑士 (35-39,45) +
+  5×t3 剑士 (36-38,49-50)；敌 0 初始、res 全 0——纯防守关，无经济无生产。
+- **城堡(type3)无投射物**（读码）：placement switch 仅 case12(塔) 注册
+  projectileTable——守城战力=10 军事单位，建筑零输出。
+- **制胜配方 v3=「单点集火+簇驻+接战门」**：近战在途不接战 + d²≤1 仅正交 →
+  追移动目标永远差 1 格（v1 全局追击=负资产）；集火引擎依据=攻击按目标格
+  结算（slot[5]），全体 retask 同一敌 tile=真集火；焦点滞回（焦点格 3 格内
+  仍有敌不换）防 retask 风暴；波重叠期总打「离城堡最近者」天然收敛。
+- 教训：驱动版本摇摆烧 2 boot——改驱动前先写一行「本版假设什么错了」，
+  索引类改动加 assert 注释。
+
+### m6 总攻关（⏳ 首轮 5 boot 未 WIN 止损（r59）；机制档案全摸清，下一轮=standoff 白嫖配方）
+- **胜负（res116）**：WIN = p1 建筑数==0 → c0≥20 → 胜（13 栋：NW 簇 8+塔 5）；
+  **无脚本判负**——通用规则"我方无建筑开局 → 17 兵全灭即败"（boot4 实测最后
+  一兵死瞬间 LOSS）。守军单位无关胜负。
+- **布阵（spawn109，唯一出生即城堡时代的进攻关）**：我方 17 兵质心 (13,57)=
+  5 剑士+5 弓兵+3 投石机 (9-11,58)+3 冲车 (10-11,56-57)+1 征服者 (16,57)，全
+  255hp、res 0——**无经济无生产，损耗不可补**。敌 13 建筑：NW 簇 TC(4,4)/城堡
+  (4,2)/兵营/射箭场/大学/攻城工坊/铁匠铺/马厩 + 5 塔 (2,8)(5,7)(6,4)(26,28)
+  (22,50)，开局即满配 Keep（攻4/甲25，塔程²=6≈2.45 格，塔间距>10 互不覆盖）。
+  敌 19 兵（research 档已勘误）：9弓+5剑+5投（中场投石机堆 (12-14,22-24)/
+  弓兵巢 (31-33,41-43)/NW 守军+猫）。**守军 aiEnabled=false 永不主动追击**
+  （5500t 静止实测），被打才报复回咬。
+- **首轮四死因**：①野战 1:1 交换（boot5 杀 18 换 16）——FIFO 15t 轮询补不出
+  player-ai 逐 tick 回血轮换（120 回血线在两个 poll 间 39→0）；②弓兵站桩自废
+  5 战力（闲置远程**只自动索敌建筑，对敌单位仅相邻触发**——m5「单点集火」
+  杀伤其实全靠近战贴身）；③blocked-arrival 改写死锁（retask 不可达格走到隔壁
+  后 slot[2] 被改写为自身 pos →「同目标不复发」门被击穿→15t 重发风暴→路径
+  缓存永不算完→15000t 冻结）；④焦点幽灵（滞回 glue 内有活敌就把焦点粘在
+  死敌 tile 上——应吸附 glue 内最近**活**敌）。
+- **二轮战况（r60）——standoff 链稳定复现到 eb=3**：probe 三条定案（①idle
+  远程对 d²9-16 建筑自动开火 YES，弓+猫 0.383/t，255hp 塔 ~150t 拆平；②猫弹
+  splash≥2.2 格且开火自走贴塔脚——猫必须远离一切守军圈；③守军近战威胁半径
+  仅 ~2 格但**追击半径 5-6 格**——首轮「怠机不追击」粗模型证伪）。主线三局
+  两次打到 eb=3（塔(22,50) 帖火零损 3/3 → 东道 → 门钉 5v3 白送塔(26,28) →
+  北穿走廊 26 hops 零损 → 帖扫 8 软建筑）。**胜负手只剩 NW 口袋 4 守军**：
+  追击 5-6 格使一切站桩/诱饵/帖位余量失效，口袋合计丢 15+ 兵杀 ~4。
+- **第 17 轮残局（BUGS-m6b，改动 ~10 行）**：v5.3 的 S5 删诱饵逻辑 →
+  **5 剑士全员 retask 同一守军 tile 逐个点名**（m5 真集火模式，路径已在代码），
+  远程钉 row0 x14-17。前四阶段已稳定送 eb=11，boot 预算 2 发。
+- 新认知：敌方 aistate slot 死亡压缩——守军追踪按 tile 不按 slot（hp 回升=
+  槽位重排伪象）；引擎 BFS 每 hop 偏 1-2 格（行军 hop 需 2-3 格密化+冻结跳级
+  守卫）；被打报复直射 112/发（猫）是宏线唯一远程对单位输出，可发展诱饵钓杀。
+- **现行代驱动**=`tools/campaign/m6bdrv.py`（v5.3：standoff 帖位/BFS 密化/
+  焦点滞回活敌吸附）+ `analyze_m6c.py`（离线安全区分析器，改 RAD 即复算）+
+  `m6-probe-layout.json`（守军 19 全量布点）+ `m6b-boot.sh`。
+- 历代：m6adrv.py（v4）+m6a-boot.sh。
+- 操作要点：驱动崩溃 java 活着时**原地重挂驱动合法不烧 boot**（trace 契约=
+  play.log 的 [fifo] 流）；retask 高频重发对军事=洗路径缓存（§11.1 村民条
+  推广）；射程口径统一 **hdr[12]=程²**。

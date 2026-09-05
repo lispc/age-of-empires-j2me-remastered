@@ -1,0 +1,3984 @@
+[devMouse] listening on /tmp/aoe-camp/m4v/fifo
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[k] node=231 mode=0 type=4 op=2
+[trace] g->9 (aA=4 am=4)
+[menuGate] ax=0 ab=0
+[dbg] ar=23 am=9 aA=4 aH=0 l=false j=false fullRedraw=false
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[k] node=310 mode=0 type=4 op=2
+[trace] g->9 (aA=4 am=4)
+[menuGate] ax=0 ab=0
+[dbg] ar=48 am=4 aA=9 aH=0 l=false j=false fullRedraw=false
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[k] node=377 mode=0 type=4 op=2
+[trace] g->9 (aA=4 am=4)
+[menuGate] ax=0 ab=0
+[dbg] ar=73 am=4 aA=0 aH=1 l=false j=false fullRedraw=false
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[dbg] ar=98 am=4 aA=4 aH=0 l=false j=false fullRedraw=false
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[void_a] key=-5 ae=22 ak=19 ar=116
+[input] ar=116 key -5
+[fHead] ax=22
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[k] node=57 mode=1 type=16 op=2
+[trace] g->9 (aA=4 am=4)
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[dbg] ar=123 am=4 aA=4 aH=0 l=false j=false fullRedraw=false
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[void_a] key=-4 ae=23 ak=19 ar=125
+[input] ar=126 key -4
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[void_a] key=-4 ae=23 ak=19 ar=136
+[input] ar=137 key -4
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[k] node=171 mode=0 type=2 op=3
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[void_a] key=-5 ae=22 ak=19 ar=143
+[input] ar=143 key -5
+[fHead] ax=22
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[k] node=171 mode=1 type=2 op=3
+[trace] g->9 (aA=4 am=4)
+[k] node=171 mode=0 type=2 op=3
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[dbg] ar=148 am=4 aA=4 aH=0 l=false j=false fullRedraw=false
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[void_a] key=-4 ae=23 ak=19 ar=153
+[input] ar=153 key -4
+[fHead] ax=23
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[void_a] key=-4 ae=23 ak=19 ar=163
+[input] ar=164 key -4
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[k] node=936 mode=0 type=2 op=3
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[void_a] key=-4 ae=23 ak=19 ar=172
+[input] ar=172 key -4
+[k] node=936 mode=0 type=2 op=3
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[dbg] ar=173 am=4 aA=4 aH=0 l=false j=false fullRedraw=false
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[void_a] key=-4 ae=23 ak=19 ar=179
+[input] ar=179 key -4
+[fHead] ax=23
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[k] node=936 mode=0 type=2 op=3
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[void_a] key=-4 ae=23 ak=19 ar=187
+[input] ar=187 key -4
+[fHead] ax=23
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[k] node=936 mode=0 type=2 op=3
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[void_a] key=-5 ae=22 ak=19 ar=195
+[input] ar=195 key -5
+[fHead] ax=22
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[k] node=936 mode=1 type=2 op=3
+[trace] g->5 (aA=4 am=4)
+[k] node=936 mode=0 type=2 op=3
+[trace] g->11 (aA=5 am=5)
+[dbg] ar=198 am=11 aA=5 aH=0 l=false j=false fullRedraw=false
+[trace] boolean_c aH=0 ac=32 aC=4
+[view] world rebuild with clipTop=0 -> var_boolean_l=true
+[trace] g->8 (aA=6 am=6)
+[dev] in mission, aA=6
+[trace] g(1,75,0) ac=32
+[trace] g->2 (aA=6 am=6)
+[view] dialog open z=75 overlayPrevState=6
+[dlg-parse] z=75 v=0 strLen=192 str=We cannot defeat the enemy if our civilization remains in the Dark Ages.  Seats of learning must be created, to build the tools we need for war. @ Advance to Castle Age and build a University.
+[dbg] ar=223 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=248 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=273 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=282 state
+[devMouse] aA=2/2 cursor=(44,58) cam=(-315,732) Q=3756 aE=0 Y=0 sel=0
+[devMouse] p0 unit 0 tile=(41,56) type=0 sel=false
+[devMouse] p0 unit 1 tile=(42,55) type=0 sel=false
+[dbg] ar=298 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=323 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=348 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=361 key -6
+[void_a] key=-6 ae=38 ak=19 ar=361
+[input] ar=361 key -6
+[dbg] ar=373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[save] wrote /tmp/aoe-camp/m4v/saves/auto.aoesave (12307B) ar=388
+[dbg] ar=398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=434 state
+[devMouse] aA=6/6 cursor=(44,58) cam=(-315,732) Q=3756 aE=0 Y=0 sel=0
+[devMouse] p0 unit 0 tile=(41,56) type=0 sel=false
+[devMouse] p0 unit 1 tile=(42,55) type=0 sel=false
+[dbg] ar=448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=512 save /tmp/aoe-camp/m4v/base.aoesave
+[save] wrote /tmp/aoe-camp/m4v/base.aoesave (12307B) ar=513
+[dbg] ar=523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=624 state
+[devMouse] aA=6/6 cursor=(44,58) cam=(-315,732) Q=3756 aE=0 Y=0 sel=0
+[devMouse] p0 unit 0 tile=(41,56) type=0 sel=false
+[devMouse] p0 unit 1 tile=(42,55) type=0 sel=false
+[fifo] ar=632 aistate
+[devMouse] aistate written, ar=632
+[fifo] ar=632 aistate
+[devMouse] aistate written, ar=632
+[fifo] ar=632 aistate
+[devMouse] aistate written, ar=632
+[dbg] ar=648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=673 retask 0 44 58
+[dbg] ar=673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=674 retask 0 44 58
+[devMouse] retask slot0 (41,56)w0 -> (44,58)
+[dbg] ar=698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=699 retask 1 29 62
+[fifo] ar=700 retask 1 29 62
+[devMouse] retask slot1 (42,55)w0 -> (29,62)
+[dbg] ar=723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=724 aistate
+[devMouse] aistate written, ar=724
+[dbg] ar=748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=764 retask 0 41 41
+[fifo] ar=765 retask 0 41 41
+[devMouse] retask slot0 (44,58)w0 -> (41,41)
+[dbg] ar=773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=806 aistate
+[devMouse] aistate written, ar=806
+[dbg] ar=823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=825 aistate
+[devMouse] aistate written, ar=825
+[dbg] ar=848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=878 aistate
+[devMouse] aistate written, ar=878
+[dbg] ar=898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=907 aistate
+[devMouse] aistate written, ar=907
+[dbg] ar=923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=948 retask 0 28 58
+[dbg] ar=948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=949 retask 0 28 58
+[devMouse] retask slot0 (41,41)w0 -> (28,58)
+[dbg] ar=973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=982 aistate
+[devMouse] aistate written, ar=982
+[dbg] ar=998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1010 aistate
+[devMouse] aistate written, ar=1010
+[dbg] ar=1023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1050 retask 1 27 59
+[fifo] ar=1051 retask 1 27 59
+[devMouse] retask slot1 (29,62)w0 -> (27,59)
+[dbg] ar=1073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1111 aistate
+[devMouse] aistate written, ar=1111
+[dbg] ar=1123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1124 aistate
+[devMouse] aistate written, ar=1124
+[dbg] ar=1148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1158 aistate
+[devMouse] aistate written, ar=1158
+[dbg] ar=1173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1192 aistate
+[devMouse] aistate written, ar=1192
+[dbg] ar=1198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1274 aistate
+[devMouse] aistate written, ar=1274
+[dbg] ar=1298 am=6 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=1323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1334 aistate
+[devMouse] aistate written, ar=1334
+[dbg] ar=1348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1355 aistate
+[devMouse] aistate written, ar=1355
+[fifo] ar=1367 aistate
+[devMouse] aistate written, ar=1367
+[dbg] ar=1373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1396 build 30 62 0
+[fifo] ar=1397 build 30 62 0
+[devMouse] build OK type0 @(30,62) 施工中(约1.3s完工)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=1398 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[fifo] ar=1422 aistate
+[devMouse] aistate written, ar=1422
+[dbg] ar=1423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g(0,70,0) ac=32
+[trace] g->2 (aA=6 am=6)
+[view] dialog open z=70 overlayPrevState=6
+[dlg-parse] z=70 v=0 strLen=34 str=Lumber Camp: @ Used to store wood.
+[dbg] ar=1448 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1473 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1498 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1503 aistate
+[devMouse] aistate written, ar=1503
+[fifo] ar=1511 aistate
+[devMouse] aistate written, ar=1511
+[dbg] ar=1523 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1545 key -6
+[void_a] key=-6 ae=38 ak=19 ar=1545
+[input] ar=1545 key -6
+[dbg] ar=1548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1583 aistate
+[devMouse] aistate written, ar=1583
+[dbg] ar=1598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1612 aistate
+[devMouse] aistate written, ar=1612
+[dbg] ar=1623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1664 aistate
+[devMouse] aistate written, ar=1664
+[dbg] ar=1673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=1690 aistate
+[devMouse] aistate written, ar=1690
+[dbg] ar=1698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=1723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1765 aistate
+[devMouse] aistate written, ar=1765
+[dbg] ar=1773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=1848 am=6 aA=8 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1849 aistate
+[devMouse] aistate written, ar=1849
+[fifo] ar=1859 aistate
+[devMouse] aistate written, ar=1859
+[fifo] ar=1867 aistate
+[devMouse] aistate written, ar=1867
+[dbg] ar=1873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1889 build 45 59 10
+[fifo] ar=1890 build 45 59 10
+[devMouse] build OK type10 @(45,59) 施工中(约1.3s完工)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=1898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1915 aistate
+[devMouse] aistate written, ar=1915
+[trace] g(0,70,10) ac=32
+[trace] g->2 (aA=6 am=6)
+[view] dialog open z=70 overlayPrevState=6
+[dlg-parse] z=70 v=10 strLen=46 str=Barracks: @ Allows building of Infantry units.
+[dbg] ar=1923 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1948 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1973 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1996 aistate
+[devMouse] aistate written, ar=1996
+[dbg] ar=1998 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=2023 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2035 key -6
+[void_a] key=-6 ae=38 ak=19 ar=2035
+[input] ar=2035 key -6
+[fifo] ar=2044 aistate
+[devMouse] aistate written, ar=2044
+[dbg] ar=2048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2073 aistate
+[devMouse] aistate written, ar=2073
+[dbg] ar=2073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=2098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2104 aistate
+[devMouse] aistate written, ar=2104
+[fifoQ] ar=2112 train 45 59 1
+[fifo] ar=2113 train 45 59 1
+[trace] g->7 (aA=6 am=6)
+[devMouse] train OK 排队 1/1 aK=2 (aK=0村民 2/3步兵 4弓兵 5/6骑兵)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=2123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=2148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=2173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=2179 aistate
+[devMouse] aistate written, ar=2179
+[dbg] ar=2198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2220 aistate
+[devMouse] aistate written, ar=2220
+[dbg] ar=2223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2228 retask 2 41 41
+[fifo] ar=2229 retask 2 41 41
+[devMouse] retask slot2 (46,60)w0 -> (41,41)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=2248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2252 build 44 60 11
+[fifo] ar=2253 build 44 60 11
+[devMouse] build OK type11 @(44,60) 施工中(约1.3s完工)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=2273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2278 aistate
+[devMouse] aistate written, ar=2278
+[trace] g(0,70,11) ac=32
+[trace] g->2 (aA=6 am=6)
+[view] dialog open z=70 overlayPrevState=6
+[dlg-parse] z=70 v=11 strLen=46 str=House: @ Supports 5 of your town's population.
+[dbg] ar=2298 am=2 aA=2 aH=0 l=true j=false fullRedraw=false
+[dbg] ar=2323 am=2 aA=2 aH=0 l=true j=false fullRedraw=false
+[dbg] ar=2348 am=2 aA=2 aH=0 l=true j=false fullRedraw=false
+[fifo] ar=2349 aistate
+[devMouse] aistate written, ar=2349
+[fifo] ar=2360 aistate
+[devMouse] aistate written, ar=2360
+[dbg] ar=2373 am=2 aA=2 aH=0 l=true j=false fullRedraw=false
+[fifo] ar=2396 aistate
+[devMouse] aistate written, ar=2396
+[dbg] ar=2398 am=2 aA=2 aH=0 l=true j=false fullRedraw=false
+[fifo] ar=2403 key -6
+[void_a] key=-6 ae=38 ak=19 ar=2403
+[input] ar=2403 key -6
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=2423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2443 aistate
+[devMouse] aistate written, ar=2443
+[dbg] ar=2448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=2473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=2484 train 44 60 1
+[fifo] ar=2485 train 44 60 1
+[trace] g->7 (aA=6 am=6)
+[devMouse] train OK 排队 1/1 aK=0 (aK=0村民 2/3步兵 4弓兵 5/6骑兵)
+[dbg] ar=2498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=2523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=2548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=2550 aistate
+[devMouse] aistate written, ar=2550
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=2571 aistate
+[devMouse] aistate written, ar=2571
+[dbg] ar=2573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2591 rally 44 58
+[fifo] ar=2592 rally 44 58
+[devMouse] rally OK 2 单位(1 个兵种) → (44,58)
+[dbg] ar=2598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2599 aistate
+[devMouse] aistate written, ar=2599
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=2615 build 42 40 1
+[fifo] ar=2616 build 42 40 1
+[devMouse] build OK type1 @(42,40) 施工中(约1.3s完工)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=2623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2641 aistate
+[devMouse] aistate written, ar=2641
+[trace] g(0,70,1) ac=32
+[trace] g->2 (aA=6 am=6)
+[view] dialog open z=70 overlayPrevState=6
+[dlg-parse] z=70 v=1 strLen=43 str=Mining Camp: @ Used to store gold or stone.
+[dbg] ar=2648 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=2673 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=2698 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2723 aistate
+[devMouse] aistate written, ar=2723
+[dbg] ar=2723 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2743 aistate
+[devMouse] aistate written, ar=2743
+[dbg] ar=2748 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2762 key -6
+[void_a] key=-6 ae=38 ak=19 ar=2762
+[input] ar=2762 key -6
+[dbg] ar=2773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=2798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2799 aistate
+[devMouse] aistate written, ar=2799
+[dbg] ar=2823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type2 died at (44,55) ar=2835 remaining=0
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=2840 retask 4 49 48
+[fifo] ar=2841 retask 4 49 48
+[devMouse] retask slot4 (45,61)w0 -> (49,48)
+[fifo] ar=2847 aistate
+[devMouse] aistate written, ar=2847
+[dbg] ar=2848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=2873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=2898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2901 aistate
+[devMouse] aistate written, ar=2901
+[fifo] ar=2919 aistate
+[devMouse] aistate written, ar=2919
+[dbg] ar=2923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2943 build 44 60 11
+[fifo] ar=2943 build 44 60 11
+[devMouse] build FAIL (44,60) 被单位/建筑/资源占格
+[dbg] ar=2948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=2969 build 46 60 11
+[fifo] ar=2970 build 46 60 11
+[devMouse] build OK type11 @(46,60) 施工中(约1.3s完工)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=2973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2993 aistate
+[devMouse] aistate written, ar=2993
+[dbg] ar=2998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=3023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3034 train 44 60 1
+[fifo] ar=3035 train 44 60 1
+[trace] g->7 (aA=6 am=6)
+[devMouse] train OK 排队 1/1 aK=0 (aK=0村民 2/3步兵 4弓兵 5/6骑兵)
+[dbg] ar=3048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=3073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=3093 aistate
+[devMouse] aistate written, ar=3093
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=3098 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=8 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=3101 aistate
+[devMouse] aistate written, ar=3101
+[fifo] ar=3101 aistate
+[devMouse] aistate written, ar=3101
+[dbg] ar=3123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=3148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=3173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type2 died at (41,56) ar=3186 remaining=1
+[dbg] ar=3198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=3204 aistate
+[devMouse] aistate written, ar=3204
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=3223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=3248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=3272 aistate
+[devMouse] aistate written, ar=3272
+[dbg] ar=3273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=3288 aistate
+[devMouse] aistate written, ar=3288
+[dbg] ar=3298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=3323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=3330 retask 4 35 36
+[fifo] ar=3330 retask 4 35 36
+[devMouse] retask slot4 (49,48)w0 -> (35,36)
+[dbg] ar=3348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p0 type2 died at (40,55) ar=3349 remaining=7
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=3350 aistate
+[devMouse] aistate written, ar=3350
+[fifoQ] ar=3357 rally 44 58
+[fifo] ar=3358 rally 44 58
+[devMouse] rally OK 1 单位(1 个兵种) → (44,58)
+[dbg] ar=3373 am=6 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=3383 train 46 60 1
+[fifo] ar=3384 train 46 60 1
+[trace] g->7 (aA=6 am=6)
+[devMouse] train OK 排队 1/1 aK=0 (aK=0村民 2/3步兵 4弓兵 5/6骑兵)
+[dbg] ar=3398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type2 died at (44,57) ar=3408 remaining=1
+[dbg] ar=3423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=8)
+[dbg] ar=3448 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[fifo] ar=3449 aistate
+[devMouse] aistate written, ar=3449
+[fifo] ar=3457 aistate
+[devMouse] aistate written, ar=3457
+[dbg] ar=3473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=3497 retask 5 49 48
+[fifo] ar=3498 retask 5 49 48
+[devMouse] retask slot5 (44,61)w0 -> (49,48)
+[dbg] ar=3498 am=6 aA=8 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3518 retask 6 49 48
+[fifo] ar=3519 retask 6 49 48
+[devMouse] retask slot6 (45,61)w0 -> (49,48)
+[dbg] ar=3523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=3548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=3573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=3579 aistate
+[devMouse] aistate written, ar=3579
+[fifo] ar=3596 aistate
+[devMouse] aistate written, ar=3596
+[dbg] ar=3598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=3621 train 46 60 1
+[fifo] ar=3622 train 46 60 1
+[trace] g->7 (aA=6 am=6)
+[devMouse] train OK 排队 1/1 aK=0 (aK=0村民 2/3步兵 4弓兵 5/6骑兵)
+[dbg] ar=3623 am=6 aA=7 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=3629 aistate
+[devMouse] aistate written, ar=3629
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=3648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=3673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=8)
+[fifo] ar=3686 aistate
+[devMouse] aistate written, ar=3686
+[dbg] ar=3698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=3723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3727 retask 3 49 48
+[fifo] ar=3728 retask 3 49 48
+[devMouse] retask slot3 (43,61)w0 -> (49,48)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=3747 retask 5 36 36
+[fifo] ar=3748 retask 5 36 36
+[devMouse] retask slot5 (49,48)w0 -> (36,36)
+[dbg] ar=3748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=3766 retask 7 49 48
+[fifo] ar=3767 retask 7 49 48
+[devMouse] retask slot7 (43,60)w0 -> (49,48)
+[dbg] ar=3773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3785 retask 8 49 48
+[fifo] ar=3786 retask 8 49 48
+[devMouse] retask slot8 (47,61)w0 -> (49,48)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=3798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=3803 aistate
+[devMouse] aistate written, ar=3803
+[fifoQ] ar=3811 build 44 60 11
+[fifo] ar=3812 build 44 60 11
+[devMouse] build FAIL (44,60) 被单位/建筑/资源占格
+[dbg] ar=3823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3836 build 46 60 11
+[fifo] ar=3837 build 46 60 11
+[devMouse] build FAIL (46,60) 被单位/建筑/资源占格
+[fifo] ar=3844 aistate
+[devMouse] aistate written, ar=3844
+[dbg] ar=3848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3861 build 42 60 11
+[fifo] ar=3862 build 42 60 11
+[devMouse] build OK type11 @(42,60) 施工中(约1.3s完工)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=3873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=3887 aistate
+[devMouse] aistate written, ar=3887
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=3898 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=3923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3927 rally 44 58
+[fifo] ar=3928 rally 44 58
+[devMouse] rally OK 1 单位(1 个兵种) → (44,58)
+[dbg] ar=3948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=3973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=3977 aistate
+[devMouse] aistate written, ar=3977
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=3993 aistate
+[devMouse] aistate written, ar=3993
+[dbg] ar=3998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=4023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=4032 retask 3 35 35
+[fifo] ar=4033 retask 3 35 35
+[devMouse] retask slot3 (49,48)w0 -> (35,35)
+[combat] p1 type2 died at (43,56) ar=4046 remaining=3
+[dbg] ar=4048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=4051 retask 6 39 40
+[fifo] ar=4052 retask 6 39 40
+[devMouse] retask slot6 (50,49)w0 -> (39,40)
+[fifoQ] ar=4070 retask 9 49 48
+[fifo] ar=4071 retask 9 49 48
+[devMouse] retask slot9 (45,61)w0 -> (49,48)
+[dbg] ar=4073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=4090 retask 10 28 58
+[fifo] ar=4091 retask 10 28 58
+[devMouse] retask slot10 (46,61)w0 -> (28,58)
+[fifo] ar=4097 aistate
+[devMouse] aistate written, ar=4098
+[dbg] ar=4098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=4108 train 45 59 1
+[fifo] ar=4108 train 45 59 1
+[trace] g->7 (aA=6 am=8)
+[devMouse] train OK 排队 1/1 aK=2 (aK=0村民 2/3步兵 4弓兵 5/6骑兵)
+[dbg] ar=4123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=4148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=4153 aistate
+[devMouse] aistate written, ar=4153
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=4173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4174 aistate
+[devMouse] aistate written, ar=4174
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=4198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=4214 retask 7 37 36
+[fifo] ar=4215 retask 7 37 36
+[devMouse] retask slot7 (50,48)w0 -> (37,36)
+[dbg] ar=4223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=4248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=4273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4276 aistate
+[devMouse] aistate written, ar=4276
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=4298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=4318 retask 8 41 40
+[fifo] ar=4319 retask 8 41 40
+[devMouse] retask slot8 (50,47)w0 -> (41,40)
+[dbg] ar=4323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4328 aistate
+[devMouse] aistate written, ar=4328
+[fifoQ] ar=4339 retask 9 36 35
+[fifo] ar=4339 retask 9 36 35
+[devMouse] retask slot9 (49,48)w0 -> (36,35)
+[fifo] ar=4347 aistate
+[devMouse] aistate written, ar=4347
+[dbg] ar=4348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=4373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=4398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4400 aistate
+[devMouse] aistate written, ar=4400
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=4423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=4442 retask 5 41 41
+[fifo] ar=4443 retask 5 41 41
+[devMouse] retask slot5 (34,37)w0 -> (41,41)
+[dbg] ar=4448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=4473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=4498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4500 aistate
+[devMouse] aistate written, ar=4501
+[fifo] ar=4508 aistate
+[devMouse] aistate written, ar=4508
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=4523 am=6 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=4542 retask 3 41 41
+[fifo] ar=4543 retask 3 41 41
+[devMouse] retask slot3 (34,37)w0 -> (41,41)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=4548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=4563 retask 7 41 41
+[fifo] ar=4563 retask 7 41 41
+[devMouse] retask slot7 (34,39)w0 -> (41,41)
+[dbg] ar=4573 am=6 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=4583 rally 44 58
+[fifo] ar=4584 rally 44 58
+[devMouse] rally OK 3 单位(1 个兵种) → (44,58)
+[fifo] ar=4593 aistate
+[devMouse] aistate written, ar=4593
+[dbg] ar=4598 am=6 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=4620 retask 5 41 39
+[fifo] ar=4621 retask 5 41 39
+[devMouse] retask slot5 (41,41)w0 -> (41,39)
+[dbg] ar=4623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=4648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4649 aistate
+[devMouse] aistate written, ar=4649
+[combat] p1 type2 died at (42,57) ar=4660 remaining=4
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=4673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=4688 aistate
+[devMouse] aistate written, ar=4688
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=4695 retask 3 35 35
+[fifo] ar=4696 retask 3 35 35
+[devMouse] retask slot3 (41,43)w0 -> (35,35)
+[dbg] ar=4698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=4717 retask 5 36 36
+[fifo] ar=4718 retask 5 36 36
+[devMouse] retask slot5 (42,38)w3332 -> (36,36)
+[dbg] ar=4723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=4735 retask 7 37 36
+[fifo] ar=4736 retask 7 37 36
+[devMouse] retask slot7 (40,42)w0 -> (37,36)
+[dbg] ar=4748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=4773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=4796 aistate
+[devMouse] aistate written, ar=4796
+[dbg] ar=4798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=4823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=4837 retask 3 41 41
+[fifo] ar=4837 retask 3 41 41
+[devMouse] retask slot3 (36,38)w0 -> (41,41)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=4848 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[fifoQ] ar=4857 retask 5 41 41
+[fifo] ar=4858 retask 5 41 41
+[devMouse] retask slot5 (34,38)w0 -> (41,41)
+[fifo] ar=4865 aistate
+[devMouse] aistate written, ar=4865
+[fifo] ar=4873 aistate
+[devMouse] aistate written, ar=4873
+[dbg] ar=4873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=4881 build 42 58 12
+[fifo] ar=4882 build 42 58 12
+[devMouse] build OK type12 @(42,58) 施工中(约1.3s完工)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=4898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=4906 aistate
+[devMouse] aistate written, ar=4906
+[trace] g->8 (aA=6 am=6)
+[trace] g(0,70,12) ac=32
+[trace] g->2 (aA=6 am=6)
+[view] dialog open z=70 overlayPrevState=6
+[dlg-parse] z=70 v=12 strLen=28 str=Tower: @ Protect your town..
+[dbg] ar=4923 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=4946 retask 7 41 41
+[fifo] ar=4947 retask 7 41 41
+[devMouse] retask slot7 (36,40)w0 -> (41,41)
+[dbg] ar=4948 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=4966 retask 9 41 41
+[fifo] ar=4966 retask 9 41 41
+[devMouse] retask slot9 (31,36)w0 -> (41,41)
+[dbg] ar=4973 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=4998 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=5023 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5027 aistate
+[devMouse] aistate written, ar=5027
+[fifo] ar=5040 aistate
+[devMouse] aistate written, ar=5040
+[dbg] ar=5048 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5068 key -6
+[void_a] key=-6 ae=38 ak=19 ar=5068
+[input] ar=5068 key -6
+[dbg] ar=5073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=5098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=5104 aistate
+[devMouse] aistate written, ar=5104
+[fifo] ar=5118 aistate
+[devMouse] aistate written, ar=5118
+[dbg] ar=5123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=5143 retask 3 40 40
+[fifo] ar=5144 retask 3 40 40
+[devMouse] retask slot3 (40,42)w0 -> (40,40)
+[dbg] ar=5148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=5150 retask 3 35 35
+[fifo] ar=5151 retask 3 35 35
+[devMouse] retask slot3 (41,42)w0 -> (35,35)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=5172 retask 5 36 36
+[fifo] ar=5173 retask 5 36 36
+[devMouse] retask slot5 (41,41)w0 -> (36,36)
+[dbg] ar=5173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=5178
+[proj] aim scan exhausted p=0 active=1 tick=5179
+[proj] aim scan exhausted p=0 active=1 tick=5180
+[proj] aim scan exhausted p=0 active=1 tick=5181
+[proj] aim scan exhausted p=0 active=1 tick=5182
+[proj] aim scan exhausted p=0 active=1 tick=5183
+[proj] aim scan exhausted p=0 active=1 tick=5184
+[proj] aim scan exhausted p=0 active=1 tick=5185
+[proj] aim scan exhausted p=0 active=1 tick=5186
+[proj] aim scan exhausted p=0 active=1 tick=5187
+[proj] aim scan exhausted p=0 active=1 tick=5188
+[proj] aim scan exhausted p=0 active=1 tick=5189
+[proj] aim scan exhausted p=0 active=1 tick=5190
+[proj] aim scan exhausted p=0 active=1 tick=5191
+[proj] aim scan exhausted p=0 active=1 tick=5192
+[fifoQ] ar=5193 retask 7 37 36
+[fifo] ar=5194 retask 7 37 36
+[devMouse] retask slot7 (42,42)w0 -> (37,36)
+[proj] aim scan exhausted p=0 active=1 tick=5194
+[proj] aim scan exhausted p=0 active=1 tick=5195
+[proj] aim scan exhausted p=0 active=1 tick=5196
+[proj] aim scan exhausted p=0 active=1 tick=5197
+[proj] aim scan exhausted p=0 active=1 tick=5198
+[dbg] ar=5198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=5199
+[proj] aim scan exhausted p=0 active=1 tick=5200
+[proj] aim scan exhausted p=0 active=1 tick=5201
+[proj] aim scan exhausted p=0 active=1 tick=5202
+[proj] aim scan exhausted p=0 active=1 tick=5203
+[proj] aim scan exhausted p=0 active=1 tick=5204
+[proj] aim scan exhausted p=0 active=1 tick=5205
+[combat] p1 type2 died at (41,55) ar=5206 remaining=5
+[proj] aim scan exhausted p=0 active=1 tick=5206
+[proj] aim scan exhausted p=0 active=1 tick=5207
+[proj] aim scan exhausted p=0 active=1 tick=5208
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=5213 retask 9 36 35
+[fifo] ar=5214 retask 9 36 35
+[devMouse] retask slot9 (40,41)w0 -> (36,35)
+[fifo] ar=5221 aistate
+[devMouse] aistate written, ar=5221
+[dbg] ar=5223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=5234 rally 44 58
+[fifo] ar=5235 rally 44 58
+[devMouse] rally OK 3 单位(1 个兵种) → (44,58)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=5248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=5273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=5298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5302 aistate
+[devMouse] aistate written, ar=5302
+[dbg] ar=5323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=5339 retask 4 41 41
+[fifo] ar=5340 retask 4 41 41
+[devMouse] retask slot4 (34,37)w6322 -> (41,41)
+[dbg] ar=5348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=5359 retask 5 41 41
+[fifo] ar=5360 retask 5 41 41
+[devMouse] retask slot5 (33,38)w0 -> (41,41)
+[dbg] ar=5373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=5394 aistate
+[devMouse] aistate written, ar=5394
+[dbg] ar=5398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=5400
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=5401
+[fifo] ar=5402 aistate
+[proj] aim scan exhausted p=0 active=1 tick=5402
+[devMouse] aistate written, ar=5402
+[proj] aim scan exhausted p=0 active=1 tick=5403
+[proj] aim scan exhausted p=0 active=1 tick=5404
+[proj] aim scan exhausted p=0 active=1 tick=5405
+[proj] aim scan exhausted p=0 active=1 tick=5406
+[proj] aim scan exhausted p=0 active=1 tick=5407
+[proj] aim scan exhausted p=0 active=1 tick=5408
+[proj] aim scan exhausted p=0 active=1 tick=5409
+[proj] aim scan exhausted p=0 active=1 tick=5410
+[proj] aim scan exhausted p=0 active=1 tick=5411
+[proj] aim scan exhausted p=0 active=1 tick=5412
+[proj] aim scan exhausted p=0 active=1 tick=5413
+[proj] aim scan exhausted p=0 active=1 tick=5414
+[proj] aim scan exhausted p=0 active=1 tick=5416
+[fifo] ar=5416 aistate
+[devMouse] aistate written, ar=5416
+[proj] aim scan exhausted p=0 active=1 tick=5417
+[proj] aim scan exhausted p=0 active=1 tick=5418
+[proj] aim scan exhausted p=0 active=1 tick=5419
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=5420
+[proj] aim scan exhausted p=0 active=1 tick=5421
+[proj] aim scan exhausted p=0 active=1 tick=5422
+[proj] aim scan exhausted p=0 active=1 tick=5423
+[dbg] ar=5423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=5424
+[proj] aim scan exhausted p=0 active=1 tick=5425
+[proj] aim scan exhausted p=0 active=1 tick=5426
+[proj] aim scan exhausted p=0 active=1 tick=5427
+[proj] aim scan exhausted p=0 active=1 tick=5428
+[proj] aim scan exhausted p=0 active=1 tick=5429
+[proj] aim scan exhausted p=0 active=1 tick=5430
+[proj] aim scan exhausted p=0 active=1 tick=5431
+[proj] aim scan exhausted p=0 active=1 tick=5432
+[proj] aim scan exhausted p=0 active=1 tick=5433
+[proj] aim scan exhausted p=0 active=1 tick=5434
+[proj] aim scan exhausted p=0 active=1 tick=5435
+[proj] aim scan exhausted p=0 active=1 tick=5436
+[proj] aim scan exhausted p=0 active=1 tick=5437
+[proj] aim scan exhausted p=0 active=1 tick=5438
+[proj] aim scan exhausted p=0 active=1 tick=5439
+[combat] p1 type2 died at (42,56) ar=5440 remaining=5
+[proj] aim scan exhausted p=0 active=1 tick=5440
+[proj] aim scan exhausted p=0 active=1 tick=5441
+[proj] aim scan exhausted p=0 active=1 tick=5442
+[proj] aim scan exhausted p=0 active=1 tick=5443
+[proj] aim scan exhausted p=0 active=1 tick=5444
+[proj] aim scan exhausted p=0 active=1 tick=5445
+[proj] aim scan exhausted p=0 active=1 tick=5446
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=5448 am=6 aA=8 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=5458 retask 3 41 41
+[fifo] ar=5459 retask 3 41 41
+[devMouse] retask slot3 (35,39)w0 -> (41,41)
+[dbg] ar=5473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=5478 retask 4 35 36
+[fifo] ar=5479 retask 4 35 36
+[devMouse] retask slot4 (41,41)w0 -> (35,36)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=5497 retask 5 36 36
+[fifo] ar=5498 retask 5 36 36
+[devMouse] retask slot5 (40,42)w0 -> (36,36)
+[dbg] ar=5498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=5523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=5548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5556 aistate
+[devMouse] aistate written, ar=5556
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=5573 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[fifo] ar=5579 aistate
+[devMouse] aistate written, ar=5579
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=5596
+[proj] aim scan exhausted p=0 active=1 tick=5597
+[fifoQ] ar=5598 retask 3 35 35
+[fifo] ar=5598 retask 3 35 35
+[devMouse] retask slot3 (41,41)w0 -> (35,35)
+[proj] aim scan exhausted p=0 active=1 tick=5598
+[dbg] ar=5598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=5599
+[proj] aim scan exhausted p=0 active=1 tick=5600
+[proj] aim scan exhausted p=0 active=1 tick=5601
+[proj] aim scan exhausted p=0 active=1 tick=5602
+[proj] aim scan exhausted p=0 active=1 tick=5603
+[proj] aim scan exhausted p=0 active=1 tick=5604
+[proj] aim scan exhausted p=0 active=1 tick=5605
+[proj] aim scan exhausted p=0 active=1 tick=5606
+[proj] aim scan exhausted p=0 active=1 tick=5607
+[proj] aim scan exhausted p=0 active=1 tick=5608
+[proj] aim scan exhausted p=0 active=1 tick=5609
+[proj] aim scan exhausted p=0 active=1 tick=5610
+[fifoQ] ar=5618 rally 44 58
+[fifo] ar=5619 rally 44 58
+[devMouse] rally OK 3 单位(1 个兵种) → (44,58)
+[dbg] ar=5623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=5627
+[proj] aim scan exhausted p=0 active=1 tick=5628
+[proj] aim scan exhausted p=0 active=1 tick=5629
+[proj] aim scan exhausted p=0 active=1 tick=5630
+[proj] aim scan exhausted p=0 active=1 tick=5631
+[proj] aim scan exhausted p=0 active=1 tick=5632
+[proj] aim scan exhausted p=0 active=1 tick=5633
+[proj] aim scan exhausted p=0 active=1 tick=5634
+[proj] aim scan exhausted p=0 active=1 tick=5635
+[proj] aim scan exhausted p=0 active=1 tick=5636
+[proj] aim scan exhausted p=0 active=1 tick=5637
+[proj] aim scan exhausted p=0 active=1 tick=5638
+[proj] aim scan exhausted p=0 active=1 tick=5639
+[fifo] ar=5639 aistate
+[devMouse] aistate written, ar=5639
+[proj] aim scan exhausted p=0 active=1 tick=5640
+[proj] aim scan exhausted p=0 active=1 tick=5641
+[proj] aim scan exhausted p=0 active=1 tick=5642
+[proj] aim scan exhausted p=0 active=1 tick=5643
+[proj] aim scan exhausted p=0 active=1 tick=5644
+[proj] aim scan exhausted p=0 active=1 tick=5645
+[proj] aim scan exhausted p=0 active=1 tick=5646
+[proj] aim scan exhausted p=0 active=1 tick=5647
+[proj] aim scan exhausted p=0 active=1 tick=5648
+[dbg] ar=5648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=5649
+[proj] aim scan exhausted p=0 active=1 tick=5650
+[proj] aim scan exhausted p=0 active=1 tick=5651
+[proj] aim scan exhausted p=0 active=1 tick=5652
+[proj] aim scan exhausted p=0 active=1 tick=5653
+[proj] aim scan exhausted p=0 active=1 tick=5654
+[proj] aim scan exhausted p=0 active=1 tick=5655
+[combat] p1 type2 died at (41,55) ar=5656 remaining=5
+[proj] aim scan exhausted p=0 active=1 tick=5656
+[proj] aim scan exhausted p=0 active=1 tick=5657
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=5673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=5685 aistate
+[devMouse] aistate written, ar=5685
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=5698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=5723 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[fifoQ] ar=5725 retask 5 41 41
+[fifo] ar=5726 retask 5 41 41
+[devMouse] retask slot5 (35,38)w0 -> (41,41)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=5746 retask 9 41 41
+[fifo] ar=5747 retask 9 41 41
+[devMouse] retask slot9 (35,38)w0 -> (41,41)
+[dbg] ar=5748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5754 aistate
+[devMouse] aistate written, ar=5754
+[dbg] ar=5773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=5798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=5806 aistate
+[devMouse] aistate written, ar=5806
+[combat] p0 type2 died at (40,54) ar=5819 remaining=12
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=5823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=5839
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=5840
+[proj] aim scan exhausted p=0 active=1 tick=5841
+[proj] aim scan exhausted p=0 active=1 tick=5842
+[proj] aim scan exhausted p=0 active=1 tick=5843
+[proj] aim scan exhausted p=0 active=1 tick=5844
+[proj] aim scan exhausted p=0 active=1 tick=5845
+[proj] aim scan exhausted p=0 active=1 tick=5846
+[proj] aim scan exhausted p=0 active=1 tick=5847
+[proj] aim scan exhausted p=0 active=1 tick=5848
+[fifoQ] ar=5848 retask 5 36 36
+[dbg] ar=5848 am=6 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=5849 retask 5 36 36
+[devMouse] retask slot5 (41,41)w0 -> (36,36)
+[proj] aim scan exhausted p=0 active=1 tick=5849
+[proj] aim scan exhausted p=0 active=1 tick=5850
+[proj] aim scan exhausted p=0 active=1 tick=5851
+[proj] aim scan exhausted p=0 active=1 tick=5852
+[combat] p1 type2 died at (43,56) ar=5853 remaining=4
+[proj] aim scan exhausted p=0 active=1 tick=5853
+[fifoQ] ar=5868 retask 9 36 35
+[fifo] ar=5869 retask 9 36 35
+[devMouse] retask slot9 (40,42)w0 -> (36,35)
+[dbg] ar=5873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5884 aistate
+[devMouse] aistate written, ar=5884
+[fifoQ] ar=5892 retask 2 15 40
+[fifo] ar=5892 retask 2 15 40
+[devMouse] retask slot2 (43,56)w0 -> (15,40)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=5898 am=6 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=5910 train 45 59 1
+[fifo] ar=5911 train 45 59 1
+[trace] g->7 (aA=6 am=6)
+[devMouse] train OK 排队 1/1 aK=2 (aK=0村民 2/3步兵 4弓兵 5/6骑兵)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=5923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5928 aistate
+[devMouse] aistate written, ar=5928
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=5948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=5973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=5975 aistate
+[devMouse] aistate written, ar=5975
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=5998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=6023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=6048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6054 aistate
+[devMouse] aistate written, ar=6054
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=6073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=6098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6103 aistate
+[devMouse] aistate written, ar=6103
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=6123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=6127 aistate
+[devMouse] aistate written, ar=6127
+[fifo] ar=6138 aistate
+[devMouse] aistate written, ar=6138
+[dbg] ar=6148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=6173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=6178 retask 2 15 27
+[fifo] ar=6179 retask 2 15 27
+[devMouse] retask slot2 (14,39)w0 -> (15,27)
+[dbg] ar=6198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=6223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6239 aistate
+[devMouse] aistate written, ar=6239
+[dbg] ar=6248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=6273 am=6 aA=8 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6278 aistate
+[devMouse] aistate written, ar=6278
+[combat] p1 type0 died at (15,27) ar=6293 remaining=3
+[dbg] ar=6298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=6320 aistate
+[devMouse] aistate written, ar=6321
+[dbg] ar=6323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=6348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=6372 aistate
+[devMouse] aistate written, ar=6372
+[dbg] ar=6373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[combat] p1 type0 died at (15,27) ar=6392 remaining=2
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=6398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=6403 aistate
+[devMouse] aistate written, ar=6403
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=6423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=6448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6452 aistate
+[devMouse] aistate written, ar=6452
+[dbg] ar=6473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6485 aistate
+[devMouse] aistate written, ar=6485
+[dbg] ar=6498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=6523 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=6548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=6567 aistate
+[devMouse] aistate written, ar=6567
+[dbg] ar=6573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=6598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6618 aistate
+[devMouse] aistate written, ar=6618
+[dbg] ar=6623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6627 aistate
+[devMouse] aistate written, ar=6627
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=6648 aistate
+[devMouse] aistate written, ar=6648
+[dbg] ar=6648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=6673 am=6 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=6698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=6723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6729 aistate
+[devMouse] aistate written, ar=6729
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=6748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=6769 retask 2 15 37
+[fifo] ar=6770 retask 2 15 37
+[devMouse] retask slot2 (15,27)w0 -> (15,37)
+[dbg] ar=6773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=6789 retask 12 15 37
+[fifo] ar=6790 retask 12 15 37
+[devMouse] retask slot12 (45,60)w0 -> (15,37)
+[dbg] ar=6798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6801 aistate
+[devMouse] aistate written, ar=6801
+[dbg] ar=6823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=6848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6849 aistate
+[devMouse] aistate written, ar=6849
+[fifo] ar=6860 aistate
+[devMouse] aistate written, ar=6860
+[dbg] ar=6873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=6898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type0 died at (15,36) ar=6908 remaining=2
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=6923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=6930 aistate
+[devMouse] aistate written, ar=6930
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=6948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=6969 retask 3 41 41
+[fifo] ar=6969 retask 3 41 41
+[devMouse] retask slot3 (33,39)w0 -> (41,41)
+[dbg] ar=6973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6976 aistate
+[devMouse] aistate written, ar=6976
+[fifoQ] ar=6986 retask 9 41 41
+[fifo] ar=6987 retask 9 41 41
+[devMouse] retask slot9 (36,38)w0 -> (41,41)
+[dbg] ar=6998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=7006 train 45 59 1
+[fifo] ar=7006 train 45 59 1
+[trace] g->7 (aA=6 am=6)
+[devMouse] train OK 排队 1/1 aK=2 (aK=0村民 2/3步兵 4弓兵 5/6骑兵)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=7023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=7048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=7071 aistate
+[devMouse] aistate written, ar=7071
+[dbg] ar=7073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=7098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7106 aistate
+[devMouse] aistate written, ar=7106
+[fifoQ] ar=7114 retask 5 41 41
+[fifo] ar=7114 retask 5 41 41
+[devMouse] retask slot5 (33,37)w0 -> (41,41)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=7123 am=6 aA=8 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=7131 retask 3 41 39
+[fifo] ar=7132 retask 3 41 39
+[devMouse] retask slot3 (41,41)w0 -> (41,39)
+[combat] p1 type1 died at (14,35) ar=7136 remaining=3
+[fifoQ] ar=7139 build 44 60 11
+[fifo] ar=7140 build 44 60 11
+[devMouse] build FAIL (44,60) 被单位/建筑/资源占格
+[dbg] ar=7148 am=6 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=7151 aistate
+[devMouse] aistate written, ar=7151
+[fifoQ] ar=7164 retask 9 40 40
+[fifo] ar=7165 retask 9 40 40
+[devMouse] retask slot9 (40,42)w0 -> (40,40)
+[fifoQ] ar=7171 build 46 60 11
+[fifo] ar=7172 build 46 60 11
+[devMouse] build FAIL (46,60) 被单位/建筑/资源占格
+[dbg] ar=7173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=7188
+[proj] aim scan exhausted p=0 active=1 tick=7189
+[proj] aim scan exhausted p=0 active=1 tick=7190
+[proj] aim scan exhausted p=0 active=1 tick=7191
+[proj] aim scan exhausted p=0 active=1 tick=7192
+[proj] aim scan exhausted p=0 active=1 tick=7193
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=7194
+[proj] aim scan exhausted p=0 active=1 tick=7195
+[proj] aim scan exhausted p=0 active=1 tick=7196
+[proj] aim scan exhausted p=0 active=1 tick=7197
+[proj] aim scan exhausted p=0 active=1 tick=7198
+[dbg] ar=7198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=7199
+[proj] aim scan exhausted p=0 active=1 tick=7200
+[fifoQ] ar=7200 build 42 60 11
+[fifo] ar=7201 build 42 60 11
+[devMouse] build FAIL (42,60) 被单位/建筑/资源占格
+[proj] aim scan exhausted p=0 active=1 tick=7201
+[proj] aim scan exhausted p=0 active=1 tick=7202
+[proj] aim scan exhausted p=0 active=1 tick=7203
+[combat] p1 type0 died at (13,34) ar=7204 remaining=2
+[proj] aim scan exhausted p=0 active=1 tick=7204
+[proj] aim scan exhausted p=0 active=1 tick=7205
+[proj] aim scan exhausted p=0 active=1 tick=7206
+[proj] aim scan exhausted p=0 active=1 tick=7207
+[proj] aim scan exhausted p=0 active=1 tick=7208
+[proj] aim scan exhausted p=0 active=1 tick=7209
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=7210
+[proj] aim scan exhausted p=0 active=1 tick=7211
+[proj] aim scan exhausted p=0 active=1 tick=7212
+[proj] aim scan exhausted p=0 active=1 tick=7213
+[proj] aim scan exhausted p=0 active=1 tick=7214
+[proj] aim scan exhausted p=0 active=1 tick=7215
+[proj] aim scan exhausted p=0 active=1 tick=7216
+[proj] aim scan exhausted p=0 active=1 tick=7217
+[proj] aim scan exhausted p=0 active=1 tick=7218
+[combat] p1 type2 died at (42,55) ar=7218 remaining=1
+[dbg] ar=7223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=7226 build 40 60 11
+[fifo] ar=7227 build 40 60 11
+[devMouse] build OK type11 @(40,60) 施工中(约1.3s完工)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[combat] p0 type2 died at (15,32) ar=7242 remaining=14
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=7248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7251 aistate
+[devMouse] aistate written, ar=7251
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=7273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=7291 retask 3 35 35
+[fifo] ar=7292 retask 3 35 35
+[devMouse] retask slot3 (43,39)w33 -> (35,35)
+[dbg] ar=7298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p0 type2 died at (14,32) ar=7300 remaining=13
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=7311 retask 5 36 36
+[fifo] ar=7312 retask 5 36 36
+[devMouse] retask slot5 (40,41)w0 -> (36,36)
+[dbg] ar=7323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7327 aistate
+[devMouse] aistate written, ar=7327
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=7335 retask 9 36 35
+[fifo] ar=7335 retask 9 36 35
+[devMouse] retask slot9 (41,41)w2e32 -> (36,35)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=7348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=7373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=7394 aistate
+[devMouse] aistate written, ar=7394
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=7398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=7418 aistate
+[devMouse] aistate written, ar=7418
+[dbg] ar=7423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=7434 retask 5 41 41
+[fifo] ar=7435 retask 5 41 41
+[devMouse] retask slot5 (33,36)w0 -> (41,41)
+[dbg] ar=7448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=7452 rally 44 58
+[fifo] ar=7453 rally 44 58
+[devMouse] rally OK 4 单位(1 个兵种) → (44,58)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=7473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=7483
+[proj] aim scan exhausted p=0 active=1 tick=7484
+[proj] aim scan exhausted p=0 active=1 tick=7485
+[proj] aim scan exhausted p=0 active=1 tick=7486
+[proj] aim scan exhausted p=0 active=1 tick=7487
+[proj] aim scan exhausted p=0 active=1 tick=7488
+[proj] aim scan exhausted p=0 active=1 tick=7489
+[proj] aim scan exhausted p=0 active=1 tick=7490
+[proj] aim scan exhausted p=0 active=1 tick=7491
+[proj] aim scan exhausted p=0 active=1 tick=7492
+[proj] aim scan exhausted p=0 active=1 tick=7493
+[proj] aim scan exhausted p=0 active=1 tick=7494
+[proj] aim scan exhausted p=0 active=1 tick=7495
+[proj] aim scan exhausted p=0 active=1 tick=7496
+[proj] aim scan exhausted p=0 active=1 tick=7497
+[proj] aim scan exhausted p=0 active=1 tick=7498
+[dbg] ar=7498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=7499
+[proj] aim scan exhausted p=0 active=1 tick=7500
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=7501
+[proj] aim scan exhausted p=0 active=1 tick=7502
+[proj] aim scan exhausted p=0 active=1 tick=7503
+[fifo] ar=7503 aistate
+[devMouse] aistate written, ar=7503
+[proj] aim scan exhausted p=0 active=1 tick=7504
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=7505
+[proj] aim scan exhausted p=0 active=1 tick=7506
+[proj] aim scan exhausted p=0 active=1 tick=7507
+[proj] aim scan exhausted p=0 active=1 tick=7508
+[proj] aim scan exhausted p=0 active=1 tick=7509
+[proj] aim scan exhausted p=0 active=1 tick=7510
+[proj] aim scan exhausted p=0 active=1 tick=7511
+[proj] aim scan exhausted p=0 active=1 tick=7512
+[proj] aim scan exhausted p=0 active=1 tick=7513
+[proj] aim scan exhausted p=0 active=1 tick=7514
+[proj] aim scan exhausted p=0 active=1 tick=7515
+[proj] aim scan exhausted p=0 active=1 tick=7516
+[proj] aim scan exhausted p=0 active=1 tick=7517
+[proj] aim scan exhausted p=0 active=1 tick=7518
+[fifo] ar=7518 aistate
+[devMouse] aistate written, ar=7518
+[proj] aim scan exhausted p=0 active=1 tick=7519
+[proj] aim scan exhausted p=0 active=1 tick=7520
+[proj] aim scan exhausted p=0 active=1 tick=7521
+[proj] aim scan exhausted p=0 active=1 tick=7522
+[proj] aim scan exhausted p=0 active=1 tick=7523
+[dbg] ar=7523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=7524
+[proj] aim scan exhausted p=0 active=1 tick=7525
+[proj] aim scan exhausted p=0 active=1 tick=7526
+[proj] aim scan exhausted p=0 active=1 tick=7527
+[proj] aim scan exhausted p=0 active=1 tick=7528
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=7529
+[proj] aim scan exhausted p=0 active=1 tick=7530
+[proj] aim scan exhausted p=0 active=1 tick=7531
+[proj] aim scan exhausted p=0 active=1 tick=7532
+[proj] aim scan exhausted p=0 active=1 tick=7533
+[proj] aim scan exhausted p=0 active=1 tick=7534
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=7535
+[proj] aim scan exhausted p=0 active=1 tick=7536
+[proj] aim scan exhausted p=0 active=1 tick=7537
+[proj] aim scan exhausted p=0 active=1 tick=7538
+[proj] aim scan exhausted p=0 active=1 tick=7539
+[proj] aim scan exhausted p=0 active=1 tick=7540
+[proj] aim scan exhausted p=0 active=1 tick=7541
+[proj] aim scan exhausted p=0 active=1 tick=7542
+[proj] aim scan exhausted p=0 active=1 tick=7543
+[proj] aim scan exhausted p=0 active=1 tick=7544
+[proj] aim scan exhausted p=0 active=1 tick=7545
+[proj] aim scan exhausted p=0 active=1 tick=7546
+[proj] aim scan exhausted p=0 active=1 tick=7547
+[proj] aim scan exhausted p=0 active=1 tick=7548
+[dbg] ar=7548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=7549
+[proj] aim scan exhausted p=0 active=1 tick=7550
+[proj] aim scan exhausted p=0 active=1 tick=7551
+[proj] aim scan exhausted p=0 active=1 tick=7552
+[proj] aim scan exhausted p=0 active=1 tick=7553
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=7554
+[proj] aim scan exhausted p=0 active=1 tick=7555
+[proj] aim scan exhausted p=0 active=1 tick=7556
+[proj] aim scan exhausted p=0 active=1 tick=7557
+[proj] aim scan exhausted p=0 active=1 tick=7558
+[fifoQ] ar=7558 retask 5 36 36
+[fifo] ar=7559 retask 5 36 36
+[devMouse] retask slot5 (41,41)w0 -> (36,36)
+[proj] aim scan exhausted p=0 active=1 tick=7559
+[proj] aim scan exhausted p=0 active=1 tick=7560
+[proj] aim scan exhausted p=0 active=1 tick=7561
+[proj] aim scan exhausted p=0 active=1 tick=7562
+[proj] aim scan exhausted p=0 active=1 tick=7563
+[proj] aim scan exhausted p=0 active=1 tick=7564
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=7565
+[proj] aim scan exhausted p=0 active=1 tick=7566
+[proj] aim scan exhausted p=0 active=1 tick=7567
+[proj] aim scan exhausted p=0 active=1 tick=7568
+[proj] aim scan exhausted p=0 active=1 tick=7569
+[proj] aim scan exhausted p=0 active=1 tick=7570
+[proj] aim scan exhausted p=0 active=1 tick=7571
+[proj] aim scan exhausted p=0 active=1 tick=7572
+[proj] aim scan exhausted p=0 active=1 tick=7573
+[dbg] ar=7573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=7574
+[proj] aim scan exhausted p=0 active=1 tick=7575
+[proj] aim scan exhausted p=0 active=1 tick=7576
+[proj] aim scan exhausted p=0 active=1 tick=7577
+[fifoQ] ar=7577 retask 2 15 40
+[fifo] ar=7578 retask 2 15 40
+[devMouse] retask slot2 (42,59)w701 -> (15,40)
+[proj] aim scan exhausted p=0 active=1 tick=7578
+[proj] aim scan exhausted p=0 active=1 tick=7579
+[proj] aim scan exhausted p=0 active=1 tick=7580
+[proj] aim scan exhausted p=0 active=1 tick=7581
+[proj] aim scan exhausted p=0 active=1 tick=7582
+[proj] aim scan exhausted p=0 active=1 tick=7583
+[proj] aim scan exhausted p=0 active=1 tick=7584
+[proj] aim scan exhausted p=0 active=1 tick=7585
+[proj] aim scan exhausted p=0 active=1 tick=7586
+[proj] aim scan exhausted p=0 active=1 tick=7587
+[proj] aim scan exhausted p=0 active=1 tick=7588
+[proj] aim scan exhausted p=0 active=1 tick=7589
+[proj] aim scan exhausted p=0 active=1 tick=7590
+[proj] aim scan exhausted p=0 active=1 tick=7591
+[proj] aim scan exhausted p=0 active=1 tick=7592
+[proj] aim scan exhausted p=0 active=1 tick=7593
+[proj] aim scan exhausted p=0 active=1 tick=7594
+[proj] aim scan exhausted p=0 active=1 tick=7595
+[proj] aim scan exhausted p=0 active=1 tick=7596
+[fifoQ] ar=7596 retask 12 15 40
+[fifo] ar=7597 retask 12 15 40
+[devMouse] retask slot12 (44,59)w0 -> (15,40)
+[proj] aim scan exhausted p=0 active=1 tick=7597
+[proj] aim scan exhausted p=0 active=1 tick=7598
+[dbg] ar=7598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=7599
+[proj] aim scan exhausted p=0 active=1 tick=7600
+[proj] aim scan exhausted p=0 active=1 tick=7601
+[proj] aim scan exhausted p=0 active=1 tick=7602
+[proj] aim scan exhausted p=0 active=1 tick=7603
+[proj] aim scan exhausted p=0 active=1 tick=7604
+[proj] aim scan exhausted p=0 active=1 tick=7605
+[proj] aim scan exhausted p=0 active=1 tick=7606
+[proj] aim scan exhausted p=0 active=1 tick=7607
+[proj] aim scan exhausted p=0 active=1 tick=7608
+[proj] aim scan exhausted p=0 active=1 tick=7609
+[combat] p1 type4 died at (40,56) ar=7609 remaining=2
+[proj] aim scan exhausted p=0 active=1 tick=7611
+[proj] aim scan exhausted p=0 active=1 tick=7612
+[proj] aim scan exhausted p=0 active=1 tick=7613
+[proj] aim scan exhausted p=0 active=1 tick=7614
+[proj] aim scan exhausted p=0 active=1 tick=7615
+[proj] aim scan exhausted p=0 active=1 tick=7616
+[proj] aim scan exhausted p=0 active=1 tick=7617
+[combat] p0 type2 died at (42,57) ar=7618 remaining=13
+[proj] aim scan exhausted p=0 active=1 tick=7618
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=7619
+[proj] aim scan exhausted p=0 active=1 tick=7620
+[proj] aim scan exhausted p=0 active=1 tick=7621
+[proj] aim scan exhausted p=0 active=1 tick=7622
+[proj] aim scan exhausted p=0 active=1 tick=7623
+[dbg] ar=7623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=7624
+[proj] aim scan exhausted p=0 active=1 tick=7625
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=7627
+[proj] aim scan exhausted p=0 active=1 tick=7628
+[proj] aim scan exhausted p=0 active=1 tick=7629
+[proj] aim scan exhausted p=0 active=1 tick=7630
+[proj] aim scan exhausted p=0 active=1 tick=7631
+[proj] aim scan exhausted p=0 active=1 tick=7632
+[proj] aim scan exhausted p=0 active=1 tick=7633
+[proj] aim scan exhausted p=0 active=1 tick=7634
+[proj] aim scan exhausted p=0 active=1 tick=7635
+[proj] aim scan exhausted p=0 active=1 tick=7636
+[proj] aim scan exhausted p=0 active=1 tick=7637
+[proj] aim scan exhausted p=0 active=1 tick=7638
+[proj] aim scan exhausted p=0 active=1 tick=7639
+[proj] aim scan exhausted p=0 active=1 tick=7640
+[proj] aim scan exhausted p=0 active=1 tick=7641
+[proj] aim scan exhausted p=0 active=1 tick=7642
+[proj] aim scan exhausted p=0 active=1 tick=7643
+[proj] aim scan exhausted p=0 active=1 tick=7644
+[proj] aim scan exhausted p=0 active=1 tick=7645
+[proj] aim scan exhausted p=0 active=1 tick=7646
+[proj] aim scan exhausted p=0 active=1 tick=7647
+[proj] aim scan exhausted p=0 active=1 tick=7648
+[dbg] ar=7648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=7649
+[proj] aim scan exhausted p=0 active=1 tick=7650
+[proj] aim scan exhausted p=0 active=1 tick=7651
+[proj] aim scan exhausted p=0 active=1 tick=7652
+[proj] aim scan exhausted p=0 active=1 tick=7653
+[proj] aim scan exhausted p=0 active=1 tick=7654
+[proj] aim scan exhausted p=0 active=1 tick=7655
+[combat] p1 type5 died at (42,57) ar=7656 remaining=1
+[proj] aim scan exhausted p=0 active=1 tick=7656
+[proj] aim scan exhausted p=0 active=1 tick=7657
+[fifo] ar=7658 aistate
+[devMouse] aistate written, ar=7658
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=7666 aistate
+[devMouse] aistate written, ar=7666
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=7673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7682 aistate
+[devMouse] aistate written, ar=7682
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=7698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=7700 retask 5 41 41
+[fifo] ar=7701 retask 5 41 41
+[devMouse] retask slot5 (37,42)w0 -> (41,41)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=7719 retask 9 41 41
+[fifo] ar=7720 retask 9 41 41
+[devMouse] retask slot9 (36,39)w0 -> (41,41)
+[dbg] ar=7723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[combat] p0 type2 died at (28,40) ar=7737 remaining=12
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=7748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=7773 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[fifo] ar=7781 aistate
+[devMouse] aistate written, ar=7781
+[dbg] ar=7798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=7823 retask 9 36 35
+[dbg] ar=7823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7824 retask 9 36 35
+[devMouse] retask slot9 (40,41)w0 -> (36,35)
+[proj] aim scan exhausted p=0 active=1 tick=7838
+[proj] aim scan exhausted p=0 active=1 tick=7839
+[proj] aim scan exhausted p=0 active=1 tick=7840
+[proj] aim scan exhausted p=0 active=1 tick=7841
+[proj] aim scan exhausted p=0 active=1 tick=7842
+[proj] aim scan exhausted p=0 active=1 tick=7843
+[proj] aim scan exhausted p=0 active=1 tick=7844
+[proj] aim scan exhausted p=0 active=1 tick=7845
+[proj] aim scan exhausted p=0 active=1 tick=7846
+[proj] aim scan exhausted p=0 active=1 tick=7847
+[proj] aim scan exhausted p=0 active=1 tick=7848
+[dbg] ar=7848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=7849
+[proj] aim scan exhausted p=0 active=1 tick=7850
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=7851
+[proj] aim scan exhausted p=0 active=1 tick=7852
+[proj] aim scan exhausted p=0 active=1 tick=7853
+[proj] aim scan exhausted p=0 active=1 tick=7854
+[proj] aim scan exhausted p=0 active=1 tick=7855
+[proj] aim scan exhausted p=0 active=1 tick=7856
+[proj] aim scan exhausted p=0 active=1 tick=7857
+[proj] aim scan exhausted p=0 active=1 tick=7858
+[fifo] ar=7858 aistate
+[devMouse] aistate written, ar=7858
+[proj] aim scan exhausted p=0 active=1 tick=7859
+[proj] aim scan exhausted p=0 active=1 tick=7860
+[proj] aim scan exhausted p=0 active=1 tick=7861
+[proj] aim scan exhausted p=0 active=1 tick=7862
+[proj] aim scan exhausted p=0 active=1 tick=7863
+[proj] aim scan exhausted p=0 active=1 tick=7864
+[proj] aim scan exhausted p=0 active=1 tick=7865
+[proj] aim scan exhausted p=0 active=1 tick=7866
+[proj] aim scan exhausted p=0 active=1 tick=7867
+[proj] aim scan exhausted p=0 active=1 tick=7868
+[proj] aim scan exhausted p=0 active=1 tick=7869
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=7870
+[proj] aim scan exhausted p=0 active=1 tick=7871
+[proj] aim scan exhausted p=0 active=1 tick=7872
+[proj] aim scan exhausted p=0 active=1 tick=7873
+[dbg] ar=7873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=7874
+[proj] aim scan exhausted p=0 active=1 tick=7875
+[proj] aim scan exhausted p=0 active=1 tick=7876
+[proj] aim scan exhausted p=0 active=1 tick=7877
+[proj] aim scan exhausted p=0 active=1 tick=7878
+[proj] aim scan exhausted p=0 active=1 tick=7879
+[proj] aim scan exhausted p=0 active=1 tick=7880
+[proj] aim scan exhausted p=0 active=1 tick=7881
+[combat] p1 type5 died at (40,55) ar=7882 remaining=1
+[proj] aim scan exhausted p=0 active=1 tick=7882
+[proj] aim scan exhausted p=0 active=1 tick=7883
+[proj] aim scan exhausted p=0 active=1 tick=7884
+[fifo] ar=7884 aistate
+[devMouse] aistate written, ar=7884
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=7898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7913 aistate
+[devMouse] aistate written, ar=7913
+[dbg] ar=7923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=7924 retask 5 36 36
+[fifo] ar=7925 retask 5 36 36
+[devMouse] retask slot5 (41,41)w0 -> (36,36)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=7939 retask 5 41 39
+[fifo] ar=7940 retask 5 41 39
+[devMouse] retask slot5 (43,42)w0 -> (41,39)
+[dbg] ar=7948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=7973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=7986 aistate
+[devMouse] aistate written, ar=7986
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=7998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=8023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=8032 aistate
+[devMouse] aistate written, ar=8032
+[dbg] ar=8048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=8065 aistate
+[devMouse] aistate written, ar=8065
+[dbg] ar=8073 am=6 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=8098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=8123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=8147 aistate
+[devMouse] aistate written, ar=8147
+[dbg] ar=8148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=8173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=8188 retask 9 41 41
+[fifo] ar=8189 retask 9 41 41
+[devMouse] retask slot9 (36,38)w0 -> (41,41)
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=8196 aistate
+[devMouse] aistate written, ar=8196
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=8198 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[fifo] ar=8207 aistate
+[devMouse] aistate written, ar=8208
+[dbg] ar=8223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=8248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=8250 aistate
+[devMouse] aistate written, ar=8250
+[dbg] ar=8273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=8289 retask 9 36 35
+[fifo] ar=8290 retask 9 36 35
+[devMouse] retask slot9 (41,41)w0 -> (36,35)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=8298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=8308 train 45 59 1
+[fifo] ar=8309 train 45 59 1
+[trace] g->7 (aA=6 am=6)
+[devMouse] train OK 排队 1/1 aK=2 (aK=0村民 2/3步兵 4弓兵 5/6骑兵)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=8323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=8348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=8373 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[fifo] ar=8374 aistate
+[devMouse] aistate written, ar=8374
+[fifo] ar=8384 aistate
+[devMouse] aistate written, ar=8384
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=8398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[combat] p1 type2 died at (38,53) ar=8414 remaining=2
+[fifoQ] ar=8414 rally 44 58
+[fifo] ar=8415 rally 44 58
+[devMouse] rally OK 3 单位(1 个兵种) → (44,58)
+[dbg] ar=8423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=8439 retask 2 15 40
+[fifo] ar=8440 retask 2 15 40
+[devMouse] retask slot2 (18,36)w0 -> (15,40)
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=8448 aistate
+[devMouse] aistate written, ar=8448
+[dbg] ar=8448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=8460 retask 11 44 58
+[fifo] ar=8461 retask 11 44 58
+[devMouse] retask slot11 (43,58)w0 -> (44,58)
+[dbg] ar=8473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=8498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=8521 aistate
+[devMouse] aistate written, ar=8521
+[dbg] ar=8523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=8548 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[fifo] ar=8560 aistate
+[devMouse] aistate written, ar=8561
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=8573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=8598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=8602 aistate
+[devMouse] aistate written, ar=8602
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=8623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=8648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=8673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=8685 aistate
+[devMouse] aistate written, ar=8685
+[fifo] ar=8693 aistate
+[devMouse] aistate written, ar=8693
+[dbg] ar=8698 am=6 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=8723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=8727 retask 0 28 58
+[fifo] ar=8728 retask 0 28 58
+[devMouse] retask slot0 (26,59)w0 -> (28,58)
+[fifo] ar=8739 aistate
+[devMouse] aistate written, ar=8739
+[dbg] ar=8748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=8773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=8787 aistate
+[devMouse] aistate written, ar=8787
+[proj] aim scan exhausted p=0 active=1 tick=8789
+[proj] aim scan exhausted p=0 active=1 tick=8790
+[proj] aim scan exhausted p=0 active=1 tick=8791
+[proj] aim scan exhausted p=0 active=1 tick=8792
+[proj] aim scan exhausted p=0 active=1 tick=8793
+[proj] aim scan exhausted p=0 active=1 tick=8794
+[proj] aim scan exhausted p=0 active=1 tick=8795
+[proj] aim scan exhausted p=0 active=1 tick=8796
+[proj] aim scan exhausted p=0 active=1 tick=8797
+[proj] aim scan exhausted p=0 active=1 tick=8798
+[dbg] ar=8798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type1 died at (15,37) ar=8799 remaining=3
+[proj] aim scan exhausted p=0 active=1 tick=8799
+[proj] aim scan exhausted p=0 active=1 tick=8800
+[proj] aim scan exhausted p=0 active=1 tick=8801
+[proj] aim scan exhausted p=0 active=1 tick=8802
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=8803
+[proj] aim scan exhausted p=0 active=1 tick=8805
+[proj] aim scan exhausted p=0 active=1 tick=8806
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=8807
+[proj] aim scan exhausted p=0 active=1 tick=8808
+[proj] aim scan exhausted p=0 active=1 tick=8809
+[proj] aim scan exhausted p=0 active=1 tick=8810
+[proj] aim scan exhausted p=0 active=1 tick=8811
+[proj] aim scan exhausted p=0 active=1 tick=8812
+[proj] aim scan exhausted p=0 active=1 tick=8813
+[proj] aim scan exhausted p=0 active=1 tick=8814
+[proj] aim scan exhausted p=0 active=1 tick=8815
+[proj] aim scan exhausted p=0 active=1 tick=8816
+[proj] aim scan exhausted p=0 active=1 tick=8817
+[proj] aim scan exhausted p=0 active=1 tick=8818
+[proj] aim scan exhausted p=0 active=1 tick=8819
+[proj] aim scan exhausted p=0 active=1 tick=8820
+[proj] aim scan exhausted p=0 active=1 tick=8821
+[proj] aim scan exhausted p=0 active=1 tick=8822
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=8823
+[dbg] ar=8823 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=8824
+[proj] aim scan exhausted p=0 active=1 tick=8825
+[proj] aim scan exhausted p=0 active=1 tick=8826
+[proj] aim scan exhausted p=0 active=1 tick=8827
+[proj] aim scan exhausted p=0 active=1 tick=8828
+[proj] aim scan exhausted p=0 active=1 tick=8829
+[fifoQ] ar=8829 retask 2 15 37
+[fifo] ar=8830 retask 2 15 37
+[devMouse] retask slot2 (15,37)w0 -> (15,37)
+[proj] aim scan exhausted p=0 active=1 tick=8830
+[proj] aim scan exhausted p=0 active=1 tick=8831
+[trace] g->8 (aA=6 am=6)
+[combat] p0 type2 died at (42,57) ar=8832 remaining=13
+[proj] aim scan exhausted p=0 active=1 tick=8832
+[proj] aim scan exhausted p=0 active=1 tick=8833
+[proj] aim scan exhausted p=0 active=1 tick=8834
+[proj] aim scan exhausted p=0 active=1 tick=8835
+[proj] aim scan exhausted p=0 active=1 tick=8837
+[proj] aim scan exhausted p=0 active=1 tick=8838
+[proj] aim scan exhausted p=0 active=1 tick=8839
+[proj] aim scan exhausted p=0 active=1 tick=8840
+[proj] aim scan exhausted p=0 active=1 tick=8841
+[proj] aim scan exhausted p=0 active=1 tick=8842
+[proj] aim scan exhausted p=0 active=1 tick=8843
+[proj] aim scan exhausted p=0 active=1 tick=8844
+[proj] aim scan exhausted p=0 active=1 tick=8845
+[proj] aim scan exhausted p=0 active=1 tick=8846
+[proj] aim scan exhausted p=0 active=1 tick=8847
+[proj] aim scan exhausted p=0 active=1 tick=8848
+[dbg] ar=8848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=8849
+[proj] aim scan exhausted p=0 active=1 tick=8850
+[fifoQ] ar=8850 retask 13 15 37
+[fifo] ar=8851 retask 13 15 37
+[devMouse] retask FAIL slot13 越界(n=13)
+[proj] aim scan exhausted p=0 active=1 tick=8851
+[combat] p1 type2 died at (41,57) ar=8851 remaining=2
+[dbg] ar=8873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=8898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type1 died at (15,36) ar=8901 remaining=1
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=8911 aistate
+[devMouse] aistate written, ar=8911
+[fifo] ar=8918 aistate
+[devMouse] aistate written, ar=8919
+[dbg] ar=8923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=8942 aistate
+[devMouse] aistate written, ar=8942
+[dbg] ar=8948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=8973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=8994 aistate
+[devMouse] aistate written, ar=8994
+[dbg] ar=8998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=9023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=9048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=9073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=9076 aistate
+[devMouse] aistate written, ar=9076
+[fifo] ar=9093 aistate
+[devMouse] aistate written, ar=9093
+[dbg] ar=9098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=9123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=9148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type0 died at (14,35) ar=9149 remaining=0
+[fifo] ar=9157 aistate
+[devMouse] aistate written, ar=9157
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=9173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=9187 aistate
+[devMouse] aistate written, ar=9187
+[dbg] ar=9198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=9223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=9239 aistate
+[devMouse] aistate written, ar=9239
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=9248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=9268 aistate
+[devMouse] aistate written, ar=9268
+[dbg] ar=9273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=9298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=9320 aistate
+[devMouse] aistate written, ar=9320
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=9323 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=9348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=9373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=9398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=9402 aistate
+[devMouse] aistate written, ar=9402
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=9423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=9432 aistate
+[devMouse] aistate written, ar=9432
+[fifo] ar=9444 aistate
+[devMouse] aistate written, ar=9444
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=9448 am=6 aA=8 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=9473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=9483 aistate
+[devMouse] aistate written, ar=9483
+[dbg] ar=9498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=9523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=9548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=9563 aistate
+[devMouse] aistate written, ar=9563
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=9573 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[dbg] ar=9598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=9618 aistate
+[devMouse] aistate written, ar=9618
+[dbg] ar=9623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[combat] p1 type1 died at (12,31) ar=9643 remaining=1
+[fifo] ar=9644 aistate
+[devMouse] aistate written, ar=9644
+[dbg] ar=9648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=9673 aistate
+[devMouse] aistate written, ar=9673
+[dbg] ar=9673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=9683 retask 1 27 59
+[fifo] ar=9683 retask 1 27 59
+[devMouse] retask slot1 (25,60)w0 -> (27,59)
+[dbg] ar=9698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=9723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=9743 aistate
+[devMouse] aistate written, ar=9743
+[dbg] ar=9748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=9773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=9785 retask 9 36 35
+[fifo] ar=9786 retask 9 36 35
+[devMouse] retask slot9 (35,39)w0 -> (36,35)
+[fifo] ar=9793 aistate
+[devMouse] aistate written, ar=9793
+[dbg] ar=9798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=9823 am=6 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=9847 aistate
+[devMouse] aistate written, ar=9847
+[dbg] ar=9848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type1 died at (10,31) ar=9859 remaining=0
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=9873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=9898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=9921 aistate
+[devMouse] aistate written, ar=9921
+[dbg] ar=9923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=9930 aistate
+[devMouse] aistate written, ar=9930
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=9948 am=6 aA=8 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=9971 aistate
+[devMouse] aistate written, ar=9971
+[dbg] ar=9973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=9998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=10014 aistate
+[devMouse] aistate written, ar=10014
+[dbg] ar=10023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=10048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=10073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=10094 aistate
+[devMouse] aistate written, ar=10094
+[dbg] ar=10098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=10123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=10135 retask 2 15 40
+[fifo] ar=10136 retask 2 15 40
+[devMouse] retask slot2 (10,31)w0 -> (15,40)
+[fifo] ar=10148 aistate
+[devMouse] aistate written, ar=10148
+[dbg] ar=10148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=10168 aistate
+[devMouse] aistate written, ar=10168
+[dbg] ar=10173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=10194 aistate
+[devMouse] aistate written, ar=10195
+[dbg] ar=10198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=10223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=10248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=10273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=10275 aistate
+[devMouse] aistate written, ar=10276
+[dbg] ar=10298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=10321 aistate
+[devMouse] aistate written, ar=10321
+[dbg] ar=10323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=10348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=10356 aistate
+[devMouse] aistate written, ar=10356
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=10373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=10398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=10411 aistate
+[devMouse] aistate written, ar=10411
+[dbg] ar=10423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=10438 aistate
+[devMouse] aistate written, ar=10438
+[dbg] ar=10448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=10473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=10480 rally 44 58
+[fifo] ar=10481 rally 44 58
+[devMouse] rally OK 3 单位(1 个兵种) → (44,58)
+[fifo] ar=10498 aistate
+[devMouse] aistate written, ar=10498
+[dbg] ar=10498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=10506 train 45 59 1
+[fifo] ar=10506 train 45 59 1
+[trace] g->7 (aA=6 am=6)
+[devMouse] train OK 排队 1/1 aK=2 (aK=0村民 2/3步兵 4弓兵 5/6骑兵)
+[dbg] ar=10523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=10548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=10571 aistate
+[devMouse] aistate written, ar=10571
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=10573 am=6 aA=8 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=10598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=10623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=10629
+[proj] aim scan exhausted p=0 active=1 tick=10630
+[proj] aim scan exhausted p=0 active=1 tick=10631
+[proj] aim scan exhausted p=0 active=1 tick=10632
+[proj] aim scan exhausted p=0 active=1 tick=10633
+[proj] aim scan exhausted p=0 active=1 tick=10634
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=10635
+[proj] aim scan exhausted p=0 active=1 tick=10636
+[proj] aim scan exhausted p=0 active=1 tick=10637
+[proj] aim scan exhausted p=0 active=1 tick=10638
+[proj] aim scan exhausted p=0 active=1 tick=10639
+[proj] aim scan exhausted p=0 active=1 tick=10640
+[proj] aim scan exhausted p=0 active=1 tick=10641
+[proj] aim scan exhausted p=0 active=1 tick=10642
+[proj] aim scan exhausted p=0 active=1 tick=10643
+[proj] aim scan exhausted p=0 active=1 tick=10645
+[proj] aim scan exhausted p=0 active=1 tick=10646
+[proj] aim scan exhausted p=0 active=1 tick=10647
+[proj] aim scan exhausted p=0 active=1 tick=10648
+[dbg] ar=10648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=10649
+[proj] aim scan exhausted p=0 active=1 tick=10650
+[proj] aim scan exhausted p=0 active=1 tick=10651
+[proj] aim scan exhausted p=0 active=1 tick=10652
+[proj] aim scan exhausted p=0 active=1 tick=10653
+[proj] aim scan exhausted p=0 active=1 tick=10654
+[proj] aim scan exhausted p=0 active=1 tick=10655
+[proj] aim scan exhausted p=0 active=1 tick=10656
+[proj] aim scan exhausted p=0 active=1 tick=10657
+[proj] aim scan exhausted p=0 active=1 tick=10658
+[fifo] ar=10658 aistate
+[devMouse] aistate written, ar=10658
+[proj] aim scan exhausted p=0 active=1 tick=10659
+[proj] aim scan exhausted p=0 active=1 tick=10661
+[proj] aim scan exhausted p=0 active=1 tick=10662
+[proj] aim scan exhausted p=0 active=1 tick=10663
+[proj] aim scan exhausted p=0 active=1 tick=10664
+[proj] aim scan exhausted p=0 active=1 tick=10665
+[proj] aim scan exhausted p=0 active=1 tick=10666
+[proj] aim scan exhausted p=0 active=1 tick=10667
+[proj] aim scan exhausted p=0 active=1 tick=10668
+[proj] aim scan exhausted p=0 active=1 tick=10669
+[proj] aim scan exhausted p=0 active=1 tick=10670
+[proj] aim scan exhausted p=0 active=1 tick=10671
+[fifo] ar=10671 aistate
+[devMouse] aistate written, ar=10671
+[proj] aim scan exhausted p=0 active=1 tick=10672
+[proj] aim scan exhausted p=0 active=1 tick=10673
+[dbg] ar=10673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=10674
+[proj] aim scan exhausted p=0 active=1 tick=10675
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=10676
+[proj] aim scan exhausted p=0 active=1 tick=10677
+[proj] aim scan exhausted p=0 active=1 tick=10678
+[proj] aim scan exhausted p=0 active=1 tick=10679
+[fifo] ar=10679 aistate
+[devMouse] aistate written, ar=10679
+[proj] aim scan exhausted p=0 active=1 tick=10680
+[proj] aim scan exhausted p=0 active=1 tick=10681
+[proj] aim scan exhausted p=0 active=1 tick=10682
+[proj] aim scan exhausted p=0 active=1 tick=10683
+[proj] aim scan exhausted p=0 active=1 tick=10684
+[proj] aim scan exhausted p=0 active=1 tick=10685
+[proj] aim scan exhausted p=0 active=1 tick=10686
+[proj] aim scan exhausted p=0 active=1 tick=10687
+[proj] aim scan exhausted p=0 active=1 tick=10688
+[proj] aim scan exhausted p=0 active=1 tick=10689
+[proj] aim scan exhausted p=0 active=1 tick=10690
+[proj] aim scan exhausted p=0 active=1 tick=10691
+[combat] p1 type2 died at (40,56) ar=10692 remaining=2
+[proj] aim scan exhausted p=0 active=1 tick=10692
+[proj] aim scan exhausted p=0 active=1 tick=10693
+[proj] aim scan exhausted p=0 active=1 tick=10694
+[proj] aim scan exhausted p=0 active=1 tick=10695
+[proj] aim scan exhausted p=0 active=1 tick=10696
+[proj] aim scan exhausted p=0 active=1 tick=10697
+[proj] aim scan exhausted p=0 active=1 tick=10698
+[dbg] ar=10698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=10699
+[proj] aim scan exhausted p=0 active=1 tick=10700
+[proj] aim scan exhausted p=0 active=1 tick=10701
+[proj] aim scan exhausted p=0 active=1 tick=10702
+[proj] aim scan exhausted p=0 active=1 tick=10703
+[proj] aim scan exhausted p=0 active=1 tick=10704
+[proj] aim scan exhausted p=0 active=1 tick=10705
+[proj] aim scan exhausted p=0 active=1 tick=10706
+[proj] aim scan exhausted p=0 active=1 tick=10707
+[fifoQ] ar=10713 retask 11 44 58
+[fifo] ar=10714 retask 11 44 58
+[devMouse] retask slot11 (41,56)w0 -> (44,58)
+[dbg] ar=10723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=10733 retask 12 44 58
+[fifo] ar=10734 retask 12 44 58
+[devMouse] retask slot12 (40,56)w0 -> (44,58)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=10748 am=6 aA=8 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=10751 retask 13 13 33
+[fifo] ar=10752 retask 13 13 33
+[devMouse] retask slot13 (45,60)w0 -> (13,33)
+[fifoQ] ar=10771 retask 14 13 33
+[fifo] ar=10772 retask 14 13 33
+[devMouse] retask slot14 (45,58)w0 -> (13,33)
+[dbg] ar=10773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=10798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=10823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=10831 aistate
+[devMouse] aistate written, ar=10831
+[dbg] ar=10848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=10854 aistate
+[devMouse] aistate written, ar=10854
+[fifoQ] ar=10871 train 45 59 1
+[fifo] ar=10872 train 45 59 1
+[trace] g->7 (aA=6 am=6)
+[devMouse] train OK 排队 1/1 aK=2 (aK=0村民 2/3步兵 4弓兵 5/6骑兵)
+[dbg] ar=10873 am=6 aA=7 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=10898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=10903 aistate
+[devMouse] aistate written, ar=10903
+[dbg] ar=10923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=8)
+[fifo] ar=10936 aistate
+[devMouse] aistate written, ar=10936
+[dbg] ar=10948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=10973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=10977 retask 10 28 58
+[fifo] ar=10978 retask 10 28 58
+[devMouse] retask slot10 (25,60)w0 -> (28,58)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=10998 retask 13 15 40
+[dbg] ar=10998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=10999 retask 13 15 40
+[devMouse] retask slot13 (14,32)w0 -> (15,40)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=11019 retask 14 15 40
+[fifo] ar=11020 retask 14 15 40
+[devMouse] retask slot14 (12,32)w701 -> (15,40)
+[dbg] ar=11023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=11032 aistate
+[devMouse] aistate written, ar=11032
+[dbg] ar=11048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=11073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=11079 aistate
+[devMouse] aistate written, ar=11079
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=11098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=11123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=11148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=11152 aistate
+[devMouse] aistate written, ar=11152
+[fifo] ar=11163 aistate
+[devMouse] aistate written, ar=11163
+[combat] p1 type1 died at (15,36) ar=11165 remaining=2
+[dbg] ar=11173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=11198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=11210 aistate
+[devMouse] aistate written, ar=11210
+[dbg] ar=11223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type1 died at (16,36) ar=11229 remaining=1
+[fifo] ar=11244 aistate
+[devMouse] aistate written, ar=11244
+[dbg] ar=11248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=11273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=11285 retask 10 28 58
+[fifo] ar=11286 retask 10 28 58
+[devMouse] retask slot10 (29,59)w0 -> (28,58)
+[dbg] ar=11298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=11323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=11348 aistate
+[devMouse] aistate written, ar=11348
+[dbg] ar=11348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=11373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=11387 aistate
+[devMouse] aistate written, ar=11387
+[fifo] ar=11398 aistate
+[devMouse] aistate written, ar=11398
+[dbg] ar=11398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=11423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=11429 aistate
+[devMouse] aistate written, ar=11430
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=11448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type1 died at (15,36) ar=11454 remaining=1
+[fifoQ] ar=11471 retask 9 41 41
+[fifo] ar=11472 retask 9 41 41
+[devMouse] retask slot9 (36,38)w0 -> (41,41)
+[dbg] ar=11473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=11490 retask 10 28 58
+[fifo] ar=11490 retask 10 28 58
+[devMouse] retask slot10 (29,59)w0 -> (28,58)
+[dbg] ar=11498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=11523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=11548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=11551 aistate
+[devMouse] aistate written, ar=11551
+[fifo] ar=11564 aistate
+[devMouse] aistate written, ar=11564
+[dbg] ar=11573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=11598 am=6 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=11623 am=6 aA=8 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=11633 aistate
+[devMouse] aistate written, ar=11633
+[fifo] ar=11644 aistate
+[devMouse] aistate written, ar=11644
+[dbg] ar=11648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=11664
+[proj] aim scan exhausted p=0 active=1 tick=11665
+[proj] aim scan exhausted p=0 active=1 tick=11666
+[proj] aim scan exhausted p=0 active=1 tick=11667
+[proj] aim scan exhausted p=0 active=1 tick=11668
+[proj] aim scan exhausted p=0 active=1 tick=11669
+[fifoQ] ar=11669 retask 9 41 39
+[fifo] ar=11670 retask 9 41 39
+[devMouse] retask slot9 (41,41)w0 -> (41,39)
+[proj] aim scan exhausted p=0 active=1 tick=11670
+[proj] aim scan exhausted p=0 active=1 tick=11671
+[proj] aim scan exhausted p=0 active=1 tick=11672
+[proj] aim scan exhausted p=0 active=1 tick=11673
+[dbg] ar=11673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=11674
+[proj] aim scan exhausted p=0 active=1 tick=11675
+[proj] aim scan exhausted p=0 active=1 tick=11676
+[proj] aim scan exhausted p=0 active=1 tick=11677
+[fifoQ] ar=11677 retask 9 36 35
+[fifo] ar=11678 retask 9 36 35
+[devMouse] retask slot9 (41,40)w0 -> (36,35)
+[proj] aim scan exhausted p=0 active=1 tick=11678
+[proj] aim scan exhausted p=0 active=1 tick=11680
+[proj] aim scan exhausted p=0 active=1 tick=11681
+[proj] aim scan exhausted p=0 active=1 tick=11682
+[proj] aim scan exhausted p=0 active=1 tick=11683
+[proj] aim scan exhausted p=0 active=1 tick=11684
+[proj] aim scan exhausted p=0 active=1 tick=11685
+[proj] aim scan exhausted p=0 active=1 tick=11686
+[proj] aim scan exhausted p=0 active=1 tick=11687
+[proj] aim scan exhausted p=0 active=1 tick=11688
+[proj] aim scan exhausted p=0 active=1 tick=11689
+[proj] aim scan exhausted p=0 active=1 tick=11690
+[proj] aim scan exhausted p=0 active=1 tick=11691
+[proj] aim scan exhausted p=0 active=1 tick=11692
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=11693
+[proj] aim scan exhausted p=0 active=1 tick=11694
+[proj] aim scan exhausted p=0 active=1 tick=11695
+[proj] aim scan exhausted p=0 active=1 tick=11696
+[proj] aim scan exhausted p=0 active=1 tick=11697
+[fifoQ] ar=11698 retask 10 28 58
+[fifo] ar=11698 retask 10 28 58
+[devMouse] retask slot10 (29,59)w0 -> (28,58)
+[proj] aim scan exhausted p=0 active=1 tick=11698
+[dbg] ar=11698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type2 died at (41,57) ar=11699 remaining=1
+[proj] aim scan exhausted p=0 active=1 tick=11699
+[proj] aim scan exhausted p=0 active=1 tick=11700
+[proj] aim scan exhausted p=0 active=1 tick=11701
+[proj] aim scan exhausted p=0 active=1 tick=11702
+[proj] aim scan exhausted p=0 active=1 tick=11703
+[proj] aim scan exhausted p=0 active=1 tick=11704
+[proj] aim scan exhausted p=0 active=1 tick=11705
+[proj] aim scan exhausted p=0 active=1 tick=11706
+[proj] aim scan exhausted p=0 active=1 tick=11707
+[proj] aim scan exhausted p=0 active=1 tick=11708
+[proj] aim scan exhausted p=0 active=1 tick=11709
+[proj] aim scan exhausted p=0 active=1 tick=11710
+[fifoQ] ar=11717 rally 44 58
+[fifo] ar=11718 rally 44 58
+[devMouse] rally OK 6 单位(1 个兵种) → (44,58)
+[dbg] ar=11723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=11741 aistate
+[devMouse] aistate written, ar=11741
+[dbg] ar=11748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=11749 retask 13 15 40
+[fifo] ar=11749 retask 13 15 40
+[devMouse] retask slot13 (21,36)w0 -> (15,40)
+[fifoQ] ar=11770 retask 14 15 40
+[fifo] ar=11771 retask 14 15 40
+[devMouse] retask slot14 (20,36)w0 -> (15,40)
+[dbg] ar=11773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=11798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=11823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=11830 aistate
+[devMouse] aistate written, ar=11830
+[dbg] ar=11848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=11873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=11898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=11914 aistate
+[devMouse] aistate written, ar=11914
+[fifo] ar=11922 aistate
+[devMouse] aistate written, ar=11922
+[dbg] ar=11923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=11930 aistate
+[devMouse] aistate written, ar=11930
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=11948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=11954 retask 10 28 58
+[fifo] ar=11955 retask 10 28 58
+[devMouse] retask slot10 (29,59)w0 -> (28,58)
+[dbg] ar=11973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=11998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=12014 aistate
+[devMouse] aistate written, ar=12014
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=12023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=12048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=12073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=12094 aistate
+[devMouse] aistate written, ar=12094
+[dbg] ar=12098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=12102 aistate
+[devMouse] aistate written, ar=12102
+[dbg] ar=12123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=12136 retask 10 28 58
+[fifo] ar=12137 retask 10 28 58
+[devMouse] retask slot10 (29,59)w0 -> (28,58)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=12148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=12173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=12174 aistate
+[devMouse] aistate written, ar=12174
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=12197 aistate
+[devMouse] aistate written, ar=12197
+[dbg] ar=12198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=12223 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[fifoQ] ar=12238 rally 44 58
+[fifo] ar=12239 rally 44 58
+[devMouse] rally OK 7 单位(1 个兵种) → (44,58)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=12248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=12266
+[proj] aim scan exhausted p=0 active=1 tick=12267
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=12268
+[proj] aim scan exhausted p=0 active=1 tick=12269
+[proj] aim scan exhausted p=0 active=1 tick=12270
+[proj] aim scan exhausted p=0 active=1 tick=12271
+[proj] aim scan exhausted p=0 active=1 tick=12272
+[proj] aim scan exhausted p=0 active=1 tick=12273
+[dbg] ar=12273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=12274
+[proj] aim scan exhausted p=0 active=1 tick=12275
+[proj] aim scan exhausted p=0 active=1 tick=12276
+[proj] aim scan exhausted p=0 active=1 tick=12277
+[proj] aim scan exhausted p=0 active=1 tick=12278
+[proj] aim scan exhausted p=0 active=1 tick=12279
+[proj] aim scan exhausted p=0 active=1 tick=12280
+[fifo] ar=12281 aistate
+[devMouse] aistate written, ar=12281
+[proj] aim scan exhausted p=0 active=1 tick=12282
+[proj] aim scan exhausted p=0 active=1 tick=12283
+[proj] aim scan exhausted p=0 active=1 tick=12284
+[proj] aim scan exhausted p=0 active=1 tick=12285
+[proj] aim scan exhausted p=0 active=1 tick=12286
+[proj] aim scan exhausted p=0 active=1 tick=12287
+[proj] aim scan exhausted p=0 active=1 tick=12288
+[proj] aim scan exhausted p=0 active=1 tick=12289
+[proj] aim scan exhausted p=0 active=1 tick=12290
+[proj] aim scan exhausted p=0 active=1 tick=12291
+[proj] aim scan exhausted p=0 active=1 tick=12292
+[proj] aim scan exhausted p=0 active=1 tick=12293
+[proj] aim scan exhausted p=0 active=1 tick=12294
+[proj] aim scan exhausted p=0 active=1 tick=12295
+[proj] aim scan exhausted p=0 active=1 tick=12296
+[proj] aim scan exhausted p=0 active=1 tick=12297
+[proj] aim scan exhausted p=0 active=1 tick=12298
+[dbg] ar=12298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=12299
+[proj] aim scan exhausted p=0 active=1 tick=12300
+[proj] aim scan exhausted p=0 active=1 tick=12301
+[combat] p1 type2 died at (42,57) ar=12302 remaining=2
+[proj] aim scan exhausted p=0 active=1 tick=12302
+[proj] aim scan exhausted p=0 active=1 tick=12303
+[proj] aim scan exhausted p=0 active=1 tick=12304
+[proj] aim scan exhausted p=0 active=1 tick=12305
+[proj] aim scan exhausted p=0 active=1 tick=12306
+[fifo] ar=12306 aistate
+[devMouse] aistate written, ar=12306
+[proj] aim scan exhausted p=0 active=1 tick=12307
+[proj] aim scan exhausted p=0 active=1 tick=12308
+[proj] aim scan exhausted p=0 active=1 tick=12309
+[proj] aim scan exhausted p=0 active=1 tick=12310
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=12311
+[proj] aim scan exhausted p=0 active=1 tick=12312
+[dbg] ar=12323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=12346 retask 7 37 36
+[fifo] ar=12347 retask 7 37 36
+[devMouse] retask slot7 (40,34)w0 -> (37,36)
+[dbg] ar=12348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=12365 retask 10 28 58
+[fifo] ar=12366 retask 10 28 58
+[devMouse] retask slot10 (29,59)w0 -> (28,58)
+[dbg] ar=12373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=12398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=12421 aistate
+[devMouse] aistate written, ar=12421
+[dbg] ar=12423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=12429 aistate
+[devMouse] aistate written, ar=12429
+[dbg] ar=12448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=12460 aistate
+[devMouse] aistate written, ar=12460
+[fifoQ] ar=12470 train 45 59 1
+[fifo] ar=12470 train 45 59 1
+[trace] g->7 (aA=6 am=6)
+[devMouse] train OK 排队 1/1 aK=2 (aK=0村民 2/3步兵 4弓兵 5/6骑兵)
+[dbg] ar=12473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=12498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=12523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=12536 aistate
+[devMouse] aistate written, ar=12537
+[dbg] ar=12548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=12573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=12579 retask 10 28 58
+[fifo] ar=12580 retask 10 28 58
+[devMouse] retask slot10 (29,59)w0 -> (28,58)
+[fifoQ] ar=12598 retask 2 15 36
+[dbg] ar=12598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=12599 retask 2 15 36
+[devMouse] retask slot2 (41,58)w0 -> (15,36)
+[fifoQ] ar=12619 retask 17 15 36
+[fifo] ar=12620 retask 17 15 36
+[devMouse] retask slot17 (45,60)w0 -> (15,36)
+[dbg] ar=12623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=12638 aistate
+[devMouse] aistate written, ar=12638
+[dbg] ar=12648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=12671 aistate
+[devMouse] aistate written, ar=12671
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=12673 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[fifo] ar=12682 aistate
+[devMouse] aistate written, ar=12682
+[dbg] ar=12698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=12723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=12748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=12764 aistate
+[devMouse] aistate written, ar=12764
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=12773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=12798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=12805 retask 10 28 58
+[fifo] ar=12806 retask 10 28 58
+[devMouse] retask slot10 (29,59)w0 -> (28,58)
+[bfs] p0 u10 escalate unitsBlock cur=1d3b target=1c3a -> len=1 ar=12806
+[fifo] ar=12819 aistate
+[devMouse] aistate written, ar=12819
+[combat] p1 type1 died at (15,36) ar=12821 remaining=2
+[dbg] ar=12823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=12848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=12867 aistate
+[devMouse] aistate written, ar=12867
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=12873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=12898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=12922 aistate
+[devMouse] aistate written, ar=12922
+[dbg] ar=12923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=12948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=12951 aistate
+[devMouse] aistate written, ar=12951
+[dbg] ar=12973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=12998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=12999 aistate
+[devMouse] aistate written, ar=12999
+[dbg] ar=13023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[combat] p1 type1 died at (15,36) ar=13035 remaining=2
+[fifo] ar=13036 aistate
+[devMouse] aistate written, ar=13036
+[dbg] ar=13048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=13073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[combat] p1 type1 died at (14,35) ar=13078 remaining=1
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=13098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=13123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=13140 aistate
+[devMouse] aistate written, ar=13140
+[dbg] ar=13148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[combat] p0 type2 died at (15,34) ar=13164 remaining=18
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=13173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=13177 aistate
+[devMouse] aistate written, ar=13177
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=13185 aistate
+[devMouse] aistate written, ar=13185
+[fifoQ] ar=13185 retask 10 28 58
+[fifo] ar=13186 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[combat] p1 type2 died at (14,35) ar=13191 remaining=0
+[dbg] ar=13198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=13206 rally 44 58
+[fifo] ar=13207 rally 44 58
+[devMouse] rally OK 8 单位(1 个兵种) → (44,58)
+[dbg] ar=13223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=13248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=13273 aistate
+[devMouse] aistate written, ar=13273
+[dbg] ar=13273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=13298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=13323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=13348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=13356 aistate
+[devMouse] aistate written, ar=13356
+[fifo] ar=13366 aistate
+[devMouse] aistate written, ar=13366
+[dbg] ar=13373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=13398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=13399 retask 10 28 58
+[fifo] ar=13400 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=13423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=13427 aistate
+[devMouse] aistate written, ar=13427
+[dbg] ar=13448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=13453 retask 8 38 38
+[fifo] ar=13454 retask 8 38 38
+[devMouse] retask slot8 (39,39)w0 -> (38,38)
+[fifo] ar=13461 aistate
+[devMouse] aistate written, ar=13461
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=13473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=13498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=13523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=13543 aistate
+[devMouse] aistate written, ar=13543
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=13548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=13551 aistate
+[devMouse] aistate written, ar=13551
+[dbg] ar=13573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=13583 retask 10 28 58
+[fifo] ar=13584 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=13598 am=6 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=13623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=13644 aistate
+[trace] g->8 (aA=6 am=6)
+[devMouse] aistate written, ar=13645
+[dbg] ar=13648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=13673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=13698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=13711 aistate
+[devMouse] aistate written, ar=13711
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=13723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=13728 aistate
+[devMouse] aistate written, ar=13728
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=13736 aistate
+[devMouse] aistate written, ar=13736
+[dbg] ar=13748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=13770 retask 10 28 58
+[fifo] ar=13771 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[dbg] ar=13773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=13798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=13823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=13831 aistate
+[devMouse] aistate written, ar=13831
+[dbg] ar=13848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=13873 rally 44 58
+[fifo] ar=13873 rally 44 58
+[devMouse] rally OK 8 单位(1 个兵种) → (44,58)
+[dbg] ar=13873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=13883
+[proj] aim scan exhausted p=0 active=1 tick=13884
+[proj] aim scan exhausted p=0 active=1 tick=13885
+[proj] aim scan exhausted p=0 active=1 tick=13886
+[proj] aim scan exhausted p=0 active=1 tick=13887
+[proj] aim scan exhausted p=0 active=1 tick=13888
+[proj] aim scan exhausted p=0 active=1 tick=13889
+[proj] aim scan exhausted p=0 active=1 tick=13890
+[proj] aim scan exhausted p=0 active=1 tick=13891
+[proj] aim scan exhausted p=0 active=1 tick=13892
+[proj] aim scan exhausted p=0 active=1 tick=13893
+[proj] aim scan exhausted p=0 active=1 tick=13894
+[proj] aim scan exhausted p=0 active=1 tick=13895
+[proj] aim scan exhausted p=0 active=1 tick=13896
+[proj] aim scan exhausted p=0 active=1 tick=13897
+[proj] aim scan exhausted p=0 active=1 tick=13898
+[dbg] ar=13898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=13899
+[proj] aim scan exhausted p=0 active=1 tick=13900
+[proj] aim scan exhausted p=0 active=1 tick=13901
+[proj] aim scan exhausted p=0 active=1 tick=13902
+[proj] aim scan exhausted p=0 active=1 tick=13903
+[proj] aim scan exhausted p=0 active=1 tick=13904
+[proj] aim scan exhausted p=0 active=1 tick=13905
+[proj] aim scan exhausted p=0 active=1 tick=13906
+[proj] aim scan exhausted p=0 active=1 tick=13907
+[proj] aim scan exhausted p=0 active=1 tick=13908
+[proj] aim scan exhausted p=0 active=1 tick=13909
+[proj] aim scan exhausted p=0 active=1 tick=13910
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=13911
+[proj] aim scan exhausted p=0 active=1 tick=13912
+[proj] aim scan exhausted p=0 active=1 tick=13913
+[proj] aim scan exhausted p=0 active=1 tick=13914
+[proj] aim scan exhausted p=0 active=1 tick=13915
+[fifo] ar=13915 aistate
+[devMouse] aistate written, ar=13915
+[proj] aim scan exhausted p=0 active=1 tick=13916
+[proj] aim scan exhausted p=0 active=1 tick=13917
+[proj] aim scan exhausted p=0 active=1 tick=13918
+[proj] aim scan exhausted p=0 active=1 tick=13919
+[combat] p1 type2 died at (40,55) ar=13920 remaining=2
+[proj] aim scan exhausted p=0 active=1 tick=13920
+[proj] aim scan exhausted p=0 active=1 tick=13921
+[proj] aim scan exhausted p=0 active=1 tick=13922
+[trace] g->8 (aA=6 am=6)
+[proj] aim scan exhausted p=0 active=1 tick=13923
+[dbg] ar=13923 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[proj] aim scan exhausted p=0 active=1 tick=13924
+[proj] aim scan exhausted p=0 active=1 tick=13925
+[proj] aim scan exhausted p=0 active=1 tick=13926
+[proj] aim scan exhausted p=0 active=1 tick=13927
+[proj] aim scan exhausted p=0 active=1 tick=13928
+[proj] aim scan exhausted p=0 active=1 tick=13929
+[fifo] ar=13941 aistate
+[devMouse] aistate written, ar=13941
+[dbg] ar=13948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=13958 aistate
+[devMouse] aistate written, ar=13958
+[dbg] ar=13973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=13982 retask 10 28 58
+[fifo] ar=13983 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[dbg] ar=13998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=14023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=14045 aistate
+[devMouse] aistate written, ar=14045
+[dbg] ar=14048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=14073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=14093 aistate
+[devMouse] aistate written, ar=14093
+[dbg] ar=14098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=14123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=14127 aistate
+[devMouse] aistate written, ar=14127
+[dbg] ar=14148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=14168 retask 10 28 58
+[fifo] ar=14169 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[dbg] ar=14173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=14198 am=6 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=14205 aistate
+[devMouse] aistate written, ar=14205
+[dbg] ar=14223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=14228 aistate
+[devMouse] aistate written, ar=14229
+[dbg] ar=14248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=14269 aistate
+[devMouse] aistate written, ar=14269
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=14273 am=6 aA=8 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=14298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=14312 aistate
+[devMouse] aistate written, ar=14312
+[dbg] ar=14323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=14348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=14351 retask 10 28 58
+[fifo] ar=14352 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[fifo] ar=14372 state
+[devMouse] aA=6/6 cursor=(44,58) cam=(-315,732) Q=3756 aE=512 Y=0 sel=6
+[devMouse] p0 unit 0 tile=(28,58) type=0 sel=false
+[devMouse] p0 unit 1 tile=(27,59) type=0 sel=false
+[devMouse] p0 unit 2 tile=(44,59) type=2 sel=true
+[devMouse] p0 unit 3 tile=(40,31) type=0 sel=false
+[devMouse] p0 unit 4 tile=(34,37) type=0 sel=false
+[devMouse] p0 unit 5 tile=(42,41) type=0 sel=false
+[devMouse] p0 unit 6 tile=(40,39) type=0 sel=false
+[devMouse] p0 unit 7 tile=(41,34) type=1 sel=false
+[devMouse] p0 unit 8 tile=(41,40) type=1 sel=false
+[devMouse] p0 unit 9 tile=(41,35) type=1 sel=false
+[devMouse] p0 unit 10 tile=(29,58) type=1 sel=false
+[devMouse] p0 unit 11 tile=(43,58) type=2 sel=true
+[devMouse] p0 unit 12 tile=(40,55) type=2 sel=true
+[devMouse] p0 unit 13 tile=(44,58) type=2 sel=true
+[devMouse] p0 unit 14 tile=(44,57) type=2 sel=true
+[devMouse] p0 unit 15 tile=(45,57) type=2 sel=true
+[devMouse] p0 unit 16 tile=(45,58) type=2 sel=true
+[devMouse] p0 unit 17 tile=(41,58) type=2 sel=true
+[devMouse] p1 unit 0 tile=(15,36) type=1 sel=false
+[devMouse] p1 unit 1 tile=(9,30) type=1 sel=false
+[devMouse] p1 unit 2 tile=(22,35) type=2 sel=false
+[dbg] ar=14373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=14398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=14414 key -1
+[void_a] key=-1 ae=19 ak=19 ar=14414
+[input] ar=14414 key -1
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=14423 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[fifo] ar=14429 state
+[devMouse] aA=6/6 cursor=(43,57) cam=(-315,716) Q=3691 aE=512 Y=0 sel=6
+[devMouse] p0 unit 0 tile=(28,58) type=0 sel=false
+[devMouse] p0 unit 1 tile=(27,59) type=0 sel=false
+[devMouse] p0 unit 2 tile=(44,59) type=2 sel=true
+[devMouse] p0 unit 3 tile=(40,29) type=0 sel=false
+[devMouse] p0 unit 4 tile=(34,38) type=0 sel=false
+[devMouse] p0 unit 5 tile=(40,39) type=0 sel=false
+[devMouse] p0 unit 6 tile=(42,41) type=0 sel=false
+[devMouse] p0 unit 7 tile=(40,34) type=1 sel=false
+[devMouse] p0 unit 8 tile=(39,39) type=1 sel=false
+[devMouse] p0 unit 9 tile=(42,32) type=1 sel=false
+[devMouse] p0 unit 10 tile=(29,58) type=1 sel=false
+[devMouse] p0 unit 11 tile=(43,58) type=2 sel=true
+[devMouse] p0 unit 12 tile=(40,55) type=2 sel=true
+[devMouse] p0 unit 13 tile=(44,58) type=2 sel=true
+[devMouse] p0 unit 14 tile=(44,57) type=2 sel=true
+[devMouse] p0 unit 15 tile=(45,57) type=2 sel=true
+[devMouse] p0 unit 16 tile=(45,58) type=2 sel=true
+[devMouse] p0 unit 17 tile=(46,55) type=2 sel=true
+[devMouse] p1 unit 0 tile=(15,36) type=1 sel=false
+[devMouse] p1 unit 1 tile=(14,36) type=1 sel=false
+[devMouse] p1 unit 2 tile=(31,44) type=2 sel=false
+[fifo] ar=14446 aistate
+[devMouse] aistate written, ar=14446
+[dbg] ar=14448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=14454 aistate
+[devMouse] aistate written, ar=14454
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=14472 key -5
+[void_a] key=-5 ae=22 ak=19 ar=14472
+[input] ar=14472 key -5
+[trace] g->7 (aA=6 am=6)
+[dbg] ar=14473 am=7 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=14498 am=7 aA=7 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=14503 state
+[devMouse] aA=7/7 cursor=(43,57) cam=(-315,716) Q=3691 aE=512 Y=0 sel=6
+[devMouse] p0 unit 0 tile=(28,58) type=0 sel=false
+[devMouse] p0 unit 1 tile=(27,59) type=0 sel=false
+[devMouse] p0 unit 2 tile=(44,59) type=2 sel=true
+[devMouse] p0 unit 3 tile=(38,28) type=0 sel=false
+[devMouse] p0 unit 4 tile=(38,41) type=0 sel=false
+[devMouse] p0 unit 5 tile=(40,39) type=0 sel=false
+[devMouse] p0 unit 6 tile=(42,41) type=0 sel=false
+[devMouse] p0 unit 7 tile=(41,34) type=1 sel=false
+[devMouse] p0 unit 8 tile=(39,39) type=1 sel=false
+[devMouse] p0 unit 9 tile=(40,31) type=1 sel=false
+[devMouse] p0 unit 10 tile=(29,58) type=1 sel=false
+[devMouse] p0 unit 11 tile=(43,58) type=2 sel=true
+[devMouse] p0 unit 12 tile=(40,55) type=2 sel=true
+[devMouse] p0 unit 13 tile=(44,58) type=2 sel=true
+[devMouse] p0 unit 14 tile=(44,57) type=2 sel=true
+[devMouse] p0 unit 15 tile=(45,57) type=2 sel=true
+[devMouse] p0 unit 16 tile=(45,58) type=2 sel=true
+[devMouse] p0 unit 17 tile=(41,56) type=2 sel=true
+[devMouse] p1 unit 0 tile=(15,36) type=1 sel=false
+[devMouse] p1 unit 1 tile=(15,37) type=1 sel=false
+[devMouse] p1 unit 2 tile=(36,52) type=2 sel=false
+[devMouse] p1 unit 3 tile=(5,27) type=1 sel=false
+[dbg] ar=14523 am=7 aA=7 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=14546 key -5
+[void_a] key=-5 ae=22 ak=19 ar=14546
+[input] ar=14546 key -5
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=14548 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[dbg] ar=14573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g(0,62,0) ac=32
+[trace] g->2 (aA=6 am=6)
+[trace] g->8 (aA=6 am=2)
+[view] dialog open z=62 overlayPrevState=6
+[dlg-parse] z=62 v=0 strLen=229 str=Reached Feudal Age @ @ New buildings and technology are now available. @ Mill, Blacksmith, Archery Range, Stable, Watch Tower.  @ To reach the next age, construct a Mill and a Blacksmith, and spend 20 Wood, 20 Gold, and 20 Stone.
+[dbg] ar=14598 am=2 aA=2 aH=0 l=true j=false fullRedraw=false
+[dbg] ar=14623 am=2 aA=2 aH=0 l=true j=false fullRedraw=false
+[fifo] ar=14625 state
+[devMouse] aA=2/2 cursor=(43,57) cam=(-315,716) Q=3691 aE=512 Y=0 sel=6
+[devMouse] p0 unit 0 tile=(28,58) type=0 sel=false
+[devMouse] p0 unit 1 tile=(27,59) type=0 sel=false
+[devMouse] p0 unit 2 tile=(44,59) type=3 sel=true
+[devMouse] p0 unit 3 tile=(36,30) type=0 sel=false
+[devMouse] p0 unit 4 tile=(40,40) type=0 sel=false
+[devMouse] p0 unit 5 tile=(40,39) type=0 sel=false
+[devMouse] p0 unit 6 tile=(43,38) type=0 sel=false
+[devMouse] p0 unit 7 tile=(40,34) type=1 sel=false
+[devMouse] p0 unit 8 tile=(39,39) type=1 sel=false
+[devMouse] p0 unit 9 tile=(39,33) type=1 sel=false
+[devMouse] p0 unit 10 tile=(29,58) type=1 sel=false
+[devMouse] p0 unit 11 tile=(43,58) type=3 sel=true
+[devMouse] p0 unit 12 tile=(40,55) type=3 sel=true
+[devMouse] p0 unit 13 tile=(44,58) type=3 sel=true
+[devMouse] p0 unit 14 tile=(44,57) type=3 sel=true
+[devMouse] p0 unit 15 tile=(45,57) type=3 sel=true
+[devMouse] p0 unit 16 tile=(45,58) type=3 sel=true
+[devMouse] p0 unit 17 tile=(40,57) type=3 sel=true
+[devMouse] p1 unit 0 tile=(12,32) type=1 sel=false
+[devMouse] p1 unit 1 tile=(15,37) type=1 sel=false
+[devMouse] p1 unit 2 tile=(39,54) type=3 sel=false
+[devMouse] p1 unit 3 tile=(8,29) type=1 sel=false
+[fifo] ar=14634 aistate
+[devMouse] aistate written, ar=14634
+[dbg] ar=14648 am=2 aA=2 aH=0 l=true j=false fullRedraw=false
+[fifo] ar=14668 key -6
+[void_a] key=-6 ae=38 ak=19 ar=14668
+[input] ar=14668 key -6
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=14673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=14698 am=6 aA=8 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=14708 aistate
+[devMouse] aistate written, ar=14708
+[fifo] ar=14717 aistate
+[devMouse] aistate written, ar=14717
+[dbg] ar=14723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type3 died at (39,54) ar=14724 remaining=3
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=14748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=14759 rally 44 58
+[fifo] ar=14760 rally 44 58
+[devMouse] rally OK 8 单位(1 个兵种) → (44,58)
+[dbg] ar=14773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=14786 retask 12 15 37
+[fifo] ar=14787 retask 12 15 37
+[devMouse] retask slot12 (39,57)w0 -> (15,37)
+[dbg] ar=14798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=14804 retask 16 15 37
+[fifo] ar=14805 retask 16 15 37
+[devMouse] retask slot16 (45,58)w0 -> (15,37)
+[fifo] ar=14814 aistate
+[devMouse] aistate written, ar=14814
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=14823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=14825 retask 17 44 58
+[fifo] ar=14825 retask 17 44 58
+[devMouse] retask slot17 (45,54)w0 -> (44,58)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=14844 build 44 56 5
+[fifo] ar=14845 build 44 56 5
+[devMouse] build OK type5 @(44,56) 施工中(约1.3s完工)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=14848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=14871 aistate
+[devMouse] aistate written, ar=14871
+[dbg] ar=14873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g(0,70,5) ac=32
+[trace] g->2 (aA=6 am=6)
+[view] dialog open z=70 overlayPrevState=6
+[dlg-parse] z=70 v=5 strLen=40 str=Mill: @ Speeds up creation of all units.
+[dbg] ar=14898 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=14913 retask 10 28 58
+[fifo] ar=14913 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[dbg] ar=14923 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=14948 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=14959 aistate
+[devMouse] aistate written, ar=14959
+[dbg] ar=14973 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=14975 aistate
+[devMouse] aistate written, ar=14975
+[fifo] ar=14993 aistate
+[devMouse] aistate written, ar=14993
+[dbg] ar=14998 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=15015 key -6
+[void_a] key=-6 ae=38 ak=19 ar=15015
+[input] ar=15015 key -6
+[fifoQ] ar=15023 build 43 55 6
+[dbg] ar=15023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=15024 build 43 55 6
+[devMouse] build OK type6 @(43,55) 施工中(约1.3s完工)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=15048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=15051 aistate
+[devMouse] aistate written, ar=15051
+[trace] g(0,70,6) ac=32
+[trace] g->2 (aA=6 am=6)
+[view] dialog open z=70 overlayPrevState=6
+[dlg-parse] z=70 v=6 strLen=46 str=Blacksmith: @ Allows you to upgrade your army.
+[fifo] ar=15072 aistate
+[devMouse] aistate written, ar=15072
+[dbg] ar=15073 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=15092 key -6
+[void_a] key=-6 ae=38 ak=19 ar=15092
+[input] ar=15092 key -6
+[dbg] ar=15098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=15123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=15128 aistate
+[devMouse] aistate written, ar=15128
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=15148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=15169 build 42 58 12
+[fifo] ar=15170 build 42 58 12
+[devMouse] build FAIL (42,58) 被单位/建筑/资源占格
+[dbg] ar=15173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=15193 build 44 56 12
+[fifo] ar=15194 build 44 56 12
+[devMouse] build FAIL (44,56) 被单位/建筑/资源占格
+[dbg] ar=15198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=15208 aistate
+[devMouse] aistate written, ar=15208
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=15219 build 45 57 12
+[fifo] ar=15219 build 45 57 12
+[devMouse] build FAIL (45,57) 被单位/建筑/资源占格
+[dbg] ar=15223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=15245 aistate
+[devMouse] aistate written, ar=15245
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=15248 am=6 aA=8 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=15273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=15285 retask 8 41 41
+[fifo] ar=15286 retask 8 41 41
+[devMouse] retask slot8 (35,39)w0 -> (41,41)
+[dbg] ar=15298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=15304 retask 10 28 58
+[fifo] ar=15305 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[dbg] ar=15323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[combat] p1 type1 died at (14,34) ar=15348 remaining=4
+[dbg] ar=15348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=15363 aistate
+[devMouse] aistate written, ar=15363
+[trace] g->8 (aA=6 am=6)
+[combat] p0 type3 died at (15,34) ar=15369 remaining=17
+[dbg] ar=15373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=15398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type3 died at (15,33) ar=15399 remaining=3
+[fifoQ] ar=15406 retask 8 41 40
+[fifo] ar=15407 retask 8 41 40
+[devMouse] retask slot8 (41,41)w0 -> (41,40)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=15423 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[dbg] ar=15448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=15455 aistate
+[devMouse] aistate written, ar=15455
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=15467 aistate
+[devMouse] aistate written, ar=15467
+[combat] p1 type1 died at (16,36) ar=15468 remaining=3
+[dbg] ar=15473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=15475 aistate
+[devMouse] aistate written, ar=15475
+[fifoQ] ar=15483 retask 8 41 39
+[fifo] ar=15484 retask 8 41 39
+[devMouse] retask slot8 (41,41)w0 -> (41,39)
+[dbg] ar=15498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=15507 retask 8 41 40
+[fifo] ar=15508 retask 8 41 40
+[devMouse] retask slot8 (41,39)w0 -> (41,40)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=15523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=15528 retask 10 28 58
+[fifo] ar=15529 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[dbg] ar=15548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=15549 train 45 59 1
+[fifo] ar=15550 train 45 59 1
+[trace] g->7 (aA=6 am=6)
+[devMouse] train OK 排队 0/1 aK=3 (aK=0村民 2/3步兵 4弓兵 5/6骑兵)
+[dbg] ar=15573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=15598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=15616 aistate
+[devMouse] aistate written, ar=15616
+[dbg] ar=15623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[combat] p1 type1 died at (16,37) ar=15626 remaining=2
+[dbg] ar=15648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=15657 build 44 56 5
+[fifo] ar=15658 build 44 56 5
+[devMouse] build FAIL (44,56) 被单位/建筑/资源占格
+[combat] p1 type1 died at (16,36) ar=15671 remaining=1
+[dbg] ar=15673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=15683 build 42 56 5
+[fifo] ar=15684 build 42 56 5
+[devMouse] build FAIL type5 已建成过(不可重复)
+[dbg] ar=15698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=15709 build 46 56 5
+[fifo] ar=15710 build 46 56 5
+[devMouse] build FAIL type5 已建成过(不可重复)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=15723 am=6 aA=8 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type1 died at (18,36) ar=15728 remaining=0
+[fifo] ar=15735 aistate
+[devMouse] aistate written, ar=15735
+[fifo] ar=15742 aistate
+[devMouse] aistate written, ar=15742
+[dbg] ar=15748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=15773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=15775 retask 10 28 58
+[fifo] ar=15776 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=15796 train 45 59 1
+[fifo] ar=15797 train 45 59 1
+[trace] g->7 (aA=6 am=6)
+[devMouse] train OK 排队 0/1 aK=3 (aK=0村民 2/3步兵 4弓兵 5/6骑兵)
+[dbg] ar=15798 am=6 aA=7 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=15823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=15848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=15864 aistate
+[devMouse] aistate written, ar=15864
+[dbg] ar=15873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=15898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=15903 retask 8 41 40
+[fifo] ar=15904 retask 8 41 40
+[devMouse] retask slot8 (41,39)w0 -> (41,40)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=15923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=15948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=15962 aistate
+[devMouse] aistate written, ar=15962
+[dbg] ar=15973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type0 died at (16,36) ar=15984 remaining=0
+[fifo] ar=15993 aistate
+[devMouse] aistate written, ar=15993
+[dbg] ar=15998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=16002 retask 10 28 58
+[fifo] ar=16003 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[dbg] ar=16023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=16048 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[fifo] ar=16065 aistate
+[devMouse] aistate written, ar=16065
+[dbg] ar=16073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=16098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=16123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=16148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=16149 aistate
+[devMouse] aistate written, ar=16149
+[dbg] ar=16173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=16189 retask 10 28 58
+[fifo] ar=16189 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=16198 am=6 aA=8 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=16209 build 42 58 12
+[fifo] ar=16209 build 42 58 12
+[devMouse] build FAIL (42,58) 被单位/建筑/资源占格
+[dbg] ar=16223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=16234 build 44 56 12
+[fifo] ar=16235 build 44 56 12
+[devMouse] build FAIL (44,56) 被单位/建筑/资源占格
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=16243 aistate
+[devMouse] aistate written, ar=16243
+[dbg] ar=16248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=16261 build 45 57 12
+[fifo] ar=16262 build 45 57 12
+[devMouse] build FAIL (45,57) 被单位/建筑/资源占格
+[fifoQ] ar=16271 retask 8 41 38
+[fifo] ar=16272 retask 8 41 38
+[devMouse] retask slot8 (41,40)w0 -> (41,38)
+[dbg] ar=16273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=16287 aistate
+[devMouse] aistate written, ar=16287
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=16298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=16323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=16348 am=6 aA=8 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=16371 aistate
+[devMouse] aistate written, ar=16371
+[dbg] ar=16373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[combat] p1 type1 died at (15,35) ar=16393 remaining=0
+[dbg] ar=16398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=16411 retask 10 28 58
+[fifo] ar=16412 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[dbg] ar=16423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=16448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=16472 aistate
+[devMouse] aistate written, ar=16472
+[dbg] ar=16473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=16498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=16523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=16527 aistate
+[devMouse] aistate written, ar=16527
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=16548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=16552 aistate
+[devMouse] aistate written, ar=16552
+[dbg] ar=16573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=16592 retask 10 28 58
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=16593 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[dbg] ar=16598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=16612 build 44 56 5
+[fifo] ar=16613 build 44 56 5
+[devMouse] build FAIL (44,56) 被单位/建筑/资源占格
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=16623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=16639 build 42 56 5
+[fifo] ar=16640 build 42 56 5
+[devMouse] build FAIL type5 已建成过(不可重复)
+[dbg] ar=16648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=16665 build 46 56 5
+[fifo] ar=16665 build 46 56 5
+[devMouse] build FAIL type5 已建成过(不可重复)
+[dbg] ar=16673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=16692 aistate
+[devMouse] aistate written, ar=16692
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=16698 am=6 aA=8 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=16723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=16748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=16773 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[fifo] ar=16774 aistate
+[devMouse] aistate written, ar=16774
+[fifo] ar=16782 aistate
+[devMouse] aistate written, ar=16782
+[dbg] ar=16798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=16816 retask 10 28 58
+[fifo] ar=16816 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[dbg] ar=16823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=16848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=16873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=16877 aistate
+[devMouse] aistate written, ar=16877
+[dbg] ar=16898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=16923 am=6 aA=8 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=16948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=16961 aistate
+[devMouse] aistate written, ar=16961
+[dbg] ar=16973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=16998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=17002 retask 10 28 58
+[fifo] ar=17003 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=17023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=17032 aistate
+[devMouse] aistate written, ar=17032
+[dbg] ar=17048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=17061 aistate
+[devMouse] aistate written, ar=17061
+[dbg] ar=17073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=17098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=17123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=17143 aistate
+[devMouse] aistate written, ar=17143
+[dbg] ar=17148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=17173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=17183 retask 10 28 58
+[fifo] ar=17184 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[combat] p1 type1 died at (14,34) ar=17187 remaining=0
+[dbg] ar=17198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=17223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=17242 aistate
+[devMouse] aistate written, ar=17242
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=17248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=17273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=17278 aistate
+[devMouse] aistate written, ar=17278
+[fifoQ] ar=17286 build 42 58 12
+[fifo] ar=17287 build 42 58 12
+[devMouse] build FAIL (42,58) 被单位/建筑/资源占格
+[dbg] ar=17298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=17311 build 44 56 12
+[fifo] ar=17312 build 44 56 12
+[devMouse] build FAIL (44,56) 被单位/建筑/资源占格
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=17323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=17339 build 45 57 12
+[fifo] ar=17339 build 45 57 12
+[devMouse] build FAIL (45,57) 被单位/建筑/资源占格
+[dbg] ar=17348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=17363 aistate
+[devMouse] aistate written, ar=17363
+[dbg] ar=17373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=17398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=17405 retask 10 28 58
+[fifo] ar=17406 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[dbg] ar=17423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=17448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=17467 aistate
+[devMouse] aistate written, ar=17467
+[dbg] ar=17473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=17498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=17510 build 44 56 5
+[fifo] ar=17510 build 44 56 5
+[devMouse] build FAIL (44,56) 被单位/建筑/资源占格
+[dbg] ar=17523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=17524 aistate
+[devMouse] aistate written, ar=17524
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=17535 build 42 56 5
+[fifo] ar=17536 build 42 56 5
+[devMouse] build FAIL type5 已建成过(不可重复)
+[dbg] ar=17548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=17562 build 46 56 5
+[fifo] ar=17563 build 46 56 5
+[devMouse] build FAIL type5 已建成过(不可重复)
+[dbg] ar=17573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=17589 aistate
+[devMouse] aistate written, ar=17589
+[dbg] ar=17598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=17623 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[fifoQ] ar=17628 retask 10 28 58
+[fifo] ar=17629 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=17648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=17673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=17688 aistate
+[devMouse] aistate written, ar=17688
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=17698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=17723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=17748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=17771 aistate
+[devMouse] aistate written, ar=17771
+[dbg] ar=17773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=17778 aistate
+[devMouse] aistate written, ar=17778
+[combat] p1 type1 died at (13,33) ar=17795 remaining=0
+[dbg] ar=17798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=17804 retask 5 39 36
+[fifo] ar=17804 retask 5 39 36
+[devMouse] retask slot5 (39,38)w0 -> (39,36)
+[fifoQ] ar=17812 retask 10 28 58
+[fifo] ar=17813 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[dbg] ar=17823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=17848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=17873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=17874 aistate
+[devMouse] aistate written, ar=17874
+[dbg] ar=17898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=17923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=17948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=17956 aistate
+[devMouse] aistate written, ar=17956
+[dbg] ar=17973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=17997 retask 10 28 58
+[fifo] ar=17998 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[dbg] ar=17998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=18023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=18048 am=6 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=18056 aistate
+[devMouse] aistate written, ar=18056
+[fifo] ar=18065 aistate
+[devMouse] aistate written, ar=18065
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=18073 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[dbg] ar=18098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=18123 am=6 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=18147 aistate
+[devMouse] aistate written, ar=18147
+[dbg] ar=18148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=18173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=18188 retask 10 28 58
+[fifo] ar=18189 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[dbg] ar=18198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=18209 build 42 58 12
+[fifo] ar=18210 build 42 58 12
+[devMouse] build FAIL (42,58) 被单位/建筑/资源占格
+[dbg] ar=18223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=18236 build 44 56 12
+[fifo] ar=18237 build 44 56 12
+[devMouse] build FAIL (44,56) 被单位/建筑/资源占格
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=18248 am=6 aA=8 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=18262 build 45 57 12
+[fifo] ar=18263 build 45 57 12
+[devMouse] build FAIL (45,57) 被单位/建筑/资源占格
+[dbg] ar=18273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=18289 aistate
+[devMouse] aistate written, ar=18289
+[dbg] ar=18298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=18303 aistate
+[devMouse] aistate written, ar=18303
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=18323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=18348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=18372 aistate
+[devMouse] aistate written, ar=18372
+[dbg] ar=18373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type1 died at (12,32) ar=18384 remaining=0
+[dbg] ar=18398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=18413 retask 10 28 58
+[fifo] ar=18414 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[dbg] ar=18423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=18434 build 44 56 5
+[fifo] ar=18435 build 44 56 5
+[devMouse] build FAIL (44,56) 被单位/建筑/资源占格
+[dbg] ar=18448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=18461 build 42 56 5
+[fifo] ar=18462 build 42 56 5
+[devMouse] build FAIL type5 已建成过(不可重复)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=18473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=18488 build 46 56 5
+[fifo] ar=18488 build 46 56 5
+[devMouse] build FAIL type5 已建成过(不可重复)
+[dbg] ar=18498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=18513 aistate
+[devMouse] aistate written, ar=18513
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=18523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=18548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=18552 aistate
+[devMouse] aistate written, ar=18552
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=18573 am=6 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=18595 aistate
+[devMouse] aistate written, ar=18595
+[dbg] ar=18598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=18623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=18637 retask 10 28 58
+[fifo] ar=18638 retask 10 28 58
+[devMouse] retask slot10 (29,58)w0 -> (28,58)
+[dbg] ar=18648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=18658 state
+[devMouse] aA=6/6 cursor=(43,57) cam=(-315,716) Q=3691 aE=512 Y=0 sel=6
+[devMouse] p0 unit 0 tile=(28,58) type=0 sel=false
+[devMouse] p0 unit 1 tile=(27,59) type=0 sel=false
+[devMouse] p0 unit 2 tile=(44,59) type=3 sel=true
+[devMouse] p0 unit 3 tile=(38,28) type=0 sel=false
+[devMouse] p0 unit 4 tile=(35,36) type=0 sel=false
+[devMouse] p0 unit 5 tile=(40,35) type=0 sel=false
+[devMouse] p0 unit 6 tile=(41,39) type=0 sel=false
+[devMouse] p0 unit 7 tile=(42,35) type=1 sel=false
+[devMouse] p0 unit 8 tile=(42,39) type=1 sel=false
+[devMouse] p0 unit 9 tile=(39,35) type=1 sel=false
+[devMouse] p0 unit 10 tile=(29,58) type=1 sel=false
+[devMouse] p0 unit 11 tile=(43,58) type=3 sel=true
+[devMouse] p0 unit 12 tile=(40,56) type=3 sel=true
+[devMouse] p0 unit 13 tile=(44,58) type=3 sel=true
+[devMouse] p0 unit 14 tile=(44,57) type=3 sel=true
+[devMouse] p0 unit 15 tile=(45,57) type=3 sel=true
+[devMouse] p0 unit 16 tile=(12,32) type=3 sel=true
+[devMouse] p0 unit 17 tile=(45,60) type=3 sel=true
+[devMouse] p0 unit 18 tile=(45,58) type=3 sel=true
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=18673 am=8 aA=6 aH=0 l=true j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=18698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=18701 state
+[devMouse] aA=6/6 cursor=(43,57) cam=(-315,716) Q=3691 aE=512 Y=0 sel=6
+[devMouse] p0 unit 0 tile=(28,58) type=0 sel=false
+[devMouse] p0 unit 1 tile=(27,59) type=0 sel=false
+[devMouse] p0 unit 2 tile=(44,59) type=3 sel=true
+[devMouse] p0 unit 3 tile=(35,28) type=0 sel=false
+[devMouse] p0 unit 4 tile=(35,36) type=0 sel=false
+[devMouse] p0 unit 5 tile=(42,38) type=0 sel=false
+[devMouse] p0 unit 6 tile=(41,39) type=0 sel=false
+[devMouse] p0 unit 7 tile=(41,34) type=1 sel=false
+[devMouse] p0 unit 8 tile=(42,39) type=1 sel=false
+[devMouse] p0 unit 9 tile=(39,35) type=1 sel=false
+[devMouse] p0 unit 10 tile=(29,58) type=1 sel=false
+[devMouse] p0 unit 11 tile=(43,58) type=3 sel=true
+[devMouse] p0 unit 12 tile=(42,57) type=3 sel=true
+[devMouse] p0 unit 13 tile=(44,58) type=3 sel=true
+[devMouse] p0 unit 14 tile=(44,57) type=3 sel=true
+[devMouse] p0 unit 15 tile=(45,57) type=3 sel=true
+[devMouse] p0 unit 16 tile=(12,32) type=3 sel=true
+[devMouse] p0 unit 17 tile=(45,60) type=3 sel=true
+[devMouse] p0 unit 18 tile=(45,58) type=3 sel=true
+[devMouse] p1 unit 0 tile=(1,27) type=1 sel=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=18723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=18744 key -5
+[void_a] key=-5 ae=22 ak=19 ar=18744
+[input] ar=18744 key -5
+[trace] g->7 (aA=6 am=6)
+[dbg] ar=18748 am=7 aA=7 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=18773 am=7 aA=7 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=18778 state
+[devMouse] aA=7/7 cursor=(43,57) cam=(-315,716) Q=3691 aE=512 Y=0 sel=6
+[devMouse] p0 unit 0 tile=(28,58) type=0 sel=false
+[devMouse] p0 unit 1 tile=(27,59) type=0 sel=false
+[devMouse] p0 unit 2 tile=(44,59) type=3 sel=true
+[devMouse] p0 unit 3 tile=(36,29) type=0 sel=false
+[devMouse] p0 unit 4 tile=(35,36) type=0 sel=false
+[devMouse] p0 unit 5 tile=(41,35) type=0 sel=false
+[devMouse] p0 unit 6 tile=(41,39) type=0 sel=false
+[devMouse] p0 unit 7 tile=(41,34) type=1 sel=false
+[devMouse] p0 unit 8 tile=(42,39) type=1 sel=false
+[devMouse] p0 unit 9 tile=(39,35) type=1 sel=false
+[devMouse] p0 unit 10 tile=(29,58) type=1 sel=false
+[devMouse] p0 unit 11 tile=(43,58) type=3 sel=true
+[devMouse] p0 unit 12 tile=(42,57) type=3 sel=true
+[devMouse] p0 unit 13 tile=(44,58) type=3 sel=true
+[devMouse] p0 unit 14 tile=(44,57) type=3 sel=true
+[devMouse] p0 unit 15 tile=(45,57) type=3 sel=true
+[devMouse] p0 unit 16 tile=(12,32) type=3 sel=true
+[devMouse] p0 unit 17 tile=(45,60) type=3 sel=true
+[devMouse] p0 unit 18 tile=(45,58) type=3 sel=true
+[devMouse] p1 unit 0 tile=(3,32) type=1 sel=false
+[dbg] ar=18798 am=7 aA=7 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=18802 aistate
+[devMouse] aistate written, ar=18802
+[fifo] ar=18819 key -5
+[void_a] key=-5 ae=22 ak=19 ar=18819
+[input] ar=18819 key -5
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=18823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=18848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[trace] g(0,62,1) ac=32
+[trace] g->2 (aA=6 am=8)
+[trace] g->8 (aA=6 am=2)
+[view] dialog open z=62 overlayPrevState=6
+[dlg-parse] z=62 v=1 strLen=205 str=Reached Castle Age @ @ New buildings and technology are now available. @ @ Siege Workshop, Castle, University, Guard Tower @ @ To reach the next age, build a castle and spend 25 wood, 25 gold and 25 stone.
+[dbg] ar=18873 am=2 aA=2 aH=0 l=true j=false fullRedraw=false
+[dbg] ar=18898 am=2 aA=2 aH=0 l=true j=false fullRedraw=false
+[fifo] ar=18899 state
+[devMouse] aA=2/2 cursor=(43,57) cam=(-315,716) Q=3691 aE=512 Y=0 sel=6
+[devMouse] p0 unit 0 tile=(28,58) type=0 sel=false
+[devMouse] p0 unit 1 tile=(27,59) type=0 sel=false
+[devMouse] p0 unit 2 tile=(44,59) type=3 sel=true
+[devMouse] p0 unit 3 tile=(39,31) type=0 sel=false
+[devMouse] p0 unit 4 tile=(35,39) type=0 sel=false
+[devMouse] p0 unit 5 tile=(40,35) type=0 sel=false
+[devMouse] p0 unit 6 tile=(41,39) type=0 sel=false
+[devMouse] p0 unit 7 tile=(41,35) type=1 sel=false
+[devMouse] p0 unit 8 tile=(42,39) type=1 sel=false
+[devMouse] p0 unit 9 tile=(40,33) type=1 sel=false
+[devMouse] p0 unit 10 tile=(29,58) type=1 sel=false
+[devMouse] p0 unit 11 tile=(43,58) type=3 sel=true
+[devMouse] p0 unit 12 tile=(40,58) type=3 sel=true
+[devMouse] p0 unit 13 tile=(44,58) type=3 sel=true
+[devMouse] p0 unit 14 tile=(44,57) type=3 sel=true
+[devMouse] p0 unit 15 tile=(45,57) type=3 sel=true
+[devMouse] p0 unit 16 tile=(12,32) type=3 sel=true
+[devMouse] p0 unit 17 tile=(45,60) type=3 sel=true
+[devMouse] p0 unit 18 tile=(45,58) type=3 sel=true
+[devMouse] p1 unit 0 tile=(4,33) type=1 sel=false
+[dbg] ar=18923 am=2 aA=2 aH=0 l=true j=false fullRedraw=false
+[fifo] ar=18942 key -6
+[void_a] key=-6 ae=38 ak=19 ar=18942
+[input] ar=18942 key -6
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=18948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=18973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=18981 aistate
+[devMouse] aistate written, ar=18981
+[dbg] ar=18998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=19023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=19024 build 46 56 4
+[fifo] ar=19025 build 46 56 4
+[devMouse] build OK type4 @(46,56) 施工中(约1.3s完工)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=19048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=19051 aistate
+[devMouse] aistate written, ar=19051
+[trace] g->8 (aA=6 am=6)
+[trace] g(0,70,4) ac=32
+[trace] g->2 (aA=6 am=6)
+[view] dialog open z=70 overlayPrevState=6
+[dlg-parse] z=70 v=4 strLen=42 str=University: @ Used to research technology.
+[fifo] ar=19060 aistate
+[devMouse] aistate written, ar=19060
+[dbg] ar=19073 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=19092 key -6
+[void_a] key=-6 ae=38 ak=19 ar=19092
+[input] ar=19092 key -6
+[dbg] ar=19098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g(0,98,0) ac=32
+[trace] g->2 (aA=6 am=6)
+[result] WIN ticks=19112
+[view] dialog open z=98 overlayPrevState=12
+[dlg-parse] z=98 v=0 strLen=20 str=You are @ victorious
+[dbg] ar=19123 am=2 aA=2 aH=0 l=false j=false fullRedraw=false

@@ -1,0 +1,222 @@
+# base=513 events=221
+t 161 fifo retask 0 44 58
+t 187 fifo retask 1 29 62
+t 252 fifo retask 0 41 41
+t 436 fifo retask 0 28 58
+t 538 fifo retask 1 27 59
+t 884 fifo build 30 62 0
+t 1032 key -6
+t 1377 fifo build 45 59 10
+t 1522 key -6
+t 1600 fifo train 45 59 1
+t 1716 fifo retask 2 41 41
+t 1740 fifo build 44 60 11
+t 1890 key -6
+t 1972 fifo train 44 60 1
+t 2079 fifo rally 44 58
+t 2103 fifo build 42 40 1
+t 2249 key -6
+t 2328 fifo retask 4 49 48
+t 2430 fifo build 44 60 11
+t 2457 fifo build 46 60 11
+t 2522 fifo train 44 60 1
+t 2817 fifo retask 4 35 36
+t 2845 fifo rally 44 58
+t 2871 fifo train 46 60 1
+t 2985 fifo retask 5 49 48
+t 3006 fifo retask 6 49 48
+t 3109 fifo train 46 60 1
+t 3215 fifo retask 3 49 48
+t 3235 fifo retask 5 36 36
+t 3254 fifo retask 7 49 48
+t 3273 fifo retask 8 49 48
+t 3299 fifo build 44 60 11
+t 3324 fifo build 46 60 11
+t 3349 fifo build 42 60 11
+t 3415 fifo rally 44 58
+t 3520 fifo retask 3 35 35
+t 3539 fifo retask 6 39 40
+t 3558 fifo retask 9 49 48
+t 3578 fifo retask 10 28 58
+t 3595 fifo train 45 59 1
+t 3702 fifo retask 7 37 36
+t 3806 fifo retask 8 41 40
+t 3826 fifo retask 9 36 35
+t 3930 fifo retask 5 41 41
+t 4030 fifo retask 3 41 41
+t 4050 fifo retask 7 41 41
+t 4071 fifo rally 44 58
+t 4108 fifo retask 5 41 39
+t 4183 fifo retask 3 35 35
+t 4205 fifo retask 5 36 36
+t 4223 fifo retask 7 37 36
+t 4324 fifo retask 3 41 41
+t 4345 fifo retask 5 41 41
+t 4369 fifo build 42 58 12
+t 4434 fifo retask 7 41 41
+t 4453 fifo retask 9 41 41
+t 4555 key -6
+t 4631 fifo retask 3 40 40
+t 4638 fifo retask 3 35 35
+t 4660 fifo retask 5 36 36
+t 4681 fifo retask 7 37 36
+t 4701 fifo retask 9 36 35
+t 4722 fifo rally 44 58
+t 4827 fifo retask 4 41 41
+t 4847 fifo retask 5 41 41
+t 4946 fifo retask 3 41 41
+t 4966 fifo retask 4 35 36
+t 4985 fifo retask 5 36 36
+t 5085 fifo retask 3 35 35
+t 5106 fifo rally 44 58
+t 5213 fifo retask 5 41 41
+t 5234 fifo retask 9 41 41
+t 5336 fifo retask 5 36 36
+t 5356 fifo retask 9 36 35
+t 5379 fifo retask 2 15 40
+t 5398 fifo train 45 59 1
+t 5666 fifo retask 2 15 27
+t 6257 fifo retask 2 15 37
+t 6277 fifo retask 12 15 37
+t 6456 fifo retask 3 41 41
+t 6474 fifo retask 9 41 41
+t 6493 fifo train 45 59 1
+t 6601 fifo retask 5 41 41
+t 6619 fifo retask 3 41 39
+t 6627 fifo build 44 60 11
+t 6652 fifo retask 9 40 40
+t 6659 fifo build 46 60 11
+t 6688 fifo build 42 60 11
+t 6714 fifo build 40 60 11
+t 6779 fifo retask 3 35 35
+t 6799 fifo retask 5 36 36
+t 6822 fifo retask 9 36 35
+t 6922 fifo retask 5 41 41
+t 6940 fifo rally 44 58
+t 7046 fifo retask 5 36 36
+t 7065 fifo retask 2 15 40
+t 7084 fifo retask 12 15 40
+t 7188 fifo retask 5 41 41
+t 7207 fifo retask 9 41 41
+t 7311 fifo retask 9 36 35
+t 7412 fifo retask 5 36 36
+t 7427 fifo retask 5 41 39
+t 7676 fifo retask 9 41 41
+t 7777 fifo retask 9 36 35
+t 7796 fifo train 45 59 1
+t 7902 fifo rally 44 58
+t 7927 fifo retask 2 15 40
+t 7948 fifo retask 11 44 58
+t 8215 fifo retask 0 28 58
+t 8317 fifo retask 2 15 37
+t 8338 fifo retask 13 15 37
+t 9170 fifo retask 1 27 59
+t 9273 fifo retask 9 36 35
+t 9623 fifo retask 2 15 40
+t 9968 fifo rally 44 58
+t 9993 fifo train 45 59 1
+t 10201 fifo retask 11 44 58
+t 10221 fifo retask 12 44 58
+t 10239 fifo retask 13 13 33
+t 10259 fifo retask 14 13 33
+t 10359 fifo train 45 59 1
+t 10465 fifo retask 10 28 58
+t 10486 fifo retask 13 15 40
+t 10507 fifo retask 14 15 40
+t 10773 fifo retask 10 28 58
+t 10959 fifo retask 9 41 41
+t 10977 fifo retask 10 28 58
+t 11157 fifo retask 9 41 39
+t 11165 fifo retask 9 36 35
+t 11185 fifo retask 10 28 58
+t 11205 fifo rally 44 58
+t 11236 fifo retask 13 15 40
+t 11258 fifo retask 14 15 40
+t 11442 fifo retask 10 28 58
+t 11624 fifo retask 10 28 58
+t 11726 fifo rally 44 58
+t 11834 fifo retask 7 37 36
+t 11853 fifo retask 10 28 58
+t 11957 fifo train 45 59 1
+t 12067 fifo retask 10 28 58
+t 12086 fifo retask 2 15 36
+t 12107 fifo retask 17 15 36
+t 12293 fifo retask 10 28 58
+t 12673 fifo retask 10 28 58
+t 12694 fifo rally 44 58
+t 12887 fifo retask 10 28 58
+t 12941 fifo retask 8 38 38
+t 13071 fifo retask 10 28 58
+t 13258 fifo retask 10 28 58
+t 13360 fifo rally 44 58
+t 13470 fifo retask 10 28 58
+t 13656 fifo retask 10 28 58
+t 13839 fifo retask 10 28 58
+t 13901 key -1
+t 13959 key -5
+t 14033 key -5
+t 14155 key -6
+t 14247 fifo rally 44 58
+t 14274 fifo retask 12 15 37
+t 14292 fifo retask 16 15 37
+t 14312 fifo retask 17 44 58
+t 14332 fifo build 44 56 5
+t 14400 fifo retask 10 28 58
+t 14502 key -6
+t 14511 fifo build 43 55 6
+t 14579 key -6
+t 14657 fifo build 42 58 12
+t 14681 fifo build 44 56 12
+t 14706 fifo build 45 57 12
+t 14773 fifo retask 8 41 41
+t 14792 fifo retask 10 28 58
+t 14894 fifo retask 8 41 40
+t 14971 fifo retask 8 41 39
+t 14995 fifo retask 8 41 40
+t 15016 fifo retask 10 28 58
+t 15037 fifo train 45 59 1
+t 15145 fifo build 44 56 5
+t 15171 fifo build 42 56 5
+t 15197 fifo build 46 56 5
+t 15263 fifo retask 10 28 58
+t 15284 fifo train 45 59 1
+t 15391 fifo retask 8 41 40
+t 15490 fifo retask 10 28 58
+t 15676 fifo retask 10 28 58
+t 15696 fifo build 42 58 12
+t 15722 fifo build 44 56 12
+t 15749 fifo build 45 57 12
+t 15759 fifo retask 8 41 38
+t 15899 fifo retask 10 28 58
+t 16080 fifo retask 10 28 58
+t 16100 fifo build 44 56 5
+t 16127 fifo build 42 56 5
+t 16152 fifo build 46 56 5
+t 16303 fifo retask 10 28 58
+t 16490 fifo retask 10 28 58
+t 16671 fifo retask 10 28 58
+t 16774 fifo build 42 58 12
+t 16799 fifo build 44 56 12
+t 16826 fifo build 45 57 12
+t 16893 fifo retask 10 28 58
+t 16997 fifo build 44 56 5
+t 17023 fifo build 42 56 5
+t 17050 fifo build 46 56 5
+t 17116 fifo retask 10 28 58
+t 17291 fifo retask 5 39 36
+t 17300 fifo retask 10 28 58
+t 17485 fifo retask 10 28 58
+t 17676 fifo retask 10 28 58
+t 17697 fifo build 42 58 12
+t 17724 fifo build 44 56 12
+t 17750 fifo build 45 57 12
+t 17901 fifo retask 10 28 58
+t 17922 fifo build 44 56 5
+t 17949 fifo build 42 56 5
+t 17975 fifo build 46 56 5
+t 18125 fifo retask 10 28 58
+t 18231 key -5
+t 18306 key -5
+t 18429 key -6
+t 18512 fifo build 46 56 4
+t 18579 key -6
