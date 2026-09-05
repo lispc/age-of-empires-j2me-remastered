@@ -42,6 +42,15 @@ tickms 只影响墙钟不影响视频内容。长 trace 验证+出视频建议 t
   replay-verify 位精确 PASS + campaign-replay 终局对拍一致；本地
   replay.mp4=全亮胜利视频 3031 帧。十轮配方演进（standoff→决斗梯→帖诱
   反杀→自投罗网→帖扫+攻城器械）见 tools/campaign/NOTES.md m6 档案。
+- m0 拆堡关  **WIN ticks=8576**（2026-09-06 r67 首战即捷，宏线收官战；
+  探针测绘→离线 73-hop 环线推演→单 boot 通关，8 兵损 4 拆平 TC；本关产出
+  近战零 reprisal/威胁模型按型半径两条机制修正）。336 事件
+  replay-verify 位精确 PASS + mktrace 事件流逐 tick 一致；本地 replay.mp4
+  874 帧紧竞态自渲染。
+
+**宏线七关全清（2026-09-06）**：m0 8576 / m1 392912 / m2 64077 / m3 89191 /
+m4 19112 / m5 2936 / m6 30067——全部位精确可回放+全亮视频。
+
 - （旧 DDA 时代 WIN ticks=90133 录制因锚点制度升级已退役，被本表 m1 覆盖。）
 
 **2026-09-06 全量复验**（player-ai 合并后构建，campaign-replay 紧竞态版）：

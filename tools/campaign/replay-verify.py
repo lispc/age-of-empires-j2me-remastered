@@ -63,11 +63,8 @@ while time.time() - t0 < 900:
         fw.flush()
         sent = True
         print('replaytrace 已发送', flush=True)
-    if sent and any('replaytrace done' in ln for ln in lines):
-        for ln in lines:
-            if 'replaytrace done' in ln or '[result]' in ln:
-                print(ln.strip(), flush=True)
-        break
+    # r67 修正: replaytrace done 不提前收尾——游戏可能还没跑到 [result]
+    # (旧版此处 break+terminate, result='' 且 '' in EXPECT 恒 PASS=空集恒真)
     if any('[result]' in ln for ln in lines):
         for ln in lines:
             if '[result]' in ln:
@@ -76,7 +73,11 @@ while time.time() - t0 < 900:
     time.sleep(0.01)
 
 fw.close()
-time.sleep(3)
+# 等 java 自然退出 (exitOnResult), 最多 30s
+for _ in range(300):
+    if proc.poll() is not None:
+        break
+    time.sleep(0.1)
 proc.terminate()
 # 终局与事件数对拍
 n_fifo = n_input = 0
@@ -91,4 +92,5 @@ with open(WORK + '/replay.log', 'r', errors='replace') as f:
             result = ln.strip()
 print(f'对拍: applied fifo={n_fifo} input={n_input} | {result}', flush=True)
 print(f'预期: {EXPECT}', flush=True)
-print('VERDICT:', 'PASS' if result.replace('[result] ', '').strip() in EXPECT else 'FAIL', flush=True)
+ok = result.strip() != '' and result.replace('[result] ', '').strip() in EXPECT
+print('VERDICT:', 'PASS' if ok else 'FAIL', flush=True)

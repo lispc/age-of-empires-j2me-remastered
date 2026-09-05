@@ -1,0 +1,2003 @@
+[devMouse] listening on /tmp/aoe-camp/m0/fifo
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[k] node=231 mode=0 type=4 op=2
+[trace] g->9 (aA=4 am=4)
+[menuGate] ax=0 ab=0
+[dbg] ar=23 am=9 aA=4 aH=0 l=false j=false fullRedraw=false
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[k] node=310 mode=0 type=4 op=2
+[trace] g->9 (aA=4 am=4)
+[menuGate] ax=0 ab=0
+[dbg] ar=48 am=4 aA=9 aH=0 l=false j=false fullRedraw=false
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[k] node=377 mode=0 type=4 op=2
+[trace] g->9 (aA=4 am=4)
+[menuGate] ax=0 ab=0
+[dbg] ar=73 am=4 aA=0 aH=1 l=false j=false fullRedraw=false
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[dbg] ar=98 am=4 aA=4 aH=0 l=false j=false fullRedraw=false
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[void_a] key=-5 ae=22 ak=19 ar=109
+[input] ar=110 key -5
+[k] node=57 mode=1 type=16 op=2
+[trace] g->9 (aA=4 am=4)
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[void_a] key=-4 ae=23 ak=19 ar=118
+[input] ar=118 key -4
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[dbg] ar=123 am=4 aA=4 aH=0 l=false j=false fullRedraw=false
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[void_a] key=-4 ae=23 ak=19 ar=127
+[input] ar=127 key -4
+[fHead] ax=23
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[k] node=171 mode=0 type=2 op=3
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[void_a] key=-5 ae=22 ak=19 ar=134
+[input] ar=134 key -5
+[fHead] ax=22
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[k] node=171 mode=1 type=2 op=3
+[trace] g->9 (aA=4 am=4)
+[k] node=171 mode=0 type=2 op=3
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[void_a] key=-5 ae=22 ak=19 ar=143
+[input] ar=143 key -5
+[fHead] ax=22
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[dbg] ar=148 am=4 aA=4 aH=0 l=false j=false fullRedraw=false
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[void_a] key=-5 ae=22 ak=19 ar=152
+[input] ar=152 key -5
+[fHead] ax=22
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[k] node=936 mode=1 type=2 op=3
+[trace] g->5 (aA=4 am=4)
+[k] node=936 mode=0 type=2 op=3
+[trace] g->11 (aA=5 am=5)
+[trace] boolean_c aH=0 ac=32 aC=0
+[view] world rebuild with clipTop=0 -> var_boolean_l=true
+[trace] g->8 (aA=6 am=6)
+[dev] in mission, aA=6
+[trace] g(1,71,0) ac=32
+[trace] g->2 (aA=6 am=6)
+[view] dialog open z=71 overlayPrevState=6
+[dlg-parse] z=71 v=0 strLen=201 str=The enemy has constructed a fort at the edge of our lands. @ We are blessed with many natural riches, and this makes them jealous. @ Destroy the fort, so they will think twice about invading our lands.
+[dbg] ar=173 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=198 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=223 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=240 state
+[devMouse] aA=2/2 cursor=(61,36) cam=(308,692) Q=2365 aE=0 Y=0 sel=0
+[devMouse] p0 unit 0 tile=(59,40) type=2 sel=false
+[devMouse] p0 unit 1 tile=(60,40) type=2 sel=false
+[devMouse] p0 unit 2 tile=(61,40) type=2 sel=false
+[devMouse] p0 unit 3 tile=(58,40) type=2 sel=false
+[devMouse] p0 unit 4 tile=(60,41) type=5 sel=false
+[devMouse] p0 unit 5 tile=(60,42) type=5 sel=false
+[devMouse] p0 unit 6 tile=(61,37) type=7 sel=false
+[devMouse] p0 unit 7 tile=(60,37) type=7 sel=false
+[devMouse] p1 unit 0 tile=(38,29) type=2 sel=false
+[devMouse] p1 unit 1 tile=(37,29) type=2 sel=false
+[devMouse] p1 unit 2 tile=(30,25) type=5 sel=false
+[devMouse] p1 unit 3 tile=(57,51) type=2 sel=false
+[devMouse] p1 unit 4 tile=(23,49) type=2 sel=false
+[devMouse] p1 unit 5 tile=(34,41) type=2 sel=false
+[devMouse] p1 unit 6 tile=(41,61) type=2 sel=false
+[devMouse] p1 unit 7 tile=(16,32) type=2 sel=false
+[dbg] ar=248 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=273 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=283 key -6
+[void_a] key=-6 ae=38 ak=19 ar=283
+[input] ar=283 key -6
+[trace] g(1,71,1) ac=32
+[trace] g->2 (aA=6 am=6)
+[view] dialog open z=71 overlayPrevState=6
+[dlg-parse] z=71 v=1 strLen=149 str=The fort is hidden in unexplored territory.  @ Use your fast moving Scouts to find it, then use your Battering Rams to smash the buildings to pieces.
+[dbg] ar=298 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=314 state
+[devMouse] aA=2/2 cursor=(61,36) cam=(308,692) Q=2365 aE=0 Y=0 sel=0
+[devMouse] p0 unit 0 tile=(59,40) type=2 sel=false
+[devMouse] p0 unit 1 tile=(60,40) type=2 sel=false
+[devMouse] p0 unit 2 tile=(61,40) type=2 sel=false
+[devMouse] p0 unit 3 tile=(58,40) type=2 sel=false
+[devMouse] p0 unit 4 tile=(60,41) type=5 sel=false
+[devMouse] p0 unit 5 tile=(60,42) type=5 sel=false
+[devMouse] p0 unit 6 tile=(61,37) type=7 sel=false
+[devMouse] p0 unit 7 tile=(60,37) type=7 sel=false
+[devMouse] p1 unit 0 tile=(38,29) type=2 sel=false
+[devMouse] p1 unit 1 tile=(37,29) type=2 sel=false
+[devMouse] p1 unit 2 tile=(30,25) type=5 sel=false
+[devMouse] p1 unit 3 tile=(57,51) type=2 sel=false
+[devMouse] p1 unit 4 tile=(23,49) type=2 sel=false
+[devMouse] p1 unit 5 tile=(34,41) type=2 sel=false
+[devMouse] p1 unit 6 tile=(41,61) type=2 sel=false
+[devMouse] p1 unit 7 tile=(16,32) type=2 sel=false
+[dbg] ar=323 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=348 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=358 key -6
+[void_a] key=-6 ae=38 ak=19 ar=358
+[input] ar=358 key -6
+[dbg] ar=373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[save] wrote /tmp/aoe-camp/m0/saves/auto.aoesave (12292B) ar=384
+[fifo] ar=388 state
+[devMouse] aA=6/6 cursor=(61,36) cam=(308,692) Q=2365 aE=0 Y=0 sel=0
+[devMouse] p0 unit 0 tile=(59,40) type=2 sel=false
+[devMouse] p0 unit 1 tile=(60,40) type=2 sel=false
+[devMouse] p0 unit 2 tile=(61,40) type=2 sel=false
+[devMouse] p0 unit 3 tile=(58,40) type=2 sel=false
+[devMouse] p0 unit 4 tile=(60,41) type=5 sel=false
+[devMouse] p0 unit 5 tile=(60,42) type=5 sel=false
+[devMouse] p0 unit 6 tile=(61,37) type=7 sel=false
+[devMouse] p0 unit 7 tile=(60,37) type=7 sel=false
+[devMouse] p1 unit 0 tile=(38,29) type=2 sel=false
+[devMouse] p1 unit 1 tile=(37,29) type=2 sel=false
+[devMouse] p1 unit 2 tile=(30,25) type=5 sel=false
+[devMouse] p1 unit 3 tile=(57,51) type=2 sel=false
+[devMouse] p1 unit 4 tile=(23,49) type=2 sel=false
+[devMouse] p1 unit 5 tile=(34,41) type=2 sel=false
+[devMouse] p1 unit 6 tile=(41,61) type=2 sel=false
+[devMouse] p1 unit 7 tile=(16,32) type=2 sel=false
+[dbg] ar=398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=430 save /tmp/aoe-camp/m0/base.aoesave
+[save] wrote /tmp/aoe-camp/m0/base.aoesave (12292B) ar=431
+[dbg] ar=448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=519 state
+[devMouse] aA=6/6 cursor=(61,36) cam=(308,692) Q=2365 aE=0 Y=0 sel=0
+[devMouse] p0 unit 0 tile=(59,40) type=2 sel=false
+[devMouse] p0 unit 1 tile=(60,40) type=2 sel=false
+[devMouse] p0 unit 2 tile=(61,40) type=2 sel=false
+[devMouse] p0 unit 3 tile=(58,40) type=2 sel=false
+[devMouse] p0 unit 4 tile=(60,41) type=5 sel=false
+[devMouse] p0 unit 5 tile=(60,42) type=5 sel=false
+[devMouse] p0 unit 6 tile=(61,37) type=7 sel=false
+[devMouse] p0 unit 7 tile=(60,37) type=7 sel=false
+[devMouse] p1 unit 0 tile=(38,29) type=2 sel=false
+[devMouse] p1 unit 1 tile=(37,29) type=2 sel=false
+[devMouse] p1 unit 2 tile=(30,25) type=5 sel=false
+[devMouse] p1 unit 3 tile=(57,51) type=2 sel=false
+[devMouse] p1 unit 4 tile=(23,49) type=2 sel=false
+[devMouse] p1 unit 5 tile=(34,41) type=2 sel=false
+[devMouse] p1 unit 6 tile=(41,61) type=2 sel=false
+[devMouse] p1 unit 7 tile=(16,32) type=2 sel=false
+[dbg] ar=523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=569 aistate
+[devMouse] aistate written, ar=569
+[dbg] ar=573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=578 retask 0 61 41
+[fifo] ar=579 retask 0 61 41
+[devMouse] retask slot0 (59,40)w0 -> (61,41)
+[fifoQ] ar=586 retask 1 62 43
+[fifo] ar=587 retask 1 62 43
+[devMouse] retask slot1 (60,40)w0 -> (62,43)
+[fifoQ] ar=594 retask 2 62 43
+[fifo] ar=595 retask 2 62 43
+[devMouse] retask slot2 (61,40)w0 -> (62,43)
+[dbg] ar=598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=603 retask 3 60 39
+[fifo] ar=603 retask 3 60 39
+[devMouse] retask slot3 (58,40)w0 -> (60,39)
+[fifoQ] ar=611 retask 4 62 43
+[fifo] ar=612 retask 4 62 43
+[devMouse] retask slot4 (60,41)w0 -> (62,43)
+[fifoQ] ar=619 retask 5 62 43
+[fifo] ar=619 retask 5 62 43
+[devMouse] retask slot5 (60,42)w0 -> (62,43)
+[dbg] ar=623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=626 retask 6 60 39
+[fifo] ar=627 retask 6 60 39
+[devMouse] retask slot6 (61,37)w0 -> (60,39)
+[fifoQ] ar=634 retask 7 60 39
+[fifo] ar=635 retask 7 60 39
+[devMouse] retask slot7 (60,37)w0 -> (60,39)
+[dbg] ar=648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=667 aistate
+[devMouse] aistate written, ar=667
+[dbg] ar=673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=678 retask 0 62 43
+[fifo] ar=679 retask 0 62 43
+[devMouse] retask slot0 (61,41)w0 -> (62,43)
+[fifoQ] ar=686 retask 1 62 45
+[fifo] ar=687 retask 1 62 45
+[devMouse] retask slot1 (61,43)w0 -> (62,45)
+[fifoQ] ar=694 retask 2 62 45
+[fifo] ar=695 retask 2 62 45
+[devMouse] retask slot2 (61,42)w0 -> (62,45)
+[dbg] ar=698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=701 retask 3 61 41
+[fifo] ar=702 retask 3 61 41
+[devMouse] retask slot3 (59,39)w0 -> (61,41)
+[fifoQ] ar=710 retask 4 62 45
+[fifo] ar=710 retask 4 62 45
+[devMouse] retask slot4 (62,43)w0 -> (62,45)
+[fifoQ] ar=717 retask 5 62 45
+[fifo] ar=718 retask 5 62 45
+[devMouse] retask slot5 (62,42)w0 -> (62,45)
+[dbg] ar=723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=725 retask 6 61 41
+[fifo] ar=726 retask 6 61 41
+[devMouse] retask slot6 (60,39)w0 -> (61,41)
+[fifoQ] ar=733 retask 7 61 41
+[fifo] ar=733 retask 7 61 41
+[devMouse] retask slot7 (59,38)w0 -> (61,41)
+[dbg] ar=748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=765 aistate
+[devMouse] aistate written, ar=765
+[dbg] ar=773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=774 retask 0 62 45
+[fifo] ar=775 retask 0 62 45
+[devMouse] retask slot0 (63,42)w0 -> (62,45)
+[fifoQ] ar=782 retask 1 62 47
+[fifo] ar=782 retask 1 62 47
+[devMouse] retask slot1 (62,45)w0 -> (62,47)
+[fifoQ] ar=789 retask 2 62 47
+[fifo] ar=790 retask 2 62 47
+[devMouse] retask slot2 (61,44)w0 -> (62,47)
+[fifoQ] ar=797 retask 3 62 43
+[fifo] ar=798 retask 3 62 43
+[devMouse] retask slot3 (61,41)w0 -> (62,43)
+[dbg] ar=798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=805 retask 4 62 47
+[fifo] ar=806 retask 4 62 47
+[devMouse] retask slot4 (62,44)w0 -> (62,47)
+[fifoQ] ar=813 retask 6 62 43
+[fifo] ar=814 retask 6 62 43
+[devMouse] retask slot6 (60,40)w0 -> (62,43)
+[dbg] ar=823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=844 aistate
+[devMouse] aistate written, ar=844
+[dbg] ar=848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=857 retask 0 62 47
+[fifo] ar=857 retask 0 62 47
+[devMouse] retask slot0 (62,45)w0 -> (62,47)
+[fifoQ] ar=865 retask 1 62 49
+[fifo] ar=866 retask 1 62 49
+[devMouse] retask slot1 (62,47)w0 -> (62,49)
+[fifoQ] ar=872 retask 2 62 49
+[fifo] ar=873 retask 2 62 49
+[devMouse] retask slot2 (61,46)w0 -> (62,49)
+[dbg] ar=873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=880 retask 3 62 45
+[fifo] ar=881 retask 3 62 45
+[devMouse] retask slot3 (62,43)w0 -> (62,45)
+[fifoQ] ar=889 retask 4 62 49
+[fifo] ar=889 retask 4 62 49
+[devMouse] retask slot4 (62,46)w0 -> (62,49)
+[fifoQ] ar=897 retask 5 62 47
+[fifo] ar=897 retask 5 62 47
+[devMouse] retask slot5 (61,45)w0 -> (62,47)
+[dbg] ar=898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=904 retask 7 62 43
+[fifo] ar=905 retask 7 62 43
+[devMouse] retask slot7 (60,41)w0 -> (62,43)
+[dbg] ar=923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=934 aistate
+[devMouse] aistate written, ar=934
+[fifoQ] ar=945 retask 0 62 49
+[fifo] ar=946 retask 0 62 49
+[devMouse] retask slot0 (62,47)w0 -> (62,49)
+[dbg] ar=948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=952 retask 1 62 51
+[fifo] ar=953 retask 1 62 51
+[devMouse] retask slot1 (62,50)w0 -> (62,51)
+[fifoQ] ar=961 retask 2 62 51
+[fifo] ar=962 retask 2 62 51
+[devMouse] retask slot2 (60,48)w1 -> (62,51)
+[fifoQ] ar=969 retask 3 62 47
+[fifo] ar=970 retask 3 62 47
+[devMouse] retask slot3 (62,45)w0 -> (62,47)
+[dbg] ar=973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=977 retask 5 62 49
+[fifo] ar=977 retask 5 62 49
+[devMouse] retask slot5 (59,48)w101 -> (62,49)
+[fifoQ] ar=984 retask 6 62 45
+[fifo] ar=985 retask 6 62 45
+[devMouse] retask slot6 (61,42)w0 -> (62,45)
+[combat] p1 type2 died at (59,49) ar=993 remaining=7
+[dbg] ar=998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1016 aistate
+[devMouse] aistate written, ar=1016
+[dbg] ar=1023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1027 retask 0 62 49
+[fifo] ar=1028 retask 0 62 49
+[devMouse] retask slot0 (60,48)w0 -> (62,49)
+[fifoQ] ar=1035 retask 1 59 53
+[fifo] ar=1036 retask 1 59 53
+[devMouse] retask slot1 (62,51)w0 -> (59,53)
+[fifoQ] ar=1043 retask 2 62 51
+[fifo] ar=1044 retask 2 62 51
+[devMouse] retask slot2 (59,49)w0 -> (62,51)
+[dbg] ar=1048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1051 retask 3 62 49
+[fifo] ar=1052 retask 3 62 49
+[devMouse] retask slot3 (62,47)w0 -> (62,49)
+[fifoQ] ar=1058 retask 4 62 49
+[fifo] ar=1059 retask 4 62 49
+[devMouse] retask slot4 (58,48)w0 -> (62,49)
+[dbg] ar=1073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1092 aistate
+[devMouse] aistate written, ar=1092
+[dbg] ar=1098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1104 retask 0 62 51
+[fifo] ar=1105 retask 0 62 51
+[devMouse] retask slot0 (61,48)w0 -> (62,51)
+[fifoQ] ar=1112 retask 1 57 55
+[fifo] ar=1112 retask 1 57 55
+[devMouse] retask slot1 (59,53)w0 -> (57,55)
+[fifoQ] ar=1121 retask 2 59 53
+[fifo] ar=1121 retask 2 59 53
+[devMouse] retask slot2 (62,51)w0 -> (59,53)
+[dbg] ar=1123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1129 retask 3 62 51
+[fifo] ar=1130 retask 3 62 51
+[devMouse] retask slot3 (62,48)w0 -> (62,51)
+[fifoQ] ar=1138 retask 4 62 51
+[fifo] ar=1138 retask 4 62 51
+[devMouse] retask slot4 (61,49)w0 -> (62,51)
+[fifoQ] ar=1146 retask 5 62 51
+[fifo] ar=1147 retask 5 62 51
+[devMouse] retask slot5 (62,49)w0 -> (62,51)
+[dbg] ar=1148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1153 retask 6 62 47
+[fifo] ar=1154 retask 6 62 47
+[devMouse] retask slot6 (62,45)w0 -> (62,47)
+[dbg] ar=1173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1184 aistate
+[devMouse] aistate written, ar=1184
+[fifoQ] ar=1196 retask 0 61 52
+[fifo] ar=1197 retask 0 61 52
+[devMouse] retask slot0 (61,50)w0 -> (61,52)
+[dbg] ar=1198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1204 retask 1 55 57
+[fifo] ar=1205 retask 1 55 57
+[devMouse] retask slot1 (57,55)w0 -> (55,57)
+[fifoQ] ar=1212 retask 2 57 55
+[fifo] ar=1213 retask 2 57 55
+[devMouse] retask slot2 (59,53)w0 -> (57,55)
+[fifoQ] ar=1220 retask 3 59 53
+[fifo] ar=1220 retask 3 59 53
+[devMouse] retask slot3 (62,51)w0 -> (59,53)
+[dbg] ar=1223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1227 retask 4 59 53
+[fifo] ar=1228 retask 4 59 53
+[devMouse] retask slot4 (61,51)w0 -> (59,53)
+[fifoQ] ar=1236 retask 5 61 52
+[fifo] ar=1237 retask 5 61 52
+[devMouse] retask slot5 (63,50)w0 -> (61,52)
+[fifoQ] ar=1244 retask 6 62 49
+[fifo] ar=1245 retask 6 62 49
+[devMouse] retask slot6 (62,47)w0 -> (62,49)
+[dbg] ar=1248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1252 retask 7 62 45
+[fifo] ar=1252 retask 7 62 45
+[devMouse] retask slot7 (62,43)w0 -> (62,45)
+[dbg] ar=1273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1280 aistate
+[devMouse] aistate written, ar=1280
+[fifoQ] ar=1290 retask 0 59 53
+[fifo] ar=1291 retask 0 59 53
+[devMouse] retask slot0 (61,52)w0 -> (59,53)
+[dbg] ar=1298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1299 retask 1 52 57
+[fifo] ar=1299 retask 1 52 57
+[devMouse] retask slot1 (55,57)w0 -> (52,57)
+[fifoQ] ar=1307 retask 2 55 57
+[fifo] ar=1308 retask 2 55 57
+[devMouse] retask slot2 (57,55)w0 -> (55,57)
+[fifoQ] ar=1315 retask 3 58 54
+[fifo] ar=1316 retask 3 58 54
+[devMouse] retask slot3 (60,52)w0 -> (58,54)
+[fifoQ] ar=1322 retask 4 57 55
+[fifo] ar=1323 retask 4 57 55
+[devMouse] retask slot4 (59,53)w0 -> (57,55)
+[dbg] ar=1323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1331 retask 5 59 53
+[fifo] ar=1331 retask 5 59 53
+[devMouse] retask slot5 (62,51)w0 -> (59,53)
+[fifoQ] ar=1339 retask 6 62 51
+[fifo] ar=1340 retask 6 62 51
+[devMouse] retask slot6 (62,49)w0 -> (62,51)
+[fifoQ] ar=1347 retask 7 62 47
+[fifo] ar=1348 retask 7 62 47
+[devMouse] retask slot7 (62,45)w0 -> (62,47)
+[dbg] ar=1348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1379 aistate
+[devMouse] aistate written, ar=1379
+[fifoQ] ar=1390 retask 0 58 54
+[fifo] ar=1391 retask 0 58 54
+[devMouse] retask slot0 (59,52)w0 -> (58,54)
+[fifoQ] ar=1398 retask 1 49 57
+[dbg] ar=1398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1399 retask 1 49 57
+[devMouse] retask slot1 (52,57)w0 -> (49,57)
+[fifoQ] ar=1406 retask 2 52 57
+[fifo] ar=1406 retask 2 52 57
+[devMouse] retask slot2 (55,57)w0 -> (52,57)
+[fifoQ] ar=1414 retask 3 56 56
+[fifo] ar=1415 retask 3 56 56
+[devMouse] retask slot3 (58,54)w0 -> (56,56)
+[fifoQ] ar=1422 retask 4 55 57
+[fifo] ar=1423 retask 4 55 57
+[devMouse] retask slot4 (57,55)w0 -> (55,57)
+[dbg] ar=1423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1430 retask 5 57 55
+[fifo] ar=1430 retask 5 57 55
+[devMouse] retask slot5 (59,53)w0 -> (57,55)
+[fifoQ] ar=1438 retask 6 59 53
+[fifo] ar=1439 retask 6 59 53
+[devMouse] retask slot6 (62,51)w0 -> (59,53)
+[fifoQ] ar=1446 retask 7 62 49
+[fifo] ar=1447 retask 7 62 49
+[devMouse] retask slot7 (62,47)w0 -> (62,49)
+[dbg] ar=1448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1477 aistate
+[devMouse] aistate written, ar=1477
+[fifoQ] ar=1489 retask 0 57 55
+[fifo] ar=1490 retask 0 57 55
+[devMouse] retask slot0 (58,53)w0 -> (57,55)
+[fifoQ] ar=1497 retask 1 47 58
+[fifo] ar=1498 retask 1 47 58
+[devMouse] retask slot1 (49,57)w0 -> (47,58)
+[dbg] ar=1498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1504 retask 2 49 57
+[fifo] ar=1505 retask 2 49 57
+[devMouse] retask slot2 (52,57)w0 -> (49,57)
+[fifoQ] ar=1512 retask 3 55 57
+[fifo] ar=1512 retask 3 55 57
+[devMouse] retask slot3 (57,56)w0 -> (55,57)
+[fifoQ] ar=1520 retask 4 52 57
+[fifo] ar=1520 retask 4 52 57
+[devMouse] retask slot4 (55,57)w0 -> (52,57)
+[dbg] ar=1523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1528 retask 5 55 57
+[fifo] ar=1528 retask 5 55 57
+[devMouse] retask slot5 (57,55)w0 -> (55,57)
+[fifoQ] ar=1536 retask 6 57 55
+[fifo] ar=1537 retask 6 57 55
+[devMouse] retask slot6 (59,53)w0 -> (57,55)
+[fifoQ] ar=1544 retask 7 62 51
+[fifo] ar=1545 retask 7 62 51
+[devMouse] retask slot7 (62,49)w0 -> (62,51)
+[dbg] ar=1548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1574 aistate
+[devMouse] aistate written, ar=1574
+[fifoQ] ar=1584 retask 0 56 56
+[fifo] ar=1585 retask 0 56 56
+[devMouse] retask slot0 (57,54)w0 -> (56,56)
+[fifoQ] ar=1592 retask 1 45 58
+[fifo] ar=1592 retask 1 45 58
+[devMouse] retask slot1 (47,58)w0 -> (45,58)
+[dbg] ar=1598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1599 retask 2 47 58
+[fifo] ar=1600 retask 2 47 58
+[devMouse] retask slot2 (49,57)w0 -> (47,58)
+[fifoQ] ar=1607 retask 3 52 57
+[fifo] ar=1608 retask 3 52 57
+[devMouse] retask slot3 (56,56)w0 -> (52,57)
+[fifoQ] ar=1615 retask 4 49 57
+[fifo] ar=1616 retask 4 49 57
+[devMouse] retask slot4 (52,57)w0 -> (49,57)
+[fifoQ] ar=1623 retask 5 52 57
+[dbg] ar=1623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1624 retask 5 52 57
+[devMouse] retask slot5 (55,57)w0 -> (52,57)
+[fifoQ] ar=1631 retask 6 55 57
+[fifo] ar=1631 retask 6 55 57
+[devMouse] retask slot6 (57,55)w0 -> (55,57)
+[fifoQ] ar=1639 retask 7 59 53
+[fifo] ar=1640 retask 7 59 53
+[devMouse] retask slot7 (62,51)w0 -> (59,53)
+[fifo] ar=1646 aistate
+[devMouse] aistate written, ar=1646
+[dbg] ar=1648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1657 retask 0 55 57
+[fifo] ar=1658 retask 0 55 57
+[devMouse] retask slot0 (56,55)w0 -> (55,57)
+[fifoQ] ar=1666 retask 1 43 60
+[fifo] ar=1667 retask 1 43 60
+[devMouse] retask slot1 (45,58)w0 -> (43,60)
+[dbg] ar=1673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1674 retask 2 45 58
+[fifo] ar=1674 retask 2 45 58
+[devMouse] retask slot2 (47,58)w0 -> (45,58)
+[fifoQ] ar=1681 retask 3 49 57
+[fifo] ar=1682 retask 3 49 57
+[devMouse] retask slot3 (52,57)w0 -> (49,57)
+[fifoQ] ar=1689 retask 4 47 58
+[fifo] ar=1690 retask 4 47 58
+[devMouse] retask slot4 (49,57)w0 -> (47,58)
+[fifoQ] ar=1697 retask 5 49 57
+[fifo] ar=1698 retask 5 49 57
+[devMouse] retask slot5 (53,56)w0 -> (49,57)
+[dbg] ar=1698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p0 type2 died at (43,60) ar=1729 remaining=7
+[fifo] ar=1729 aistate
+[devMouse] aistate written, ar=1729
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=1740 retask 0 52 57
+[fifo] ar=1741 retask 0 52 57
+[devMouse] retask slot0 (55,56)w0 -> (52,57)
+[combat] p1 type2 died at (43,60) ar=1744 remaining=6
+[fifoQ] ar=1748 retask 1 43 60
+[dbg] ar=1748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1749 retask 1 43 60
+[devMouse] retask slot1 (59,53)w0 -> (43,60)
+[fifoQ] ar=1756 retask 2 43 60
+[fifo] ar=1757 retask 2 43 60
+[devMouse] retask slot2 (43,60)w0 -> (43,60)
+[fifoQ] ar=1764 retask 3 47 58
+[fifo] ar=1765 retask 3 47 58
+[devMouse] retask slot3 (49,57)w0 -> (47,58)
+[fifoQ] ar=1772 retask 4 45 58
+[fifo] ar=1773 retask 4 45 58
+[devMouse] retask slot4 (47,58)w0 -> (45,58)
+[dbg] ar=1773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1780 retask 5 47 58
+[fifo] ar=1781 retask 5 47 58
+[devMouse] retask slot5 (50,56)w0 -> (47,58)
+[fifoQ] ar=1788 retask 6 52 57
+[fifo] ar=1789 retask 6 52 57
+[devMouse] retask slot6 (55,57)w0 -> (52,57)
+[dbg] ar=1798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1821 aistate
+[devMouse] aistate written, ar=1821
+[dbg] ar=1823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1832 retask 0 49 57
+[fifo] ar=1833 retask 0 49 57
+[devMouse] retask slot0 (52,57)w0 -> (49,57)
+[fifoQ] ar=1839 retask 2 41 60
+[fifo] ar=1840 retask 2 41 60
+[devMouse] retask slot2 (43,60)w0 -> (41,60)
+[fifoQ] ar=1847 retask 3 45 58
+[fifo] ar=1847 retask 3 45 58
+[devMouse] retask slot3 (48,57)w0 -> (45,58)
+[dbg] ar=1848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1854 retask 4 43 60
+[fifo] ar=1855 retask 4 43 60
+[devMouse] retask slot4 (45,58)w0 -> (43,60)
+[fifoQ] ar=1862 retask 5 45 58
+[fifo] ar=1863 retask 5 45 58
+[devMouse] retask slot5 (47,58)w0 -> (45,58)
+[fifoQ] ar=1871 retask 6 49 57
+[fifo] ar=1871 retask 6 49 57
+[devMouse] retask slot6 (53,56)w0 -> (49,57)
+[dbg] ar=1873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1900 aistate
+[devMouse] aistate written, ar=1900
+[fifoQ] ar=1911 retask 0 47 58
+[fifo] ar=1912 retask 0 47 58
+[devMouse] retask slot0 (49,57)w0 -> (47,58)
+[fifoQ] ar=1919 retask 2 38 60
+[fifo] ar=1920 retask 2 38 60
+[devMouse] retask slot2 (41,60)w0 -> (38,60)
+[dbg] ar=1923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1928 retask 3 43 60
+[fifo] ar=1928 retask 3 43 60
+[devMouse] retask slot3 (45,58)w0 -> (43,60)
+[fifoQ] ar=1935 retask 4 41 60
+[fifo] ar=1936 retask 4 41 60
+[devMouse] retask slot4 (43,60)w0 -> (41,60)
+[fifoQ] ar=1942 retask 5 44 59
+[fifo] ar=1943 retask 5 44 59
+[devMouse] retask slot5 (46,57)w0 -> (44,59)
+[dbg] ar=1948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1971 aistate
+[devMouse] aistate written, ar=1971
+[dbg] ar=1973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1984 retask 0 45 58
+[fifo] ar=1985 retask 0 45 58
+[devMouse] retask slot0 (47,58)w0 -> (45,58)
+[fifoQ] ar=1992 retask 2 36 60
+[fifo] ar=1992 retask 2 36 60
+[devMouse] retask slot2 (38,60)w201 -> (36,60)
+[dbg] ar=1998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1999 retask 3 41 60
+[fifo] ar=2000 retask 3 41 60
+[devMouse] retask slot3 (44,59)w0 -> (41,60)
+[fifoQ] ar=2008 retask 4 38 60
+[fifo] ar=2009 retask 4 38 60
+[devMouse] retask slot4 (41,60)w0 -> (38,60)
+[fifoQ] ar=2016 retask 5 43 60
+[fifo] ar=2017 retask 5 43 60
+[devMouse] retask slot5 (45,58)w0 -> (43,60)
+[dbg] ar=2023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2024 retask 6 47 58
+[fifo] ar=2025 retask 6 47 58
+[devMouse] retask slot6 (49,57)w0 -> (47,58)
+[dbg] ar=2048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2055 aistate
+[devMouse] aistate written, ar=2055
+[fifoQ] ar=2066 retask 0 44 59
+[fifo] ar=2067 retask 0 44 59
+[devMouse] retask slot0 (46,57)w0 -> (44,59)
+[dbg] ar=2073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2074 retask 1 41 60
+[fifo] ar=2074 retask 1 41 60
+[devMouse] retask slot1 (43,60)w0 -> (41,60)
+[combat] p0 type2 died at (36,60) ar=2079 remaining=6
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=2082 retask 2 33 60
+[fifo] ar=2083 retask 2 33 60
+[devMouse] retask slot2 (47,58)w0 -> (33,60)
+[fifoQ] ar=2090 retask 3 38 60
+[fifo] ar=2091 retask 3 38 60
+[devMouse] retask slot3 (41,60)w0 -> (38,60)
+[fifoQ] ar=2098 retask 4 36 60
+[dbg] ar=2098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2099 retask 4 36 60
+[devMouse] retask slot4 (38,60)w601 -> (36,60)
+[fifoQ] ar=2106 retask 5 41 60
+[fifo] ar=2107 retask 5 41 60
+[devMouse] retask slot5 (44,59)w0 -> (41,60)
+[fifoQ] ar=2114 retask 6 45 58
+[fifo] ar=2115 retask 6 45 58
+[devMouse] retask FAIL slot6 越界(n=6)
+[dbg] ar=2123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2144 aistate
+[devMouse] aistate written, ar=2145
+[dbg] ar=2148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2155 retask 0 43 60
+[fifo] ar=2156 retask 0 43 60
+[devMouse] retask slot0 (45,58)w0 -> (43,60)
+[fifoQ] ar=2163 retask 1 40 60
+[fifo] ar=2164 retask 1 40 60
+[devMouse] retask slot1 (42,59)w0 -> (40,60)
+[fifoQ] ar=2171 retask 3 36 60
+[fifo] ar=2172 retask 3 36 60
+[devMouse] retask slot3 (38,60)w601 -> (36,60)
+[dbg] ar=2173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2179 retask 4 33 60
+[fifo] ar=2179 retask 4 33 60
+[devMouse] retask slot4 (36,60)w401 -> (33,60)
+[fifo] ar=2186 aistate
+[devMouse] aistate written, ar=2186
+[fifoQ] ar=2198 retask 1 37 61
+[dbg] ar=2198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2199 retask 1 37 61
+[devMouse] retask slot1 (40,60)w0 -> (37,61)
+[fifoQ] ar=2207 retask 2 37 61
+[fifo] ar=2208 retask 2 37 61
+[devMouse] retask slot2 (41,59)w0 -> (37,61)
+[fifoQ] ar=2214 retask 0 45 58
+[fifo] ar=2215 retask 0 45 58
+[devMouse] retask slot0 (43,60)w0 -> (45,58)
+[fifoQ] ar=2223 retask 3 44 57
+[fifo] ar=2223 retask 3 44 57
+[devMouse] retask slot3 (37,60)w201 -> (44,57)
+[dbg] ar=2223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2231 retask 4 44 57
+[fifo] ar=2232 retask 4 44 57
+[devMouse] retask slot4 (33,60)w0 -> (44,57)
+[dbg] ar=2248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2260 aistate
+[devMouse] aistate written, ar=2260
+[fifoQ] ar=2271 retask 1 37 61
+[fifo] ar=2272 retask 1 37 61
+[devMouse] retask slot1 (38,60)w1 -> (37,61)
+[dbg] ar=2273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2279 retask 2 37 61
+[fifo] ar=2280 retask 2 37 61
+[devMouse] retask slot2 (38,61)w401 -> (37,61)
+[fifoQ] ar=2287 retask 5 44 57
+[fifo] ar=2287 retask 5 44 57
+[devMouse] retask slot5 (41,60)w0 -> (44,57)
+[dbg] ar=2298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2318 aistate
+[devMouse] aistate written, ar=2318
+[dbg] ar=2323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2330 aistate
+[devMouse] aistate written, ar=2330
+[fifoQ] ar=2341 retask 0 43 60
+[fifo] ar=2342 retask 0 43 60
+[devMouse] retask slot0 (45,58)w0 -> (43,60)
+[dbg] ar=2348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2350 retask 1 40 60
+[fifo] ar=2350 retask 1 40 60
+[devMouse] retask slot1 (38,60)w0 -> (40,60)
+[fifoQ] ar=2358 retask 2 33 60
+[fifo] ar=2359 retask 2 33 60
+[devMouse] retask slot2 (38,61)w0 -> (33,60)
+[fifoQ] ar=2366 retask 3 36 60
+[fifo] ar=2367 retask 3 36 60
+[devMouse] retask slot3 (44,58)w0 -> (36,60)
+[dbg] ar=2373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2374 retask 4 33 60
+[fifo] ar=2375 retask 4 33 60
+[devMouse] retask slot4 (43,58)w0 -> (33,60)
+[fifoQ] ar=2382 retask 5 41 60
+[fifo] ar=2383 retask 5 41 60
+[devMouse] retask slot5 (44,57)w0 -> (41,60)
+[dbg] ar=2398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2412 aistate
+[devMouse] aistate written, ar=2413
+[dbg] ar=2423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2424 retask 0 41 60
+[fifo] ar=2425 retask 0 41 60
+[devMouse] retask slot0 (43,60)w0 -> (41,60)
+[fifoQ] ar=2432 retask 1 38 60
+[fifo] ar=2433 retask 1 38 60
+[devMouse] retask slot1 (40,60)w0 -> (38,60)
+[fifoQ] ar=2440 retask 5 38 60
+[fifo] ar=2441 retask 5 38 60
+[devMouse] retask slot5 (41,60)w0 -> (38,60)
+[dbg] ar=2448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2469 aistate
+[devMouse] aistate written, ar=2469
+[dbg] ar=2473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2480 retask 0 40 60
+[fifo] ar=2481 retask 0 40 60
+[devMouse] retask slot0 (42,59)w0 -> (40,60)
+[fifoQ] ar=2488 retask 1 36 60
+[fifo] ar=2489 retask 1 36 60
+[devMouse] retask slot1 (38,60)w0 -> (36,60)
+[fifoQ] ar=2496 retask 2 31 60
+[fifo] ar=2497 retask 2 31 60
+[devMouse] retask slot2 (33,60)w0 -> (31,60)
+[dbg] ar=2498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2504 retask 4 31 60
+[fifo] ar=2505 retask 4 31 60
+[devMouse] retask slot4 (34,60)w0 -> (31,60)
+[fifoQ] ar=2512 retask 5 36 60
+[fifo] ar=2513 retask 5 36 60
+[devMouse] retask slot5 (39,61)w0 -> (36,60)
+[dbg] ar=2523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2541 aistate
+[devMouse] aistate written, ar=2541
+[dbg] ar=2548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2553 retask 0 38 60
+[fifo] ar=2554 retask 0 38 60
+[devMouse] retask slot0 (40,60)w0 -> (38,60)
+[fifoQ] ar=2561 retask 1 33 60
+[fifo] ar=2562 retask 1 33 60
+[devMouse] retask slot1 (37,60)w0 -> (33,60)
+[fifoQ] ar=2569 retask 2 28 60
+[fifo] ar=2570 retask 2 28 60
+[devMouse] retask slot2 (31,60)w0 -> (28,60)
+[dbg] ar=2573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2577 retask 3 33 60
+[fifo] ar=2578 retask 3 33 60
+[devMouse] retask slot3 (36,60)w0 -> (33,60)
+[fifoQ] ar=2585 retask 4 28 60
+[fifo] ar=2586 retask 4 28 60
+[devMouse] retask slot4 (32,59)w0 -> (28,60)
+[fifoQ] ar=2592 retask 5 33 60
+[fifo] ar=2593 retask 5 33 60
+[devMouse] retask slot5 (37,61)w0 -> (33,60)
+[dbg] ar=2598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=2623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2625 aistate
+[devMouse] aistate written, ar=2625
+[fifoQ] ar=2636 retask 0 36 60
+[fifo] ar=2637 retask 0 36 60
+[devMouse] retask slot0 (38,60)w0 -> (36,60)
+[fifoQ] ar=2643 retask 1 31 60
+[fifo] ar=2644 retask 1 31 60
+[devMouse] retask slot1 (34,59)w0 -> (31,60)
+[dbg] ar=2648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2652 retask 2 26 60
+[fifo] ar=2652 retask 2 26 60
+[devMouse] retask slot2 (28,60)w0 -> (26,60)
+[fifoQ] ar=2659 retask 3 31 60
+[fifo] ar=2660 retask 3 31 60
+[devMouse] retask slot3 (33,60)w0 -> (31,60)
+[fifoQ] ar=2668 retask 4 23 60
+[fifo] ar=2669 retask 4 23 60
+[devMouse] retask slot4 (27,59)w0 -> (23,60)
+[dbg] ar=2673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2676 retask 5 31 60
+[fifo] ar=2677 retask 5 31 60
+[devMouse] retask slot5 (34,60)w0 -> (31,60)
+[dbg] ar=2698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2705 aistate
+[devMouse] aistate written, ar=2705
+[fifoQ] ar=2716 retask 0 33 60
+[fifo] ar=2717 retask 0 33 60
+[devMouse] retask slot0 (36,60)w0 -> (33,60)
+[dbg] ar=2723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2724 retask 1 28 60
+[fifo] ar=2724 retask 1 28 60
+[devMouse] retask slot1 (32,59)w0 -> (28,60)
+[fifoQ] ar=2731 retask 2 23 60
+[fifo] ar=2732 retask 2 23 60
+[devMouse] retask slot2 (26,60)w0 -> (23,60)
+[fifoQ] ar=2739 retask 3 28 60
+[fifo] ar=2740 retask 3 28 60
+[devMouse] retask slot3 (31,60)w0 -> (28,60)
+[fifoQ] ar=2747 retask 4 20 60
+[fifo] ar=2748 retask 4 20 60
+[devMouse] retask slot4 (23,60)w0 -> (20,60)
+[dbg] ar=2748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2755 retask 5 28 60
+[fifo] ar=2756 retask 5 28 60
+[devMouse] retask slot5 (30,59)w0 -> (28,60)
+[dbg] ar=2773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2787 aistate
+[devMouse] aistate written, ar=2787
+[fifoQ] ar=2797 retask 0 31 60
+[fifo] ar=2798 retask 0 31 60
+[devMouse] retask slot0 (33,60)w0 -> (31,60)
+[dbg] ar=2798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2805 retask 1 26 60
+[fifo] ar=2806 retask 1 26 60
+[devMouse] retask slot1 (29,59)w0 -> (26,60)
+[fifoQ] ar=2813 retask 2 20 60
+[fifo] ar=2814 retask 2 20 60
+[devMouse] retask slot2 (23,60)w0 -> (20,60)
+[fifoQ] ar=2821 retask 3 26 60
+[fifo] ar=2821 retask 3 26 60
+[devMouse] retask slot3 (28,60)w0 -> (26,60)
+[dbg] ar=2823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2829 retask 4 17 60
+[fifo] ar=2829 retask 4 17 60
+[devMouse] retask slot4 (20,60)w0 -> (17,60)
+[fifoQ] ar=2836 retask 5 26 60
+[fifo] ar=2837 retask 5 26 60
+[devMouse] retask slot5 (29,61)w0 -> (26,60)
+[dbg] ar=2848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2865 aistate
+[devMouse] aistate written, ar=2865
+[dbg] ar=2873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2877 retask 0 28 60
+[fifo] ar=2878 retask 0 28 60
+[devMouse] retask slot0 (31,60)w0 -> (28,60)
+[fifoQ] ar=2884 retask 2 17 60
+[fifo] ar=2885 retask 2 17 60
+[devMouse] retask slot2 (20,60)w0 -> (17,60)
+[fifoQ] ar=2893 retask 3 23 60
+[fifo] ar=2894 retask 3 23 60
+[devMouse] retask slot3 (26,60)w0 -> (23,60)
+[dbg] ar=2898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2901 retask 4 15 59
+[fifo] ar=2902 retask 4 15 59
+[devMouse] retask slot4 (17,60)w0 -> (15,59)
+[fifoQ] ar=2910 retask 5 23 60
+[fifo] ar=2911 retask 5 23 60
+[devMouse] retask slot5 (27,59)w0 -> (23,60)
+[dbg] ar=2923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2939 aistate
+[devMouse] aistate written, ar=2939
+[dbg] ar=2948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2952 retask 0 26 60
+[fifo] ar=2953 retask 0 26 60
+[devMouse] retask slot0 (28,60)w0 -> (26,60)
+[fifoQ] ar=2960 retask 1 23 60
+[fifo] ar=2961 retask 1 23 60
+[devMouse] retask slot1 (26,59)w0 -> (23,60)
+[fifoQ] ar=2968 retask 2 15 59
+[fifo] ar=2969 retask 2 15 59
+[devMouse] retask slot2 (17,60)w0 -> (15,59)
+[dbg] ar=2973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2975 retask 3 20 60
+[fifo] ar=2976 retask 3 20 60
+[devMouse] retask slot3 (23,60)w0 -> (20,60)
+[fifoQ] ar=2983 retask 4 13 57
+[fifo] ar=2984 retask 4 13 57
+[devMouse] retask slot4 (15,59)w0 -> (13,57)
+[fifoQ] ar=2991 retask 5 20 60
+[fifo] ar=2992 retask 5 20 60
+[devMouse] retask slot5 (24,59)w0 -> (20,60)
+[dbg] ar=2998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=3022 aistate
+[devMouse] aistate written, ar=3022
+[dbg] ar=3023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3033 retask 0 23 60
+[fifo] ar=3034 retask 0 23 60
+[devMouse] retask slot0 (26,60)w0 -> (23,60)
+[fifoQ] ar=3041 retask 2 13 57
+[fifo] ar=3042 retask 2 13 57
+[devMouse] retask slot2 (15,59)w0 -> (13,57)
+[dbg] ar=3048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3050 retask 3 17 60
+[fifo] ar=3051 retask 3 17 60
+[devMouse] retask slot3 (20,60)w0 -> (17,60)
+[fifoQ] ar=3057 retask 4 12 55
+[fifo] ar=3058 retask 4 12 55
+[devMouse] retask slot4 (13,57)w0 -> (12,55)
+[fifoQ] ar=3066 retask 5 17 60
+[fifo] ar=3067 retask 5 17 60
+[devMouse] retask slot5 (21,59)w0 -> (17,60)
+[dbg] ar=3073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=3098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=3099 aistate
+[devMouse] aistate written, ar=3099
+[fifoQ] ar=3111 retask 0 20 60
+[fifo] ar=3112 retask 0 20 60
+[devMouse] retask slot0 (24,59)w0 -> (20,60)
+[fifoQ] ar=3119 retask 1 20 60
+[fifo] ar=3120 retask 1 20 60
+[devMouse] retask slot1 (23,60)w0 -> (20,60)
+[dbg] ar=3123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3127 retask 2 12 55
+[fifo] ar=3128 retask 2 12 55
+[devMouse] retask slot2 (14,58)w0 -> (12,55)
+[fifoQ] ar=3135 retask 3 15 59
+[fifo] ar=3136 retask 3 15 59
+[devMouse] retask slot3 (17,60)w0 -> (15,59)
+[fifoQ] ar=3142 retask 4 10 52
+[fifo] ar=3143 retask 4 10 52
+[devMouse] retask slot4 (12,55)w0 -> (10,52)
+[dbg] ar=3148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3151 retask 5 15 59
+[fifo] ar=3151 retask 5 15 59
+[devMouse] retask slot5 (18,60)w0 -> (15,59)
+[dbg] ar=3173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=3182 aistate
+[devMouse] aistate written, ar=3182
+[fifoQ] ar=3194 retask 0 17 60
+[fifo] ar=3195 retask 0 17 60
+[devMouse] retask slot0 (20,60)w0 -> (17,60)
+[dbg] ar=3198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3203 retask 1 17 60
+[fifo] ar=3203 retask 1 17 60
+[devMouse] retask slot1 (21,59)w0 -> (17,60)
+[fifoQ] ar=3211 retask 2 10 52
+[fifo] ar=3212 retask 2 10 52
+[devMouse] retask slot2 (12,55)w0 -> (10,52)
+[fifoQ] ar=3219 retask 3 13 57
+[fifo] ar=3220 retask 3 13 57
+[devMouse] retask slot3 (15,59)w0 -> (13,57)
+[dbg] ar=3223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3227 retask 4 9 50
+[fifo] ar=3228 retask 4 9 50
+[devMouse] retask slot4 (10,52)w0 -> (9,50)
+[fifoQ] ar=3234 retask 5 14 58
+[fifo] ar=3235 retask 5 14 58
+[devMouse] retask slot5 (16,60)w0 -> (14,58)
+[dbg] ar=3248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=3266 aistate
+[devMouse] aistate written, ar=3266
+[dbg] ar=3273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3278 retask 0 15 59
+[fifo] ar=3279 retask 0 15 59
+[devMouse] retask slot0 (17,60)w0 -> (15,59)
+[fifoQ] ar=3286 retask 1 15 59
+[fifo] ar=3287 retask 1 15 59
+[devMouse] retask slot1 (18,60)w0 -> (15,59)
+[fifoQ] ar=3294 retask 2 9 50
+[fifo] ar=3295 retask 2 9 50
+[devMouse] retask slot2 (10,52)w0 -> (9,50)
+[dbg] ar=3298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3302 retask 3 12 55
+[fifo] ar=3302 retask 3 12 55
+[devMouse] retask slot3 (13,57)w0 -> (12,55)
+[fifoQ] ar=3309 retask 4 8 48
+[fifo] ar=3310 retask 4 8 48
+[devMouse] retask slot4 (9,50)w0 -> (8,48)
+[fifoQ] ar=3317 retask 5 12 55
+[fifo] ar=3318 retask 5 12 55
+[devMouse] retask slot5 (14,58)w0 -> (12,55)
+[dbg] ar=3323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=3348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=3350 aistate
+[devMouse] aistate written, ar=3350
+[fifoQ] ar=3361 retask 0 13 57
+[fifo] ar=3362 retask 0 13 57
+[devMouse] retask slot0 (15,59)w0 -> (13,57)
+[fifoQ] ar=3369 retask 1 14 58
+[fifo] ar=3370 retask 1 14 58
+[devMouse] retask slot1 (16,60)w0 -> (14,58)
+[dbg] ar=3373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3377 retask 2 8 48
+[fifo] ar=3378 retask 2 8 48
+[devMouse] retask slot2 (9,50)w0 -> (8,48)
+[fifoQ] ar=3384 retask 3 10 52
+[fifo] ar=3385 retask 3 10 52
+[devMouse] retask slot3 (12,55)w0 -> (10,52)
+[fifoQ] ar=3394 retask 4 8 46
+[fifo] ar=3394 retask 4 8 46
+[devMouse] retask slot4 (8,48)w0 -> (8,46)
+[dbg] ar=3398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3402 retask 5 11 54
+[fifo] ar=3402 retask 5 11 54
+[devMouse] retask slot5 (13,56)w0 -> (11,54)
+[dbg] ar=3423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=3432 aistate
+[devMouse] aistate written, ar=3432
+[fifoQ] ar=3443 retask 0 12 55
+[fifo] ar=3444 retask 0 12 55
+[devMouse] retask slot0 (13,57)w0 -> (12,55)
+[dbg] ar=3448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3451 retask 1 12 55
+[fifo] ar=3452 retask 1 12 55
+[devMouse] retask slot1 (14,58)w0 -> (12,55)
+[fifoQ] ar=3458 retask 2 8 46
+[fifo] ar=3459 retask 2 8 46
+[devMouse] retask slot2 (9,49)w0 -> (8,46)
+[fifoQ] ar=3466 retask 3 9 50
+[fifo] ar=3467 retask 3 9 50
+[devMouse] retask slot3 (10,52)w0 -> (9,50)
+[dbg] ar=3473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3474 retask 4 7 44
+[fifo] ar=3475 retask 4 7 44
+[devMouse] retask slot4 (8,46)w0 -> (7,44)
+[fifoQ] ar=3482 retask 5 10 52
+[fifo] ar=3482 retask 5 10 52
+[devMouse] retask slot5 (11,54)w0 -> (10,52)
+[dbg] ar=3498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=3513 aistate
+[devMouse] aistate written, ar=3513
+[dbg] ar=3523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3525 retask 0 10 52
+[fifo] ar=3526 retask 0 10 52
+[devMouse] retask slot0 (12,55)w0 -> (10,52)
+[fifoQ] ar=3532 retask 1 11 54
+[fifo] ar=3533 retask 1 11 54
+[devMouse] retask slot1 (13,56)w0 -> (11,54)
+[fifoQ] ar=3540 retask 2 7 44
+[fifo] ar=3541 retask 2 7 44
+[devMouse] retask slot2 (8,46)w0 -> (7,44)
+[fifoQ] ar=3548 retask 3 8 48
+[dbg] ar=3548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=3549 retask 3 8 48
+[devMouse] retask slot3 (9,50)w0 -> (8,48)
+[fifoQ] ar=3556 retask 4 7 42
+[fifo] ar=3557 retask 4 7 42
+[devMouse] retask slot4 (7,44)w0 -> (7,42)
+[fifoQ] ar=3564 retask 5 9 50
+[fifo] ar=3565 retask 5 9 50
+[devMouse] retask slot5 (10,52)w0 -> (9,50)
+[dbg] ar=3573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=3594 aistate
+[devMouse] aistate written, ar=3594
+[dbg] ar=3598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3604 retask 0 9 50
+[fifo] ar=3605 retask 0 9 50
+[devMouse] retask slot0 (11,53)w0 -> (9,50)
+[fifoQ] ar=3612 retask 1 10 52
+[fifo] ar=3613 retask 1 10 52
+[devMouse] retask slot1 (11,54)w0 -> (10,52)
+[fifoQ] ar=3620 retask 2 7 42
+[fifo] ar=3621 retask 2 7 42
+[devMouse] retask slot2 (8,45)w0 -> (7,42)
+[dbg] ar=3623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3627 retask 3 8 46
+[fifo] ar=3628 retask 3 8 46
+[devMouse] retask slot3 (8,48)w0 -> (8,46)
+[fifoQ] ar=3635 retask 4 6 40
+[fifo] ar=3636 retask 4 6 40
+[devMouse] retask slot4 (7,42)w0 -> (6,40)
+[fifoQ] ar=3643 retask 5 8 48
+[fifo] ar=3644 retask 5 8 48
+[devMouse] retask slot5 (9,50)w0 -> (8,48)
+[dbg] ar=3648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=3671 aistate
+[devMouse] aistate written, ar=3671
+[dbg] ar=3673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3681 retask 0 8 48
+[fifo] ar=3682 retask 0 8 48
+[devMouse] retask slot0 (10,51)w0 -> (8,48)
+[fifoQ] ar=3689 retask 1 9 50
+[fifo] ar=3690 retask 1 9 50
+[devMouse] retask slot1 (10,52)w0 -> (9,50)
+[fifoQ] ar=3698 retask 2 6 40
+[dbg] ar=3698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=3699 retask 2 6 40
+[devMouse] retask slot2 (7,42)w0 -> (6,40)
+[fifoQ] ar=3706 retask 3 7 44
+[fifo] ar=3707 retask 3 7 44
+[devMouse] retask slot3 (8,46)w0 -> (7,44)
+[fifoQ] ar=3715 retask 4 6 38
+[fifo] ar=3716 retask 4 6 38
+[devMouse] retask slot4 (6,40)w0 -> (6,38)
+[fifoQ] ar=3722 retask 5 8 46
+[fifo] ar=3723 retask 5 8 46
+[devMouse] retask slot5 (8,48)w0 -> (8,46)
+[dbg] ar=3723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=3748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=3750 aistate
+[devMouse] aistate written, ar=3750
+[fifoQ] ar=3761 retask 0 8 46
+[fifo] ar=3762 retask 0 8 46
+[devMouse] retask slot0 (9,49)w0 -> (8,46)
+[fifoQ] ar=3769 retask 1 8 48
+[fifo] ar=3770 retask 1 8 48
+[devMouse] retask slot1 (9,50)w0 -> (8,48)
+[dbg] ar=3773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3777 retask 2 6 38
+[fifo] ar=3778 retask 2 6 38
+[devMouse] retask slot2 (7,41)w0 -> (6,38)
+[fifoQ] ar=3785 retask 3 7 42
+[fifo] ar=3786 retask 3 7 42
+[devMouse] retask slot3 (7,44)w0 -> (7,42)
+[fifoQ] ar=3793 retask 4 7 36
+[fifo] ar=3793 retask 4 7 36
+[devMouse] retask slot4 (6,38)w0 -> (7,36)
+[dbg] ar=3798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3801 retask 5 7 44
+[fifo] ar=3802 retask 5 7 44
+[devMouse] retask slot5 (8,46)w0 -> (7,44)
+[dbg] ar=3823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=3833 aistate
+[devMouse] aistate written, ar=3833
+[fifoQ] ar=3845 retask 0 7 44
+[fifo] ar=3846 retask 0 7 44
+[devMouse] retask slot0 (9,47)w0 -> (7,44)
+[dbg] ar=3848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3853 retask 1 8 46
+[fifo] ar=3854 retask 1 8 46
+[devMouse] retask slot1 (8,48)w0 -> (8,46)
+[fifoQ] ar=3861 retask 2 7 36
+[fifo] ar=3862 retask 2 7 36
+[devMouse] retask slot2 (6,38)w0 -> (7,36)
+[fifoQ] ar=3871 retask 3 6 40
+[fifo] ar=3871 retask 3 6 40
+[devMouse] retask slot3 (7,42)w0 -> (6,40)
+[dbg] ar=3873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3879 retask 4 9 34
+[fifo] ar=3880 retask 4 9 34
+[devMouse] retask slot4 (7,36)w0 -> (9,34)
+[fifoQ] ar=3887 retask 5 7 42
+[fifo] ar=3887 retask 5 7 42
+[devMouse] retask slot5 (7,44)w0 -> (7,42)
+[dbg] ar=3898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=3918 aistate
+[devMouse] aistate written, ar=3918
+[dbg] ar=3923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3930 retask 0 7 42
+[fifo] ar=3931 retask 0 7 42
+[devMouse] retask slot0 (8,45)w0 -> (7,42)
+[fifoQ] ar=3938 retask 1 7 44
+[fifo] ar=3939 retask 1 7 44
+[devMouse] retask slot1 (8,46)w0 -> (7,44)
+[fifoQ] ar=3946 retask 2 8 35
+[fifo] ar=3947 retask 2 8 35
+[devMouse] retask slot2 (7,37)w0 -> (8,35)
+[dbg] ar=3948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=3954 retask 3 6 38
+[fifo] ar=3955 retask 3 6 38
+[devMouse] retask slot3 (6,40)w0 -> (6,38)
+[fifoQ] ar=3962 retask 4 11 34
+[fifo] ar=3962 retask 4 11 34
+[devMouse] retask slot4 (9,34)w0 -> (11,34)
+[fifoQ] ar=3970 retask 5 6 40
+[fifo] ar=3971 retask 5 6 40
+[devMouse] retask slot5 (7,42)w0 -> (6,40)
+[dbg] ar=3973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=3998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4003 aistate
+[devMouse] aistate written, ar=4003
+[fifoQ] ar=4015 retask 0 6 40
+[fifo] ar=4016 retask 0 6 40
+[devMouse] retask slot0 (8,43)w0 -> (6,40)
+[fifoQ] ar=4023 retask 1 7 42
+[dbg] ar=4023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4024 retask 1 7 42
+[devMouse] retask slot1 (7,44)w0 -> (7,42)
+[fifoQ] ar=4031 retask 2 11 34
+[fifo] ar=4032 retask 2 11 34
+[devMouse] retask slot2 (8,35)w0 -> (11,34)
+[fifoQ] ar=4039 retask 3 7 36
+[fifo] ar=4040 retask 3 7 36
+[devMouse] retask slot3 (6,38)w0 -> (7,36)
+[fifoQ] ar=4047 retask 4 13 34
+[fifo] ar=4048 retask 4 13 34
+[devMouse] retask slot4 (11,34)w0 -> (13,34)
+[dbg] ar=4048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=4055 retask 5 6 38
+[fifo] ar=4056 retask 5 6 38
+[devMouse] retask slot5 (6,40)w0 -> (6,38)
+[dbg] ar=4073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4085 aistate
+[devMouse] aistate written, ar=4085
+[fifoQ] ar=4096 retask 0 6 38
+[fifo] ar=4097 retask 0 6 38
+[devMouse] retask slot0 (7,41)w0 -> (6,38)
+[dbg] ar=4098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=4104 retask 1 6 40
+[fifo] ar=4105 retask 1 6 40
+[devMouse] retask slot1 (7,42)w0 -> (6,40)
+[fifoQ] ar=4112 retask 2 13 34
+[fifo] ar=4113 retask 2 13 34
+[devMouse] retask slot2 (11,34)w0 -> (13,34)
+[fifoQ] ar=4119 retask 3 9 34
+[fifo] ar=4120 retask 3 9 34
+[devMouse] retask slot3 (7,36)w0 -> (9,34)
+[combat] p1 type2 died at (15,31) ar=4120 remaining=5
+[dbg] ar=4123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=4128 retask 4 13 34
+[fifo] ar=4129 retask 4 13 34
+[devMouse] retask slot4 (16,31)w0 -> (13,34)
+[fifoQ] ar=4136 retask 5 7 36
+[fifo] ar=4137 retask 5 7 36
+[devMouse] retask slot5 (6,38)w0 -> (7,36)
+[dbg] ar=4148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4167 aistate
+[devMouse] aistate written, ar=4167
+[dbg] ar=4173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=4180 retask 0 7 36
+[fifo] ar=4181 retask 0 7 36
+[devMouse] retask slot0 (7,39)w0 -> (7,36)
+[fifoQ] ar=4188 retask 1 6 38
+[fifo] ar=4189 retask 1 6 38
+[devMouse] retask slot1 (6,40)w0 -> (6,38)
+[fifoQ] ar=4196 retask 2 16 33
+[fifo] ar=4197 retask 2 16 33
+[devMouse] retask slot2 (13,34)w0 -> (16,33)
+[dbg] ar=4198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=4204 retask 3 11 34
+[fifo] ar=4205 retask 3 11 34
+[devMouse] retask slot3 (9,34)w0 -> (11,34)
+[fifoQ] ar=4212 retask 5 9 34
+[fifo] ar=4212 retask 5 9 34
+[devMouse] retask slot5 (7,36)w0 -> (9,34)
+[dbg] ar=4223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4245 aistate
+[devMouse] aistate written, ar=4245
+[dbg] ar=4248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=4256 retask 0 8 35
+[fifo] ar=4257 retask 0 8 35
+[devMouse] retask slot0 (8,37)w0 -> (8,35)
+[combat] p0 type5 died at (16,32) ar=4263 remaining=5
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=4264 retask 1 7 36
+[fifo] ar=4265 retask 1 7 36
+[devMouse] retask slot1 (6,38)w0 -> (7,36)
+[fifoQ] ar=4272 retask 2 16 33
+[fifo] ar=4273 retask 2 16 33
+[devMouse] retask slot2 (17,32)w301 -> (16,33)
+[dbg] ar=4273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=4280 retask 3 13 34
+[fifo] ar=4281 retask 3 13 34
+[devMouse] retask slot3 (11,34)w0 -> (13,34)
+[fifoQ] ar=4288 retask 5 11 34
+[fifo] ar=4289 retask 5 11 34
+[devMouse] retask FAIL slot5 越界(n=5)
+[dbg] ar=4298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4321 aistate
+[devMouse] aistate written, ar=4321
+[dbg] ar=4323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=4348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4359 aistate
+[devMouse] aistate written, ar=4359
+[dbg] ar=4373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4398 aistate
+[devMouse] aistate written, ar=4398
+[dbg] ar=4398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=4423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4437 aistate
+[devMouse] aistate written, ar=4437
+[dbg] ar=4448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=4473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4475 aistate
+[devMouse] aistate written, ar=4475
+[dbg] ar=4498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4512 aistate
+[devMouse] aistate written, ar=4512
+[dbg] ar=4523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=4548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4550 aistate
+[devMouse] aistate written, ar=4550
+[dbg] ar=4573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4587 aistate
+[devMouse] aistate written, ar=4587
+[dbg] ar=4598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=4623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4625 aistate
+[devMouse] aistate written, ar=4625
+[dbg] ar=4648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4663 aistate
+[devMouse] aistate written, ar=4663
+[dbg] ar=4673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=4698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4701 aistate
+[devMouse] aistate written, ar=4701
+[dbg] ar=4723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4739 aistate
+[devMouse] aistate written, ar=4739
+[dbg] ar=4748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=4773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4777 aistate
+[devMouse] aistate written, ar=4777
+[dbg] ar=4798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4815 aistate
+[devMouse] aistate written, ar=4815
+[dbg] ar=4823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=4848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4852 aistate
+[devMouse] aistate written, ar=4852
+[dbg] ar=4873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4889 aistate
+[devMouse] aistate written, ar=4889
+[dbg] ar=4898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=4923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4927 aistate
+[devMouse] aistate written, ar=4927
+[dbg] ar=4948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=4963 aistate
+[devMouse] aistate written, ar=4963
+[dbg] ar=4973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=4998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5000 aistate
+[devMouse] aistate written, ar=5000
+[dbg] ar=5023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5038 aistate
+[devMouse] aistate written, ar=5038
+[dbg] ar=5048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=5073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5075 aistate
+[devMouse] aistate written, ar=5075
+[dbg] ar=5098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5112 aistate
+[devMouse] aistate written, ar=5112
+[dbg] ar=5123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=5148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5149 aistate
+[devMouse] aistate written, ar=5149
+[dbg] ar=5173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5187 aistate
+[devMouse] aistate written, ar=5187
+[dbg] ar=5198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=5223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5225 aistate
+[devMouse] aistate written, ar=5225
+[dbg] ar=5248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5263 aistate
+[devMouse] aistate written, ar=5263
+[dbg] ar=5273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=5298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5301 aistate
+[devMouse] aistate written, ar=5301
+[dbg] ar=5323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5340 aistate
+[devMouse] aistate written, ar=5340
+[dbg] ar=5348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=5373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5377 aistate
+[devMouse] aistate written, ar=5377
+[dbg] ar=5398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5414 aistate
+[devMouse] aistate written, ar=5414
+[dbg] ar=5423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=5448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5452 aistate
+[devMouse] aistate written, ar=5452
+[dbg] ar=5473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5489 aistate
+[devMouse] aistate written, ar=5489
+[dbg] ar=5498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=5523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5524 aistate
+[devMouse] aistate written, ar=5524
+[dbg] ar=5548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5562 aistate
+[devMouse] aistate written, ar=5562
+[dbg] ar=5573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=5598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5600 aistate
+[devMouse] aistate written, ar=5600
+[dbg] ar=5623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5638 aistate
+[devMouse] aistate written, ar=5638
+[dbg] ar=5648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=5673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5676 aistate
+[devMouse] aistate written, ar=5676
+[dbg] ar=5698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5716 aistate
+[devMouse] aistate written, ar=5716
+[dbg] ar=5723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=5748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5753 aistate
+[devMouse] aistate written, ar=5753
+[dbg] ar=5773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5792 aistate
+[devMouse] aistate written, ar=5792
+[dbg] ar=5798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=5823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5830 aistate
+[devMouse] aistate written, ar=5830
+[dbg] ar=5848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5868 aistate
+[devMouse] aistate written, ar=5868
+[dbg] ar=5873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=5898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5907 aistate
+[devMouse] aistate written, ar=5907
+[dbg] ar=5923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5944 aistate
+[devMouse] aistate written, ar=5944
+[dbg] ar=5948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=5973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=5980 aistate
+[devMouse] aistate written, ar=5981
+[dbg] ar=5998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6019 aistate
+[devMouse] aistate written, ar=6019
+[dbg] ar=6023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=6048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6057 aistate
+[devMouse] aistate written, ar=6057
+[dbg] ar=6073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6095 aistate
+[devMouse] aistate written, ar=6095
+[dbg] ar=6098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=6123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6133 aistate
+[devMouse] aistate written, ar=6133
+[dbg] ar=6148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6171 aistate
+[devMouse] aistate written, ar=6171
+[dbg] ar=6173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=6198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6209 aistate
+[devMouse] aistate written, ar=6209
+[dbg] ar=6223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6247 aistate
+[devMouse] aistate written, ar=6247
+[dbg] ar=6248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=6273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6284 aistate
+[devMouse] aistate written, ar=6284
+[dbg] ar=6298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6321 aistate
+[devMouse] aistate written, ar=6321
+[dbg] ar=6323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=6348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6360 aistate
+[devMouse] aistate written, ar=6360
+[dbg] ar=6373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=6398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6399 aistate
+[devMouse] aistate written, ar=6399
+[dbg] ar=6423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6437 aistate
+[devMouse] aistate written, ar=6437
+[dbg] ar=6448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=6473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6475 aistate
+[devMouse] aistate written, ar=6475
+[dbg] ar=6498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6512 aistate
+[devMouse] aistate written, ar=6512
+[dbg] ar=6523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=6548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6551 aistate
+[devMouse] aistate written, ar=6551
+[dbg] ar=6573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6590 aistate
+[devMouse] aistate written, ar=6590
+[dbg] ar=6598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=6623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6629 aistate
+[devMouse] aistate written, ar=6629
+[dbg] ar=6648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6668 aistate
+[devMouse] aistate written, ar=6668
+[dbg] ar=6673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=6698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6705 aistate
+[devMouse] aistate written, ar=6705
+[dbg] ar=6723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6743 aistate
+[devMouse] aistate written, ar=6743
+[dbg] ar=6748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=6773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6781 aistate
+[devMouse] aistate written, ar=6781
+[dbg] ar=6798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6819 aistate
+[devMouse] aistate written, ar=6819
+[dbg] ar=6823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=6848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6858 aistate
+[devMouse] aistate written, ar=6858
+[dbg] ar=6873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6896 aistate
+[devMouse] aistate written, ar=6896
+[dbg] ar=6898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=6923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6933 aistate
+[devMouse] aistate written, ar=6933
+[dbg] ar=6948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=6972 aistate
+[devMouse] aistate written, ar=6972
+[dbg] ar=6973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=6998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7011 aistate
+[devMouse] aistate written, ar=7011
+[dbg] ar=7023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=7048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7049 aistate
+[devMouse] aistate written, ar=7049
+[dbg] ar=7073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7087 aistate
+[devMouse] aistate written, ar=7087
+[dbg] ar=7098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=7123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7124 aistate
+[devMouse] aistate written, ar=7124
+[dbg] ar=7148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7162 aistate
+[devMouse] aistate written, ar=7162
+[dbg] ar=7173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=7198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7200 aistate
+[devMouse] aistate written, ar=7200
+[dbg] ar=7223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7238 aistate
+[devMouse] aistate written, ar=7238
+[dbg] ar=7248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=7273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7277 aistate
+[devMouse] aistate written, ar=7277
+[fifoQ] ar=7289 retask 0 11 34
+[fifo] ar=7290 retask 0 11 34
+[devMouse] retask slot0 (8,35)w0 -> (11,34)
+[fifoQ] ar=7297 retask 1 9 34
+[fifo] ar=7298 retask 1 9 34
+[devMouse] retask slot1 (7,36)w0 -> (9,34)
+[dbg] ar=7298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=7305 retask 2 18 33
+[fifo] ar=7306 retask 2 18 33
+[devMouse] retask slot2 (16,32)w0 -> (18,33)
+[fifoQ] ar=7313 retask 3 16 33
+[fifo] ar=7314 retask 3 16 33
+[devMouse] retask slot3 (13,34)w0 -> (16,33)
+[fifoQ] ar=7321 retask 4 13 34
+[fifo] ar=7322 retask 4 13 34
+[devMouse] retask slot4 (9,34)w0 -> (13,34)
+[dbg] ar=7323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=7348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7352 aistate
+[devMouse] aistate written, ar=7352
+[fifoQ] ar=7363 retask 0 13 34
+[fifo] ar=7364 retask 0 13 34
+[devMouse] retask slot0 (11,34)w0 -> (13,34)
+[fifoQ] ar=7371 retask 1 11 34
+[fifo] ar=7372 retask 1 11 34
+[devMouse] retask slot1 (8,35)w0 -> (11,34)
+[dbg] ar=7373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=7379 retask 2 20 33
+[fifo] ar=7380 retask 2 20 33
+[devMouse] retask slot2 (18,33)w0 -> (20,33)
+[fifoQ] ar=7387 retask 3 18 33
+[fifo] ar=7388 retask 3 18 33
+[devMouse] retask slot3 (16,33)w0 -> (18,33)
+[fifoQ] ar=7395 retask 4 16 33
+[fifo] ar=7396 retask 4 16 33
+[devMouse] retask slot4 (13,34)w0 -> (16,33)
+[dbg] ar=7398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=7423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7426 aistate
+[devMouse] aistate written, ar=7426
+[fifoQ] ar=7438 retask 0 14 33
+[fifo] ar=7439 retask 0 14 33
+[devMouse] retask slot0 (12,34)w0 -> (14,33)
+[fifoQ] ar=7445 retask 1 13 34
+[fifo] ar=7446 retask 1 13 34
+[devMouse] retask slot1 (11,34)w0 -> (13,34)
+[dbg] ar=7448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=7453 retask 2 24 32
+[fifo] ar=7454 retask 2 24 32
+[devMouse] retask slot2 (20,33)w0 -> (24,32)
+[fifoQ] ar=7461 retask 3 20 33
+[fifo] ar=7461 retask 3 20 33
+[devMouse] retask slot3 (18,33)w0 -> (20,33)
+[fifoQ] ar=7470 retask 4 18 33
+[fifo] ar=7470 retask 4 18 33
+[devMouse] retask slot4 (16,33)w0 -> (18,33)
+[dbg] ar=7473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7498 aistate
+[devMouse] aistate written, ar=7498
+[dbg] ar=7498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=7507 retask 0 16 33
+[fifo] ar=7508 retask 0 16 33
+[devMouse] retask slot0 (14,33)w0 -> (16,33)
+[fifoQ] ar=7516 retask 1 16 33
+[fifo] ar=7517 retask 1 16 33
+[devMouse] retask slot1 (13,34)w0 -> (16,33)
+[dbg] ar=7523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=7524 retask 3 24 32
+[fifo] ar=7525 retask 3 24 32
+[devMouse] retask slot3 (20,33)w0 -> (24,32)
+[fifoQ] ar=7532 retask 4 20 33
+[fifo] ar=7533 retask 4 20 33
+[devMouse] retask slot4 (18,33)w0 -> (20,33)
+[fifo] ar=7541 aistate
+[devMouse] aistate written, ar=7541
+[dbg] ar=7548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7554 aistate
+[devMouse] aistate written, ar=7554
+[fifoQ] ar=7564 retask 0 18 33
+[fifo] ar=7565 retask 0 18 33
+[devMouse] retask slot0 (16,33)w0 -> (18,33)
+[fifoQ] ar=7572 retask 1 18 33
+[fifo] ar=7573 retask 1 18 33
+[devMouse] retask slot1 (15,34)w0 -> (18,33)
+[dbg] ar=7573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=7581 retask 2 27 32
+[fifo] ar=7581 retask 2 27 32
+[devMouse] retask slot2 (24,32)w0 -> (27,32)
+[fifoQ] ar=7588 retask 3 27 32
+[fifo] ar=7589 retask 3 27 32
+[devMouse] retask slot3 (23,32)w0 -> (27,32)
+[fifoQ] ar=7596 retask 4 24 32
+[fifo] ar=7597 retask 4 24 32
+[devMouse] retask slot4 (20,33)w0 -> (24,32)
+[dbg] ar=7598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=7623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7629 aistate
+[devMouse] aistate written, ar=7629
+[fifoQ] ar=7641 retask 0 20 33
+[fifo] ar=7642 retask 0 20 33
+[devMouse] retask slot0 (18,33)w0 -> (20,33)
+[fifoQ] ar=7648 retask 1 20 33
+[dbg] ar=7648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7649 retask 1 20 33
+[devMouse] retask slot1 (17,34)w0 -> (20,33)
+[fifoQ] ar=7657 retask 2 30 32
+[fifo] ar=7658 retask 2 30 32
+[devMouse] retask slot2 (26,32)w0 -> (30,32)
+[fifoQ] ar=7664 retask 3 30 32
+[fifo] ar=7665 retask 3 30 32
+[devMouse] retask slot3 (27,32)w0 -> (30,32)
+[fifoQ] ar=7673 retask 4 27 32
+[fifo] ar=7673 retask 4 27 32
+[devMouse] retask slot4 (24,32)w0 -> (27,32)
+[dbg] ar=7673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=7698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7705 aistate
+[devMouse] aistate written, ar=7705
+[fifoQ] ar=7716 retask 0 24 32
+[fifo] ar=7717 retask 0 24 32
+[devMouse] retask slot0 (20,33)w0 -> (24,32)
+[dbg] ar=7723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=7724 retask 1 21 32
+[fifo] ar=7725 retask 1 21 32
+[devMouse] retask slot1 (19,34)w0 -> (21,32)
+[fifoQ] ar=7732 retask 3 33 32
+[fifo] ar=7732 retask 3 33 32
+[devMouse] retask slot3 (30,32)w0 -> (33,32)
+[fifoQ] ar=7739 retask 4 30 32
+[fifo] ar=7740 retask 4 30 32
+[devMouse] retask slot4 (27,32)w0 -> (30,32)
+[dbg] ar=7748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7769 aistate
+[devMouse] aistate written, ar=7769
+[dbg] ar=7773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=7779 retask 0 27 32
+[fifo] ar=7780 retask 0 27 32
+[devMouse] retask slot0 (24,32)w0 -> (27,32)
+[fifoQ] ar=7787 retask 1 24 32
+[fifo] ar=7787 retask 1 24 32
+[devMouse] retask slot1 (21,32)w0 -> (24,32)
+[fifoQ] ar=7794 retask 2 33 32
+[fifo] ar=7795 retask 2 33 32
+[devMouse] retask slot2 (29,33)w0 -> (33,32)
+[dbg] ar=7798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=7803 retask 3 36 32
+[fifo] ar=7803 retask 3 36 32
+[devMouse] retask slot3 (33,32)w0 -> (36,32)
+[fifoQ] ar=7811 retask 4 33 32
+[fifo] ar=7811 retask 4 33 32
+[devMouse] retask slot4 (30,32)w0 -> (33,32)
+[dbg] ar=7823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7840 aistate
+[devMouse] aistate written, ar=7840
+[dbg] ar=7848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=7852 retask 0 30 32
+[fifo] ar=7853 retask 0 30 32
+[devMouse] retask slot0 (27,32)w0 -> (30,32)
+[fifoQ] ar=7860 retask 1 27 32
+[fifo] ar=7861 retask 1 27 32
+[devMouse] retask slot1 (24,32)w0 -> (27,32)
+[fifoQ] ar=7868 retask 3 38 32
+[fifo] ar=7869 retask 3 38 32
+[devMouse] retask slot3 (36,32)w0 -> (38,32)
+[dbg] ar=7873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=7876 retask 4 36 32
+[fifo] ar=7876 retask 4 36 32
+[devMouse] retask slot4 (34,32)w0 -> (36,32)
+[dbg] ar=7898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7908 aistate
+[devMouse] aistate written, ar=7908
+[combat] p1 type2 died at (37,31) ar=7913 remaining=4
+[fifoQ] ar=7919 retask 0 33 32
+[fifo] ar=7920 retask 0 33 32
+[devMouse] retask slot0 (30,32)w0 -> (33,32)
+[dbg] ar=7923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=7927 retask 1 30 32
+[fifo] ar=7928 retask 1 30 32
+[devMouse] retask slot1 (27,32)w0 -> (30,32)
+[fifoQ] ar=7934 retask 2 36 32
+[fifo] ar=7935 retask 2 36 32
+[devMouse] retask slot2 (32,33)w0 -> (36,32)
+[combat] p0 type2 died at (38,32) ar=7938 remaining=4
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=7942 retask 3 38 32
+[fifo] ar=7943 retask 3 38 32
+[devMouse] retask slot3 (37,31)w1 -> (38,32)
+[dbg] ar=7948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=7951 retask 4 36 32
+[fifo] ar=7951 retask 4 36 32
+[devMouse] retask FAIL slot4 越界(n=4)
+[combat] p1 type2 died at (37,31) ar=7956 remaining=3
+[dbg] ar=7973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=7982 aistate
+[devMouse] aistate written, ar=7982
+[fifoQ] ar=7993 retask 0 36 32
+[fifo] ar=7994 retask 0 36 32
+[devMouse] retask slot0 (33,32)w0 -> (36,32)
+[dbg] ar=7998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=8001 retask 1 33 32
+[fifo] ar=8002 retask 1 33 32
+[devMouse] retask slot1 (30,32)w0 -> (33,32)
+[fifoQ] ar=8010 retask 3 38 32
+[fifo] ar=8010 retask 3 38 32
+[devMouse] retask slot3 (38,29)w501 -> (38,32)
+[dbg] ar=8023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=8040 aistate
+[devMouse] aistate written, ar=8040
+[dbg] ar=8048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=8051 retask 0 38 32
+[fifo] ar=8052 retask 0 38 32
+[devMouse] retask slot0 (35,32)w0 -> (38,32)
+[fifoQ] ar=8059 retask 1 36 32
+[fifo] ar=8060 retask 1 36 32
+[devMouse] retask slot1 (33,32)w0 -> (36,32)
+[fifoQ] ar=8068 retask 2 38 32
+[fifo] ar=8068 retask 2 38 32
+[devMouse] retask slot2 (36,32)w0 -> (38,32)
+[dbg] ar=8073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=8098 aistate
+[devMouse] aistate written, ar=8098
+[dbg] ar=8098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=8110 retask 1 38 32
+[fifo] ar=8111 retask 1 38 32
+[devMouse] retask slot1 (36,32)w0 -> (38,32)
+[fifo] ar=8118 aistate
+[devMouse] aistate written, ar=8118
+[dbg] ar=8123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=8132 aistate
+[devMouse] aistate written, ar=8132
+[fifoQ] ar=8142 retask 1 39 29
+[fifo] ar=8143 retask 1 39 29
+[devMouse] retask slot1 (38,32)w0 -> (39,29)
+[dbg] ar=8148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=8151 retask 2 40 28
+[fifo] ar=8151 retask 2 40 28
+[devMouse] retask slot2 (39,33)w201 -> (40,28)
+[fifoQ] ar=8159 retask 0 39 27
+[fifo] ar=8160 retask 0 39 27
+[devMouse] retask slot0 (39,31)w501 -> (39,27)
+[fifoQ] ar=8167 retask 3 38 27
+[fifo] ar=8167 retask 3 38 27
+[devMouse] retask slot3 (39,32)w501 -> (38,27)
+[dbg] ar=8173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=8198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=8201 aistate
+[devMouse] aistate written, ar=8201
+[dbg] ar=8223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=8240 aistate
+[devMouse] aistate written, ar=8240
+[dbg] ar=8248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=8273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=8278 aistate
+[devMouse] aistate written, ar=8278
+[dbg] ar=8298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=8317 aistate
+[devMouse] aistate written, ar=8317
+[dbg] ar=8323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=8348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=8355 aistate
+[devMouse] aistate written, ar=8355
+[dbg] ar=8373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=8393 aistate
+[devMouse] aistate written, ar=8393
+[dbg] ar=8398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=8423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=8432 aistate
+[devMouse] aistate written, ar=8432
+[dbg] ar=8448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=8471 aistate
+[devMouse] aistate written, ar=8472
+[dbg] ar=8473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=8498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=8509 aistate
+[devMouse] aistate written, ar=8509
+[dbg] ar=8523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=8548 aistate
+[devMouse] aistate written, ar=8548
+[dbg] ar=8548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=8573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[trace] g(0,98,0) ac=32
+[trace] g->2 (aA=6 am=6)
+[result] WIN ticks=8576

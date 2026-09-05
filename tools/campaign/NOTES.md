@@ -303,3 +303,25 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
 - 操作要点：驱动崩溃 java 活着时**原地重挂驱动合法不烧 boot**（trace 契约=
   play.log 的 [fifo] 流）；retask 高频重发对军事=洗路径缓存（§11.1 村民条
   推广）；射程口径统一 **hdr[12]=程²**。
+
+### m0 拆堡关（✅ WIN ticks=8576 首战即捷，r67；宏线 7/7 全清收官）
+- **布阵（res103，探针实测）**：我方 8 兵=4 长枪+2 侦察+2 冲车 @(58-61,37-42)，
+  时代 0，双方 0 资源；敌 TC(39,28)+4 建筑+2 守军枪+1 侦+5 游哨枪+4 哨塔。
+  **敌基地簇周围无塔**，4 塔全在西南部——唯一硬威胁是塔程几何（基值面板
+  程²16≈4 格/攻 2，无开局写值）。
+- **地形**：北线死路（金矿+树带封闭，4 邻与 8 向+切角洪泛双判）；唯一路线=
+  环线（南缘→twS→西带→y33/32 走廊→口袋）73 hops，逐 hop 验证 walkability
+  +塔程规避（route_m0.py 模式：格网解析别手数 mapdump 字符行）。
+- **战况（boot2=WIN）**：8 兵损 4——pk4 1:1、1 pike 流过 twS 塔程被 void_b
+  吸塔啃反杀、1 scout 在 twNW 区被射、守军战 1:2；换 pk1/pk4/pk5/双守军/
+  twS/twNW/TC，活 4（1 枪+1 侦+2 冲车）。
+- **机制修正（本关最大产出）**：①reprisal=投射物命中路径专属，近战击杀
+  零反击——纯近战敌配置不需要引诱/帖位战术；②威胁模型=tickAutoEngage
+  每玩家每 tick 恰 1 单位轮转（~8t）+按型索敌半径（9/16），d²25 圈是 m6
+  局部口径；③idle 近战 void_b 自动啃活塔=隐形自毁（活塔 d²≤9 近战禁区）。
+- **驱动骨架**：合并单一路线+顺序门闩+段尾继续前走（cap=min+2 整队式会
+  脱钩冻结）；门控早于危险区；dry 端到端先行。入库：`tools/campaign/
+  m0drv.py`（v1.3）+ `m0-boot.sh` + `m0-route.py` + `m0-drysim.py`。
+- 交付：三件套入 `recordings/campaign/m0/`；验证=修正版 replay-verify
+  位精确 + mktrace 事件流 337 行逐 tick 一致（campaign-replay 对本关注入
+  偏晚 ~4500t，视频用紧竞态自渲染 874 帧）。

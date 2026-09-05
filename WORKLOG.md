@@ -7,6 +7,28 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
+### 战役第 36 夜: m0 拆堡 WIN@8576——宏线 7/7 全清 ✅ 收官(2026-09-06)
+
+- **WIN 局**（v1.1 驱动 boot2）：探针测绘（敌基地无塔、4 塨全在西南、程²16
+  基值面板）→ 离线 73-hop 环线推演（北线双判死路）→ 单 boot 通关，8 兵损 4
+  拆平 TC 活 4。首战即捷，宏线七关全清：m0 8576 / m1 392912 / m2 64077 /
+  m3 89191 / m4 19112 / m5 2936 / m6 30067。
+- **机制修正**：①reprisal=投射物命中路径专属，近战击杀零反击（修正 m6
+  口径的通用化）；②威胁模型=tickAutoEngage 每玩家每 tick 恰 1 单位轮转
+  （~8t）+按型索敌半径 9/16（c.java:8311）；③idle 近战 void_b 自动啃活塔
+  =隐形自毁（活塔 d²≤9 近战禁区）；④塔面板逐关读脚本（m0 基值程²16 vs
+  m6 Keep 程²6）。
+- **工具修复**：replay-verify 空集恒真 bug（replaytrace done 即 break,
+  result='' 时 '' in EXPECT 恒 PASS——已修为等 [result] 收尾+非空匹配；
+  m6/m5 的历史 PASS 因 result 非空仍有效）。campaign-replay 对 m0 注入
+  偏晚 ~4500t（宽竞态复现 WIN 但 ticks=9241）——m0 视频用紧竞态自渲染
+  （874 帧,位精确）。
+- **入库**：`tools/campaign/m0drv.py`(v1.1)+m0-boot.sh+m0-route.py+
+  m0-drysim.py+m0-verify-tight.py;三件套入 recordings/campaign/m0/。
+- **事故**：dry feeder 与活局共用 play.log 截断录制流（boot1 弃局）——
+  dry 隔离工作目录已入 §11。
+- commit：本条目对应。画像：114 调用/124min,sleep 仅 323s。
+
 ### 战役第 35 夜: m6 八轮 WIN@30067——宏线 6/7,帖位三半径定律定案+v8.0c 入库(2026-09-06)
 
 - **WIN 局**（v8.0c,boot3）：帖位双闸（tier1 洪泛连通+帖 d²>25 严格）修复
