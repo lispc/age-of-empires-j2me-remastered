@@ -1,0 +1,893 @@
+[devMouse] listening on /tmp/aoe-camp/m5a/fifo
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=187 tmpl=1029
+[k] node=218 mode=0 type=4 op=5
+[k] node=231 mode=0 type=4 op=2
+[trace] g->9 (aA=4 am=4)
+[menuGate] ax=0 ab=0
+[dbg] ar=23 am=9 aA=4 aH=0 l=false j=false fullRedraw=false
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=6 Z=0 aR=254 tmpl=1029
+[k] node=297 mode=0 type=4 op=5
+[k] node=310 mode=0 type=4 op=2
+[trace] g->9 (aA=4 am=4)
+[menuGate] ax=0 ab=0
+[dbg] ar=48 am=4 aA=9 aH=0 l=false j=false fullRedraw=false
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[menuGate] ax=0 ab=0
+[fMenu] ao=5 Z=0 aR=333 tmpl=1029
+[k] node=364 mode=0 type=4 op=5
+[k] node=377 mode=0 type=4 op=2
+[trace] g->9 (aA=4 am=4)
+[menuGate] ax=0 ab=0
+[dbg] ar=73 am=4 aA=0 aH=1 l=false j=false fullRedraw=false
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[dbg] ar=98 am=4 aA=4 aH=0 l=false j=false fullRedraw=false
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[fMenu] ao=9 Z=4 aR=0 tmpl=1029
+[void_a] key=-5 ae=22 ak=19 ar=110
+[input] ar=110 key -5
+[k] node=57 mode=1 type=16 op=2
+[trace] g->9 (aA=4 am=4)
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[void_a] key=-4 ae=23 ak=19 ar=118
+[input] ar=118 key -4
+[fHead] ax=23
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[dbg] ar=123 am=4 aA=4 aH=0 l=false j=false fullRedraw=false
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[void_a] key=-4 ae=23 ak=19 ar=129
+[input] ar=129 key -4
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[k] node=171 mode=0 type=2 op=3
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[fMenu] ao=5 Z=4 aR=116 tmpl=1029
+[void_a] key=-5 ae=22 ak=19 ar=138
+[input] ar=138 key -5
+[k] node=171 mode=1 type=2 op=3
+[trace] g->9 (aA=4 am=4)
+[k] node=171 mode=0 type=2 op=3
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[void_a] key=-4 ae=23 ak=19 ar=147
+[input] ar=147 key -4
+[fHead] ax=23
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[dbg] ar=148 am=4 aA=4 aH=0 l=false j=false fullRedraw=false
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[void_a] key=-4 ae=23 ak=19 ar=158
+[input] ar=158 key -4
+[k] node=936 mode=0 type=2 op=3
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[void_a] key=-4 ae=23 ak=19 ar=165
+[input] ar=165 key -4
+[k] node=936 mode=0 type=2 op=3
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[void_a] key=-4 ae=23 ak=19 ar=172
+[input] ar=172 key -4
+[k] node=936 mode=0 type=2 op=3
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[dbg] ar=173 am=4 aA=4 aH=0 l=false j=false fullRedraw=false
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[void_a] key=-4 ae=23 ak=19 ar=179
+[input] ar=179 key -4
+[fHead] ax=23
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[k] node=936 mode=0 type=2 op=3
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[void_a] key=-4 ae=23 ak=19 ar=188
+[input] ar=188 key -4
+[fHead] ax=23
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[k] node=936 mode=0 type=2 op=3
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[fMenu] ao=5 Z=4 aR=881 tmpl=1029
+[void_a] key=-5 ae=22 ak=19 ar=197
+[input] ar=197 key -5
+[k] node=936 mode=1 type=2 op=3
+[trace] g->5 (aA=4 am=4)
+[k] node=936 mode=0 type=2 op=3
+[dbg] ar=198 am=5 aA=0 aH=1 l=false j=false fullRedraw=false
+[trace] g->11 (aA=5 am=5)
+[trace] boolean_c aH=0 ac=32 aC=5
+[view] world rebuild with clipTop=0 -> var_boolean_l=true
+[trace] g->8 (aA=6 am=6)
+[dev] in mission, aA=6
+[trace] g(1,76,0) ac=32
+[trace] g->2 (aA=6 am=6)
+[view] dialog open z=76 overlayPrevState=6
+[dlg-parse] z=76 v=0 strLen=18 str=Protect the Castle
+[dbg] ar=223 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=248 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=273 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=279 state
+[devMouse] aA=2/2 cursor=(37,47) cam=(-251,588) Q=3045 aE=0 Y=0 sel=0
+[devMouse] p0 unit 0 tile=(35,45) type=6 sel=false
+[devMouse] p0 unit 1 tile=(36,45) type=6 sel=false
+[devMouse] p0 unit 2 tile=(37,45) type=6 sel=false
+[devMouse] p0 unit 3 tile=(38,45) type=6 sel=false
+[devMouse] p0 unit 4 tile=(39,45) type=6 sel=false
+[devMouse] p0 unit 5 tile=(36,49) type=3 sel=false
+[devMouse] p0 unit 6 tile=(37,49) type=3 sel=false
+[devMouse] p0 unit 7 tile=(37,50) type=3 sel=false
+[devMouse] p0 unit 8 tile=(38,49) type=3 sel=false
+[devMouse] p0 unit 9 tile=(38,50) type=3 sel=false
+[devMouse] p1 unit 0 tile=(13,42) type=3 sel=false
+[devMouse] p1 unit 1 tile=(13,43) type=3 sel=false
+[devMouse] p1 unit 2 tile=(14,42) type=3 sel=false
+[devMouse] p1 unit 3 tile=(14,43) type=3 sel=false
+[dbg] ar=298 am=2 aA=2 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=321 key -6
+[void_a] key=-6 ae=38 ak=19 ar=321
+[input] ar=321 key -6
+[dbg] ar=323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[save] wrote /tmp/aoe-camp/m5a/saves/auto.aoesave (12483B) ar=348
+[dbg] ar=348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=352 state
+[devMouse] aA=6/6 cursor=(37,47) cam=(-251,588) Q=3045 aE=0 Y=0 sel=0
+[devMouse] p0 unit 0 tile=(35,45) type=6 sel=false
+[devMouse] p0 unit 1 tile=(36,45) type=6 sel=false
+[devMouse] p0 unit 2 tile=(37,45) type=6 sel=false
+[devMouse] p0 unit 3 tile=(38,45) type=6 sel=false
+[devMouse] p0 unit 4 tile=(39,45) type=6 sel=false
+[devMouse] p0 unit 5 tile=(36,49) type=3 sel=false
+[devMouse] p0 unit 6 tile=(37,49) type=3 sel=false
+[devMouse] p0 unit 7 tile=(37,50) type=3 sel=false
+[devMouse] p0 unit 8 tile=(38,49) type=3 sel=false
+[devMouse] p0 unit 9 tile=(38,50) type=3 sel=false
+[devMouse] p1 unit 0 tile=(17,41) type=3 sel=false
+[devMouse] p1 unit 1 tile=(17,42) type=3 sel=false
+[devMouse] p1 unit 2 tile=(20,43) type=3 sel=false
+[devMouse] p1 unit 3 tile=(20,44) type=3 sel=false
+[dbg] ar=373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=396 save /tmp/aoe-camp/m5a/base.aoesave
+[save] wrote /tmp/aoe-camp/m5a/base.aoesave (12483B) ar=397
+[dbg] ar=398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type3 died at (34,47) ar=451 remaining=3
+[combat] p1 type3 died at (35,47) ar=452 remaining=2
+[dbg] ar=473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type3 died at (33,47) ar=474 remaining=1
+[fifo] ar=487 state
+[devMouse] aA=6/6 cursor=(37,47) cam=(-251,588) Q=3045 aE=0 Y=0 sel=0
+[devMouse] p0 unit 0 tile=(34,46) type=6 sel=false
+[devMouse] p0 unit 1 tile=(35,48) type=6 sel=false
+[devMouse] p0 unit 2 tile=(32,45) type=6 sel=false
+[devMouse] p0 unit 3 tile=(38,45) type=6 sel=false
+[devMouse] p0 unit 4 tile=(39,45) type=6 sel=false
+[devMouse] p0 unit 5 tile=(33,47) type=3 sel=false
+[devMouse] p0 unit 6 tile=(33,45) type=3 sel=false
+[devMouse] p0 unit 7 tile=(37,50) type=3 sel=false
+[devMouse] p0 unit 8 tile=(37,48) type=3 sel=false
+[devMouse] p0 unit 9 tile=(38,47) type=3 sel=false
+[devMouse] p1 unit 0 tile=(36,49) type=3 sel=false
+[combat] p1 type3 died at (36,49) ar=492 remaining=0
+[dbg] ar=498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=536 aistate
+[devMouse] aistate written, ar=536
+[fifoQ] ar=548 retask 0 37 33
+[dbg] ar=548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=549 retask 0 37 33
+[devMouse] retask slot0 (34,46)w0 -> (37,33)
+[fifoQ] ar=556 retask 1 38 33
+[fifo] ar=556 retask 1 38 33
+[devMouse] retask slot1 (35,48)w0 -> (38,33)
+[fifoQ] ar=564 retask 2 39 33
+[fifo] ar=565 retask 2 39 33
+[devMouse] retask slot2 (35,49)w0 -> (39,33)
+[fifoQ] ar=572 retask 3 38 32
+[fifo] ar=573 retask 3 38 32
+[devMouse] retask slot3 (38,45)w0 -> (38,32)
+[dbg] ar=573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=581 retask 4 38 34
+[fifo] ar=581 retask 4 38 34
+[devMouse] retask slot4 (39,45)w0 -> (38,34)
+[fifoQ] ar=588 retask 5 37 49
+[fifo] ar=589 retask 5 37 49
+[devMouse] retask slot5 (33,47)w0 -> (37,49)
+[fifoQ] ar=596 retask 6 35 47
+[fifo] ar=597 retask 6 35 47
+[devMouse] retask slot6 (32,46)w0 -> (35,47)
+[dbg] ar=598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=605 retask 7 38 48
+[fifo] ar=606 retask 7 38 48
+[devMouse] retask slot7 (37,50)w0 -> (38,48)
+[fifoQ] ar=613 retask 8 37 45
+[fifo] ar=613 retask 8 37 45
+[devMouse] retask slot8 (36,49)w0 -> (37,45)
+[fifoQ] ar=621 retask 9 39 47
+[fifo] ar=622 retask 9 39 47
+[devMouse] retask slot9 (35,50)w0 -> (39,47)
+[dbg] ar=623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=647 aistate
+[devMouse] aistate written, ar=647
+[dbg] ar=648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=685 aistate
+[devMouse] aistate written, ar=685
+[dbg] ar=698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=719 aistate
+[devMouse] aistate written, ar=719
+[dbg] ar=723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=755 aistate
+[devMouse] aistate written, ar=755
+[dbg] ar=773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=791 aistate
+[devMouse] aistate written, ar=791
+[dbg] ar=798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=827 aistate
+[devMouse] aistate written, ar=827
+[dbg] ar=848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=863 aistate
+[devMouse] aistate written, ar=863
+[dbg] ar=873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=900 aistate
+[devMouse] aistate written, ar=900
+[dbg] ar=923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=936 aistate
+[devMouse] aistate written, ar=936
+[dbg] ar=948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=950 retask 0 34 29
+[fifo] ar=951 retask 0 34 29
+[devMouse] retask slot0 (37,33)w0 -> (34,29)
+[fifoQ] ar=959 retask 1 34 29
+[fifo] ar=959 retask 1 34 29
+[devMouse] retask slot1 (38,33)w0 -> (34,29)
+[fifoQ] ar=967 retask 2 34 29
+[fifo] ar=968 retask 2 34 29
+[devMouse] retask slot2 (39,33)w0 -> (34,29)
+[dbg] ar=973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=975 retask 3 34 29
+[fifo] ar=975 retask 3 34 29
+[devMouse] retask slot3 (40,30)w0 -> (34,29)
+[fifoQ] ar=982 retask 4 34 29
+[fifo] ar=983 retask 4 34 29
+[devMouse] retask slot4 (36,33)w1 -> (34,29)
+[fifoQ] ar=991 retask 5 34 29
+[fifo] ar=992 retask 5 34 29
+[devMouse] retask slot5 (37,49)w0 -> (34,29)
+[fifoQ] ar=998 retask 6 34 29
+[dbg] ar=998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=999 retask 6 34 29
+[devMouse] retask slot6 (35,47)w0 -> (34,29)
+[fifoQ] ar=1007 retask 7 34 29
+[fifo] ar=1008 retask 7 34 29
+[devMouse] retask slot7 (38,48)w0 -> (34,29)
+[fifoQ] ar=1015 retask 8 34 29
+[fifo] ar=1016 retask 8 34 29
+[devMouse] retask slot8 (37,45)w0 -> (34,29)
+[fifoQ] ar=1023 retask 9 34 29
+[dbg] ar=1023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1024 retask 9 34 29
+[devMouse] retask slot9 (39,47)w0 -> (34,29)
+[combat] p1 type4 died at (32,27) ar=1036 remaining=5
+[combat] p1 type4 died at (35,34) ar=1039 remaining=4
+[dbg] ar=1048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1049 aistate
+[devMouse] aistate written, ar=1049
+[fifoQ] ar=1063 retask 0 36 46
+[fifo] ar=1064 retask 0 36 46
+[devMouse] retask slot0 (32,27)w0 -> (36,46)
+[fifoQ] ar=1071 retask 1 36 46
+[fifo] ar=1072 retask 1 36 46
+[devMouse] retask slot1 (35,29)w0 -> (36,46)
+[dbg] ar=1073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1079 retask 2 36 46
+[fifo] ar=1079 retask 2 36 46
+[devMouse] retask slot2 (35,34)w0 -> (36,46)
+[fifoQ] ar=1086 retask 3 36 46
+[fifo] ar=1087 retask 3 36 46
+[devMouse] retask slot3 (33,27)w0 -> (36,46)
+[fifoQ] ar=1094 retask 4 36 46
+[fifo] ar=1095 retask 4 36 46
+[devMouse] retask slot4 (36,33)w0 -> (36,46)
+[dbg] ar=1098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1102 retask 5 36 46
+[fifo] ar=1103 retask 5 36 46
+[devMouse] retask slot5 (35,29)w0 -> (36,46)
+[fifoQ] ar=1110 retask 6 36 46
+[fifo] ar=1111 retask 6 36 46
+[devMouse] retask slot6 (34,29)w0 -> (36,46)
+[fifoQ] ar=1118 retask 7 36 46
+[fifo] ar=1119 retask 7 36 46
+[devMouse] retask slot7 (35,29)w0 -> (36,46)
+[dbg] ar=1123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1127 retask 8 36 46
+[fifo] ar=1127 retask 8 36 46
+[devMouse] retask slot8 (35,30)w0 -> (36,46)
+[fifoQ] ar=1134 retask 9 36 46
+[fifo] ar=1135 retask 9 36 46
+[devMouse] retask slot9 (35,28)w0 -> (36,46)
+[dbg] ar=1148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1163 aistate
+[devMouse] aistate written, ar=1163
+[dbg] ar=1173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type4 died at (36,46) ar=1179 remaining=3
+[dbg] ar=1198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1199 aistate
+[devMouse] aistate written, ar=1199
+[fifoQ] ar=1214 retask 2 36 46
+[fifo] ar=1215 retask 2 36 46
+[devMouse] retask slot2 (33,46)w601 -> (36,46)
+[dbg] ar=1223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type4 died at (34,45) ar=1238 remaining=2
+[fifo] ar=1241 aistate
+[devMouse] aistate written, ar=1241
+[dbg] ar=1248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1255 retask 0 36 46
+[fifo] ar=1256 retask 0 36 46
+[devMouse] retask slot0 (32,44)w0 -> (36,46)
+[fifoQ] ar=1264 retask 1 36 46
+[fifo] ar=1265 retask 1 36 46
+[devMouse] retask slot1 (34,45)w401 -> (36,46)
+[combat] p1 type4 died at (35,45) ar=1265 remaining=1
+[fifoQ] ar=1272 retask 3 36 46
+[fifo] ar=1273 retask 3 36 46
+[devMouse] retask slot3 (34,46)w501 -> (36,46)
+[dbg] ar=1273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1280 retask 6 36 46
+[fifo] ar=1281 retask 6 36 46
+[devMouse] retask slot6 (34,45)w101 -> (36,46)
+[combat] p1 type4 died at (35,46) ar=1286 remaining=0
+[fifoQ] ar=1289 retask 8 36 46
+[fifo] ar=1290 retask 8 36 46
+[devMouse] retask slot8 (36,47)w0 -> (36,46)
+[dbg] ar=1298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1319 aistate
+[devMouse] aistate written, ar=1319
+[dbg] ar=1323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1333 retask 0 37 55
+[fifo] ar=1334 retask 0 37 55
+[devMouse] retask slot0 (34,45)w0 -> (37,55)
+[fifoQ] ar=1341 retask 1 38 55
+[fifo] ar=1342 retask 1 38 55
+[devMouse] retask slot1 (35,46)w0 -> (38,55)
+[dbg] ar=1348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1349 retask 2 39 55
+[fifo] ar=1350 retask 2 39 55
+[devMouse] retask slot2 (35,47)w0 -> (39,55)
+[fifoQ] ar=1358 retask 3 38 56
+[fifo] ar=1358 retask 3 38 56
+[devMouse] retask slot3 (38,47)w0 -> (38,56)
+[fifoQ] ar=1366 retask 4 38 54
+[fifo] ar=1367 retask 4 38 54
+[devMouse] retask slot4 (36,46)w0 -> (38,54)
+[dbg] ar=1373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1374 retask 5 37 49
+[fifo] ar=1375 retask 5 37 49
+[devMouse] retask slot5 (36,45)w0 -> (37,49)
+[fifoQ] ar=1382 retask 6 35 47
+[fifo] ar=1382 retask 6 35 47
+[devMouse] retask slot6 (35,47)w0 -> (35,47)
+[fifoQ] ar=1390 retask 7 38 48
+[fifo] ar=1391 retask 7 38 48
+[devMouse] retask slot7 (35,45)w0 -> (38,48)
+[fifoQ] ar=1398 retask 8 37 45
+[dbg] ar=1398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1399 retask 8 37 45
+[devMouse] retask slot8 (37,48)w401 -> (37,45)
+[fifoQ] ar=1406 retask 9 39 47
+[fifo] ar=1406 retask 9 39 47
+[devMouse] retask slot9 (36,44)w0 -> (39,47)
+[dbg] ar=1423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1435 aistate
+[devMouse] aistate written, ar=1435
+[fifoQ] ar=1448 retask 0 38 47
+[dbg] ar=1448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1449 retask 0 38 47
+[devMouse] retask slot0 (37,55)w0 -> (38,47)
+[combat] p0 type3 died at (34,46) ar=1451 remaining=9
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=1456 retask 1 38 47
+[fifo] ar=1457 retask 1 38 47
+[devMouse] retask slot1 (38,55)w0 -> (38,47)
+[combat] p1 type6 died at (38,47) ar=1463 remaining=2
+[fifoQ] ar=1464 retask 2 38 47
+[fifo] ar=1465 retask 2 38 47
+[devMouse] retask slot2 (39,55)w0 -> (38,47)
+[combat] p0 type3 died at (36,46) ar=1471 remaining=8
+[trace] g->8 (aA=6 am=6)
+[fifoQ] ar=1472 retask 3 38 47
+[fifo] ar=1473 retask 3 38 47
+[devMouse] retask slot3 (38,56)w0 -> (38,47)
+[dbg] ar=1473 am=6 aA=8 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1480 retask 4 38 47
+[fifo] ar=1481 retask 4 38 47
+[devMouse] retask slot4 (38,54)w0 -> (38,47)
+[fifoQ] ar=1488 retask 6 38 47
+[fifo] ar=1489 retask 6 38 47
+[devMouse] retask slot6 (38,47)w201 -> (38,47)
+[fifoQ] ar=1497 retask 8 38 47
+[fifo] ar=1497 retask 8 38 47
+[devMouse] retask FAIL slot8 越界(n=8)
+[dbg] ar=1498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p0 type3 died at (38,47) ar=1501 remaining=7
+[trace] g->8 (aA=6 am=6)
+[combat] p0 type3 died at (39,47) ar=1517 remaining=6
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=1523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p0 type3 died at (38,45) ar=1526 remaining=5
+[trace] g->8 (aA=6 am=6)
+[fifo] ar=1527 aistate
+[devMouse] aistate written, ar=1527
+[combat] p1 type6 died at (39,46) ar=1532 remaining=1
+[fifoQ] ar=1541 retask 1 38 47
+[fifo] ar=1542 retask 1 38 47
+[devMouse] retask slot1 (38,46)w0 -> (38,47)
+[dbg] ar=1548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1549 retask 2 38 47
+[fifo] ar=1550 retask 2 38 47
+[devMouse] retask slot2 (38,45)w701 -> (38,47)
+[combat] p1 type6 died at (39,45) ar=1551 remaining=0
+[dbg] ar=1573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1575 aistate
+[devMouse] aistate written, ar=1575
+[fifoQ] ar=1588 retask 0 37 33
+[fifo] ar=1589 retask 0 37 33
+[devMouse] retask slot0 (39,45)w0 -> (37,33)
+[fifoQ] ar=1596 retask 1 38 33
+[fifo] ar=1597 retask 1 38 33
+[devMouse] retask slot1 (39,46)w0 -> (38,33)
+[dbg] ar=1598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=1604 retask 2 39 33
+[fifo] ar=1605 retask 2 39 33
+[devMouse] retask slot2 (38,47)w0 -> (39,33)
+[fifoQ] ar=1612 retask 3 38 32
+[fifo] ar=1613 retask 3 38 32
+[devMouse] retask slot3 (37,46)w0 -> (38,32)
+[fifoQ] ar=1622 retask 4 38 34
+[fifo] ar=1622 retask 4 38 34
+[devMouse] retask slot4 (40,46)w0 -> (38,34)
+[dbg] ar=1623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1651 aistate
+[devMouse] aistate written, ar=1651
+[dbg] ar=1673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1688 aistate
+[devMouse] aistate written, ar=1688
+[dbg] ar=1698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1725 aistate
+[devMouse] aistate written, ar=1725
+[dbg] ar=1748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1760 aistate
+[devMouse] aistate written, ar=1760
+[dbg] ar=1773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1797 aistate
+[devMouse] aistate written, ar=1797
+[dbg] ar=1798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1834 aistate
+[devMouse] aistate written, ar=1835
+[dbg] ar=1848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1870 aistate
+[devMouse] aistate written, ar=1870
+[dbg] ar=1873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1907 aistate
+[devMouse] aistate written, ar=1907
+[dbg] ar=1923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1944 aistate
+[devMouse] aistate written, ar=1944
+[dbg] ar=1948 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=1973 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=1980 aistate
+[devMouse] aistate written, ar=1980
+[dbg] ar=1998 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2017 aistate
+[devMouse] aistate written, ar=2017
+[dbg] ar=2023 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=2048 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2053 aistate
+[devMouse] aistate written, ar=2053
+[dbg] ar=2073 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2089 aistate
+[devMouse] aistate written, ar=2089
+[dbg] ar=2098 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=2123 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2126 aistate
+[devMouse] aistate written, ar=2126
+[fifoQ] ar=2140 retask 0 32 27
+[fifo] ar=2141 retask 0 32 27
+[devMouse] retask slot0 (37,33)w0 -> (32,27)
+[fifoQ] ar=2148 retask 1 32 27
+[dbg] ar=2148 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2149 retask 1 32 27
+[devMouse] retask slot1 (38,33)w0 -> (32,27)
+[fifoQ] ar=2155 retask 2 32 27
+[fifo] ar=2156 retask 2 32 27
+[devMouse] retask slot2 (39,33)w0 -> (32,27)
+[fifoQ] ar=2163 retask 3 32 27
+[fifo] ar=2164 retask 3 32 27
+[devMouse] retask slot3 (38,32)w0 -> (32,27)
+[fifoQ] ar=2170 retask 4 32 27
+[fifo] ar=2171 retask 4 32 27
+[devMouse] retask slot4 (38,34)w0 -> (32,27)
+[dbg] ar=2173 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=2198 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2200 aistate
+[devMouse] aistate written, ar=2200
+[fifoQ] ar=2213 retask 0 32 27
+[fifo] ar=2214 retask 0 32 27
+[devMouse] retask slot0 (34,27)w0 -> (32,27)
+[fifoQ] ar=2221 retask 2 32 27
+[fifo] ar=2222 retask 2 32 27
+[devMouse] retask slot2 (33,26)w0 -> (32,27)
+[dbg] ar=2223 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type7 died at (34,26) ar=2231 remaining=3
+[fifo] ar=2246 aistate
+[devMouse] aistate written, ar=2246
+[dbg] ar=2248 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2260 retask 1 32 27
+[fifo] ar=2260 retask 1 32 27
+[devMouse] retask slot1 (33,27)w0 -> (32,27)
+[combat] p1 type7 died at (30,25) ar=2265 remaining=2
+[fifoQ] ar=2267 retask 3 32 27
+[fifo] ar=2268 retask 3 32 27
+[devMouse] retask slot3 (34,26)w0 -> (32,27)
+[dbg] ar=2273 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2275 retask 4 32 27
+[fifo] ar=2276 retask 4 32 27
+[devMouse] retask slot4 (32,26)w0 -> (32,27)
+[dbg] ar=2298 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2301 aistate
+[devMouse] aistate written, ar=2301
+[fifoQ] ar=2314 retask 0 33 36
+[fifo] ar=2314 retask 0 33 36
+[devMouse] retask slot0 (31,26)w0 -> (33,36)
+[fifoQ] ar=2321 retask 1 33 36
+[fifo] ar=2322 retask 1 33 36
+[devMouse] retask slot1 (31,25)w0 -> (33,36)
+[dbg] ar=2323 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2329 retask 2 33 36
+[fifo] ar=2330 retask 2 33 36
+[devMouse] retask slot2 (30,25)w0 -> (33,36)
+[fifoQ] ar=2337 retask 3 33 36
+[fifo] ar=2338 retask 3 33 36
+[devMouse] retask slot3 (33,26)w0 -> (33,36)
+[fifoQ] ar=2345 retask 4 33 36
+[fifo] ar=2346 retask 4 33 36
+[devMouse] retask slot4 (32,27)w0 -> (33,36)
+[dbg] ar=2348 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=2373 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2374 aistate
+[devMouse] aistate written, ar=2374
+[fifoQ] ar=2387 retask 0 33 43
+[fifo] ar=2388 retask 0 33 43
+[devMouse] retask slot0 (35,33)w0 -> (33,43)
+[fifoQ] ar=2396 retask 1 33 43
+[fifo] ar=2397 retask 1 33 43
+[devMouse] retask slot1 (33,36)w0 -> (33,43)
+[dbg] ar=2398 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2404 retask 2 33 43
+[fifo] ar=2405 retask 2 33 43
+[devMouse] retask slot2 (36,35)w0 -> (33,43)
+[fifoQ] ar=2412 retask 3 33 43
+[fifo] ar=2413 retask 3 33 43
+[devMouse] retask slot3 (34,35)w0 -> (33,43)
+[fifoQ] ar=2421 retask 4 33 43
+[fifo] ar=2422 retask 4 33 43
+[devMouse] retask slot4 (33,36)w0 -> (33,43)
+[dbg] ar=2423 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=2448 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2449 aistate
+[devMouse] aistate written, ar=2449
+[fifoQ] ar=2463 retask 2 33 43
+[fifo] ar=2464 retask 2 33 43
+[devMouse] retask slot2 (35,43)w0 -> (33,43)
+[combat] p1 type7 died at (34,45) ar=2473 remaining=1
+[dbg] ar=2473 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2491 aistate
+[devMouse] aistate written, ar=2491
+[dbg] ar=2498 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2505 retask 0 36 46
+[fifo] ar=2506 retask 0 36 46
+[devMouse] retask slot0 (35,43)w0 -> (36,46)
+[fifoQ] ar=2513 retask 1 36 46
+[fifo] ar=2514 retask 1 36 46
+[devMouse] retask slot1 (33,44)w0 -> (36,46)
+[fifoQ] ar=2521 retask 2 36 46
+[fifo] ar=2522 retask 2 36 46
+[devMouse] retask slot2 (33,43)w0 -> (36,46)
+[dbg] ar=2523 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type7 died at (36,46) ar=2525 remaining=3
+[fifoQ] ar=2529 retask 4 36 46
+[fifo] ar=2529 retask 4 36 46
+[devMouse] retask slot4 (36,46)w0 -> (36,46)
+[dbg] ar=2548 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2555 aistate
+[devMouse] aistate written, ar=2555
+[fifoQ] ar=2568 retask 0 37 33
+[fifo] ar=2569 retask 0 37 33
+[devMouse] retask slot0 (35,47)w0 -> (37,33)
+[dbg] ar=2573 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2577 retask 1 38 33
+[fifo] ar=2577 retask 1 38 33
+[devMouse] retask slot1 (37,45)w0 -> (38,33)
+[fifoQ] ar=2585 retask 2 39 33
+[fifo] ar=2586 retask 2 39 33
+[devMouse] retask slot2 (35,46)w0 -> (39,33)
+[fifoQ] ar=2594 retask 3 38 32
+[fifo] ar=2595 retask 3 38 32
+[devMouse] retask slot3 (35,45)w0 -> (38,32)
+[dbg] ar=2598 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2601 retask 4 38 34
+[fifo] ar=2602 retask 4 38 34
+[devMouse] retask slot4 (36,46)w0 -> (38,34)
+[dbg] ar=2623 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2630 aistate
+[devMouse] aistate written, ar=2630
+[dbg] ar=2648 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2667 aistate
+[devMouse] aistate written, ar=2667
+[dbg] ar=2673 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[dbg] ar=2698 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2704 aistate
+[devMouse] aistate written, ar=2704
+[fifoQ] ar=2717 retask 0 39 49
+[fifo] ar=2718 retask 0 39 49
+[devMouse] retask slot0 (37,33)w0 -> (39,49)
+[dbg] ar=2723 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2725 retask 1 39 49
+[fifo] ar=2725 retask 1 39 49
+[devMouse] retask slot1 (38,33)w0 -> (39,49)
+[fifoQ] ar=2733 retask 2 39 49
+[fifo] ar=2734 retask 2 39 49
+[devMouse] retask slot2 (39,33)w0 -> (39,49)
+[fifoQ] ar=2741 retask 3 39 49
+[fifo] ar=2742 retask 3 39 49
+[devMouse] retask slot3 (38,32)w0 -> (39,49)
+[fifoQ] ar=2748 retask 4 39 49
+[dbg] ar=2748 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2749 retask 4 39 49
+[devMouse] retask slot4 (38,34)w0 -> (39,49)
+[dbg] ar=2773 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2774 aistate
+[devMouse] aistate written, ar=2774
+[dbg] ar=2798 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2812 aistate
+[devMouse] aistate written, ar=2812
+[dbg] ar=2823 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2848 aistate
+[devMouse] aistate written, ar=2848
+[dbg] ar=2848 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type8 died at (38,48) ar=2851 remaining=2
+[combat] p0 type6 died at (37,48) ar=2867 remaining=4
+[trace] g->8 (aA=6 am=6)
+[dbg] ar=2873 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifo] ar=2885 aistate
+[devMouse] aistate written, ar=2885
+[combat] p1 type8 died at (38,49) ar=2888 remaining=1
+[dbg] ar=2898 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[combat] p1 type8 died at (39,48) ar=2916 remaining=0
+[fifo] ar=2922 aistate
+[devMouse] aistate written, ar=2922
+[dbg] ar=2923 am=6 aA=6 aH=0 l=false j=false fullRedraw=false
+[fifoQ] ar=2935 retask 0 37 55
+[fifo] ar=2936 retask 0 37 55
+[devMouse] retask slot0 (38,48)w0 -> (37,55)
+[trace] g(0,98,0) ac=32
+[trace] g->2 (aA=6 am=6)
+[result] WIN ticks=2936

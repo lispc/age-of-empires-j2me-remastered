@@ -1000,9 +1000,12 @@ fps=30≈12 倍原速）；长 trace 验证+出视频建议 tickms=2 免超时�
   退出码一律落文件再读**（管道 $? 是 tail 的）。replaycheck 已补 rmsDir 隔离
   （r54；此前裸写真实 ~/.aoe-desktop RMS，同值写回零污染但属卫生缺口，且
   tutorialProgress 变化会埋选关雷）。
-  **campaign-replay 对 aiEnabled=true 的战役关必死锁（r55 实锤）**：
-  unattended 局活不过脚本 2s 轮询窗，echo 写 fifo 无读者永久阻塞——缩窗无用，
-  用 tools/campaign/replay-probe.py（预握 fifo 写端+10ms 轮询 devBoot done）。
+  **campaign-replay 对短局必死锁（r55/r56 实锤，与 aiEnabled 无关）**：
+  turbo 下 unattended 局 ~2s 内自然终局退场，活不过脚本 2s 轮询窗，echo 写
+  fifo 无读者永久阻塞——缩窗无用，用 tools/campaign/replay-probe.py 模式
+  （预握 fifo 写端+10ms 轮询 devBoot done+非 turbo；m5a/replay-m5a.py 是
+  关卡定制版范例）。**跨会话 pkill 危险（r56）**：`pkill -f aoe.Main` 会命中
+  并行会话的游戏进程——boot 脚本 pkill 一律带工作目录窄 pattern。
   对拍口径：key 事件录制侧走 [input] ar=、回放侧走 [fifo] ar=，两流合并后
   逐 tick 对拍；aistate 顶层键是 tick 不是 ar。旁路脚本（热修）的 echo 在
   宿主 java 死后会变僵尸——subprocess 加 timeout 兜底。

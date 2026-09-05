@@ -31,5 +31,8 @@ tickms 只影响墙钟不影响视频内容。长 trace 验证+出视频建议 t
   trace 逐拍重放、ar 检查点吻合但首战提前 650t）——回放会分叉，见
   tools/campaign/BUGS-m4p/m4pdrv.md 与 WORKLOG 第 22 夜。录制侧含 2 支
   FIFO 热修脚本（bs-hotfix/reseat-miners，已入库 tools/campaign/）。
-- m3、m5-m7  待打/待录。
+- m5 守城关  **WIN ticks=2936**（2026-09-05，首轮 4 boot 即胜：扛完 5 波
+  （剑士西/弓兵北/骑士南/冲车北/投石机南，间隔 500-700t）再全歼——LOSS=城堡
+  被毁、WIN=p1 单位数==0 且 c0≥20；制胜配方=「单点集火+簇驻+接战门」，
+  96 条写宏流回放逐 tick 一致）。回放验证 ✓（probe 模式）。
 - （旧 DDA 时代 WIN ticks=90133 录制因锚点制度升级已退役，被本表 m1 覆盖。）
