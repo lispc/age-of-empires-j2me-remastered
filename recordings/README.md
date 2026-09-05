@@ -17,10 +17,12 @@
 tickms 只影响墙钟不影响视频内容。长 trace 验证+出视频建议 tickms=2（免超时）。
 
 战绩（调度表制录制，均经 campaign-replay 终局复现验证；验证+出视频全程 turbo+fastSim ≈1-5 分钟/关）：
-- m1 护送关  **WIN ticks=392912**（2026-09-04，phase0 清西敌→砍隧道 y=57-59→
-  护送入堡；村民 3/3 全活；军事死亡合法）。尸检翻案与关脚本解码见
-  tools/campaign/NOTES.md 与 docs/agent-operations.md §11。片尾拍到
-  "You are victorious"（-Daoe.resultHold）。
+- m1 护送关  **WIN ticks=5172**（2026-09-06 r68 环路重录，首发即捷；移植
+  player-ai CampaignAi v2 环路护送 20/20 配方——军事 SWEEP 11 点清扫+slot0
+  走 WALK 15 点环路+军事拖后保镖，村民零伤亡）。270 事件 replay-verify
+  位精确 PASS + mktrace 事件流 270 行逐 tick 一致；本地 replay.mp4 538 帧。
+  旧砍树墙配方录制（392912，快 76× 的对照样本）留档
+  `recordings/campaign/m1-chop/`。
 - m2 经济关  **WIN ticks=64077**（2026-09-04，三桶链式锁存 >101：木→金→石；
   无判负块；BFS 长途交付 34 格自动循环零 stall）。trace 仅 49 事件——
   尾段为三村民全自动采集循环。
@@ -48,7 +50,7 @@ tickms 只影响墙钟不影响视频内容。长 trace 验证+出视频建议 t
   replay-verify 位精确 PASS + mktrace 事件流逐 tick 一致；本地 replay.mp4
   874 帧紧竞态自渲染。
 
-**宏线七关全清（2026-09-06）**：m0 8576 / m1 392912 / m2 64077 / m3 89191 /
+**宏线七关全清（2026-09-06）**：m0 8576 / m1 5172 / m2 64077 / m3 89191 /
 m4 19112 / m5 2936 / m6 30067——全部位精确可回放+全亮视频。
 
 - （旧 DDA 时代 WIN ticks=90133 录制因锚点制度升级已退役，被本表 m1 覆盖。）

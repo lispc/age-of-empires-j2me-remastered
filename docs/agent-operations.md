@@ -1114,6 +1114,10 @@ fps=30≈12 倍原速）；长 trace 验证+出视频建议 tickms=2 免超时�
   **新关标准开工序（r66 定案，本轮两次预判成功）**：①mapdump 真值（修复版）
   →②离线 claims 推演（各击杀阶段解锁链）→③探针局标定消耗品交换比→④
   boot。aggro 边界这类「站桩交互」例外：只有 boot 尸检能看见。
+  **mapdump 建筑层转置的作用域（r68）**：转置 bug 只影响 mapdump 的 H/B
+  覆盖层（已修），地形层与单位层一直正确；aistate buildingRecs 恒为真值——
+  **凡引用历史文档/注释里的塔与建筑坐标，一律先 aistate 对账**（player-ai
+  CampaignAi 注释的 m1 塔位即转置时代坐标，r68 实测纠偏）。
   **尸检先画「死点散布图」再立假设（r66）**：[combat] 死点+✝(diff) 坐标都
   是 stale 提示（boot2 ✝ 说冲车死在驻位、真值在袋内）——把死点按 shooter
   脚下聚类一眼定性；建议工具化（future-tasks）。send() 侧建议落 `[drv-send]`
