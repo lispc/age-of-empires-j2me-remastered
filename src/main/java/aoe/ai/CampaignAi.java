@@ -25,6 +25,7 @@ public final class CampaignAi implements PlayerAi {
     private int nextDecide;
     private int lastLog;
     private int prevTick;               // 回溯检测（devPhase 拨钟/读档）
+    private int zeroUnitTicks;          // 僵尸局投降计时（0 单位且无产能路径）
     private int lastMissionLogged = -1;
     private int fleeCount;              // #4 逃命遥测（500t 摘要行消费后清零）
 
@@ -58,6 +59,34 @@ public final class CampaignAi implements PlayerAi {
         if (ss != 6 || game.gameMode != 32) {
             return;
         }
+        // 僵尸局投降（批测契约，-Daoe.exitOnResult 才生效）：0 单位且（无成品
+        // 房屋或木<5=产不出村民）持续 500t → 引擎判负链断（tickAi 的威胁扫描
+        // 以我方单位为引，我方 0 单位时敌军 stance 永不推进，TC 站着也没人拆，
+        // 实测拖到 t=25M 不终局）——AI 按 [result] 契约主动认输，省批测时间。
+        if (System.getProperty("aoe.exitOnResult") != null
+                && game.playerUnitHeaders[0][2] == 0) {
+            boolean canProduce = false;
+            if (game.playerUnitHeaders[0][5] >= 5) {
+                int[] recs = game.buildingTable[0];
+                for (int i = 0; i < game.playerUnitHeaders[0][4]; ++i) {
+                    int o = i << 2;
+                    if ((recs[o + 3] & 0xFF) == 11 && (recs[o + 2] & 0xFF) == 255
+                            && (recs[o + 2] & 0x40000000) == 0) {
+                        canProduce = true;
+                        break;
+                    }
+                }
+            }
+            this.zeroUnitTicks = canProduce ? 0 : this.zeroUnitTicks + DECIDE_EVERY;
+            if (this.zeroUnitTicks >= 500) {
+                System.out.println("[cai] concede: 0 units, no production path, t=" + t);
+                System.out.println("[result] LOSS ticks=" + t);
+                System.out.flush();
+                System.exit(0);
+            }
+        } else {
+            this.zeroUnitTicks = 0;
+        }
         switch (game.missionIndex) {
             case 0:
             case 3:
@@ -88,8 +117,18 @@ public final class CampaignAi implements PlayerAi {
             this.lastLog = t;
             int units = game.playerUnitHeaders[0][2];
             int ebld = game.playerUnitHeaders[1][4];
+            // 敌军事实力(波规模遥测:相位×波规模的抽签结构测绘用)
+            short[] es = game.playerUnitSlots[1];
+            int eu = game.playerUnitHeaders[1][2];
+            int emil = 0;
+            for (int i = 0; i < eu; ++i) {
+                if ((es[(i << 3) + 3] & 0xFF) >= 2) {
+                    ++emil;
+                }
+            }
             System.out.println("[cai] t=" + t + " m" + game.missionIndex
-                + " units=" + units + " ebld=" + ebld + " flee=" + this.fleeCount + " tgt="
+                + " units=" + units + " ebld=" + ebld + " emil=" + emil
+                + " flee=" + this.fleeCount + " tgt="
                 + (this.m0Target >= 0 ? (this.m0Target >>> 8) + "," + (this.m0Target & 0xFF) : "?"));
             this.fleeCount = 0;
         }
@@ -858,13 +897,47 @@ public final class CampaignAi implements PlayerAi {
         // —— 防御：敌兵进 TC 12 格 → 全军压上；村民逃命 ——
         short[] es = game.playerUnitSlots[1];
         int eu = game.playerUnitHeaders[1][2];
-        int invader = -1, invD2 = Integer.MAX_VALUE;
+        int invader = -1, invD2 = Integer.MAX_VALUE, invCount = 0;
         for (int i = 0; i < eu; ++i) {
             int ep = es[i << 3] & 0xFFFF;
             int d2 = ((ep >>> 8) - tx) * ((ep >>> 8) - tx) + ((ep & 0xFF) - ty) * ((ep & 0xFF) - ty);
-            if (d2 <= 144 && d2 < invD2) {
-                invD2 = d2;
-                invader = ep;
+            if (d2 <= 144) {
+                ++invCount;
+                if (d2 < invD2) {
+                    invD2 = d2;
+                    invader = ep;
+                }
+            }
+        }
+        // v26 村民围攻（同相位成对 9/20 vs kite-only 6/20，翻转 +3/反向 0，
+        // 默认采用）：塔未立且无兵时，独狼/双人 raid 让村民围攻
+        // （4×(1<<4)/1=64/轮 vs 长枪 255HP ≈ 4 轮收工；逃=经济永停必死，围=
+        // 可能清场）。敌 ≥3 不围（添油）。实测细节：围攻能杀掉首波独狼
+        // （p1 type2 died ar=1453），但后续波会把村民磨光——配僵尸局投降
+        // （tick 首部）把"磨光后引擎不判负"的死局转成快速 LOSS。
+        boolean swarm = false;
+        if (invader >= 0 && towerN == 0 && invCount <= 2) {
+            int mil = 0;
+            for (int i = 0; i < units; ++i) {
+                if ((slots[(i << 3) + 3] & 0xFF) >= 2) {
+                    ++mil;
+                }
+            }
+            swarm = mil == 0;
+        }
+        if (swarm) {
+            this.m0Target = invader;
+            for (int i = 0; i < units; ++i) {
+                int o = i << 3;
+                if ((slots[o + 3] & 0xFF) >= 2 || (slots[o + 7] & 0xF) == 1) {
+                    continue;
+                }
+                if ((slots[o + 2] & 0xFFFF) != invader) {
+                    slots[o + 1] = slots[o + 0];
+                    slots[o + 2] = (short) invader;
+                    slots[o + 7] = 0;
+                    slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+                }
             }
         }
         if (invader >= 0) {
@@ -889,6 +962,9 @@ public final class CampaignAi implements PlayerAi {
             int o = i << 3;
             if ((slots[o + 3] & 0xFF) >= 2) {
                 continue;
+            }
+            if (swarm) {
+                continue; // v26: 围攻期间村民不逃——逃=经济永停必死
             }
             int pos = slots[o] & 0xFFFF;
             int px = pos >>> 8, py = pos & 0xFF;
