@@ -229,10 +229,10 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
 - 新认知：敌方 aistate slot 死亡压缩——守军追踪按 tile 不按 slot（hp 回升=
   槽位重排伪象）；引擎 BFS 每 hop 偏 1-2 格（行军 hop 需 2-3 格密化+冻结跳级
   守卫）；被打报复直射 112/发（猫）是宏线唯一远程对单位输出，可发展诱饵钓杀。
-- **现行代驱动**=`tools/campaign/m6cdrv.py`（v5.5：x16 走廊/S2 同拍撤兵/
-  猫优先/近战≥3 门槛+slot 防串快照）+ `m6bdrv.py`（v5.3）+ `analyze_m6c.py`
-  （离线安全区分析器）+ `m6-probe-layout.json`（守军 19 全量布点）+
-  `m6b-boot.sh`。
+- **现行代驱动**=`tools/campaign/m6ddrv.py`（v6.2：S0-S4 v5.5 原样+决斗梯
+  +ram_sweep+slot 防串，2 bug 修复后上主线）+ `m6cdrv.py`（v5.5）+
+  `analyze_m6c.py`（离线安全区分析器）+ `m6-probe-layout.json`（守军 19 全量
+  布点）+ `m6b-boot.sh`。
 - 历代：m6adrv.py（v4）+m6a-boot.sh。
 - 操作要点：驱动崩溃 java 活着时**原地重挂驱动合法不烧 boot**（trace 契约=
   play.log 的 [fifo] 流）；retask 高频重发对军事=洗路径缓存（§11.1 村民条
