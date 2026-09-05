@@ -31,7 +31,7 @@ wait_view6() {  # $1=fifo $2=tag：等到主视图(aA=6)，途中推掉简报对
 # ---- 造基准档（headless random:1，固定种子）----
 FIFO="$WORK/fifo-gen"; LOG="$WORK/gen.log"
 rm -f "$FIFO"; mkfifo "$FIFO"
-java -Daoe.headless=1 -Daoe.dev=random:1 -Daoe.mapSeed=$SEED -Daoe.tickms=40 \
+java -Dapple.awt.UIElement=true -Daoe.headless=1 -Daoe.dev=random:1 -Daoe.mapSeed=$SEED -Daoe.tickms=40 \
      -Daoe.debug=1 -Daoe.harnessQuiet=1 -Daoe.saveDir="$WORK/saves-gen" \
      -Daoe.rmsDir="$WORK/rms-gen" -Daoe.devMouse="$FIFO" \
      -cp "$CP" aoe.Main > "$LOG" 2>&1 &
@@ -62,7 +62,7 @@ run_boot() {  # $1=A|B
   local TAG=$1
   local FIFO="$WORK/fifo-$TAG" LOG="$WORK/run-$TAG.log"
   rm -f "$FIFO"; mkfifo "$FIFO"
-  java -Daoe.headless=1 -Daoe.devBoot="$WORK/base.aoesave" -Daoe.mapSeed=$SEED \
+  java -Dapple.awt.UIElement=true -Daoe.headless=1 -Daoe.devBoot="$WORK/base.aoesave" -Daoe.mapSeed=$SEED \
        -Daoe.tickms=40 -Daoe.debug=1 -Daoe.harnessQuiet=1 \
        -Daoe.saveDir="$WORK/saves-$TAG" -Daoe.rmsDir="$WORK/rms-$TAG" \
        -Daoe.devMouse="$FIFO" -cp "$CP" aoe.Main > "$LOG" 2>&1 &

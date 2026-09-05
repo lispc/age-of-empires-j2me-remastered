@@ -1,0 +1,13 @@
+# wave9：敌 AI 建造规划 + 最缺资源挑选（2026-09-05，player-ai 分支）
+# 只收录已完全读懂语义的符号。证据：c.java 现场直读——
+#   void_a()（c.java:8600）：沿 aiBuildOrder 配对表（建筑类型,配额）从
+#     aiBuildPhase 扫描，第一个低于配额的建筑类型写 aiBuildTarget；
+#     表尾（-1）推进 aiBuildPhase。tickAi 的 aiBuildTimer 驱动 + setupMissionEnv
+#     初始化各调一次。
+#   int_b(int)（c.java:8713）：读 hdr[5]木/[7]石/[6]金，木份额 <1/3 → 0x301、
+#     石份额 <1/3 → 0x303、否则 0x302——敌 AI 村民的"最缺资源种类"挑选，
+#     返回值是 findNearbyResource 的 kind 参数（tickAi:8507 调用点实读）。
+# 重载安全：void_a 四重载按 () 参数表精确定位；int_b 三重载按 (I) 定位。
+# 格式：kind<TAB>owner<TAB>oldName<TAB>params<TAB>newName
+M	AgeOfEmpires.c	void_a	()	pickAiBuildTarget
+M	AgeOfEmpires.c	int_b	(int)	aiScarcestResource

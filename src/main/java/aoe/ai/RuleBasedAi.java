@@ -179,7 +179,7 @@ public final class RuleBasedAi implements PlayerAi {
     // mapTiles 0x8000=未探索，已探索格上的敌单位/建筑/资源主视图与小地图都照常画
     // （renderWorld 第二遍 `s>0` 门；小地图 stampThumbTile 负值=黑雾、单位点经
     // 3591 行的 0x8000 门刷新）；0x4000 只影响地表贴图明暗，不构成第二层视野。
-    // 故诚实规则 = 已探索=可见。视野来源（p()/dimFogAroundUnit/revealFogAroundUnit/void_a 实读）：单位揭开
+    // 故诚实规则 = 已探索=可见。视野来源（p()/dimFogAroundUnit/revealFogAroundUnit 实读）：单位揭开
     // 自身 3×3（每 tick + 移动时），建筑轮流揭半径 3、塔半径 6，探索永久累积。
     // 诚实模式下禁读 hdr[1] 全部字段（军值/资源/人口/TC 位=人类看不到的统计）；
     // 敌单位/建筑只认已探索格上的；敌 TC 位置改侦察记忆（见过一次即永久，TC 不动）。

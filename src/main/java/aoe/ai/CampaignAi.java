@@ -25,6 +25,12 @@ public final class CampaignAi implements PlayerAi {
     private int nextDecide;
     private int lastLog;
     private int prevTick;               // 回溯检测（devPhase 拨钟/读档）
+    private int zeroUnitTicks;          // 僵尸局投降计时（0 单位且无产能路径）
+    // #2 经济关看门狗状态（卡死村民强制重派）
+    private final int[] gqStuckPos = new int[26];
+    private final int[] gqStuckTgt = new int[26];
+    private final int[] gqStuckTick = new int[26];
+    private int gqSkipTile = -1;
     private int lastMissionLogged = -1;
     private int fleeCount;              // #4 逃命遥测（500t 摘要行消费后清零）
 
@@ -58,6 +64,34 @@ public final class CampaignAi implements PlayerAi {
         if (ss != 6 || game.gameMode != 32) {
             return;
         }
+        // 僵尸局投降（批测契约，-Daoe.exitOnResult 才生效）：0 单位且（无成品
+        // 房屋或木<5=产不出村民）持续 500t → 引擎判负链断（tickAi 的威胁扫描
+        // 以我方单位为引，我方 0 单位时敌军 stance 永不推进，TC 站着也没人拆，
+        // 实测拖到 t=25M 不终局）——AI 按 [result] 契约主动认输，省批测时间。
+        if (System.getProperty("aoe.exitOnResult") != null
+                && game.playerUnitHeaders[0][2] == 0) {
+            boolean canProduce = false;
+            if (game.playerUnitHeaders[0][5] >= 5) {
+                int[] recs = game.buildingTable[0];
+                for (int i = 0; i < game.playerUnitHeaders[0][4]; ++i) {
+                    int o = i << 2;
+                    if ((recs[o + 3] & 0xFF) == 11 && (recs[o + 2] & 0xFF) == 255
+                            && (recs[o + 2] & 0x40000000) == 0) {
+                        canProduce = true;
+                        break;
+                    }
+                }
+            }
+            this.zeroUnitTicks = canProduce ? 0 : this.zeroUnitTicks + DECIDE_EVERY;
+            if (this.zeroUnitTicks >= 500) {
+                System.out.println("[cai] concede: 0 units, no production path, t=" + t);
+                System.out.println("[result] LOSS ticks=" + t);
+                System.out.flush();
+                System.exit(0);
+            }
+        } else {
+            this.zeroUnitTicks = 0;
+        }
         switch (game.missionIndex) {
             case 0:
             case 3:
@@ -88,8 +122,18 @@ public final class CampaignAi implements PlayerAi {
             this.lastLog = t;
             int units = game.playerUnitHeaders[0][2];
             int ebld = game.playerUnitHeaders[1][4];
+            // 敌军事实力(波规模遥测:相位×波规模的抽签结构测绘用)
+            short[] es = game.playerUnitSlots[1];
+            int eu = game.playerUnitHeaders[1][2];
+            int emil = 0;
+            for (int i = 0; i < eu; ++i) {
+                if ((es[(i << 3) + 3] & 0xFF) >= 2) {
+                    ++emil;
+                }
+            }
             System.out.println("[cai] t=" + t + " m" + game.missionIndex
-                + " units=" + units + " ebld=" + ebld + " flee=" + this.fleeCount + " tgt="
+                + " units=" + units + " ebld=" + ebld + " emil=" + emil
+                + " flee=" + this.fleeCount + " tgt="
                 + (this.m0Target >= 0 ? (this.m0Target >>> 8) + "," + (this.m0Target & 0xFF) : "?"));
             this.fleeCount = 0;
         }
@@ -348,9 +392,30 @@ public final class CampaignAi implements PlayerAi {
                 clearTarget = ep;
             }
         }
-        // 军事下令（不接敌打断）
+        // 村民补员（2026-09-05 phase-0 stall 尸检：本 handler 无训练逻辑，
+        // 单位被蹲点敌兵磨到 0 后房屋+木料在也永远补不了人 → 僵尸局）。
         short[] slots = game.playerUnitSlots[0];
         int units = hdr0[2];
+        int vills = 0;
+        for (int i = 0; i < units; ++i) {
+            if ((slots[(i << 3) + 3] & 0xFF) < 2) {
+                ++vills;
+            }
+        }
+        boolean popRoom = hdr0[2] + hdr0[49] < hdr0[3] && hdr0[2] + hdr0[49] < 26;
+        if (popRoom && vills + hdr0[66] < 4 && hdr0[57] + hdr0[66] < hdr0[75]
+                && game.canAfford(0, 0, 0)) {
+            int[] mb2 = game.buildingTable[0];
+            for (int i = 0; i < hdr0[4]; ++i) {
+                int o = i << 2;
+                if ((mb2[o + 3] & 0xFF) == 11 && (mb2[o + 2] & 0xFF) == 255
+                        && (mb2[o + 2] & 0x40000000) == 0) {
+                    game.queueUnitTraining(0, 0);
+                    break;
+                }
+            }
+        }
+        // 军事下令（不接敌打断）
         if (clearTarget >= 0) {
             this.m0Target = clearTarget;
             for (int i = 0; i < units; ++i) {
@@ -372,19 +437,39 @@ public final class CampaignAi implements PlayerAi {
             if ((slots[o + 3] & 0xFF) >= 2) {
                 continue; // 军事
             }
+            int pos = slots[o] & 0xFFFF;
             boolean idle = (slots[o + 7] & 0xF) == 0
                 && (slots[o + 0] & 0xFFFF) == (slots[o + 2] & 0xFFFF);
             if (!idle) {
-                continue; // 采集循环引擎全自动
+                // 卡死看门狗（phase-0 stall 实锤：村民被派往被蹲资源点，永不
+                // 到达=永不 idle=永不再分派，最后一人在 tgt=53,40 挂数百万
+                // tick）：目标格不变且位置漂移 ≤1 格持续 600t → 强制重派
+                // （跳过当前目标格）。位置判据带容差防往返抖动漏检。
+                int tgt0 = slots[o + 2] & 0xFFFF;
+                int dxp = (pos >>> 8) - (this.gqStuckPos[i] >>> 8);
+                int dyp = (pos & 0xFF) - (this.gqStuckPos[i] & 0xFF);
+                boolean stuck = tgt0 == this.gqStuckTgt[i]
+                    && Math.max(Math.abs(dxp), Math.abs(dyp)) <= 1;
+                if (stuck && game.tickCount - this.gqStuckTick[i] >= 600) {
+                    this.gqStuckTick[i] = game.tickCount;
+                    this.gqSkipTile = tgt0;
+                    idle = true; // 落入下方分派
+                } else if (!stuck) {
+                    this.gqStuckPos[i] = pos;
+                    this.gqStuckTgt[i] = tgt0;
+                    this.gqStuckTick[i] = game.tickCount;
+                }
+                if (!idle) {
+                    continue; // 采集循环引擎全自动
+                }
             }
-            int pos = slots[o] & 0xFFFF;
             // 缺口最大优先，找不到安全格退次缺
             for (int kTry = 0; kTry < 3; ++kTry) {
                 int kind = this.maxNeedKind(need);
                 if (kind == 0) {
                     break;
                 }
-                int tile = this.nearestSafeResource(game, pos, kind, es, eu);
+                int tile = this.nearestSafeResourceEx(game, pos, kind, es, eu);
                 if (tile >= 0) {
                     slots[o + 1] = slots[o + 0];
                     slots[o + 2] = (short) tile;
@@ -396,6 +481,7 @@ public final class CampaignAi implements PlayerAi {
                 }
                 need[kind] = 0; // 该种类无安全格，本决策退而求其次
             }
+            this.gqSkipTile = -1;
         }
     }
 
@@ -470,9 +556,51 @@ public final class CampaignAi implements PlayerAi {
         return best;
     }
 
+    /** 看门狗版资源搜索（#2 经济关卡死修复）：排除 gqSkipTile（卡死现报
+     *  目标格），找不到回退普通最近安全搜索。 */
+    private int nearestSafeResourceEx(c game, int pos, int kind, short[] es, int eu) {
+        if (this.gqSkipTile < 0) {
+            return this.nearestSafeResource(game, pos, kind, es, eu);
+        }
+        int px = pos >>> 8, py = pos & 0xFF;
+        int best = -1, bestD2 = Integer.MAX_VALUE;
+        for (int y = 0; y < 64; ++y) {
+            for (int x = 0; x < 64; ++x) {
+                int t = game.mapTiles[x + (y << 6)] & 0xFFF;
+                if ((t & 0x300) != 0x300 || (t & 3) != kind) {
+                    continue;
+                }
+                int packed = x << 8 | y;
+                if (packed == this.gqSkipTile) {
+                    continue;
+                }
+                boolean camped = false;
+                for (int j = 0; j < eu; ++j) {
+                    int ep = es[j << 3] & 0xFFFF;
+                    int dx = (ep >>> 8) - x, dy = (ep & 0xFF) - y;
+                    if (dx * dx + dy * dy <= 64) {
+                        camped = true;
+                        break;
+                    }
+                }
+                if (camped) {
+                    continue;
+                }
+                int d2 = (x - px) * (x - px) + (y - py) * (y - py);
+                if (d2 < bestD2) {
+                    bestD2 = d2;
+                    best = packed;
+                }
+            }
+        }
+        if (best < 0) {
+            return this.nearestSafeResource(game, pos, kind, es, eu);
+        }
+        return best;
+    }
+
     /** 点 (px,py) 到线段 (x1,y1)-(x2,y2) 的垂直距离²（近似：投影截断）。 */
-    private int distToSegment(int px, int py, int x1, int y1, int x2, int y2) {
-        int dx = x2 - x1, dy = y2 - y1;
+    private int distToSegment(int px, int py, int x1, int y1, int x2, int y2) {        int dx = x2 - x1, dy = y2 - y1;
         int len2 = dx * dx + dy * dy;
         if (len2 == 0) {
             return (px - x1) * (px - x1) + (py - y1) * (py - y1);
@@ -858,13 +986,47 @@ public final class CampaignAi implements PlayerAi {
         // —— 防御：敌兵进 TC 12 格 → 全军压上；村民逃命 ——
         short[] es = game.playerUnitSlots[1];
         int eu = game.playerUnitHeaders[1][2];
-        int invader = -1, invD2 = Integer.MAX_VALUE;
+        int invader = -1, invD2 = Integer.MAX_VALUE, invCount = 0;
         for (int i = 0; i < eu; ++i) {
             int ep = es[i << 3] & 0xFFFF;
             int d2 = ((ep >>> 8) - tx) * ((ep >>> 8) - tx) + ((ep & 0xFF) - ty) * ((ep & 0xFF) - ty);
-            if (d2 <= 144 && d2 < invD2) {
-                invD2 = d2;
-                invader = ep;
+            if (d2 <= 144) {
+                ++invCount;
+                if (d2 < invD2) {
+                    invD2 = d2;
+                    invader = ep;
+                }
+            }
+        }
+        // v26 村民围攻（同相位成对 9/20 vs kite-only 6/20，翻转 +3/反向 0，
+        // 默认采用）：塔未立且无兵时，独狼/双人 raid 让村民围攻
+        // （4×(1<<4)/1=64/轮 vs 长枪 255HP ≈ 4 轮收工；逃=经济永停必死，围=
+        // 可能清场）。敌 ≥3 不围（添油）。实测细节：围攻能杀掉首波独狼
+        // （p1 type2 died ar=1453），但后续波会把村民磨光——配僵尸局投降
+        // （tick 首部）把"磨光后引擎不判负"的死局转成快速 LOSS。
+        boolean swarm = false;
+        if (invader >= 0 && towerN == 0 && invCount <= 2) {
+            int mil = 0;
+            for (int i = 0; i < units; ++i) {
+                if ((slots[(i << 3) + 3] & 0xFF) >= 2) {
+                    ++mil;
+                }
+            }
+            swarm = mil == 0;
+        }
+        if (swarm) {
+            this.m0Target = invader;
+            for (int i = 0; i < units; ++i) {
+                int o = i << 3;
+                if ((slots[o + 3] & 0xFF) >= 2 || (slots[o + 7] & 0xF) == 1) {
+                    continue;
+                }
+                if ((slots[o + 2] & 0xFFFF) != invader) {
+                    slots[o + 1] = slots[o + 0];
+                    slots[o + 2] = (short) invader;
+                    slots[o + 7] = 0;
+                    slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+                }
             }
         }
         if (invader >= 0) {
@@ -889,6 +1051,9 @@ public final class CampaignAi implements PlayerAi {
             int o = i << 3;
             if ((slots[o + 3] & 0xFF) >= 2) {
                 continue;
+            }
+            if (swarm) {
+                continue; // v26: 围攻期间村民不逃——逃=经济永停必死
             }
             int pos = slots[o] & 0xFFFF;
             int px = pos >>> 8, py = pos & 0xFF;
@@ -1071,10 +1236,25 @@ public final class CampaignAi implements PlayerAi {
         // 早期长枪是承重墙。v23 穿针：塔前帽 1（5G，给塔留足 6G），塔立后帽 2——
         // n=20 尸检：早死桶 6/20 全是塔 1 未立（两轮长枪把 G 从 13 吃到 <6，
         // 恰逢 5.3k 首波露营金矿线，塔金永远凑不齐），但塔前全面禁兵又死首波。
+        // v27/v28 时代科研储备（同相位成对 9/20 = 基线、胜局平均快 1-3k、
+        // 零反向翻转，默认采用）：塔立后补兵三门抬到"下一时代成本+5"
+        // （封建 20/20/20、城堡 25/25/25）——科研判定先于训练，但长枪门
+        // W12/G12 < 封建 15/15/15，拉锯战里补一个长枪 5G 就把封建金永远压在
+        // 15 以下（g5 尸检：双塔 3.9/4.1k 全活整局，FEUDAL 从未研出，长枪
+        // 补员循环是唯一的金出口）。剃头兜底：milCount==0 按原门补 1 个
+        // （v27 无兜底时相位 63 被剃头后无人看门翻负 8/20）。
         int meleeType = age >= 2 ? 3 : 2;
         int meleeCap = age >= 2 ? 4 : (towerN >= 1 ? 2 : 1);
+        int wGate = 12, gGate = 12, sGate = 0;
+        if (age < 2 && towerN >= 1 && milCount > 0) {
+            int reserve = age == 0 ? 15 : 20;
+            wGate = reserve + 5;
+            gGate = reserve + 5;
+            sGate = reserve + 5;
+        }
         if (popRoom && barracksSlot >= 0 && milCount < meleeCap
-                && hdr[5] >= 12 && hdr[6] >= 12 && game.canAfford(0, 0, meleeType)) {
+                && hdr[5] >= wGate && hdr[6] >= gGate && hdr[7] >= sGate
+                && game.canAfford(0, 0, meleeType)) {
             game.queueUnitTraining(0, meleeType);
         }
         // —— 村民采集：分阶段配额（v1 用"总量缺口"全堆木，石启动太晚被一波带走）。

@@ -59,7 +59,7 @@ CP=build/classes/java/main:build/resources/main
 # 提速只改 tick 墙钟速率，不改 tick 语义；指纹若因此对不上 golden = 墙钟依赖
 # 泄漏进场景，属真发现，停下来查，不许 --update。
 # DevHarness 尾参 60 只是防卡死上限（正常收尾靠下方 f_after 回执 + kill）。
-"$JAVA" -Daoe.debug=1 -Daoe.autoDismiss=1 -Daoe.headless=1 -Daoe.tickms=40 \
+"$JAVA" -Dapple.awt.UIElement=true -Daoe.debug=1 -Daoe.autoDismiss=1 -Daoe.headless=1 -Daoe.tickms=40 \
     -Daoe.turbo=1 \
     -Duser.home="$WORK/userhome" \
     -Daoe.dev=tutorial:1 -Daoe.devMouse="$FIFO" -Daoe.saveDir="$SAVES" \

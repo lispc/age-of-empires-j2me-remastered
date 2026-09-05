@@ -262,6 +262,21 @@ TC/村民）钉死。
 （renderWorld 单位段守卫）——与第六批"只切地表明暗"记录在单位维度上冲突，
 以本波读码为准（实测复核留给后续）。
 
+## 已改名：wave9（2026-09-05，敌 AI 建造规划/最缺资源挑选）
+
+证据：c.java 现场直读——void_a()（8600）沿 aiBuildOrder 配对表（类型,配额）
+从 aiBuildPhase 扫描、首个低于配额者写 aiBuildTarget、表尾推进 aiBuildPhase；
+int_b(int)（8713）读 hdr[5]木/[7]石/[6]金，木/石份额 <1/3（21845/65536）→
+0x301/0x303，否则 0x302（金）——敌 AI 村民"最缺资源"挑选，返回值直接喂
+findNearbyResource 的 kind（tickAi:8507 调用点）。重载安全：void_a 四重载按
+() 参数表定位、int_b 三重载按 (int) 定位。注释误伤一例（RuleBasedAi 视野来源
+清单里的"void_a"指的是别的重载）已人工删除该指代。
+
+| 新名 | 旧名 | 语义 |
+|---|---|---|
+| pickAiBuildTarget | void_a() | 敌 AI 建造规划：aiBuildOrder 配对表扫描，首个低于配额的建筑类型→aiBuildTarget；表尾推进 aiBuildPhase |
+| aiScarcestResource | int_b(int) | 敌 AI 村民最缺资源种类：木/石份额 <1/3 优先，否则金；返回 0x300|kind 资源格码 |
+
 ## 补充结构语义（原 deobfuscation.md 考据，2026-09-03）
 
 **胜负判定双路径**（r30/r31 定案）：①敌 TC 毁→即胜（工人/村民不计入，r30 实测敌

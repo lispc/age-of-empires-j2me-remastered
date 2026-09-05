@@ -4516,7 +4516,7 @@ implements CommandListener {
         }
         if (this.aiEnabled) {
             this.aiBuildPhase = 0;
-            this.void_a();
+            this.pickAiBuildTarget();
         }
         this.missionScript = com.ulysseo.mad.c.byte_arr_a(n2);
         return true;
@@ -7431,7 +7431,7 @@ implements CommandListener {
                         int n14 = this.playerUnitSlots[n][n2 + 5];
                         int n15 = n14 >>> 8;
                         int n16 = n15 + ((n14 &= 0xFF) << 6);
-                        int n17 = this.int_b(n);
+                        int n17 = this.aiScarcestResource(n);
                         if (n17 == (this.mapTiles[n16] & 0x303)) {
                             this.playerUnitSlots[n][n2 + 2] = this.playerUnitSlots[n][n2 + 5];
                             short[] sArray = this.playerUnitSlots[n];
@@ -8512,7 +8512,7 @@ implements CommandListener {
                 this.aiFreeResTimer = 0;
             }
             if (this.aiBuildTimer++ >= this.aiBuildInterval) {
-                this.void_a();
+                this.pickAiBuildTarget();
                 if (this.tryPlaceAiBuilding()) {
                     this.aiBuildTimer = 0;
                 }
@@ -8528,7 +8528,7 @@ implements CommandListener {
         }
         do {
             if ((this.playerUnitSlots[1][n6 + 3] & 0xFF) < 2 && (this.playerUnitSlots[1][n6 + 7] & 0xFF) == 0 && (this.playerUnitSlots[1][n6 + 2] == this.playerUnitSlots[1][n6 + 0] || this.playerUnitSlots[1][n6 + 1] == this.playerUnitSlots[1][n6 + 0])) {
-                this.playerUnitSlots[1][n6 + 2] = this.findNearbyResource((int)this.playerUnitSlots[1][n6 + 0], this.int_b(1));
+                this.playerUnitSlots[1][n6 + 2] = this.findNearbyResource((int)this.playerUnitSlots[1][n6 + 0], this.aiScarcestResource(1));
             }
             n6 += 8;
         } while (--n7 > 0);
@@ -8597,7 +8597,7 @@ implements CommandListener {
         return true;
     }
 
-    final void void_a() {
+    final void pickAiBuildTarget() {
         int n = this.aiBuildPhase;
         while (this.aiBuildOrder[n] >= 0) {
             if (this.countBuildings(1, (int)this.aiBuildOrder[n], false) < this.aiBuildOrder[n + 1]) {
@@ -8710,7 +8710,7 @@ implements CommandListener {
         return (short)n4;
     }
 
-    final int int_b(int n) {
+    final int aiScarcestResource(int n) {
         int n2 = this.playerUnitHeaders[n][5];
         int n3 = this.playerUnitHeaders[n][7];
         int n4 = this.playerUnitHeaders[n][6];

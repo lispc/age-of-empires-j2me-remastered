@@ -16,7 +16,7 @@ rm -rf "$W/rms" "$W/saves"; rm -f "$W/fifo" "$W/fifo.json" "$W/fifo.aistate.json
 mkdir -p "$W/saves" "$W/rms"
 mkfifo "$W/fifo"
 nohup /opt/homebrew/opt/openjdk@17/bin/java \
-  -Daoe.headless=1 -Daoe.dev=campaign:6 -Daoe.tickms=10 -Daoe.debug=1 \
+  -Dapple.awt.UIElement=true -Daoe.headless=1 -Daoe.dev=campaign:6 -Daoe.tickms=10 -Daoe.debug=1 \
   -Daoe.harnessQuiet=1 -Daoe.exitOnResult=1 \
   -Daoe.saveDir=$W/saves -Daoe.rmsDir=$W/rms -Daoe.mapSeed=8224 -Daoe.bfsPath=1 \
   -Daoe.devMouse=$W/fifo \

@@ -96,7 +96,7 @@ while [ $i -le "$N" ]; do
         PHASE_ARG="-Daoe.devPhase=$(( (i - 1) * ${PHASE_STEP:-7} ))"
     fi
     t0=$SECONDS
-    "$JAVA" -Daoe.headless=1 "-Daoe.dev=campaign:$MISSION" -Daoe.turbo=1 -Daoe.noRender=1 \
+    "$JAVA" -Dapple.awt.UIElement=true -Daoe.headless=1 "-Daoe.dev=campaign:$MISSION" -Daoe.turbo=1 -Daoe.noRender=1 \
         -Daoe.mute=1 -Daoe.debug=1 -Daoe.exitOnResult=1 \
         -Daoe.playerAi="$AI" -Daoe.aiFog=0 ${BFS_ARG:+"$BFS_ARG"} ${C4V_ARG:+"$C4V_ARG"} ${PHASE_ARG:+"$PHASE_ARG"} \
         -Daoe.saveDir="$gdir/saves" -Daoe.rmsDir="$gdir/rms" \
