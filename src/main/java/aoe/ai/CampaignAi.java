@@ -415,6 +415,64 @@ public final class CampaignAi implements PlayerAi {
                 }
             }
         }
+        // 前置矿仓（m4 宏线"金道正解=前置矿仓"移植，2026-09-05）：村民 512 速
+        // ≈8.5t/格，跑路比装载（102t）贵——基线尸检：村民被派往 43 格外的
+        // 东金矿，一趟往返 ~830t，尾段 20k tick 全是长途搬运。规则：某资源
+        // 缺口 ≥20 且其最近安全格离 TC >12 格、该格 6 格内无对应交存场
+        // （木→伐木场 type0，金/石→采矿场 type1，含在建）→ 拍一座。
+        // 引擎交存自动取 TC+hdr[9]/[10]/[11] 仓槽最近者（unit-stats），
+        // UC 建筑 j() 每 tick +8 自动成型，无需派工。一次只建一座。
+        {
+            boolean ucAny = false;
+            for (int i = 0; i < hdr0[4]; ++i) {
+                if ((mb[(i << 2) + 2] & 0x40000000) != 0) {
+                    ucAny = true;
+                    break;
+                }
+            }
+            if (!ucAny) {
+                for (int kind = 1; kind <= 3; ++kind) {
+                    if (need[kind] < 20) {
+                        continue;
+                    }
+                    int rtile = this.nearestSafeResourceEx(game, tc, kind, es, eu);
+                    if (rtile < 0) {
+                        continue;
+                    }
+                    int rx = rtile >>> 8, ry = rtile & 0xFF;
+                    int dtc = Math.max(Math.abs(rx - tx), Math.abs(ry - ty));
+                    if (dtc <= 12) {
+                        continue;
+                    }
+                    int campType = kind == 1 ? 0 : 1;
+                    boolean campNear = false;
+                    for (int i = 0; i < hdr0[4]; ++i) {
+                        int o = i << 2;
+                        if ((mb[o + 3] & 0xFF) != campType) {
+                            continue;
+                        }
+                        int cx = (mb[o] >> 8) & 0x3F, cy = mb[o] & 0x3F; // 打包=x<<8|y
+                        int d2 = (cx - rx) * (cx - rx) + (cy - ry) * (cy - ry);
+                        if (d2 <= 36) {
+                            campNear = true;
+                            break;
+                        }
+                    }
+                    if (campNear || !game.canAfford(0, 1, campType)) {
+                        continue;
+                    }
+                    int spot = game.findAiBuildSpot(rtile);
+                    int bx = spot >>> 8, by = spot & 0xFF;
+                    if (bx < 64 && by < 64 && (game.mapTiles[bx + (by << 6)] & 0xFFF) == 0) {
+                        int rc = game.a(0, campType, bx, by, 0x40000000, true);
+                        System.out.println("[cai] build camp type=" + campType + " at " + bx
+                            + "," + by + " rc=" + rc + " for kind=" + kind + " res@" + rx + "," + ry
+                            + " t=" + game.tickCount);
+                        break;
+                    }
+                }
+            }
+        }
         // 军事下令（不接敌打断）
         if (clearTarget >= 0) {
             this.m0Target = clearTarget;
@@ -556,12 +614,11 @@ public final class CampaignAi implements PlayerAi {
         return best;
     }
 
-    /** 看门狗版资源搜索（#2 经济关卡死修复）：排除 gqSkipTile（卡死现报
-     *  目标格），找不到回退普通最近安全搜索。 */
+    /** 看门狗版资源搜索（#2 经济关专用）：排除 gqSkipTile（卡死现报目标格），
+     *  且**跳过余趟数 0 的枯竭格**（趟数=(raw>>2)&0x1F，砍完一载就扣——前置
+     *  矿仓版尸检：村民采空 (16,33) 后 search 仍把它当最近金，idle→重派同格
+     *  死循环白烧 ~384t/轮）。 */
     private int nearestSafeResourceEx(c game, int pos, int kind, short[] es, int eu) {
-        if (this.gqSkipTile < 0) {
-            return this.nearestSafeResource(game, pos, kind, es, eu);
-        }
         int px = pos >>> 8, py = pos & 0xFF;
         int best = -1, bestD2 = Integer.MAX_VALUE;
         for (int y = 0; y < 64; ++y) {
@@ -570,8 +627,16 @@ public final class CampaignAi implements PlayerAi {
                 if ((t & 0x300) != 0x300 || (t & 3) != kind) {
                     continue;
                 }
+                if (((t >> 2) & 0x1F) == 0) {
+                    continue; // 枯竭格
+                }
                 int packed = x << 8 | y;
                 if (packed == this.gqSkipTile) {
+                    continue;
+                }
+                if (packed == pos) {
+                    // 同格重派是 no-op（m1 教训：装载计时靠"重踏入"重启）——
+                    // 村民闲在资源格上时，必须派去别的格子才能恢复采集。
                     continue;
                 }
                 boolean camped = false;
@@ -592,9 +657,6 @@ public final class CampaignAi implements PlayerAi {
                     best = packed;
                 }
             }
-        }
-        if (best < 0) {
-            return this.nearestSafeResource(game, pos, kind, es, eu);
         }
         return best;
     }

@@ -2007,7 +2007,8 @@ implements CommandListener {
                             int bn = this.playerUnitHeaders[pl][4];
                             for (int i = 0; i < bn; ++i) {
                                 int o = i << 2;
-                                int bx = br[o] & 0x3F, by = (br[o] >> 8) & 0x3F;
+                                // 打包 = x<<8|y(a() 存 (n3<<8)+n4)——别转置
+                                int bx = (br[o] >> 8) & 0x3F, by = br[o] & 0x3F;
                                 if (bx >= x0 && bx <= x1 && by >= y0 && by <= y1) {
                                     grid[by][bx] = pl == 0 ? 'H' : 'B';
                                 }

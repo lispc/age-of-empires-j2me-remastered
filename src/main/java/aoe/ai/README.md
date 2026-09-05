@@ -21,7 +21,7 @@ missionIndex 0..6）。批跑：`tools/camloop.sh -m N -n 局数 -t 超时 -k`�
 |---|---|---|---|
 | #0 拆堡 | 拆敌 TC | **5/5**（~3k tick） | tickRaze |
 | #1 护送 | 送 slot0 村民进堡区，死 1 村民=负 | **5/5**（v2 环路护送 ~2.3k tick；取代砍树墙 ~96k，快 42×） | tickEscort |
-| #2 经济 | 木/金/石各 >100（严格） | **3/3**（看门狗+补员修复后 ~28k tick；修复前 2.2M tick 且 phase 0 stall，见下） | tickGatherQuota |
+| #2 经济 | 木/金/石各 >100（严格） | **5/5**（前置矿仓后 ~11.7k tick；矿仓前 28k，看门狗修复前 2.2M） | tickGatherQuota |
 | #3 拆家 | 拆光敌 5 建筑 | **5/5**（~4.6k tick） | tickRaze |
 | #4 科技 | 升城堡时代+放置大学 | **9/20**（v31：tryResearch 锁槽偏移修复+城堡竞速锁；配方演进见下"待攻"） | tickCastleRace |
 | #5 守城 | 扛 5 波刷兵后全歼 | **5/5**（~5.9k tick） | tickProtectCastle |
