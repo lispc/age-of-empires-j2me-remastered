@@ -1091,6 +1091,11 @@ implements CommandListener {
             // 帧照常跑模拟,世界与标签即时对齐;代价仅是放弃一帧强制全量重画
             // (mapThumbStampRow 已在 apply() 里重置,小地图照常重盖)。
             AgeOfEmpires.b.var_boolean_a = false;
+            // devBoot 菜单导航的最后一次按键脉冲会残留在 keyActionEvent 里
+            // （apply 不覆盖它）——不清零则恢复后首个 onKeyPress 语义可能被
+            // 旧脉冲突改（r56 A′/B′ 对拍：录制侧 0 vs 恢复侧 22）。清瞬态
+            // 不是漏状态，无需 bump 快照版本。
+            this.keyActionEvent = 0;
             // 回放锚：trace 的相对 tick 坐标从这里起算（快照 v2 已钉住 tickCount）
             this.devTraceBaseTick = this.tickCount;
             System.out.println("[load] applied (" + data.length + "B) traceBase=" + this.devTraceBaseTick);

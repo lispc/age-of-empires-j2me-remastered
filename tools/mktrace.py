@@ -39,6 +39,8 @@ def main() -> int:
 
     events = []  # (absTick, order, line)
     order = 0
+    seen_key = set()  # (absTick, cmd)：同一次按键走 [fifo]+[input] 两路各打一行，
+    #                   不去重则 trace 里每个 key 成双、回放多按一次（r56 定案）
     with open(a.log, encoding="utf-8", errors="replace") as f:
         for ln in f:
             ln = ln.rstrip("\n")
@@ -57,6 +59,11 @@ def main() -> int:
                 cmd = rest
             if t < a.base:
                 continue
+            if cmd.startswith("key "):
+                k = (t, cmd)
+                if k in seen_key:
+                    continue
+                seen_key.add(k)
             events.append((t, order, cmd))
             order += 1
 

@@ -1017,6 +1017,13 @@ fps=30≈12 倍原速）；长 trace 验证+出视频建议 tickms=2 免超时�
   零丢失（PIPE_BUF 原子写+行协议）——"旁路脚本做单发补丁"是合法战术。
   **aistate units[].target 字段**（移动目的地；到位==tile、在途≠tile）是
   "真在途"判据与死锁检测的钥匙。
+  **fields 工具盲区（r56）**：对象字段只打句柄（仅 AgeOfEmpires.d 递归
+  depth<2）、默认只转储 b 静态——c.rngStateHi/Lo 不在对拍面，确定性对拍要
+  手动扩成 dump(this,c.class)+dump(this,b.class) 双调。「存→载 roundtrip
+  零 diff」对 devBoot 场景有结构性盲区（两侧世界同源自一次 apply，丢的字段
+  起点就相等）——逃盲区姿势=A′（按录制日志精确复刻 pre-apply 轨迹）vs B′
+  （devBoot）apply 后立即逐字段对拍。**mktrace 已修 key 双记**（[fifo]+[input]
+  两路各打一行，同 tick 同 key 去重）。
   **探针 boot（r47 新实践）**：独立目录+3 条 fifo 命令+state/aistate 轮询
   10 分钟即可定案造价/可建性/入账语义——比纯读码多一层"引擎真做了"的证据，
   机制考证性价比最高（type0 造价与放格即生效即此法定案）。
