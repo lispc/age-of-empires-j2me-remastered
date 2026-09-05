@@ -258,6 +258,10 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   冲车盾（ramshield_spot 扫描窗西扩 sx≥0 修 C2 西缘盲区）；守军死亡判定改
   [combat] 差分。预算全押盾+围杀组合，钓鱼降辅助。工具：mapdump FIFO 指令
   （r64 主线侧引入）可做 S4 漂移监测与帖位可走性核对。
+- **mapdump 地图真值（r64 尾声探针局，m6f/deliver/map-*.txt）**：西廊永久
+  排除——唯一南北通道 x8 列 y22-28 贴中场猫 d²=20 火圈零余量，**东廊是唯一
+  路线**；S1 南线 hops 逐格可走核对 ✓；守军 19 布点与 probe-layout ±1 格
+  吻合。mapdump 建议变体（future-tasks 登记）：叠加守军射程圈直接画 d²16/20。
 - **现行代驱动**=`tools/campaign/m6fdrv.py`（v6.7：+S1 南线/冲车盾/ram_sweep
   猫圈豁免/S5→S6 'done' 转段/S4 漂移监测/import 闸）+ `m6-zone-calc.py` +
   `m6-probe-layout.json`（敌 19 全量布点，顺序版）+ 早期代 m6edrv(v6.4)/

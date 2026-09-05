@@ -51,8 +51,11 @@
 6. **改名债务**：renamer（AST）+ waveN.tsv + 逐条过 diff 看注释；
    语义登记 docs/symbols.md。候选 = 近期考证过的符号（僵尸局链
    tickAi 的 hdr[53]/[54] 威胁扫描字段、aiStance 三态等）。
-7. **coreaudiod 防范**：连续 kill 音频初始化中的 java 进程会病态化
+7. **mapdump 守军圈叠加变体**（m6 线 r64 建议）：加开关在输出里直接画弓
+   d²16/猫 d²20 射程圈（独立字符层），帖位/廊道校验不用人工数格——m6
+   总攻关与拆堡关布阵规划都受益。
+8. **coreaudiod 防范**：连续 kill 音频初始化中的 java 进程会病态化
    macOS 音频服务（headless 已不碰 MIDI，但 GUI 调试会话注意）。
-8. **批测卫生**：同一时刻只跑一批 camloop/ailoop（turbo 吃满 CPU，
+9. **批测卫生**：同一时刻只跑一批 camloop/ailoop（turbo 吃满 CPU，
    并行会扭曲墙钟敏感的环节）；批测跑着的时候禁止编译（每局起新 JVM
    读 build/classes）。
