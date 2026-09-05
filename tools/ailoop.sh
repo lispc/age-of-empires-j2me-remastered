@@ -30,7 +30,7 @@
 #                        走向不同;pin 后同种子同相位必同结果,A/B 逐对对比)。
 #                        off 恢复旧的墙钟漂移行为
 #   tools/ailoop.sh --selftest  假日志自检解析/统计逻辑(不跑游戏,无需构建产物)
-# 默认:n=10 d=1 无AI 种子1000起每局+1 超时300s。
+# 默认:n=10 d=1 种子1000起每局+1 超时300s。-a 必填(无 AI=站桩必败,防空跑)。
 # 示例:
 #   tools/ailoop.sh -n 20 -d 2 -a aoe.ai.SimpleAi -k
 #   AOE_SEED_PROP=aoe.mapSeed tools/ailoop.sh -n 5 -t 120
@@ -60,6 +60,13 @@ usage() { sed -n '2,40p' "$0"; exit "${1:-1}"; }
         *) usage ;;
     esac
 done
+
+# 无 -a = 玩家站桩裸奔,批测结果全是 0%(2026-09-05 实踩:白烧一批 20 局)。
+# 除了 --selftest,显式拒绝缺省,宁可报错不可出假数据。
+if [ $SELFTEST = 0 ] && [ -z "$AI" ]; then
+    echo "错误: 缺 -a <AI类名>(如 -a aoe.ai.RuleBasedAi);不带 AI 跑批是无效数据" >&2
+    exit 2
+fi
 
 # ---- 退化种子跳过表:tools/ailoop-skip.txt(一行一个,#注释)+ -x 叠加 ----
 SKIP=" "

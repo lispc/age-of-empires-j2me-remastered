@@ -611,36 +611,15 @@ public final class CampaignAi implements PlayerAi {
         return (px - cx) * (px - cx) + (py - cy) * (py - cy);
     }
 
-    /** 塔位锚点（移植 RuleBasedAi.corridorAnchor/stanceTile）：敌 TC 已知 → 走廊
+    /** 塔位锚点（移植 RuleBasedAi.corridorAnchor/AiKit.stanceTile）：敌 TC 已知 → 走廊
      *  阶梯（钳走廊 60% 内，避免压进敌警戒圈/白送在建塔）；未知 → 东侧 dist 格。 */
     private static int corridorAnchor(int myTc, int enemyTc, int dist) {
         if (enemyTc >= 0) {
-            return stanceTile(myTc, enemyTc, Math.min(dist, corridorLen(myTc, enemyTc) * 3 / 5));
+            return AiKit.stanceTile(myTc, enemyTc, Math.min(dist, AiKit.corridorLen(myTc, enemyTc) * 3 / 5));
         }
         int x = Math.max(1, Math.min(62, (myTc >>> 8) + dist));
         int y = Math.max(1, Math.min(62, myTc & 0xFF));
         return x << 8 | y;
-    }
-
-    /** from→to 方向 dist 格处的点（Chebyshev 归一，钳图界内）。 */
-    private static int stanceTile(int fromPacked, int toPacked, int dist) {
-        int fx = fromPacked >>> 8, fy = fromPacked & 0xFF;
-        int dx = (toPacked >>> 8) - fx, dy = (toPacked & 0xFF) - fy;
-        int m = Math.max(Math.abs(dx), Math.abs(dy));
-        if (m == 0) {
-            return fromPacked;
-        }
-        int ax = Math.max(1, Math.min(62, fx + dx * dist / m));
-        int ay = Math.max(1, Math.min(62, fy + dy * dist / m));
-        return ax << 8 | ay;
-    }
-
-    private static int corridorLen(int myTc, int enemyTc) {
-        if (enemyTc < 0) {
-            return Integer.MAX_VALUE;
-        }
-        int dx = (enemyTc >>> 8) - (myTc >>> 8), dy = (enemyTc & 0xFF) - (myTc & 0xFF);
-        return Math.max(Math.abs(dx), Math.abs(dy));
     }
 
     /** #4 塔锚点（v17 实验）：mine 变体驻矿——塔 1 护最近金矿、塔 2 护最近石矿
@@ -739,7 +718,7 @@ public final class CampaignAi implements PlayerAi {
                 return;
             }
             this.m0Target = tgt;
-            this.orderMilitary(game, tgt, false);
+            AiKit.orderMilitary(game, tgt, false);
             // 村民原地不动（钉在口袋里最安全）
             return;
         }
@@ -783,7 +762,7 @@ public final class CampaignAi implements PlayerAi {
             }
             if (tgt >= 0) {
                 this.m0Target = tgt;
-                this.orderMilitary(game, tgt, false);
+                AiKit.orderMilitary(game, tgt, false);
                 return;
             }
             // 无敌：军事质心到点（d2≤16）才推进下一点
@@ -809,7 +788,7 @@ public final class CampaignAi implements PlayerAi {
                 }
             }
             this.m0Target = sp;
-            this.orderMilitary(game, sp, false);
+            AiKit.orderMilitary(game, sp, false);
             return;
         }
 
@@ -844,9 +823,9 @@ public final class CampaignAi implements PlayerAi {
                 }
             }
             if (danger >= 0) {
-                this.orderMilitary(game, danger, true);
+                AiKit.orderMilitary(game, danger, true);
             } else {
-                this.orderMilitary(game,
+                AiKit.orderMilitary(game,
                     ESCORT_WALK[Math.max(0, this.escortWalkIdx - 1)], false);
             }
         }
@@ -1028,7 +1007,7 @@ public final class CampaignAi implements PlayerAi {
         }
         if (invader >= 0) {
             this.m0Target = invader;
-            this.orderMilitary(game, invader, false);
+            AiKit.orderMilitary(game, invader, false);
         }
         // 村民逃命：敌兵贴身 9 格（TC 保卫战里的入侵者，或路过采集点的散兵）→
         // 撤到 TC 背敌侧。v1 只在 TC 被围时逃，远征矿工被路过敌军白砍（game1
@@ -1082,7 +1061,7 @@ public final class CampaignAi implements PlayerAi {
             if (covTower >= 0) {
                 // kite:敌→塔方向越过塔 2 格
                 int d = Math.max(Math.abs((covTower >>> 8) - exx), Math.abs((covTower & 0xFF) - eyy));
-                flee = stanceTile(nearE, covTower, d + 2);
+                flee = AiKit.stanceTile(nearE, covTower, d + 2);
                 if ((game.mapTiles[(flee >>> 8) + ((flee & 0xFF) << 6)] & 0xFFF) != 0) {
                     continue; // 塔背侧不可走:站桩赌塔先清场
                 }
@@ -1432,7 +1411,7 @@ public final class CampaignAi implements PlayerAi {
                 System.out.println("[cai] fa phase2 SIEGE(direct) t=" + game.tickCount);
             } else {
                 for (int i = 0; i < units; ++i) {
-                    this.orderUnit(game, i, this.retreatTile(i), false);
+                    AiKit.orderUnit(game, i, this.retreatTile(i), false);
                 }
                 return;
             }
@@ -1526,7 +1505,7 @@ public final class CampaignAi implements PlayerAi {
                 tgt = this.healTile(game, threatSrc, slots[o] & 0xFFFF, i);
             } else if (threat >= 0) {
                 // 焦点集火：近战贴上（贴身互锁），攻城器 3 格外站桩齐射（程 4 内）
-                tgt = siege ? stanceTile(threat, cPacked, 3) : threat;
+                tgt = siege ? AiKit.stanceTile(threat, cPacked, 3) : threat;
             } else if (siege) {
                 tgt = towerTarget >= 0 ? towerTarget
                     : (softTarget >= 0 ? softTarget : this.retreatTile(i));
@@ -1543,7 +1522,7 @@ public final class CampaignAi implements PlayerAi {
                 int gy = Math.max(1, Math.min(62, by + dy * 8 / m));
                 tgt = gx << 8 | gy;
             }
-            this.orderUnit(game, i, tgt, healing);
+            AiKit.orderUnit(game, i, tgt, healing);
         }
         // 攻城尸检打点（临时）：每 ~512t 全军槽位快照——塔火力/轮换/卡死定位用。
         if (System.getProperty("aoe.debug") != null && game.tickCount - this.lastFa2Log >= 512) {
@@ -1585,46 +1564,11 @@ public final class CampaignAi implements PlayerAi {
             if (dx * dx + dy * dy >= 64) {
                 return pos; // 已脱险：原地站桩（pos==tgt 才回血）
             }
-            int h = stanceTile(src, pos, 7);
+            int h = AiKit.stanceTile(src, pos, 7);
             if ((game.mapTiles[(h >>> 8) + ((h & 0xFF) << 6)] & 0xFFF) == 0) {
                 return h;
             }
         }
         return this.retreatTile(i);
-    }
-
-    /** 单单位下令：接敌（任务字 1）且非撤退不打断；目标相同不写。 */    private void orderUnit(c game, int i, int tgt, boolean force) {
-        short[] slots = game.playerUnitSlots[0];
-        int o = i << 3;
-        if (!force && (slots[o + 7] & 0xF) == 1) {
-            return;
-        }
-        if ((slots[o + 2] & 0xFFFF) == tgt) {
-            return;
-        }
-        slots[o + 1] = slots[o + 0];
-        slots[o + 2] = (short) tgt;
-        slots[o + 7] = 0;
-        slots[o + 3] = (short) (slots[o + 3] & 0xFF);
-    }
-
-    /** 全体军事压向目标（不接敌打断）。 */
-    private void orderMilitary(c game, int target, boolean includeEngaged) {        short[] slots = game.playerUnitSlots[0];
-        int units = game.playerUnitHeaders[0][2];
-        for (int i = 0; i < units; ++i) {
-            int o = i << 3;
-            if ((slots[o + 3] & 0xFF) < 2) {
-                continue;
-            }
-            if (!includeEngaged && (slots[o + 7] & 0xF) == 1) {
-                continue;
-            }
-            if ((slots[o + 2] & 0xFFFF) != target) {
-                slots[o + 1] = slots[o + 0];
-                slots[o + 2] = (short) target;
-                slots[o + 7] = 0;
-                slots[o + 3] = (short) (slots[o + 3] & 0xFF);
-            }
-        }
     }
 }

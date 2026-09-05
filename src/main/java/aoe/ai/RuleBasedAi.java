@@ -576,14 +576,14 @@ public final class RuleBasedAi implements PlayerAi {
             // v2 十二格冲锋被放风筝的同类问题），钉在锚点朝敌 3 格塔火重叠区等接敌。
             // 敌 t8 由 v32 猎手小队处理（见下），全军冲 t8 = 离圈送死。
             int meleeTile = defendTile;
-            if (expert && defendAnchor >= 0 && corridorLen(defendAnchor, defendTile) > 3) {
-                meleeTile = stanceTile(defendAnchor, defendTile, 3);
+            if (expert && defendAnchor >= 0 && AiKit.corridorLen(defendAnchor, defendTile) > 3) {
+                meleeTile = AiKit.stanceTile(defendAnchor, defendTile, 3);
             }
             int rangedTile;
             if (mangonelTile >= 0 && mangonelD2 <= 400) {
                 rangedTile = mangonelTile;
             } else {
-                rangedTile = defendAnchor >= 0 ? stanceTile(defendTile, defendAnchor, 3) : defendTile;
+                rangedTile = defendAnchor >= 0 ? AiKit.stanceTile(defendTile, defendAnchor, 3) : defendTile;
             }
             if (expert) {
                 // v34 逐单位下令：攻击态（action==1）单位不动——群令 orderMove 会清
@@ -641,7 +641,7 @@ public final class RuleBasedAi implements PlayerAi {
             // 贴脸图闪击（v8：敌我 TC ≤14 格时消耗战必输——敌 3.07× 经济 + 8 格补给线，
             // 拖=被三倍产量磨死，seed 1013/1015/1019 连续实证）：兵力不劣就走，
             // 家里靠塔接敌防御模式的反扑残兵。
-            boolean closeRush = corridorLen(myTc, enemyTc) <= 14 && milCount >= 7
+            boolean closeRush = AiKit.corridorLen(myTc, enemyTc) <= 14 && milCount >= 7
                 && milVal >= enemyMilVal;
             boolean goCrushed = (crushed || closeRush) && milCount >= MIN_ATTACK_UNITS - 1
                 && milVal >= enemyMilVal;
@@ -660,7 +660,7 @@ public final class RuleBasedAi implements PlayerAi {
                 this.attackMode = true;
                 this.attackMuster = true;                    // v14：先集结后开打
                 this.musterStart = game.tickCount;
-                this.musterTile = stanceTile(enemyTc, myTc, 7); // 敌 TC 朝我 7 格（警戒圈 6 格外沿）
+                this.musterTile = AiKit.stanceTile(enemyTc, myTc, 7); // 敌 TC 朝我 7 格（警戒圈 6 格外沿）
                 this.lastAttackOrder = -100000;
                 this.attackBestD2 = Integer.MAX_VALUE;
                 System.out.println("[ai] ATTACK enemy TC " + (enemyTc >>> 8) + "," + (enemyTc & 0xFF)
@@ -790,7 +790,7 @@ public final class RuleBasedAi implements PlayerAi {
                 int stanceTgt = enemyDir >= 0 ? enemyDir
                     : (this.enemyHint >= 0 && game.tickCount - this.enemyHintTick < 5000
                         ? this.enemyHint : myTc);
-                int stance = stanceTile(myTc, stanceTgt, stanceDist);
+                int stance = AiKit.stanceTile(myTc, stanceTgt, stanceDist);
                 game.selectUnits(0, -1);
                 game.orderMove(0, stance >>> 8, stance & 0xFF);
                 game.clearSelection();
@@ -834,7 +834,7 @@ public final class RuleBasedAi implements PlayerAi {
 
         // ===== 残血回撤回血（必须在群令之后跑，覆盖被召回的回血单位） =====
         if (myTc >= 0 && !this.attackMode) {
-            int healTile = enemyDir >= 0 ? stanceTile(myTc, enemyDir, -3) : myTc;
+            int healTile = enemyDir >= 0 ? AiKit.stanceTile(myTc, enemyDir, -3) : myTc;
             for (int i = 0; i < units; ++i) {
                 int o = i << 3;
                 if ((slots[o + 3] & 0xFF) < 2) {
@@ -1652,7 +1652,7 @@ public final class RuleBasedAi implements PlayerAi {
                 }
             }
         }
-        int corridor = corridorLen(myTc, enemyTc);
+        int corridor = AiKit.corridorLen(myTc, enemyTc);
         if (!this.waveInFlight && dispatched >= 4) {
             this.waveInFlight = true;
             this.waveLaunchTick = game.tickCount;
@@ -1743,27 +1743,13 @@ public final class RuleBasedAi implements PlayerAi {
         return r;
     }
 
-    /** TC 朝敌 TC 方向 dist 格（切比雪夫）的驻防/塔位锚点。 */
-    private static int stanceTile(int fromPacked, int toPacked, int dist) {
-        int fx = fromPacked >>> 8, fy = fromPacked & 0xFF;
-        int dx = (toPacked >>> 8) - fx, dy = (toPacked & 0xFF) - fy;
-        int m = Math.max(Math.abs(dx), Math.abs(dy));
-        if (m == 0) {
-            return fromPacked;
-        }
-        int ax = fx + dx * dist / m, ay = fy + dy * dist / m;
-        ax = Math.max(1, Math.min(62, ax));
-        ay = Math.max(1, Math.min(62, ay));
-        return ax << 8 | ay;
-    }
-
     /** 塔位锚点：敌 TC 已知 → 走廊阶梯（近距图钳到走廊 60% 内，避免建筑压进敌
      *  警戒圈——警戒半径² 36 触发 87.5% 反扑——和白送在建塔，seed 1019 相距 ~10 格）；
      *  敌 TC 未知 → 塔环降级，有首波接触来向（enemyDir）则环序整体朝来向旋转
      *  （v58：纯罗盘环会把塔落到背敌侧，seed 1006 村民暴露被屠实锤）。 */
     private static int corridorAnchor(int myTc, int enemyTc, int enemyDir, int dist, int towerIdx) {
         if (enemyTc >= 0) {
-            return stanceTile(myTc, enemyTc, Math.min(dist, corridorLen(myTc, enemyTc) * 3 / 5));
+            return AiKit.stanceTile(myTc, enemyTc, Math.min(dist, AiKit.corridorLen(myTc, enemyTc) * 3 / 5));
         }
         return ringAnchor(myTc, towerIdx, dist, enemyDir);
     }
@@ -1878,15 +1864,6 @@ public final class RuleBasedAi implements PlayerAi {
         }
     }
 
-    /** 双方 TC 的切比雪夫距离（-1 = 敌 TC 不明）。 */
-    private static int corridorLen(int myTc, int enemyTc) {
-        if (enemyTc < 0) {
-            return Integer.MAX_VALUE;
-        }
-        int dx = (enemyTc >>> 8) - (myTc >>> 8), dy = (enemyTc & 0xFF) - (myTc & 0xFF);
-        return Math.max(Math.abs(dx), Math.abs(dy));
-    }
-
     /** 村民逃跑点：远离威胁 5 格， candidate 不可走则依次试 TC 四周。 */
     private static int fleeTile(c game, int px, int py, int ex, int ey, int tcx, int tcy) {
         int dx = px - ex, dy = py - ey;
@@ -1940,7 +1917,7 @@ public final class RuleBasedAi implements PlayerAi {
         int fx = fromPacked >>> 8, fy = fromPacked & 0xFF;
         int ex = this.resEnemyTc >>> 8, ey = this.resEnemyTc & 0xFF;
         int corridor = this.resEnemyTc >= 0 && this.resMyTc >= 0
-            ? corridorLen(this.resMyTc, this.resEnemyTc) - 3 : -1;
+            ? AiKit.corridorLen(this.resMyTc, this.resEnemyTc) - 3 : -1;
         int best = -1, bestD2 = Integer.MAX_VALUE;
         for (int ty = 0; ty < 64; ++ty) {
             for (int tx = 0; tx < 64; ++tx) {

@@ -49,8 +49,10 @@
 ## C. 基建/卫生
 
 6. **改名债务**：renamer（AST）+ waveN.tsv + 逐条过 diff 看注释；
-   语义登记 docs/symbols.md。候选 = 近期考证过的符号（僵尸局链
-   tickAi 的 hdr[53]/[54] 威胁扫描字段、aiStance 三态等）。
+   语义登记 docs/symbols.md。候选 = 近期考证过的符号。
+   （2026-09-05 清账：aiStance 早已登记 symbols.md；tickAi 威胁扫描的
+   hdr[53]/[54] 已补进 unit-stats.md 头字段表——[53]=最近入侵者坐标、
+   [54]=扫描状态（游标|minD²），防御分支（stance==1）读 [53] 做反击目标。）
 7. **mapdump 守军圈叠加变体**（m6 线 r64 建议）：加开关在输出里直接画弓
    d²16/猫 d²20 射程圈（独立字符层），帖位/廊道校验不用人工数格——m6
    总攻关与拆堡关布阵规划都受益。
@@ -59,3 +61,9 @@
 9. **批测卫生**：同一时刻只跑一批 camloop/ailoop（turbo 吃满 CPU，
    并行会扭曲墙钟敏感的环节）；批测跑着的时候禁止编译（每局起新 JVM
    读 build/classes）。
+10. **宏时代遗产标记**（记录，2026-09-05）：tools/campaign/*.py 驱动
+    （m1run/m4 系列等宏线）已被 CampaignAi 取代，但文档未声明地位，
+    易被误读为现役。做时：README 顶部加遗产声明，知识留档。
+11. **C4V 变体残留**（记录）：CampaignAi 的 mine/bare/tower1st 证伪变体
+    开关留在代码里供回放对照，但应集中注释说明"仅对照用"，或彻底拆除。
+    低优先。
