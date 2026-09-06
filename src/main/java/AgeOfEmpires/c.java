@@ -4491,6 +4491,13 @@ implements CommandListener {
                     this.aiFreeResInterval = 1000;
                 }
             }
+            // dev 旋钮（-Daoe.aiAtkThreshold=N）：覆盖敌 AI 进攻阈值，用于
+            // "AI 防线对阈值通用性"的批测（50/100/150/200 四档）。只影响随机图
+            // （gameMode==0 的 difficulty 分支之后）；缺省不动。
+            String atkOv = System.getProperty("aoe.aiAtkThreshold");
+            if (atkOv != null) {
+                this.aiAttackThreshold = Integer.parseInt(atkOv);
+            }
         }
         n2 = 128;
         this.missionResId = 0;
