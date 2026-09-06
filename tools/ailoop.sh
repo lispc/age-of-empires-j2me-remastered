@@ -180,6 +180,9 @@ while [ $i -le "$N" ]; do
     # 阈值矩阵：-T N 覆盖敌方 AI 进攻阈值（c.java 测试钩子）
     THR_ARG=""
     [ -n "$ATKTHR" ] && THR_ARG="-Daoe.aiAttackThreshold=$ATKTHR"
+    # 旋钮透传：EXTRA_D="-Daoe.xxx=1 -Daoe.yyy=2"（AI 研究用旋钮 A/B）
+    EXTRA_ARG=""
+    [ -n "${EXTRA_D:-}" ] && EXTRA_ARG=$EXTRA_D
     PHASE_ARG=""
     if [ "${PHASE_STEP:-7}" != "off" ]; then
         PHASE_ARG="-Daoe.devPhase=$(( (i - 1) * ${PHASE_STEP:-7} ))"
@@ -187,7 +190,7 @@ while [ $i -le "$N" ]; do
     t0=$SECONDS
     "$JAVA" -Dapple.awt.UIElement=true -Daoe.headless=1 "-Daoe.dev=random:$DIFF" -Daoe.turbo=1 -Daoe.noRender=1 \
         -Daoe.mute=1 -Daoe.debug=1 -Daoe.exitOnResult=1 "-D$SEED_PROP=$seed" \
-        ${AI_ARG:+"$AI_ARG"} ${BFS_ARG:+"$BFS_ARG"} ${SNAP_ARG:+"$SNAP_ARG"} ${FOG_ARG:+"$FOG_ARG"} ${THR_ARG:+"$THR_ARG"} ${PHASE_ARG:+"$PHASE_ARG"} \
+        ${AI_ARG:+"$AI_ARG"} ${BFS_ARG:+"$BFS_ARG"} ${SNAP_ARG:+"$SNAP_ARG"} ${FOG_ARG:+"$FOG_ARG"} ${THR_ARG:+"$THR_ARG"} ${EXTRA_ARG:+"$EXTRA_ARG"} ${PHASE_ARG:+"$PHASE_ARG"} \
         -Daoe.saveDir="$gdir/saves" -Daoe.rmsDir="$gdir/rms" \
         -Duser.home="$gdir/userhome" \
         -cp "$CP" aoe.Main > "$log" 2>&1 &

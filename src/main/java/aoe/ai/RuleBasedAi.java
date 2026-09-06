@@ -174,8 +174,7 @@ public final class RuleBasedAi implements PlayerAi {
     private boolean waveInFlight;
     private int waveLaunchTick = -1;
 
-    // ===== 迷雾诚实模式（2026-09-04 第六批：摘掉全图挂）=====
-    // 可见性考证（c.java renderWorld/stampThumbTile 实读）：引擎只有单层迷雾——
+    // ===== 迷雾诚实模式（2026-09-04 第六批：摘掉全图挂）=====    // 可见性考证（c.java renderWorld/stampThumbTile 实读）：引擎只有单层迷雾——
     // mapTiles 0x8000=未探索，已探索格上的敌单位/建筑/资源主视图与小地图都照常画
     // （renderWorld 第二遍 `s>0` 门；小地图 stampThumbTile 负值=黑雾、单位点经
     // 3591 行的 0x8000 门刷新）；0x4000 只影响地表贴图明暗，不构成第二层视野。
@@ -191,6 +190,17 @@ public final class RuleBasedAi implements PlayerAi {
     private static final boolean FOG_RES_OMNI = "res".equals(AI_FOG);
     // =tc → 敌 TC 坐标全图（塔走廊/攻击目标直接可用），其余仍诚实。
     private static final boolean FOG_TC_OMNI = "tc".equals(AI_FOG);
+    // Expert 全图攻坚旋钮（2026-09-06 第 41 夜，批测 A/B 用；验证后转默认）：
+    private static final boolean EXP_WTFIRST =
+        System.getProperty("aoe.expWtfirst", "0").equals("1");
+    // 敌军 ≥2× 我军时全军收进 TC 塔火重叠区（保反杀部队，塔吃伤害）
+    private static final boolean EXP_TURTLE =
+        System.getProperty("aoe.expTurtle", "0").equals("1");
+    // Expert 下铁匠铺前置（射箭场之前）+ t8 门槛 40/40→25/25——首波窗口的
+    // 塔后投石机是集团近战的毁灭性反制（224 溅射/发 vs 塔 1.9/t）。
+    // v41 默认采用：全图 Expert 两带 4/20→8/20（2026-09-06，aoe.expMangonel=0 回退）
+    private static final boolean EXP_MANGONEL =
+        System.getProperty("aoe.expMangonel", "1").equals("1");
     // 螺旋侦察路点参数（函数 spiralWaypoint/spiralCount 在文件底部；静态方法无前置
     // 声明顺序问题，但字段初始化器引用这些常量必须文本序在前——JLS 8.3.3）。
     private static final int SCOUT_RINGS = 16;      // 螺旋半径 3,5,…,33（全图覆盖）
@@ -634,6 +644,8 @@ public final class RuleBasedAi implements PlayerAi {
         } else {
             this.stallTicks = 0;
         }
+        // EXP_TURTLE 判定（DEFEND/猎手/闪避共用）：敌军 ≥2× 我军
+        boolean expOutnumbered = EXP_TURTLE && expert && enemyMilCount >= milCount * 2;
         if (threat && defendTile >= 0 && game.tickCount - this.lastDefendOrder >= DEFEND_REISSUE) {
             this.lastDefendOrder = game.tickCount;
             // 近战压向最近入侵者；远程（弓/投石机）停在入侵者朝防御锚点 3 格处开火——
@@ -647,11 +659,22 @@ public final class RuleBasedAi implements PlayerAi {
             if (expert && defendAnchor >= 0 && AiKit.corridorLen(defendAnchor, defendTile) > 3) {
                 meleeTile = AiKit.stanceTile(defendAnchor, defendTile, 3);
             }
+            // EXP_TURTLE（Expert）：敌军 ≥2× 我军时全军收进 TC 塔火重叠区——
+            // 敌索敌优先打塔，军队在环内存活等 CRUSHED 反杀窗口；在圈缘被
+            // 3 倍兵力集火=全军歼灭（Expert 败局签名：mil 4-7 → 0,村民随后
+            // 被猎杀）。1:1 时维持环形拦截。
+            boolean outnumbered = expOutnumbered;
+            if (outnumbered) {
+                meleeTile = myTc >= 0 ? AiKit.stanceTile(myTc, defendTile, 1) : defendTile;
+            }
             int rangedTile;
             if (mangonelTile >= 0 && mangonelD2 <= 400) {
                 rangedTile = mangonelTile;
             } else {
                 rangedTile = defendAnchor >= 0 ? AiKit.stanceTile(defendTile, defendAnchor, 3) : defendTile;
+            }
+            if (outnumbered) {
+                rangedTile = meleeTile;      // 全龟：远程也收进重叠区
             }
             if (expert) {
                 // v34 逐单位下令：攻击态（action==1）单位不动——群令 orderMove 会清
@@ -958,7 +981,7 @@ public final class RuleBasedAi implements PlayerAi {
         // 全军冲=离圈送死，派 ≤2 个最近的快腿近战（t2/3/5/6）直取；敌命中会改写
         // 我方 slot[2]（resolveAttack 反扑语义），靠每决策重投续上。猎手不参与闪避。
         java.util.Arrays.fill(this.huntingM, false);
-        if (expert && !this.attackMode && myTc >= 0) {
+        if (expert && !expOutnumbered && !this.attackMode && myTc >= 0) {
             int huntersLeft = Math.min(4, Math.max(1, milCount / 2));
             for (int j = 0; j < eunits && huntersLeft > 0; ++j) {
                 int eo = j << 3;
@@ -1367,10 +1390,17 @@ public final class RuleBasedAi implements PlayerAi {
                 }
             }
             if (feudal) {
+                // Watch Tower 先研（EXP_WTFIRST，仅 Expert）：10/5/10 换塔甲
+                // 10→15+索敌² 16→25，是首波窗口最便宜的战略倍增器——Expert 败局
+                // 全在 ~2.3-2.9k 首波窗口，Forging(+1 攻) 换不了塔的生存。
+                if (EXP_WTFIRST && towerSlot >= 0 && game.canAfford(0, 2, 13)
+                        && game.tryResearch(0, towerSlot, 13)) {
+                    System.out.println("[ai] research WatchTower(wtfirst) t=" + game.tickCount);
+                }
                 if (smithSlot >= 0 && game.canAfford(0, 2, 4) && game.tryResearch(0, smithSlot, 4)) {
                     System.out.println("[ai] research Forging t=" + game.tickCount);
                 }
-                if (towerSlot >= 0 && game.canAfford(0, 2, 13) && game.tryResearch(0, towerSlot, 13)) {
+                if (!EXP_WTFIRST && towerSlot >= 0 && game.canAfford(0, 2, 13) && game.tryResearch(0, towerSlot, 13)) {
                     System.out.println("[ai] research WatchTower t=" + game.tickCount);
                 }
                 if (miningSlot >= 0 && game.canAfford(0, 2, 5) && game.tryResearch(0, miningSlot, 5)) {
@@ -1499,6 +1529,10 @@ public final class RuleBasedAi implements PlayerAi {
                     // 我方矿场(hdr[10]) 10 格内有金格被蹲才触发，锚点强制距矿场1 ≥8 格。
                     need = 1;
                     anchor = this.findSecondGold(game, myTc, hdr[10], game.tickCount);
+                } else if (expert && EXP_MANGONEL && feudal && smithDone == 0
+                        && !hasUC(recs, hdr[4], 6) && hdr[5] >= 25 && hdr[7] >= 15) {
+                    need = 6;            // EXP_MANGONEL：铁匠铺提到射箭场前（t8 是波 1 的
+                                         // 杀伤率倍增器；门槛 25/15≈成本+缓冲）
                 } else if (expert && feudal && archeryDone == 0 && !hasUC(recs, hdr[4], 7)
                         && hdr[5] >= 30 && hdr[7] >= 12) {
                     // v42 Expert：射箭场提到铁匠铺前。败局复盘（v41）：7/7 败局 smith 未建
@@ -1573,7 +1607,8 @@ public final class RuleBasedAi implements PlayerAi {
                     game.queueUnitTraining(0, 4);
                 }
                 if (smithDone > 0 && smithSlot >= 0 && canTrain(hdr, 8)
-                        && queueLen(recs, smithSlot) < 1 && hdr[5] >= 40 && hdr[6] >= 40
+                        && queueLen(recs, smithSlot) < 1
+                        && hdr[5] >= (EXP_MANGONEL ? 25 : 40) && hdr[6] >= (EXP_MANGONEL ? 25 : 40)
                         && game.canAfford(0, 0, 8)) {
                     game.queueUnitTraining(0, 8);    // 投石机产自铁匠铺（case 8 → 建筑 6）
                 }
