@@ -3,6 +3,12 @@
 > 院里晾着的活，按预期收益排序。开工前先看 `src/main/java/aoe/ai/README.md`
 > 的排除项（别再试清单）和 `docs/game-mechanics.md` 的机制档案。
 > 完成一项就从本档划掉一项（或标 done+日期），别让它烂尾成考古现场。
+>
+> **【2026-09-06 AI 探索期收官】**以下条目全部转 **resting point**（登记在案
+> 的暂停项，非承诺待办）。重启攻关时的入口排序见 `docs/REVIEW.md`。
+> 已结项：A.3 钓鱼 Volley（m6 六轮 probe 否决"守军不抱团"，被帖扫路线取代）；
+> B.5 附带发现 seed 1002 确定性 STALL 已随 Easy 阈值恢复原版自然消失
+> （早期分出胜负，僵局不再成立，无需跳过表）。
 
 ## A. 战役 AI（camloop + devPhase 成对批测）
 
