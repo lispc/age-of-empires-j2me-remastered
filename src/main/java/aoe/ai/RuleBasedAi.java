@@ -211,6 +211,12 @@ public final class RuleBasedAi implements PlayerAi {
     // 铁匠铺（25W）/补塔（22W）全部饿死在木上。
     private static final boolean EXP_ECO_KILL =
         System.getProperty("aoe.expEcoKill", "0").equals("1");
+    // Horse Collar（磨坊 tech 6，10W/5G）：hdr[56] 训练速度再 +50%（磨坊完工已
+    // +50%：1024→1536→2304，剑士 64t→28.3t/个）——波 2/3 消耗战补兵与 CRUSHED
+    // 后重建成军的关键提速。unit-stats.md 旧注"木产量[50]+5"是数据表误注
+    // （效果=hdr[56] 增量，c.java 磨坊完工/HC 研究 6233/6343 两级各 +50%）。
+    private static final boolean EXP_HORSECOLLAR =
+        System.getProperty("aoe.expHorsecollar", "0").equals("1");
     // ===== aiK build-order 旋钮（2026-09-06 逐种子离线搜索，B.5）=====
     // 契约：属性 aoe.aiK.<name> 未设置时默认值=改动前行为（逐字节一致，已用
     // 1000-1019 全 19 种子日志 diff 验证）。每个旋钮登记：名字/含义/默认值。
@@ -275,6 +281,12 @@ public final class RuleBasedAi implements PlayerAi {
     // slot[2]（防装填清零）；攻击态单位不重定向（打断=装填清零，且它已在输出）。
     // 两带 10/20（基线 8/20,8 存量胜全保,样本外 1020+ 带 +1）;aoe.exm.focus=0 回退。
     private static final int EXM_FOCUS = exm("focus", 1);
+    // 围城期裸成本应急生产（0=关）：threat（DEFEND 激活）或任一完工塔 HP<220
+    // 时军事门按裸成本放行——剑士 W 15→5、t8 25/25→20/20。败局经济学：G 全程
+    // 囤积 31→129 而部队恒顶帽 5-6 无补充——卡点是 W≥15 缓冲门认不出"半死
+    // 收入"（现有放行只认 woodW==0+无可采木）。排队不付款语义使放行的资源
+    // 风险≈0（扣款在产出时，产出失败才退款路径不存在→放行只会多试不会囤积）。
+    private static final int EXM_EMGPROD = exm("emgprod", 0);
     // 集火候选距离门（距防御锚点格²）。**64=8 格是几何最优**：恰覆盖紧凑塔环
     // 3/5/7/9/11 主力段;36=6 格候选进出半径导致目标抖动（丢 1012/1013）,
     // 100=10 格追出圈=v2 冲锋教训重演。不要调成可变参数。
@@ -467,6 +479,7 @@ public final class RuleBasedAi implements PlayerAi {
         int lumberN = 0, miningN = 0, millN = 0, towerN = 0, stableDone = 0, siegeDone = 0;
         int tcSlot = -1, houseSlot = -1, barracksSlot = -1, archerySlot = -1, smithSlot = -1;
         int lumberSlot = -1, miningSlot = -1, towerSlot = -1, stableSlot = -1, siegeSlot = -1;
+        int millSlot = -1;                            // 磨坊（Horse Collar 研究位）
         int barracks2Slot = -1;                      // 第二兵营（Expert 专建）
         boolean anyUC = false;
         this.towerCnt = 0;
@@ -486,7 +499,7 @@ public final class RuleBasedAi implements PlayerAi {
                 case 6:  if (!uc) { ++smithDone; if (smithSlot < 0) smithSlot = o; } break;
                 case 0:  ++lumberN; if (!uc && lumberSlot < 0) lumberSlot = o; break;
                 case 1:  ++miningN; if (!uc && miningSlot < 0) miningSlot = o; break;
-                case 5:  ++millN; break;
+                case 5:  ++millN; if (!uc && millSlot < 0) millSlot = o; break;
                 case 12: ++towerN; if (!uc && towerSlot < 0) towerSlot = o;
                     if (!uc && this.towerCnt < 8) {
                         this.towerTiles[this.towerCnt++] = recs[o + 0];
@@ -823,8 +836,12 @@ public final class RuleBasedAi implements PlayerAi {
             game.clearSelection();
             }
             if (invaderD2 <= 64 || defendAnchor != myTc) {
+                // mil=N 注记：残局全军尽没后本行每 48t 照打（指令自然空转），
+                // 不带 mil 会把 mil=0 的假 focus 行当真实防御指挥误读（game3
+                // 2758-2998 尸检教训）
                 System.out.println("[ai] DEFEND invader " + invaderN + " at " + (defendTile >>> 8) + ","
                     + (defendTile & 0xFF) + (defendAnchor != myTc ? " (tower)" : "")
+                    + " mil=" + milCount
                     + (focusTile >= 0 ? " focus " + (focusTile >>> 8) + "," + (focusTile & 0xFF)
                         + " hp" + focusHp : "")
                     + " t=" + game.tickCount);
@@ -1553,6 +1570,12 @@ public final class RuleBasedAi implements PlayerAi {
                         && game.tryResearch(0, lumberSlot, 1)) {
                     System.out.println("[ai] research BowSaw t=" + game.tickCount);
                 }
+                // Horse Collar（磨坊 tech 6，10W/5G）：训练速度第二级 +50%——
+                // 波 2/3 消耗战补兵/CRUSHED 后重建成军提速（64t→28.3t/剑士）。
+                if (EXP_HORSECOLLAR && millSlot >= 0 && game.canAfford(0, 2, 6)
+                        && game.tryResearch(0, millSlot, 6)) {
+                    System.out.println("[ai] research HorseCollar t=" + game.tickCount);
+                }
                 if (smithSlot >= 0 && hdr[6] >= 25 && game.canAfford(0, 2, 8) && game.tryResearch(0, smithSlot, 8)) {
                     System.out.println("[ai] research ScaleMail t=" + game.tickCount);
                 }
@@ -1739,11 +1762,29 @@ public final class RuleBasedAi implements PlayerAi {
                 && findResource(game, myTc, 2, game.tickCount) < 0;
             boolean woodIncomeDead = woodW == 0
                 && findResource(game, myTc, 1, game.tickCount) < 0;
+            // 围城信号（EXM_EMGPROD 用）：DEFEND 已激活或任一完工塔 HP<220。
+            // 败局实态是"1 伐木工活着但 W 恒 5-20"——半死收入放不出 15 木缓冲，
+            // 兵被歼后补位窗整个错过（G 反而囤到 129 无处可花）。
+            boolean siege = threat;
+            if (!siege) {
+                for (int si = 0; si < hdr[4]; ++si) {
+                    int so = si << 2;
+                    int sbt = recs[so + 3] & 0xFF;
+                    if ((recs[so + 2] & 0x40000000) != 0 || sbt < 12 || sbt > 15) {
+                        continue;
+                    }
+                    if ((recs[so + 2] & 0xFF) < 220) {
+                        siege = true;
+                        break;
+                    }
+                }
+            }
+            boolean emg = EXM_EMGPROD != 0 && siege;
             if (popRoom && barracksDone > 0 && vills >= K_MIL_VILLS) {
                 int meleeType = feudal ? 3 : 2;
                 if (canTrain(hdr, meleeType) && queueLen(recs, barracksSlot) < 2
-                        && hdr[5] >= (woodIncomeDead ? 5 : K_MELEE_W)
-                        && (feudal || hdr[6] >= (goldIncomeDead ? 5 : K_MELEE_G1))
+                        && hdr[5] >= (woodIncomeDead ? 5 : emg ? 5 : K_MELEE_W)
+                        && (feudal || hdr[6] >= (goldIncomeDead ? 5 : emg ? 5 : K_MELEE_G1))
                         && game.canAfford(0, 0, meleeType)) {
                     game.queueUnitTraining(0, meleeType);
                 }
@@ -1764,7 +1805,8 @@ public final class RuleBasedAi implements PlayerAi {
                 }
                 if (smithDone > 0 && smithSlot >= 0 && canTrain(hdr, 8)
                         && queueLen(recs, smithSlot) < (expert ? (EXP_ECO_KILL ? 2 : K_T8_Q) : 1)
-                        && hdr[5] >= (EXP_MANGONEL ? K_T8_W : 40) && hdr[6] >= (EXP_MANGONEL ? K_T8_G : 40)
+                        && hdr[5] >= (EXP_MANGONEL ? emg ? 20 : K_T8_W : 40)
+                        && hdr[6] >= (EXP_MANGONEL ? emg ? 20 : K_T8_G : 40)
                         && game.canAfford(0, 0, 8)) {
                     game.queueUnitTraining(0, 8);    // 投石机产自铁匠铺（case 8 → 建筑 6）
                 }

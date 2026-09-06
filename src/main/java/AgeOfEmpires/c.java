@@ -6569,12 +6569,25 @@ implements CommandListener {
                                             nArray10[n34] = nArray10[n34] | n4;
                                         }
                                     } else {
-                                        int[] nArray = this.buildingTable[i];
-                                        int n35 = n + 2;
-                                        nArray[n35] = nArray[n35] & 0xFF0000FF;
+                                        // spawn 失败（此路径唯一可达条件：单位表满 26，
+                                        // a() 的 tile 检查与上方寻位循环同谓词不会失败；且
+                                        // a() 已在帽检前 payCost——钱扣了兵没出）。本建筑整条
+                                        // 队列在此清零（进度+计数位），排队计数 hdr[49]/
+                                        // hdr[66+型] 必须同步递减，否则幽灵排队永久顶满
+                                        // canTrain 的"存活+排队<帽"→该兵种线静默锁死。
+                                        int wiped = (n4 >>> 16) + 1;
+                                        int[] nArray = this.playerUnitHeaders[i];
+                                        nArray[49] = nArray[49] - wiped;
+                                        if (--n3 < 0) {
+                                            n3 = 0;
+                                        }
+                                        nArray[66 + n3] = nArray[66 + n3] - wiped;
                                         int[] nArray11 = this.buildingTable[i];
+                                        int n35 = n + 2;
+                                        nArray11[n35] = nArray11[n35] & 0xFF0000FF;
+                                        int[] nArray12 = this.buildingTable[i];
                                         int n36 = n + 2;
-                                        nArray11[n36] = nArray11[n36] & 0xFF00FFFF;
+                                        nArray12[n36] = nArray12[n36] & 0xFF00FFFF;
                                     }
                                     if (i == 0) {
                                         this.requestStateSwitch(8);
@@ -7727,6 +7740,37 @@ implements CommandListener {
             this.techFlags[10 + n8] = 1;
         }
         this.e(n, 1, n8);
+        // 完工建筑带队列被拆：hdr[49]/hdr[66+型] 同步递减，否则幽灵排队永久占
+        // canTrain 的"存活+排队<帽"和 pop 的 [2]+[49] → 生产链静默锁死（围城战
+        // 兵营/房屋带队被拆是常态）。排除两类非队列建筑：在建(0x40000000)的
+        // byte2 是施工进度流出位；研究中(0x20000000)的 byte2 bit0 是研究标志
+        // （tryResearch |= 0x10000），都不是排队数。类型→计数器映射照抄取消
+        // 路径与生产 switch（民兵/侦察按玩家 0 时代折型——原作单升时代设计）。
+        if ((this.buildingTable[n][n4 + 2] & 0x60000000) == 0) {
+            int qN = this.buildingTable[n][n4 + 2] >>> 16 & 0xFF;
+            if (qN > 0) {
+                int qT = 1;
+                if (n8 == 10) {
+                    qT = this.playerUnitHeaders[0][0] == 0 ? 2 : 3;
+                } else if (n8 == 7) {
+                    qT = 4;
+                } else if (n8 == 8) {
+                    qT = this.playerUnitHeaders[0][0] >= 2 ? 6 : 5;
+                } else if (n8 == 6) {
+                    qT = 8;
+                } else if (n8 == 2) {
+                    qT = 7;
+                } else if (n8 == 3) {
+                    qT = 9;
+                }
+                int[] hdrQ = this.playerUnitHeaders[n];
+                hdrQ[49] = hdrQ[49] - qN;
+                if (--qT < 0) {
+                    qT = 0;
+                }
+                hdrQ[66 + qT] = hdrQ[66 + qT] - qN;
+            }
+        }
         switch (n8) {
             case 9: {
                 if (n == 0) {
