@@ -263,6 +263,30 @@ public final class RuleBasedAi implements PlayerAi {
     private static final int K_Q_FEUD_S = k("qFeudS", 1);
     private static final int K_Q_WAR_G = k("qWarG", 3);
     private static final int K_Q_TOWER_FULL = k("qTowerFull", 5);
+    // ===== exm 战斗微操旋钮（2026-09-03，波 1 防御期承伤结构/杀伤率搜索）=====
+    // 契约同 aiK.*：属性 aoe.exm.<name> 未设置时默认值=改动前行为（逐字节一致）。
+    private static int exm(String n, int d) {
+        String v = System.getProperty("aoe.exm." + n);
+        return v == null ? d : Integer.parseInt(v.trim());
+    }
+    // 防御集火（1=开,v41 默认）：DEFEND 期未接敌军事单位显式指向同一目标格——可见
+    // 敌军中 HP 最低者、平手取最近。先杀掉的敌人不再输出，1:N 时净承伤下降（战役
+    // #6 v8 已验证的 doctrine，RuleBasedAi 从未试过）。retask 禁律：目标格未变不重写
+    // slot[2]（防装填清零）；攻击态单位不重定向（打断=装填清零，且它已在输出）。
+    // 两带 10/20（基线 8/20,8 存量胜全保,样本外 1020+ 带 +1）;aoe.exm.focus=0 回退。
+    private static final int EXM_FOCUS = exm("focus", 1);
+    // 集火候选距离门（距防御锚点格²）。**64=8 格是几何最优**：恰覆盖紧凑塔环
+    // 3/5/7/9/11 主力段;36=6 格候选进出半径导致目标抖动（丢 1012/1013）,
+    // 100=10 格追出圈=v2 冲锋教训重演。不要调成可变参数。
+    private static final int EXM_FOCUS_D2 = exm("focusD2", 64);
+    // 闪避上限自适应（0=关，恒 milCount/2）：1=被围（敌≥2×我）时全员闪避；
+    // 2=被围时只 1 人闪避（保输出，赌塔火杀得回来）
+    private static final int EXM_DANCE = exm("dance", 0);
+    // 修塔人数上限（默认 2=v44/v46 现行为）。塔 255HP、1 修理工≈抵 1 剑士磨塔，
+    // 围城期修理容量直接=塔的存活时间。
+    private static final int EXM_REPCAP = exm("repcap", 2);
+    // 回血阈值（0=关：<100 撤 / >220 归）：1=撤 <130；2=归 >200；3=两者
+    private static final int EXM_HEAL = exm("heal", 0);
     // 螺旋侦察路点参数（函数 spiralWaypoint/spiralCount 在文件底部；静态方法无前置
     // 声明顺序问题，但字段初始化器引用这些常量必须文本序在前——JLS 8.3.3）。
     private static final int SCOUT_RINGS = 16;      // 螺旋半径 3,5,…,33（全图覆盖）
@@ -738,6 +762,36 @@ public final class RuleBasedAi implements PlayerAi {
             if (outnumbered) {
                 rangedTile = meleeTile;      // 全龟：远程也收进重叠区
             }
+            // EXM_FOCUS 集火目标：可见敌军中 HP 最低（平手取最近）、距防御锚点
+            // ≤EXM_FOCUS_D2 才入候选（防追出塔火圈）。敌 HP 全图挂可读
+            // （eslots[o+4]&0xFF）；无候选回退原驻点行为。expert 门内（含遥测——
+            // 非 Expert 不算不打，否则 Medium 的 DEFEND 日志会带 focus 注释）。
+            int focusTile = -1, focusHp = -1;
+            if (expert && EXM_FOCUS == 1 && defendAnchor >= 0) {
+                int fax = defendAnchor >>> 8, fay = defendAnchor & 0xFF;
+                int fHp = 0x100, fD2 = Integer.MAX_VALUE;
+                for (int j = 0; j < eunits; ++j) {
+                    int eo = j << 3;
+                    if ((eslots[eo + 3] & 0xFF) < 2 || !this.evis[j]) {
+                        continue;
+                    }
+                    int et = eslots[eo + 0] & 0xFFFF;
+                    int fdx = (et >>> 8) - fax, fdy = (et & 0xFF) - fay;
+                    int fd2 = fdx * fdx + fdy * fdy;
+                    if (fd2 > EXM_FOCUS_D2) {
+                        continue;
+                    }
+                    int ehp = eslots[eo + 4] & 0xFF;
+                    if (ehp < fHp || (ehp == fHp && fd2 < fD2)) {
+                        fHp = ehp;
+                        fD2 = fd2;
+                        focusTile = et;
+                    }
+                }
+                if (focusTile >= 0) {
+                    focusHp = fHp;
+                }
+            }
             if (expert) {
                 // v34 逐单位下令：攻击态（action==1）单位不动——群令 orderMove 会清
                 // slot[7] 攻击计数器并把缠斗中的兵拉开，48t 一次的重发等于周期性
@@ -750,7 +804,8 @@ public final class RuleBasedAi implements PlayerAi {
                             || i == this.scoutIds[0] || i == this.scoutIds[1]) {
                         continue;
                     }
-                    int tgt = (type == 4 || type == 8) ? rangedTile : meleeTile;
+                    int tgt = focusTile >= 0 ? focusTile
+                        : (type == 4 || type == 8) ? rangedTile : meleeTile;
                     if ((slots[o + 2] & 0xFFFF) != tgt) {
                         slots[o + 1] = slots[o + 0];
                         slots[o + 2] = (short) tgt;
@@ -770,6 +825,8 @@ public final class RuleBasedAi implements PlayerAi {
             if (invaderD2 <= 64 || defendAnchor != myTc) {
                 System.out.println("[ai] DEFEND invader " + invaderN + " at " + (defendTile >>> 8) + ","
                     + (defendTile & 0xFF) + (defendAnchor != myTc ? " (tower)" : "")
+                    + (focusTile >= 0 ? " focus " + (focusTile >>> 8) + "," + (focusTile & 0xFF)
+                        + " hp" + focusHp : "")
                     + " t=" + game.tickCount);
             }
         }
@@ -1009,6 +1066,10 @@ public final class RuleBasedAi implements PlayerAi {
         // ===== 残血回撤回血（必须在群令之后跑，覆盖被召回的回血单位） =====
         if (myTc >= 0 && !this.attackMode) {
             int healTile = enemyDir >= 0 ? AiKit.stanceTile(myTc, enemyDir, -3) : myTc;
+            // EXM_HEAL 回血阈值（消耗战老兵存活率）：更早撤（<130）更晚归（>200 的
+            // 反向=更早归 >200）。默认 100/220；expert 门内（Easy/Medium 恒原值）。
+            int healOut = expert && (EXM_HEAL == 1 || EXM_HEAL == 3) ? 130 : 100;
+            int healBack = expert && (EXM_HEAL == 2 || EXM_HEAL == 3) ? 200 : 220;
             for (int i = 0; i < units; ++i) {
                 int o = i << 3;
                 if ((slots[o + 3] & 0xFF) < 2) {
@@ -1016,7 +1077,7 @@ public final class RuleBasedAi implements PlayerAi {
                 }
                 int hp = slots[o + 4] & 0xFF;
                 if (this.healUntil[i] > game.tickCount) {
-                    if (hp > 220) {
+                    if (hp > healBack) {
                         this.healUntil[i] = 0;      // 回满归队（下个群令自然收编）
                         continue;
                     }
@@ -1026,7 +1087,7 @@ public final class RuleBasedAi implements PlayerAi {
                         slots[o + 7] = 0;
                         slots[o + 3] = (short) (slots[o + 3] & 0xFF);
                     }
-                } else if (threat && hp < 100 && milCount > 4) {
+                } else if (threat && hp < healOut && milCount > 4) {
                     this.healUntil[i] = game.tickCount + 600;
                     slots[o + 1] = slots[o + 0];
                     slots[o + 2] = (short) healTile;
@@ -1109,6 +1170,13 @@ public final class RuleBasedAi implements PlayerAi {
         if (expert && !this.attackMode && myTc >= 0) {
             int coverR2 = hdr[12];
             int maxDancers = Math.max(1, milCount / 2);
+            // EXM_DANCE 闪避上限自适应（被围=敌≥2×我）：1=全员走位（承伤结构优先，
+            // 敌装填全清）；2=只 1 人走位（保输出密度，赌塔火杀得回来）
+            if (EXM_DANCE == 1 && enemyMilCount >= milCount * 2) {
+                maxDancers = milCount;
+            } else if (EXM_DANCE == 2 && enemyMilCount >= milCount * 2) {
+                maxDancers = 1;
+            }
             int dancers = 0;
             for (int i = 0; i < units && dancers < maxDancers; ++i) {
                 int o = i << 3;
@@ -1763,7 +1831,7 @@ public final class RuleBasedAi implements PlayerAi {
                         }
                     }
                 }
-                for (int pick = 0; pick < 2 && repairers < 2; ++pick) {
+                for (int pick = 0; pick < EXM_REPCAP && repairers < EXM_REPCAP; ++pick) {
                     int bestI = -1, bestD2 = Integer.MAX_VALUE;
                     for (int i = 0; i < units; ++i) {
                         int o = i << 3;

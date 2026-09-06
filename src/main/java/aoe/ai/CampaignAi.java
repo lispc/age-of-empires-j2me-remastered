@@ -74,17 +74,26 @@ public final class CampaignAi implements PlayerAi {
         // 实测拖到 t=25M 不终局）——AI 按 [result] 契约主动认输，省批测时间。
         if (System.getProperty("aoe.exitOnResult") != null
                 && game.playerUnitHeaders[0][2] == 0) {
+            // v33 补丁（player-ai c75e004 移植）：产能还须 TC 活着——TC 毁+房屋
+            // 站着+木够时 canProduce 恒真→永不投降，而 tickCastleRace 见 tc<0
+            // 直接 return 永不训练，两侧互等成 35.7M tick 死锁（对方 game12
+            // 实测烧满批测超时）。通式：0 单位+无 TC = 无胜路。
             boolean canProduce = false;
             if (game.playerUnitHeaders[0][5] >= 5) {
                 int[] recs = game.buildingTable[0];
+                boolean hasHouse = false, hasTc = false;
                 for (int i = 0; i < game.playerUnitHeaders[0][4]; ++i) {
                     int o = i << 2;
-                    if ((recs[o + 3] & 0xFF) == 11 && (recs[o + 2] & 0xFF) == 255
-                            && (recs[o + 2] & 0x40000000) == 0) {
-                        canProduce = true;
-                        break;
+                    boolean done = (recs[o + 2] & 0xFF) == 255
+                            && (recs[o + 2] & 0x40000000) == 0;
+                    if (done && (recs[o + 3] & 0xFF) == 11) {
+                        hasHouse = true;
+                    }
+                    if (done && (recs[o + 3] & 0xFF) == 9) {
+                        hasTc = true;
                     }
                 }
+                canProduce = hasHouse && hasTc;
             }
             this.zeroUnitTicks = canProduce ? 0 : this.zeroUnitTicks + DECIDE_EVERY;
             if (this.zeroUnitTicks >= 500) {
@@ -584,11 +593,16 @@ public final class CampaignAi implements PlayerAi {
             int etc, int mtc) {
         int px = pos >>> 8, py = pos & 0xFF;
         int best = -1, bestD2 = Integer.MAX_VALUE;
+        int best2 = -1; // 次近格（同格防 no-op 用,v33 移植）
+        int best2D2 = Integer.MAX_VALUE;
         for (int y = 0; y < 64; ++y) {
             for (int x = 0; x < 64; ++x) {
                 int t = game.mapTiles[x + (y << 6)] & 0xFFF;
                 if ((t & 0x300) != 0x300 || (t & 3) != kind) {
                     continue;
+                }
+                if (((t >> 2) & 0x1F) == 0) {
+                    continue; // 枯竭格（v33 移植：拉锯尾段对枯竭格重派风暴实锤）
                 }
                 if (etc >= 0 && this.distToSegment(x, y, etc >>> 8, etc & 0xFF, mtc >>> 8, mtc & 0xFF) <= 25) {
                     continue; // 走廊 5 格内（d2≤25）不采
@@ -610,13 +624,23 @@ public final class CampaignAi implements PlayerAi {
                 }
                 int d2 = (x - px) * (x - px) + (y - py) * (y - py);
                 if (d2 < bestD2) {
+                    best2 = best;
+                    best2D2 = bestD2;
                     bestD2 = d2;
                     best = x << 8 | y;
+                } else if (d2 < best2D2) {
+                    best2D2 = d2;
+                    best2 = x << 8 | y;
                 }
             }
         }
         if (best < 0 && etc >= 0) {
             return this.nearestSafeResourceOffCorridor(game, pos, kind, es, eu, -1, -1); // 全在走廊上=不回避
+        }
+        if (best == pos && best2 >= 0) {
+            // 同格重派是 no-op（装载计时靠"重踏入"重启）——村民闲在最近格上时
+            // 派次近格。v33 移植：拉锯尾段对同格 16t 重派风暴实锤。
+            return best2;
         }
         return best;
     }
