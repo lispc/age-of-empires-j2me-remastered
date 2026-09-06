@@ -92,6 +92,7 @@ LLM 玩家代理的宏层（sel/goto/train/build/gather/rally/sitrep 等 FIFO �
 | `aoe.turbo=1` | tight-loop 主循环：不起 Timer，非 daemon 线程全速跑 tick（CPU 100% 预期；批量 AI 实验用。非 daemon 是保活需要：普通模式靠 Timer 线程撑 JVM） |
 | `aoe.noRender=1` | 跳过任务主视图渲染（dispatchRender case 6）。菜单/对话框仍渲染——菜单引擎嵌在渲染函数里，整跳会冻住导航。probe/click/ctile 失效 |
 | `aoe.playerAi=<全限定类名>` | 玩家 AI 帧首 hook：实现 `aoe.ai.PlayerAi`（`void tick(AgeOfEmpires.c game)`），每帧首调一次，自行节流；装载失败/tick 异常打 `[ai]` 并禁用 |
+| `aoe.enemyAi=<全限定类名>` | 敌方 AI 帧首 hook（同 playerAi 契约，反串 player 1）：装载优先取 `(int side)` 构造传 1，无则回退无参；装载成功且 gameMode==0（随机图）时抑制引擎 tickAi 的玩家 1 驱动；非随机图忽略并打一行 `[ai]` 日志。实现见 `aoe.ai.RuleBasedAi`（侧参数化）与 ai/README「EnemyAi」节 |
 | `aoe.exitOnResult=1` | 终局（startMissionBriefing z==98）无条件打印 `[result] WIN|LOSS ticks=N` 后 System.exit(0)——批量脚本契约，格式勿改 |
 | `aoe.mapSeed=N` | 随机图种子覆盖（beginMissionLoad 装载点，N 拆 hi/lo 两字节；不设则逐字节不变） |
 | `aoe.devPhase=N` | 进关相位 pin（N≥0）：菜单(4)→主视图(6)边首帧把 tickCount 拨到 N。战役地图本就恒定（res 103-109 种子字节非零），批测方差的真来源是菜单导航墙钟漂移造成的进关相位（敌 AI tickCount%10 选兵等）；同 N 必同结果，camloop/ailoop 均默认逐局 (i-1)*7（PHASE_STEP=off 关）。**坑**：AI 节流器若按绝对 tickCount 记 nextDecide，拨钟后恒冻结——CampaignAi/RuleBasedAi 已加回溯检测，新 AI 注意 |

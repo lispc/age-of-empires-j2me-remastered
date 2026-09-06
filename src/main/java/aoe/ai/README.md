@@ -490,3 +490,58 @@ enemyVis/eb/etc=敌TC坐标或?）；诊断配合 FIFO `aistate`（`tools/aoectl
 - 同一种子跨跑结果会翻（菜单导航墙钟相位）——诚实模式马拉松局放大该噪声
   （v62/v64 行为等价的 Medium 同批种子 8/10 vs 4/10）：只信多批合并带。
 
+## EnemyAi（反串 player 1，2026-09-07）
+
+`-Daoe.enemyAi=aoe.ai.RuleBasedAi` 让 RuleBasedAi 反串敌方（player 1），取代引擎
+原版敌 AI（tickAi 生产脚本），作为可选的强化对手。次要场景：同时挂
+`-Daoe.playerAi=aoe.ai.RuleBasedAi` 自对弈（平衡观察）。
+
+**挂载**：c.java onPaint 帧首与 playerAi 并列的 hook（同契约：反射装载失败/
+tick 异常打 `[ai]` 并禁用，不影响游戏；装载优先取 `(int side)` 构造传 1，无则
+回退无参）。装载成功且 gameMode==0（随机图）时 `enemyAiActive=true`，模拟段
+跳过 tickAi——敌方不再被旧脚本驱动（tickAi 的威胁扫描/免费资源滴/建筑/出兵/
+村民改派/stance 推进全部只服务 player 1，整体可跳）。战役/教学（gameMode
+16/32）aiEnabled=false 静态守军是有意设计，enemyAi 打一行日志后忽略。
+
+**side 参数化**：无参构造 = side 0（现状）；`RuleBasedAi(1)` = 反串。原 player-0
+硬编码统一走 `this.side/this.foe`（hdr/slots/buildingTable 下标 + selectUnits/
+orderMove/queueUnitTraining/tryResearch/canAfford/a 首参，共 ~70 处替换）。
+side 1 强制全图（fogHonest=false）：引擎迷雾是 player-0 单层（mapTiles 0x8000
+只被 player 0 单位揭开），player 1 没有自有雾层可诚实——侦察/探针/敌 TC 记忆
+模块全挂在 fogHonest 门上自然旁路。side 1 永不打印 `[result]`/System.exit
+（那是 player-0 视角批测契约，僵尸投降门整个跳过；敌方胜负由引擎 z=98 结算
+代打）。静态可变状态：无（全部 static 均为 final 常量/属性旋钮），两实例同
+JVM 共存安全。
+
+**引擎不对称发现（side 1 适配的根因，都实读 c.java 验证）**：
+- **研究完成效果只在 tickBuildings 的 i==0 分支生效**（techFlags 是全局单份
+  =player 0 科技态）：player 1 研究完成=静默清零无效果，升时代永不落地，
+  tryResearch 每 ~500t 重复扣款烧钱（Easy 实测 3.2M tick 空转）。→ side 1
+  **整个科技模块禁用**，封建门改用"兵营已建成"。
+- **出兵形态跟随 player 0 的时代**（tryTrainAiUnit 与 tickBuildings case 10/8
+  同键 `playerUnitHeaders[0][0]`：民兵↔剑士、侦察↔骑兵；convertUnitType 在
+  player 0 升时代时迁移双方队列计数）。→ meleeType 改键
+  `playerUnitHeaders[0][0]`（side 0 时与原 `feudal?3:2` 逐字节等价）——键自己
+  的 feudal 会排 swordsman 产 militia，hdr[66+型] 队列记账错位。
+- 弓箭手/投石机/冲车的 spawn（case 7/6/2）无时代门——side 1 不升时代也能出
+  全兵种；塔完工注册（case 12）按 player 参数化，天然对称。
+- **起始资源不对称**：Easy 起 player 1 只有 50/15/15（player 0 恒 200/100/100）
+  ——boot 配额 2木1金 无石工，建完兵营 S=5 永远攒不够封建 15S。→ side 1 补丁：
+  S<15 且有矿场时 boot 期保 1 石工（side 0 起始 100 石永不进此分支）。
+- 采集乘数（aiGatherMultiplier ×2/×3.07/×8）在交存结算处按 player 1 生效，
+  side 1 RB 照吃难度加成；免费资源滴在 tickAi 里，随抑制一起停用。
+
+**验证**（seed 1000 系，-b BFS，turbo headless）：
+- enemyAi vs 空转玩家（Easy）：`[ai] side=1` 正常发育（射箭场+5 塔+9 兵），
+  t=25008 DESPERATE 总攻拆空转玩家 TC → 引擎 `[result] LOSS ticks=25552`。
+- 自对弈（Medium 5 局，两侧同 AI）：见下方批测数字。
+- 默认路径零行为差：不设 enemyAi 时 regress 三连 PASS、replaycheck 一致、
+  ailoop 5 局与改动前基线逐种子同结果、`[ai]`/`[result]` 流仅 boot 行格式
+  差异（加 side= 前缀）。
+
+**已知限制**：side 1 无科技加成（攻防/采集/塔升级全是基值——研究效果引擎层面
+就是 player-0-only）；民兵帽 4 卡早期军值，进攻多靠 DESPERATE 兜底触发（对
+空转玩家）或正常 CRUSHED/OVERWHELM（对真玩家）；自对弈时两侧共享
+aiGatherMultiplier/aiAttackThreshold 难度旋钮语义（值按"敌方难度"解读，对
+side-1 实例是自身加成）。
+

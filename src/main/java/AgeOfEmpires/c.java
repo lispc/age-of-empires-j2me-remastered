@@ -2179,6 +2179,63 @@ implements CommandListener {
         }
     }
 
+    // ===== 敌方 AI 接口（移植新增，2026-09-07）=====
+    // -Daoe.enemyAi=<全限定类名>：与 playerAi 同契约（onPaint 帧首 hook、反射
+    // 装载失败/tick 异常打 [ai] 并禁用、不影响游戏），但反串 player 1——装载
+    // 优先取 (int side) 带参构造传 1，类没有该构造则回退无参（= side 0 语义，
+    // 由 AI 自己负责）。装载成功且 gameMode==0（随机图）时 enemyAiActive=true，
+    // 模拟段跳过引擎 tickAi——敌方不再被旧生产脚本驱动（tickAi 对 player 0 无
+    // 作用，其威胁扫描/村民改派/stance 推进也只服务 player 1，整体可跳）。
+    // 战役/教学（gameMode 16/32）aiEnabled=false 静态守军+任务脚本是有意设计，
+    // enemyAi 不接管：打一行日志后忽略（enemyAiActive=false，tickAi 照旧）。
+    private static final String ENEMY_AI_CLASS = System.getProperty("aoe.enemyAi");
+    private aoe.ai.PlayerAi enemyAiHook;
+    private boolean enemyAiDisabled;
+    private boolean enemyAiActive;
+    private boolean enemyAiModeLogged;
+
+    private void tickEnemyAi() {
+        if (this.gameMode != 0) {
+            this.enemyAiActive = false;
+            if (!this.enemyAiModeLogged) {
+                this.enemyAiModeLogged = true;
+                System.out.println("[ai] enemyAi ignored: gameMode=" + this.gameMode
+                    + " (非随机图，引擎敌 AI 照旧)");
+            }
+            return;
+        }
+        if (this.enemyAiHook == null) {
+            if (this.enemyAiDisabled) {
+                return;
+            }
+            try {
+                Class<?> aiClass = Class.forName(ENEMY_AI_CLASS);
+                try {
+                    this.enemyAiHook = (aoe.ai.PlayerAi) aiClass
+                        .getDeclaredConstructor(int.class).newInstance(1);
+                } catch (NoSuchMethodException noSideCtor) {
+                    this.enemyAiHook = (aoe.ai.PlayerAi) aiClass
+                        .getDeclaredConstructor().newInstance();
+                }
+                System.out.println("[ai] enemy AI loaded: " + ENEMY_AI_CLASS);
+            } catch (Throwable t) {
+                this.enemyAiDisabled = true;
+                System.out.println("[ai] enemy AI load failed: " + ENEMY_AI_CLASS + ": " + t);
+                return;
+            }
+        }
+        this.enemyAiActive = true;
+        try {
+            this.enemyAiHook.tick(this);
+        } catch (Throwable t) {
+            this.enemyAiDisabled = true;
+            this.enemyAiHook = null;
+            this.enemyAiActive = false;
+            System.out.println("[ai] enemy AI tick exception, disabled: " + t);
+            t.printStackTrace();
+        }
+    }
+
     /** 研究/升时代原语：与 y() case 2 完全同语义的核心三步（写建筑槽研究标志
      *  0x20000000|0x10000、清进度字节 0xFFFF00FF、payCost），但显式传建筑槽位
      *  下标（buildingSlot = buildingTable[player] 的记录起点，4 int/记录；
@@ -2630,6 +2687,9 @@ implements CommandListener {
         if (PLAYER_AI_CLASS != null) {
             this.tickPlayerAi();
         }
+        if (ENEMY_AI_CLASS != null) {
+            this.tickEnemyAi();
+        }
         if (this.var_boolean_j) {
             if (Runtime.getRuntime().freeMemory() < 50000L) {
                 return;
@@ -2761,7 +2821,9 @@ implements CommandListener {
                         this.tickAutoEngage();
                         this.aimProjectiles();
                         this.tickProjectiles();
-                        this.tickAi();
+                        if (!this.enemyAiActive) {
+                            this.tickAi();  // enemyAi 接管 player 1 时跳过引擎生产脚本
+                        }
                         this.tickBuildings();
                         this.tickMissionScript();
                         if (this.ag <= 0) break;
