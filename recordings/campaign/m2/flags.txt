@@ -1,4 +1,4 @@
 mapSeed=8224
 bfsPath=1
+rmsDir=<work>/rms  # 选关公式: missionIndex=progress+N-1, 必须隔离
 tickms=10
-# 回放旗标必须与录制同款；campaign-replay.sh 已默认 bfsPath=1+mapSeed=8224

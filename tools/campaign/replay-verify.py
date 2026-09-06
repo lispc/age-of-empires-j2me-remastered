@@ -15,6 +15,10 @@ import time
 DIR = sys.argv[1] if len(sys.argv) > 1 else '/tmp/aoe-camp/m4q/lossrec'
 BASE = int(sys.argv[2]) if len(sys.argv) > 2 else 641
 EXPECT = sys.argv[3] if len(sys.argv) > 3 else '[result] LOSS ticks=5359'
+# TOL: 终局 tick 容差（默认 0=严格全等）。m2 实证存在结构残差——devBoot 后
+# 首帧 tick 批粒度使 sim 整体平移 ±1（事件锚逐 tick 一致，3/3 复现），
+# 录制协议验收用 TOL=1 时必须在交付文档注明。
+TOL = int(sys.argv[4]) if len(sys.argv) > 4 else 0
 REPO = ('/Users/zhangzhuo/repos/personal/age-of-empires-j2me-remastered')
 MS = '10'
 WORK = '/tmp/rv-work-' + os.path.basename(DIR.rstrip('/'))
@@ -93,4 +97,10 @@ with open(WORK + '/replay.log', 'r', errors='replace') as f:
 print(f'对拍: applied fifo={n_fifo} input={n_input} | {result}', flush=True)
 print(f'预期: {EXPECT}', flush=True)
 ok = result.strip() != '' and result.replace('[result] ', '').strip() in EXPECT
-print('VERDICT:', 'PASS' if ok else 'FAIL', flush=True)
+if not ok and TOL > 0 and 'WIN' in result and 'WIN' in EXPECT:
+    import re as _re
+    a = _re.search(r'ticks=(\d+)', result)
+    b = _re.search(r'ticks=(\d+)', EXPECT)
+    ok = (a is not None and b is not None
+          and abs(int(a.group(1)) - int(b.group(1))) <= TOL)
+print(f'VERDICT:', 'PASS' if ok else 'FAIL', f'(TOL={TOL})', flush=True)

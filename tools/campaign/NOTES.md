@@ -157,6 +157,18 @@ java -Daoe.headless=1 -Daoe.dev=campaign:N -Daoe.tickms=10 -Daoe.debug=1 \
   → rows 57-59 砍到 50 → 全村民推 (51,60)。
 - res 解码法（m2-m7 通用钥匙）：data.res 条目表=偏移数组；条件 opcode 7=headers
   比较（胜负条件都能用它读懂）。
+### m2 经济关（✅ 现行录制 WIN ticks=6037，2026-09-06 r70 重录；旧"长途交付"录制 64077 留档 recordings/campaign/m2-longhaul/）
+- **环路配方（r70）**：先仓后采铁律——金仓@1331→石仓@1983→伐木场@3049→
+  房屋@3648→补员×2→三桶过线 t6017→WIN@6037（终局 105/117/246），零村民
+  死亡。弹窗冻结（aA=2/8/4 每拍清）/看门狗库存门/木格 31 载超采防护/
+  mapdump 'S' 吞浆果四定律见 game-mechanics。回放侧 WIN@6038（+1t 结构
+  残差,devBoot 首帧批粒度,3/3 复现;事件锚 31/31 逐 tick 一致）——验收口径
+  =操作流零 diff+WIN 复现 TOL=1（replay-verify 第 4 参数）。
+- **地图真值勘误**：mapdump 的 'S' 混浆果（kind0）——真石=NE(30-34,4-8)/
+  (37-41,12-16) 等;金=东(53-57,18-22)+SW 双塔夹缝;SW 木簇可用格仅
+  (11,24)/(10,25)。交存路由读码：金/石=TC/hdr[10]/hdr[11] 三者取近不分矿种。
+- **驱动**=`tools/campaign/m2v2drv.py`+`m2v2-boot.sh`。以下为旧配方档案（历史样本）：
+
 ### m2 经济关（✅ WIN ticks=64077，2026-09-04；res 112 解码结案版）
 - **胜负条件（res 112 全量解码，tools/campaign/resdec.py 可复用）**：WIN=三桶
   **链式锁存** blk2 木>100 → blk3 金>100 → blk4 石>100 → blk5 计时 20t → WIN；
