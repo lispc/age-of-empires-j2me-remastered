@@ -211,6 +211,58 @@ public final class RuleBasedAi implements PlayerAi {
     // 铁匠铺（25W）/补塔（22W）全部饿死在木上。
     private static final boolean EXP_ECO_KILL =
         System.getProperty("aoe.expEcoKill", "0").equals("1");
+    // ===== aiK build-order 旋钮（2026-09-06 逐种子离线搜索，B.5）=====
+    // 契约：属性 aoe.aiK.<name> 未设置时默认值=改动前行为（逐字节一致，已用
+    // 1000-1019 全 19 种子日志 diff 验证）。每个旋钮登记：名字/含义/默认值。
+    // 历史禁区（配额类）只为逐种子特解保留——转正默认必须过 Step3 全局验收。
+    private static int k(String n, int d) {
+        String v = System.getProperty("aoe.aiK." + n);
+        return v == null ? d : Integer.parseInt(v.trim());
+    }
+    // 军事生产总门：vills 下限（默认 3）——调低=军事更早起步，调高=经济先行
+    private static final int K_MIL_VILLS = k("milVills", 3);
+    // 近战木门（兵营 1/2 共用，默认 15）
+    private static final int K_MELEE_W = k("meleeW", 15);
+    // 近战金门：兵营 1 封建前（默认 25）/兵营 2 封建后（默认 15）
+    private static final int K_MELEE_G1 = k("meleeG1", 25);
+    private static final int K_MELEE_G2 = k("meleeG2", 15);
+    // 弓兵木门（默认 25）
+    private static final int K_ARCH_W = k("archW", 25);
+    // 兵营建筑门 W/S（默认 30/15；战中重建与平时建链共用）
+    private static final int K_BARR_W = k("barrW", 30);
+    private static final int K_BARR_S = k("barrS", 15);
+    // 塔门 W/G/S（默认 22/6/16）。塔 1/2 新建门 = 基础门 +6/+2/+4（默认 28/8/20，
+    // 随旋钮联动）；战中补塔/塔 3-5 链用基础门
+    private static final int K_TOWER_W = k("towerW", 22);
+    private static final int K_TOWER_G = k("towerG", 6);
+    private static final int K_TOWER_S = k("towerS", 16);
+    // 塔数量上限（默认 5=TOWER_DIST[_EXPER] 表长；>5 时复用表末距离）
+    private static final int K_TOWER_CAP = k("towerCap", 5);
+    // 铁匠铺门（EXP_MANGONEL 前置支默认 25/15；射箭场后备支默认 30/22）
+    private static final int K_SMITH_W = k("smithW", 25);
+    private static final int K_SMITH_S = k("smithS", 15);
+    private static final int K_SMITH2_W = k("smith2W", 30);
+    private static final int K_SMITH2_S = k("smith2S", 22);
+    // t8 生产门 W/G（默认 25/25）与排队上限（默认 1=现行为；expEcoKill 捆绑里的
+    // 排队 2 未做过归因分解，此旋钮单独验证）
+    private static final int K_T8_W = k("t8w", 25);
+    private static final int K_T8_G = k("t8g", 25);
+    private static final int K_T8_Q = k("t8q", 1);
+    // Bow Saw 研究木门（默认 30）
+    private static final int K_BOWSAW_W = k("bowsawW", 30);
+    // GoldMining 最早研究 tick（默认 0=封建立即可研；StoneMining 走 smTowerUnder）
+    private static final int K_GM_TICK = k("gmTick", 0);
+    // StoneMining 研究的塔数上限门（默认 5；=0 可整体关掉 StoneMining 研究省费用）
+    private static final int K_SM_TOWER_UNDER = k("smTowerUnder", 5);
+    // 村民配额（历史禁区）：boot 木/金（默认 2/1）、封建 木/金/石（默认 1/2/1）、
+    // 开战金配额（默认 3；石 1 时为 qWarG-1=2）、配额"塔满"界（默认 5）
+    private static final int K_Q_BOOT_W = k("qBootW", 2);
+    private static final int K_Q_BOOT_G = k("qBootG", 1);
+    private static final int K_Q_FEUD_W = k("qFeudW", 1);
+    private static final int K_Q_FEUD_G = k("qFeudG", 2);
+    private static final int K_Q_FEUD_S = k("qFeudS", 1);
+    private static final int K_Q_WAR_G = k("qWarG", 3);
+    private static final int K_Q_TOWER_FULL = k("qTowerFull", 5);
     // 螺旋侦察路点参数（函数 spiralWaypoint/spiralCount 在文件底部；静态方法无前置
     // 声明顺序问题，但字段初始化器引用这些常量必须文本序在前——JLS 8.3.3）。
     private static final int SCOUT_RINGS = 16;      // 螺旋半径 3,5,…,33（全图覆盖）
@@ -1192,12 +1244,12 @@ public final class RuleBasedAi implements PlayerAi {
             // 村民配额（v3 起：金优先——军事单位全吃金，木头永远过剩；三败全是金=0
             // 僵尸队列饿死的）。boot 期 2木1金；封建后 1木2金，塔未满 5 座压 1 人采石；
             // 开战后（敌亮过 6+ 兵）且塔≥3 → 1木3金 全力暴兵。
-            int woodTarget = 1, goldTarget = 2, stoneTarget = 0;
+            int woodTarget = K_Q_FEUD_W, goldTarget = K_Q_FEUD_G, stoneTarget = 0;
             if (!feudal) {
-                woodTarget = 2;
-                goldTarget = 1;
-            } else if (miningN > 0 && towerN < 5) {
-                stoneTarget = 1;
+                woodTarget = K_Q_BOOT_W;
+                goldTarget = K_Q_BOOT_G;
+            } else if (miningN > 0 && towerN < K_Q_TOWER_FULL) {
+                stoneTarget = K_Q_FEUD_S;
             }
             if (this.enemyMilPeak >= 6 && towerN >= 3 && miningN > 0) {
                 // 开战状态（敌亮过 6+ 兵）：石料 buffered/塔满才 3 金全力暴兵；
@@ -1208,9 +1260,9 @@ public final class RuleBasedAi implements PlayerAi {
                 // v41（第五批）：铁匠铺未起也要保 1 石工——v40 seed 1001 实锤：
                 // 5 塔完工后 stoneTarget=0 → 石恒 5-17 < smith 门槛 25 → smith/射箭场
                 // 永动机位锁死，W/G 囤 165/173 无产能转化，6 剑士被磨到城破。
-                stoneTarget = (towerN < 5 || (feudal && smithDone == 0 && !hasUC(recs, hdr[4], 6)))
+                stoneTarget = (towerN < K_Q_TOWER_FULL || (feudal && smithDone == 0 && !hasUC(recs, hdr[4], 6)))
                         && hdr[7] < 25 ? 1 : 0;
-                goldTarget = stoneTarget == 1 ? 2 : 3;
+                goldTarget = stoneTarget == 1 ? K_Q_WAR_G - 1 : K_Q_WAR_G;
             }
             // 诚实模式资源发现兜底（v60-v62）：木或金整类**无可派格**（与派工同一
             // 个 findResource 口径——v60/v61 用"已探索"口径被死水死角林卡死：格已探
@@ -1413,10 +1465,11 @@ public final class RuleBasedAi implements PlayerAi {
                 if (!EXP_WTFIRST && towerSlot >= 0 && game.canAfford(0, 2, 13) && game.tryResearch(0, towerSlot, 13)) {
                     System.out.println("[ai] research WatchTower t=" + game.tickCount);
                 }
-                if (miningSlot >= 0 && game.canAfford(0, 2, 5) && game.tryResearch(0, miningSlot, 5)) {
+                if (miningSlot >= 0 && game.tickCount >= K_GM_TICK
+                        && game.canAfford(0, 2, 5) && game.tryResearch(0, miningSlot, 5)) {
                     System.out.println("[ai] research GoldMining t=" + game.tickCount);
                 }
-                if (miningSlot >= 0 && towerN < 5 && game.canAfford(0, 2, 9)
+                if (miningSlot >= 0 && towerN < K_SM_TOWER_UNDER && game.canAfford(0, 2, 9)
                         && game.tryResearch(0, miningSlot, 9)) {
                     System.out.println("[ai] research StoneMining t=" + game.tickCount);
                 }
@@ -1427,7 +1480,7 @@ public final class RuleBasedAi implements PlayerAi {
                 // （v38 败局 5/6 木=0 卡死一切，金/石反囤），单木工 +50% 收入=续命。
                 // W≥30 门槛防与战中补塔(22 木)抢木料（v43 降到 15 实测 3/10 回滚——
                 // 木紧的局连 15 的窗口都踩不中，反而扰动 build 链）。
-                if (lumberSlot >= 0 && hdr[5] >= (expert && EXP_ECO_KILL ? 15 : 30)
+                if (lumberSlot >= 0 && hdr[5] >= (expert && EXP_ECO_KILL ? 15 : K_BOWSAW_W)
                         && game.canAfford(0, 2, 1)
                         && game.tryResearch(0, lumberSlot, 1)) {
                     System.out.println("[ai] research BowSaw t=" + game.tickCount);
@@ -1462,6 +1515,7 @@ public final class RuleBasedAi implements PlayerAi {
             if (!anyUC) {
                 int need = -1, anchor = myTc;
                 int[] tdist = expert ? TOWER_DIST_EXPERT : TOWER_DIST;
+                int tcap = Math.min(K_TOWER_CAP, tdist.length);   // aiK 塔数量上限
                 if (threat) {
                     // 交战中只补塔（敌 12 格内）：seed 1019 兵临城下连放 4 座铁匠铺全被
                     // 秒拆白烧 100 木 80 石；塔例外——战中补塔=战力，且敌军索敌优先打塔，
@@ -1475,11 +1529,11 @@ public final class RuleBasedAi implements PlayerAi {
                     // 不设兵数门：mil=1 时威胁期既不训练（无兵营）也派不出侦察
                     // （mil<3），敌 TC 永远找不到=全机器锁死（seed 1006 phase35
                     // 实测金 3909/石 2025/木 170 烂库僵 6.9M tick）。
-                    if (towerN < tdist.length && hdr[5] >= 22 && hdr[6] >= 6 && hdr[7] >= 16) {
+                    if (towerN < tcap && hdr[5] >= K_TOWER_W && hdr[6] >= K_TOWER_G && hdr[7] >= K_TOWER_S) {
                         need = 12;
-                        anchor = corridorAnchor(myTc, enemyTc, enemyDir, tdist[towerN], towerN);
+                        anchor = corridorAnchor(myTc, enemyTc, enemyDir, tdistAt(tdist, towerN), towerN);
                     } else if (barracksDone == 0 && !hasUC(recs, hdr[4], 10)
-                            && hdr[5] >= 30 && hdr[7] >= 15) {
+                            && hdr[5] >= K_BARR_W && hdr[7] >= K_BARR_S) {
                         need = 10;
                     } else if (expert && EXP_CAMPREBUILD
                             && ((miningN == 0 && !hasUC(recs, hdr[4], 1))
@@ -1522,9 +1576,10 @@ public final class RuleBasedAi implements PlayerAi {
                     anchor = findResource(game, myTc, 1, game.tickCount);
                 } else if (lumberN == 0 && !this.noWoodRes && hdr[5] >= 20 && !FOG_HONEST) {
                     this.noWoodRes = true;   // 全图模式：全图无木才锁存（v56 语义）
-                } else if (barracksDone == 0 && !hasUC(recs, hdr[4], 10) && hdr[5] >= 30 && hdr[7] >= 15) {
+                } else if (barracksDone == 0 && !hasUC(recs, hdr[4], 10) && hdr[5] >= K_BARR_W && hdr[7] >= K_BARR_S) {
                     need = 10;                                   // 兵营：出兵 + 封建前置
-                } else if (towerN + ucCount(recs, hdr[4], 12) < 1 && hdr[5] >= 28 && hdr[6] >= 8 && hdr[7] >= 20) {
+                } else if (towerN + ucCount(recs, hdr[4], 12) < 1
+                        && hdr[5] >= K_TOWER_W + 6 && hdr[6] >= K_TOWER_G + 2 && hdr[7] >= K_TOWER_S + 4) {
                     need = 12;                                   // 走廊塔 1：敌 rush 最早 ~3.5k（近距图），塔必须先就位
                     anchor = corridorAnchor(myTc, enemyTc, enemyDir, tdist[0], 0);
                 } else if (miningN == 0 && !this.noGoldRes && hdr[5] >= 20
@@ -1533,7 +1588,8 @@ public final class RuleBasedAi implements PlayerAi {
                     anchor = findResource(game, myTc, 2, game.tickCount);
                 } else if (miningN == 0 && !this.noGoldRes && hdr[5] >= 20 && !FOG_HONEST) {
                     this.noGoldRes = true;   // 全图模式：全图无金才锁存（v56 语义）
-                } else if (towerN + ucCount(recs, hdr[4], 12) < 2 && hdr[5] >= 28 && hdr[6] >= 8 && hdr[7] >= 20) {
+                } else if (towerN + ucCount(recs, hdr[4], 12) < 2
+                        && hdr[5] >= K_TOWER_W + 6 && hdr[6] >= K_TOWER_G + 2 && hdr[7] >= K_TOWER_S + 4) {
                     need = 12;                                   // 走廊塔 2
                     anchor = corridorAnchor(myTc, enemyTc, enemyDir, tdist[1], 1);
                 } else if (expert && houseN < 4 && hdr[5] >= 5) {
@@ -1544,11 +1600,11 @@ public final class RuleBasedAi implements PlayerAi {
                                                                  // （v50 试过射箭场取代兵营2：3/10 回滚——
                                                                  //  兵营1 被拆后的重建路径也要走这格，
                                                                  //  且弓兵 10 木/个在石贫图挤占补塔木）
-                } else if (expert && towerN < tdist.length && (towerN < 3 || this.enemyMilPeak < 6)
+                } else if (expert && towerN < tcap && (towerN < 3 || this.enemyMilPeak < 6)
                         && !hasUC(recs, hdr[4], 12)
-                        && hdr[5] >= 22 && hdr[6] >= 6 && hdr[7] >= 16) {
+                        && hdr[5] >= K_TOWER_W && hdr[6] >= K_TOWER_G && hdr[7] >= K_TOWER_S) {
                     need = 12;                                   // v47：塔 1-3 恒优先（波 1 最低防线），
-                    anchor = corridorAnchor(myTc, enemyTc, enemyDir, tdist[towerN], towerN); // 塔 4-5 战前优先、战后让位给
+                    anchor = corridorAnchor(myTc, enemyTc, enemyDir, tdistAt(tdist, towerN), towerN); // 塔 4-5 战前优先、战后让位给
                 }                                                // 射箭场/铁匠铺（v48 全压 3 座实测：
                                                                  // 石贫图 1006 波 1 少 2 塔提前 2500t 崩盘，
                                                                  // 回滚到 peak<6 门；v53 加 S≥40 石富门
@@ -1562,7 +1618,7 @@ public final class RuleBasedAi implements PlayerAi {
                     need = 1;
                     anchor = this.findSecondGold(game, myTc, hdr[10], game.tickCount);
                 } else if (expert && EXP_MANGONEL && feudal && smithDone == 0
-                        && !hasUC(recs, hdr[4], 6) && hdr[5] >= 25 && hdr[7] >= 15) {
+                        && !hasUC(recs, hdr[4], 6) && hdr[5] >= K_SMITH_W && hdr[7] >= K_SMITH_S) {
                     need = 6;            // EXP_MANGONEL：铁匠铺提到射箭场前（t8 是波 1 的
                                          // 杀伤率倍增器；门槛 25/15≈成本+缓冲）
                 } else if (expert && feudal && archeryDone == 0 && !hasUC(recs, hdr[4], 7)
@@ -1575,16 +1631,16 @@ public final class RuleBasedAi implements PlayerAi {
                     // 永远够不到 15；成本只要 25W/10S，边际 5W/2S 的保险换成解锁产能。
                     need = 7;
                 } else if (expert && feudal && smithDone == 0 && !hasUC(recs, hdr[4], 6)
-                        && hdr[5] >= 30 && hdr[7] >= 22) {
+                        && hdr[5] >= K_SMITH2_W && hdr[7] >= K_SMITH2_S) {
                     need = 6;                                    // v56 Expert：smith 石门槛 25→22（成本 20S，
                 } else if (feudal && smithDone == 0 && !hasUC(recs, hdr[4], 6) && hdr[5] >= 35 && hdr[7] >= 25) {  // 边际 2S）；Medium 走下一条共享分支不变
                     need = 6;                                    // 铁匠铺：攻防升级 + 投石机（产 t8 的建筑）
                 } else if (feudal && archeryDone == 0 && !hasUC(recs, hdr[4], 7) && hdr[5] >= 35 && hdr[7] >= 15) {
                     need = 7;                                    // 射箭场：弓兵反制敌投石机
-                } else if (towerN < tdist.length && !hasUC(recs, hdr[4], 12)
-                        && hdr[5] >= 22 && hdr[6] >= 6 && hdr[7] >= 16) {
+                } else if (towerN < tcap && !hasUC(recs, hdr[4], 12)
+                        && hdr[5] >= K_TOWER_W && hdr[6] >= K_TOWER_G && hdr[7] >= K_TOWER_S) {
                     need = 12;                                   // 走廊塔 3-5：阶梯前推（v3 提到房屋/磨坊前，
-                    anchor = corridorAnchor(myTc, enemyTc, enemyDir, tdist[towerN], towerN); // 塔是抗消耗主力；v6/v15 降门槛保战中补塔）
+                    anchor = corridorAnchor(myTc, enemyTc, enemyDir, tdistAt(tdist, towerN), towerN); // 塔是抗消耗主力；v6/v15 降门槛保战中补塔）
                 } else if (houseN < 4 && (hdr[2] + hdr[49] >= hdr[3] - 1 || hdr[5] >= 80)) {
                     need = 11;                                   // 补人口到 25 硬顶（上限 4 座）
                 } else if (feudal && millN == 0 && hdr[5] >= 30 && hdr[7] >= 15) {
@@ -1615,16 +1671,16 @@ public final class RuleBasedAi implements PlayerAi {
                 && findResource(game, myTc, 2, game.tickCount) < 0;
             boolean woodIncomeDead = woodW == 0
                 && findResource(game, myTc, 1, game.tickCount) < 0;
-            if (popRoom && barracksDone > 0 && vills >= 3) {
+            if (popRoom && barracksDone > 0 && vills >= K_MIL_VILLS) {
                 int meleeType = feudal ? 3 : 2;
                 if (canTrain(hdr, meleeType) && queueLen(recs, barracksSlot) < 2
-                        && hdr[5] >= (woodIncomeDead ? 5 : 15)
-                        && (feudal || hdr[6] >= (goldIncomeDead ? 5 : 25))
+                        && hdr[5] >= (woodIncomeDead ? 5 : K_MELEE_W)
+                        && (feudal || hdr[6] >= (goldIncomeDead ? 5 : K_MELEE_G1))
                         && game.canAfford(0, 0, meleeType)) {
                     game.queueUnitTraining(0, meleeType);
                 }
                 if (barracks2Slot >= 0 && canTrain(hdr, meleeType) && queueLen(recs, barracks2Slot) < 2
-                        && hdr[5] >= 15 && feudal && hdr[6] >= 15
+                        && hdr[5] >= K_MELEE_W && feudal && hdr[6] >= K_MELEE_G2
                         && game.canAfford(0, 0, meleeType)) {
                     // 第二兵营（Expert）要自己写队列位——queueUnitTraining 只会排到同类型
                     // 第一座建筑（c.java:6519 按记录序扫），语义照抄该原语：排队不付款，
@@ -1634,13 +1690,13 @@ public final class RuleBasedAi implements PlayerAi {
                     hdr[66 + meleeType - 1] += 1;
                 }
                 if (archeryDone > 0 && archerySlot >= 0 && canTrain(hdr, 4)
-                        && queueLen(recs, archerySlot) < 2 && hdr[5] >= 25
+                        && queueLen(recs, archerySlot) < 2 && hdr[5] >= K_ARCH_W
                         && game.canAfford(0, 0, 4)) {
                     game.queueUnitTraining(0, 4);
                 }
                 if (smithDone > 0 && smithSlot >= 0 && canTrain(hdr, 8)
-                        && queueLen(recs, smithSlot) < (expert && EXP_ECO_KILL ? 2 : 1)
-                        && hdr[5] >= (EXP_MANGONEL ? 25 : 40) && hdr[6] >= (EXP_MANGONEL ? 25 : 40)
+                        && queueLen(recs, smithSlot) < (expert ? (EXP_ECO_KILL ? 2 : K_T8_Q) : 1)
+                        && hdr[5] >= (EXP_MANGONEL ? K_T8_W : 40) && hdr[6] >= (EXP_MANGONEL ? K_T8_G : 40)
                         && game.canAfford(0, 0, 8)) {
                     game.queueUnitTraining(0, 8);    // 投石机产自铁匠铺（case 8 → 建筑 6）
                 }
@@ -2226,6 +2282,11 @@ public final class RuleBasedAi implements PlayerAi {
     /** 建筑在训队列长度（rec[+2] 位 16..23；研究中的 0x10000 也算 1）。 */
     private static int queueLen(int[] recs, int slot) {
         return (recs[slot + 2] >> 16) & 0xFF;
+    }
+
+    /** aiK towerCap > 表长时塔距复用表末值（防 AIOOBE）。 */
+    private static int tdistAt(int[] tdist, int i) {
+        return tdist[Math.min(i, tdist.length - 1)];
     }
 
     private static boolean hasUC(int[] recs, int bcount, int type) {

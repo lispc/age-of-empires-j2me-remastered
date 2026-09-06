@@ -7,6 +7,30 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
+### 第 42 夜三: B.5 逐种子 build-order 离线搜索——零救活,方向判死(2026-09-06,sub-agent)
+
+- **Sub-agent 交接摘要**(60 工具调用/47min):aiK.* 约 20 个旋钮化(默认逐字节
+  一致,19 种子日志 diff 验证)→ 11 颗败局种子 14 组单旋钮 + 3 组组合筛选。
+  **结论:零救活,8/20 构型是 build-order 常数空间的局部最优**。唯一候选组合
+  C1(t8q=2+qFeudG=1)全局验收 5/20 净 -3,淘汰。降塔门/降铁匠门/降 t8 门/
+  qBootW=3 全部**更早死**(提前建军=抽干塔料);milVills=2/meleeW=10 与基线
+  逐 tick 一致(门不绑定)。**方向判死入 README 别再试**:败局签名(W=0/G囤/
+  mil 被歼)对开局序常数不敏感,±30% 死亡时间扰动无一翻胜。t8q=2 单独无益
+  也有了归因(expEcoKill 捆绑净负主因确系 Bow Saw 15)。
+- **方法论事故与教训(sub-agent 实测,已入 README)**:①phase pin 按**局序**
+  (i-1)*7 取值,不同 -n/-x 命令形状下同种子相位不同——跨命令形状比较无效,
+  1014 的"phase35 翻胜"是幻影(phase0 不复现),1014/1015/1018 定性"相位边际
+  种子";②ailoop EXTRA_D 带引号展开把多个 -D 并成单 argv → 属性值垃圾 →
+  AI 裸奔假 LOSS(三屏数据作废才暴露;判别法=多组变体给出完全相同的异常早死
+  tick)。两处工具缺陷已修(EXTRA_D 无引号展开+自检 PASS;README 记坑)。
+- **基建保留**:`aoe.aiK.*` 旋钮(默认零行为差)+ `tdistAt()` helper——未来
+  逐种子/逐相位实验直接可用;工作树未提交改动经主会话审阅+独立回归后入库。
+- **/tmp 归拢(本会话)**:~14GB 可再生垃圾清理;**用户存档备份抢救至持久位置**
+  `~/Library/Application Support/AoeJ2ME/backups/.nfo.rms.real-1358`(MD5 一致;
+  原 /tmp/aoe-camp/user-rms-backup-20260904/ 原件保留)。是否重置 ~/.aoe-desktop
+  进度仍留用户决定,现在清不清 /tmp 都不丢数据。
+- regress PASS + replaycheck 一致 + ailoop --selftest PASS。commit:本条目对应。
+
 ### 第 42 夜续: Expert 全图第二轮补测——campRebuild 零触发/ecoKill 净负,8/20 定档(2026-09-06)
 
 - **campRebuild 零触发**（交存线重建,威胁分支允许重建矿场/伐木场）：与基线
