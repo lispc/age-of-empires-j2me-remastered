@@ -68,19 +68,28 @@ public final class CampaignAi implements PlayerAi {
         // 房屋或木<5=产不出村民）持续 500t → 引擎判负链断（tickAi 的威胁扫描
         // 以我方单位为引，我方 0 单位时敌军 stance 永不推进，TC 站着也没人拆，
         // 实测拖到 t=25M 不终局）——AI 按 [result] 契约主动认输，省批测时间。
+        // v33 补丁：产能还须 TC 活着——game12 尸检：TC 毁+房屋站着+木够，
+        // canProduce 恒真→永不投降,而 tickCastleRace 见 tc<0 直接 return
+        // 永不训练,两侧互等成 35.7M tick 死锁（烧满批测超时）。所有关卡通式：
+        // 0 单位+无 TC = 无胜路（护送关无 TC 但也无房屋,走不到这条）。
         if (System.getProperty("aoe.exitOnResult") != null
                 && game.playerUnitHeaders[0][2] == 0) {
             boolean canProduce = false;
             if (game.playerUnitHeaders[0][5] >= 5) {
                 int[] recs = game.buildingTable[0];
+                boolean hasHouse = false, hasTc = false;
                 for (int i = 0; i < game.playerUnitHeaders[0][4]; ++i) {
                     int o = i << 2;
-                    if ((recs[o + 3] & 0xFF) == 11 && (recs[o + 2] & 0xFF) == 255
-                            && (recs[o + 2] & 0x40000000) == 0) {
-                        canProduce = true;
-                        break;
+                    boolean done = (recs[o + 2] & 0xFF) == 255
+                            && (recs[o + 2] & 0x40000000) == 0;
+                    if (done && (recs[o + 3] & 0xFF) == 11) {
+                        hasHouse = true;
+                    }
+                    if (done && (recs[o + 3] & 0xFF) == 9) {
+                        hasTc = true;
                     }
                 }
+                canProduce = hasHouse && hasTc;
             }
             this.zeroUnitTicks = canProduce ? 0 : this.zeroUnitTicks + DECIDE_EVERY;
             if (this.zeroUnitTicks >= 500) {
@@ -580,11 +589,16 @@ public final class CampaignAi implements PlayerAi {
             int etc, int mtc) {
         int px = pos >>> 8, py = pos & 0xFF;
         int best = -1, bestD2 = Integer.MAX_VALUE;
+        int best2 = -1; // 次近格(同格防 no-op 用,v33)
+        int best2D2 = Integer.MAX_VALUE;
         for (int y = 0; y < 64; ++y) {
             for (int x = 0; x < 64; ++x) {
                 int t = game.mapTiles[x + (y << 6)] & 0xFFF;
                 if ((t & 0x300) != 0x300 || (t & 3) != kind) {
                     continue;
+                }
+                if (((t >> 2) & 0x1F) == 0) {
+                    continue; // 枯竭格(v33:#4 拉锯尾段对枯竭格重派风暴实锤)
                 }
                 if (etc >= 0 && this.distToSegment(x, y, etc >>> 8, etc & 0xFF, mtc >>> 8, mtc & 0xFF) <= 25) {
                     continue; // 走廊 5 格内（d2≤25）不采
@@ -603,13 +617,23 @@ public final class CampaignAi implements PlayerAi {
                 }
                 int d2 = (x - px) * (x - px) + (y - py) * (y - py);
                 if (d2 < bestD2) {
+                    best2 = best;
+                    best2D2 = bestD2;
                     bestD2 = d2;
                     best = x << 8 | y;
+                } else if (d2 < best2D2) {
+                    best2D2 = d2;
+                    best2 = x << 8 | y;
                 }
             }
         }
         if (best < 0 && etc >= 0) {
             return this.nearestSafeResourceOffCorridor(game, pos, kind, es, eu, -1, -1); // 全在走廊上=不回避
+        }
+        if (best == pos && best2 >= 0) {
+            // 同格重派是 no-op（装载计时靠"重踏入"重启）——村民闲在最近格上时
+            // 派次近格。v33:#4 拉锯尾段 villagers 对同格 16t 重派风暴实锤。
+            return best2;
         }
         return best;
     }
@@ -1070,6 +1094,51 @@ public final class CampaignAi implements PlayerAi {
         if (invader >= 0) {
             this.m0Target = invader;
             AiKit.orderMilitary(game, invader, false);
+        } else if (towerN >= 1 && !swarm) {
+            // v32 军事护矿（拉锯桶主死因=v21 尸检病:敌在塔圈外的矿线露营,
+            // 村民逃命乒乓,金/石收入归零——塔圈豁免圈罩不到远矿,而军事只在
+            // TC 12 格内才出击,露营者永远没人管）:TC 无敌情时,清"村民 8 格内"
+            // 的站桩/接敌敌兵。只打不动的——追移动 raider 是 768 追 768 的
+            // 追逐僵局(v29 实锤);塔已立,TC 有底。
+            // v34:护矿需 milCount≥2(留 1 兵看家)——v32 单兵倾巢时敌溜进
+            // 石线,game6 翻负实锤(石断供→城堡永远差一口气)。
+            int camp = -1, campD2 = Integer.MAX_VALUE;
+            int milNow = 0;
+            for (int i = 0; i < units; ++i) {
+                if ((slots[(i << 3) + 3] & 0xFF) >= 2) {
+                    ++milNow;
+                }
+            }
+            if (milNow >= 2) {
+            for (int i = 0; i < eu; ++i) {
+                int o2 = i << 3;
+                int nibble = es[o2 + 7] & 0xF;
+                boolean still = nibble == 1
+                    || (es[o2] & 0xFFFF) == (es[o2 + 2] & 0xFFFF);
+                if (!still) {
+                    continue;
+                }
+                int ep = es[o2] & 0xFFFF;
+                int ex = ep >>> 8, ey = ep & 0xFF;
+                for (int j = 0; j < units; ++j) {
+                    int o3 = j << 3;
+                    if ((slots[o3 + 3] & 0xFF) >= 2) {
+                        continue;
+                    }
+                    int vp = slots[o3] & 0xFFFF;
+                    int d2 = (ex - (vp >>> 8)) * (ex - (vp >>> 8))
+                        + (ey - (vp & 0xFF)) * (ey - (vp & 0xFF));
+                    if (d2 <= 64 && d2 < campD2) {
+                        campD2 = d2;
+                        camp = ep;
+                    }
+                }
+            }
+            }
+            if (camp >= 0) {
+                this.m0Target = camp;
+                AiKit.orderMilitary(game, camp, false);
+            }
         }
         // 村民逃命：敌兵贴身 9 格（TC 保卫战里的入侵者，或路过采集点的散兵）→
         // 撤到 TC 背敌侧。v1 只在 TC 被围时逃，远征矿工被路过敌军白砍（game1
