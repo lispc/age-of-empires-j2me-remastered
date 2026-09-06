@@ -26,6 +26,8 @@ public final class CampaignAi implements PlayerAi {
     private int lastLog;
     private int prevTick;               // 回溯检测（devPhase 拨钟/读档）
     private int zeroUnitTicks;          // 僵尸局投降计时（0 单位且无产能路径）
+    private int m4InvPos = -1;          // #4 露营侦测：入侵者格（swarmcamp 变体）
+    private int m4InvCampTicks;         // 入侵者同格持续时长
     // #2 经济关看门狗状态（卡死村民强制重派）
     private final int[] gqStuckPos = new int[26];
     private final int[] gqStuckTgt = new int[26];
@@ -942,6 +944,8 @@ public final class CampaignAi implements PlayerAi {
     private static final boolean C4_MINE = C4V.contains("mine");
     private static final boolean C4_BARE = C4V.contains("bare");
     private static final boolean C4_TOWER1ST = C4V.contains("tower1st"); // v25 0/20 证伪:采矿场晚于塔=金/石断供
+    private static final boolean C4_SWARMCAMP = C4V.contains("swarmcamp"); // 露营 raider 围歼(2026-09-06 分流诊断)
+    private static final boolean C4_TOWER3 = C4V.contains("tower3");       // 塔3 罩矿线(老配方 v16 时代证伪,当前配方重测)
 
     /** #4（res114：胜 = 升城堡时代（tf[14]=1）→ 放置大学（tf[14]=0，c.java:7427
      *  放置清可建标记）→ 50t → 胜。败 = 通用规则（TC 毁/全灭）。
@@ -1042,6 +1046,23 @@ public final class CampaignAi implements PlayerAi {
         // 可能清场）。敌 ≥3 不围（添油）。实测细节：围攻能杀掉首波独狼
         // （p1 type2 died ar=1453），但后续波会把村民磨光——配僵尸局投降
         // （tick 首部）把"磨光后引擎不判负"的死局转成快速 LOSS。
+        // swarmcamp 变体（2026-09-06 #4 分流诊断）：塔圈外的**露营** raider
+        // （同格 ≥300t=站着吃矿线）也围——中盘败局病理=村民对露营者无限逃命
+        // 循环（单局 flee=186 次，收入崩→封建永远研不出），围歼比逃命便宜；
+        // v29 被证伪的是"追**移动** raider"（慢速追不上=追逐僵局），露营者
+        // 不动无此问题。我方军事照常参战（下方 orderMilitary）。
+        if (invader >= 0) {
+            if (this.m4InvPos != invader) {
+                this.m4InvPos = invader;
+                this.m4InvCampTicks = 0;
+            } else {
+                this.m4InvCampTicks += DECIDE_EVERY;
+            }
+        } else {
+            this.m4InvPos = -1;
+            this.m4InvCampTicks = 0;
+        }
+        boolean camping = invader >= 0 && this.m4InvCampTicks >= 300;
         boolean swarm = false;
         if (invader >= 0 && towerN == 0 && invCount <= 2) {
             int mil = 0;
@@ -1050,7 +1071,9 @@ public final class CampaignAi implements PlayerAi {
                     ++mil;
                 }
             }
-            swarm = mil == 0;
+            swarm = mil == 0 || (C4_SWARMCAMP && camping && mil <= 2);
+        } else if (C4_SWARMCAMP && invader >= 0 && invCount <= 2 && camping) {
+            swarm = true;                                   // 塔已立:圈外露营者仍围
         }
         if (swarm) {
             this.m0Target = invader;
@@ -1228,6 +1251,15 @@ public final class CampaignAi implements PlayerAi {
         } else if (barracksDone > 0 && towerN == 1 && !C4_BARE && uc == 0 && hdr[5] >= 22 && hdr[6] >= 6 && hdr[7] >= 16) {
             need = 12;                                   // 走廊塔 2：双塔再攀科技
             anchor = this.towerAnchor4(game, tc, etc, 1, es, eu, 6);
+        } else if (C4_TOWER3 && barracksDone > 0 && towerN == 2 && uc == 0
+                && hdr[5] >= 22 && hdr[6] >= 6 && hdr[7] >= 16) {
+            // tower3 变体（2026-09-06 批测对照）：第三塔罩采矿场（露营 raider 的
+            // 主猎场，塔圈 d²25 覆盖矿工=逃命豁免生效）+ 加深 8k 大波纵深。
+            // v16"三塔 0/5"是老配方时代的结论，当前配方（v26/v27/v31）下重测。
+            need = 12;
+            anchor = miningSlot >= 0
+                ? (((recs[miningSlot] >> 8) & 0x3F) << 8 | (recs[miningSlot] & 0x3F))
+                : this.towerAnchor4(game, tc, etc, 2, es, eu, 6);
         } else if (age >= 1 && millDone == 0 && uc == 0 && hdr[5] >= 15 && hdr[7] >= 10) {
             need = 5;                                    // 磨坊：城堡前置 1/2
         } else if (age >= 1 && smithDone == 0 && uc == 0 && hdr[5] >= 25 && hdr[7] >= 20) {

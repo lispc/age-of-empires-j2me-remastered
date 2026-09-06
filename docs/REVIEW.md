@@ -11,10 +11,14 @@
   `recordings/campaign/m1-chop|m2-longhaul|m3-chew/`。战绩详见
   `recordings/README.md`。
 - **代码版 AI（player-ai→已合并）**：#0/#1/#2/#3/#5/#6 全胜(2.3k-11.7k tick),
-  #4 科技关 9/20(唯一开放伤口,波抽签结构)。
-- **开放 resting points**(非待办,重启攻关再动):Easy 原版阈值 RuleBasedAi
-  0/5(方向在 future-tasks B.4)、Expert 3/20、#4 剩余负相位、units=0 判负
-  归属考证。
+  #4 科技关 9/20(唯一开放伤口,波抽签结构;2026-09-06 分流复验+swarmcamp/
+  tower3 两变体同相位成对证伪,见 aoe/ai/README.md)。
+- **随机图 RuleBasedAi（2026-09-06 阈值矩阵批,探针活锁修复后）**:Easy 阈值
+  50/100/150/200 全矩阵 38/40(10/10、10/10、9/10、9/10),Medium 8/10、
+  Expert 1/10 回归带内。**批数必须带 -b**:无 BFS 口径完全不可比(0/5 伪基线
+  事故)。
+- **开放 resting points**(非待办,重启攻关再动):Expert 3/20、#4 剩余负相位
+  (两变体证伪后剩余候选=WT 提前/预攒塔料)、units=0 判负归属考证。
 
 ## 知识地图(什么问题查哪里)
 

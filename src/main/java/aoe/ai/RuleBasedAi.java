@@ -209,7 +209,17 @@ public final class RuleBasedAi implements PlayerAi {
     private final int[] scoutLastP = {-1, -1};      // 侦察兵卡死检测
     private final int[] scoutLastT = new int[2];
     private final int[] villProbeCursor = new int[26]; // 村民探路游标（无可派资源时开图）
-    private final int[] villProbeTick = new int[26];   // 探路命令发出时刻（走不到跳路点用）
+    private final int[] villProbeTick = new int[26];   // 探路命令发出时刻
+    private final int[] villProbeLastWp = new int[26]; // 探针连续重发检测（不可达路点跳过）
+    private final int[] villProbeRetry = new int[26];  // 同路点累计重发时长
+    private final int[] villPullCursor = new int[26];  // 专职探员（probe-pull）独立游标——
+                                                       // 与 idle 探针共写会互相踩（6/16 环
+                                                       // 两套路标同索引不同格）
+    private final int[] villPullLastWp = new int[26];
+    private final int[] villPullRetry = new int[26];
+    private final int[] villPullTick = new int[26];
+    private boolean resScoutOn;                     // 资源侦察态（敌 TC 已知+木/金盲区时保持 1 侦察兵）
+    private int stallTicks;                         // 僵尸局投降计时（无军事+无产能+木经济死）
     private int evisB;                              // 可见敌建筑数（日志用）
     private boolean bootLogged;
 
@@ -415,6 +425,13 @@ public final class RuleBasedAi implements PlayerAi {
         // 敌塔环（Expert 基线 4 连败同一样态：反击送军→下一波破家）。Expert 上
         // 反击门槛抬高到 10 兵且军值 ≥ 敌塔计入后的防御军值。
         boolean expert = game.aiGatherMultiplier >= 1024;
+        // 波次窗口模型（阈值感知，2026-09-06 阈值矩阵批测）：敌 all-in 触发 =
+        // 敌军值 ≥ aiAttackThreshold 且 > 我军值×0.8（tickAi:8543 实读），首波到时
+        // 随阈值近似线性放大——实测 T=50→~2.3k、T=100→~5.6k、T=150→~5.0k。
+        // 取保守下界 waveTick = 1000 + T×22（T=50→2.1k 早于实测，高 T 逐档提前），
+        // 只用于排序/窗口，不改任何内部常量；aiAttackThreshold 是难度面板公开
+        // 参数（玩家选难度即知），不属 hdr[1] 隐藏信息，诚实模式可读。
+        int waveTick = 1000 + game.aiAttackThreshold * 22;
 
         // v38 蹲守标记（Expert；第六批起诚实模式全难度——标记只由可见敌兵产生，
         // 本身是诚实信息）：每个敌军事单位 8 格窗口内的资源格全部拉黑
@@ -535,13 +552,24 @@ public final class RuleBasedAi implements PlayerAi {
             }
             this.lastContactTick = game.tickCount;
         }
-        // 侦察兵选拔（诚实模式且敌 TC 未知时）：scout0 优先 t5 侦察骑兵，否则首个
-        // 军事单位；milCount≥6 时再出 scout1（螺旋错开半圈，加速开图/互为阵亡备份）。
-        // 威胁中也保持侦察（milCount≥3 才抽——兵力太少时全员参战）；只选拔不写
-        // 命令——路点命令在本 tick 末尾下达（保证不被中途的群令覆盖）。
+        // 侦察兵选拔（诚实模式）：主目标=敌 TC 未知时开图找 TC；辅目标=资源侦察
+        // （敌 TC 已找到后军事侦察本会停摆，但木/金整类不可见时经济仍需开图——
+        // seed 1000 实锤：TC 附近无森林，200 起始木耗尽后全图无木源，村民探针又限
+        // 前 6 环半径 ≤13 够不到远林 → 生产永久断供 21M tick 僵局）。资源侦察保持
+        // 1 名（milCount≥3 抽闲，不夺战时人手），找到资源即自动收队。
         this.scoutIds[0] = -1;
         this.scoutIds[1] = -1;
-        if (FOG_HONEST && !FOG_TC_OMNI && this.enemyTcMem < 0 && myTc >= 0 && !this.attackMode
+        boolean resScout = FOG_HONEST && this.enemyTcMem >= 0 && myTc >= 0 && !this.attackMode
+            && milCount >= 3
+            && (findResource(game, myTc, 1, game.tickCount) < 0
+                || findResource(game, myTc, 2, game.tickCount) < 0);
+        if (this.resScoutOn != resScout) {
+            this.resScoutOn = resScout;
+            if (resScout) {
+                System.out.println("[ai] RES-SCOUT on (resource blind spot) t=" + game.tickCount);
+            }
+        }
+        if (FOG_HONEST && !FOG_TC_OMNI && (this.enemyTcMem < 0 || resScout) && myTc >= 0 && !this.attackMode
                 && (!threat || milCount >= 3)) {
             int firstMil = -1, secondMil = -1, firstT5 = -1;
             for (int i = 0; i < units; ++i) {
@@ -565,6 +593,46 @@ public final class RuleBasedAi implements PlayerAi {
             if (milCount >= 6) {
                 this.scoutIds[1] = firstT5 >= 0 ? firstMil : secondMil;
             }
+        }
+        // 僵尸局投降（批测契约，-Daoe.exitOnResult 才生效；CampaignAi 同款）：
+        // 无军事单位、无兵营系建筑（含在建）、木经济死（存量<5+无木工+无可采木）
+        // ——一切兵种成本含木、军事建筑 20 木起，产能永不可恢复，村民又无力拆
+        // 敌 TC；引擎判负式（TC 毁 / 0单位+0建筑）够不着 → 实测空转 21M tick。
+        // 持续 500t 按契约认输省批测 240s/局；真实游玩无 exitOnResult 只打日志。
+        if (System.getProperty("aoe.exitOnResult") != null && myTc >= 0) {
+            boolean noMilBuilding = barracksDone == 0 && archeryDone == 0 && stableDone == 0
+                && siegeDone == 0 && !hasUC(recs, hdr[4], 10) && !hasUC(recs, hdr[4], 7)
+                && !hasUC(recs, hdr[4], 8) && !hasUC(recs, hdr[4], 2);
+            // 收入死断 = 无在岗工人 + 全探索区无可采格。可达性推导（非阈值枚举）：
+            // 单位永不可产 = 采集收入死断后存量永远够不到成本（全兵种 ≥5W+5G）；
+            // 兵营永不可建 = 木/石同理（20W/10S，无金）。二者合一即产能永不可
+            // 恢复，村民无力拆敌 TC，引擎判负式够不着 → 按契约认输（僵尸局
+            // 实测空转 21M/10M tick：seed 1000 木=5 金=708 烂在库里）。
+            boolean woodIncomeDead = woodW == 0
+                && findResource(game, myTc, 1, game.tickCount) < 0;
+            boolean goldIncomeDead = goldW == 0
+                && findResource(game, myTc, 2, game.tickCount) < 0;
+            boolean stoneIncomeDead = stoneW == 0
+                && findResource(game, myTc, 3, game.tickCount) < 0;
+            boolean canReachUnit = (!woodIncomeDead || hdr[5] >= 5)
+                && (!goldIncomeDead || hdr[6] >= 5);
+            boolean canReachBarracks = !noMilBuilding
+                || ((!woodIncomeDead || hdr[5] >= 20)
+                    && (!stoneIncomeDead || hdr[7] >= 10));
+            this.stallTicks = milCount <= 1 && !(canReachUnit && canReachBarracks)
+                ? this.stallTicks + DECIDE_EVERY : 0;
+            // mil≤1（而非 ==0）：单兵无产能支撑永不可胜（1 单位拆不动 TC），
+            // 却会让投降门永远差一口气（seed 1006 T=150 实测 mil=1 val=8、
+            // 兵营无、金 0 木 165 烂库、僵到超时）。
+            if (this.stallTicks >= 500) {
+                System.out.println("[ai] concede: no military, no production path (income dead), t="
+                    + game.tickCount);
+                System.out.println("[result] LOSS ticks=" + game.tickCount);
+                System.out.flush();
+                System.exit(0);
+            }
+        } else {
+            this.stallTicks = 0;
         }
         if (threat && defendTile >= 0 && game.tickCount - this.lastDefendOrder >= DEFEND_REISSUE) {
             this.lastDefendOrder = game.tickCount;
@@ -655,10 +723,30 @@ public final class RuleBasedAi implements PlayerAi {
             boolean goldStarve = FOG_HONEST && enemyTc >= 0 && milCount >= 5
                 && milVal >= enemyDefVal && hdr[6] < 15 && goldW == 0
                 && findResource(game, myTc, 2, game.tickCount) < 0;
+            // 木竭突击（seed 1000 型死局兜底）：木<5 且无木工且无可采木=一切兵种
+            // （成本全含木）与军事建筑（兵营 20 木起）永不可得，生产链已死——带
+            // 现有部队 all-in，赢或死都好过无限僵局。金竭看"存量+军值还够"，
+            // 木竭看"生产要素断供"，故不设军值门；静默窗防开图早期误判
+            // （敌 TC 刚找到、森林可能还没探到——资源侦察会继续找）。
+            boolean woodStarve = FOG_HONEST && enemyTc >= 0 && milCount >= 1
+                && hdr[5] < 5 && woodW == 0
+                && findResource(game, myTc, 1, game.tickCount) < 0
+                && game.tickCount - this.lastContactTick > BAIT_QUIET;
+            // 时间窗闪击（阈值矩阵批测，T≥150 弱带主修）：高阈值下首波远
+            // （敌要攒满 aiAttackThreshold 军值才出发），其军事积累期近乎真空
+            // （T=150 seed 1001 实证：peak=0 整整 4.6k tick）——敌 TC 一旦侦察
+            // 到位且波尚远，开局部队全部砸向敌基地杀村民断收入（其大波经济永不
+            // 成立），其防御模式反扑的小股军事喂我方塔。窗口随阈值连续缩放：
+            // T=50 时 2.1k 内 TC 很难探到+波已在途=天然不触发，T≥150 窗口打开。
+            boolean timeRush = FOG_HONEST && enemyTc >= 0 && milCount >= 5
+                && game.tickCount + 1500 < waveTick
+                && milVal >= enemyMilVal
+                && game.tickCount >= this.attackCooldownUntil;
             if (!this.attackMode && !threat && game.tickCount >= this.attackCooldownUntil
-                    && enemyTc >= 0 && (goCrushed || overwhelm || desperate || goldStarve)) {
+                    && enemyTc >= 0 && (goCrushed || overwhelm || desperate || goldStarve || woodStarve
+                        || timeRush)) {
                 this.attackMode = true;
-                this.attackMuster = true;                    // v14：先集结后开打
+                this.attackMuster = !timeRush;               // 闪击不集结：抢的就是窗口
                 this.musterStart = game.tickCount;
                 this.musterTile = AiKit.stanceTile(enemyTc, myTc, 7); // 敌 TC 朝我 7 格（警戒圈 6 格外沿）
                 this.lastAttackOrder = -100000;
@@ -668,7 +756,8 @@ public final class RuleBasedAi implements PlayerAi {
                     + "(val " + enemyMilVal + ", peak " + this.enemyMilPeak + ")"
                     + (crushed ? " CRUSHED" : "") + (overwhelm ? " OVERWHELM" : "")
                     + (desperate ? " DESPERATE" : "") + (closeRush ? " CLOSERUSH" : "")
-                    + (goldStarve ? " GOLDSTARVE" : "") + " t=" + game.tickCount);
+                    + (goldStarve ? " GOLDSTARVE" : "") + (woodStarve ? " WOODSTARVE" : "")
+                    + (timeRush ? " TIMERUSH(wave@" + waveTick + ")" : "") + " t=" + game.tickCount);
             }
             // 猎寻（诚实模式兜底）：敌 TC 始终未找到且进入僵持期（15k 后）→ 全军
             // 沿侦察路点（有首波来向走射线，否则螺旋）扫荡开图；TC 入侦察记忆后
@@ -1138,14 +1227,23 @@ public final class RuleBasedAi implements PlayerAi {
                     int vi = idleVill[k];
                     int wp = spiralWaypoint(myTc,
                         (this.villProbeCursor[vi] + vi * 11) % PROBE_MAX, PROBE_RINGS);
-                    if ((slots[o + 2] & 0xFFFF) == wp
-                            && ((slots[o + 0] & 0xFFFF) == wp
-                                || game.tickCount - this.villProbeTick[vi] > 800)) {
-                        // 已到路点（或 800t 走不到=死角）→ 立刻推进并续发下一路点
-                        // （v61 前到达后空转一个决策周期才续发，探图速度折半）
+                    // 不可达路点跳过：引擎对不可达/被占位目标即时取消移动（pos==tgt
+                    // → 视作 idle → 下拍重发），slot[2]==wp 与 pos==wp 的时刻都不存在
+                    // ——800t 超时门永远够不着（活锁实测 t=1504-5280 每 8t 重发
+                    // (25,46) 永不推进）。改按"同一路点累计重发 400t=走不到"跳过：
+                    // 正常可行路点行军中不重发（不在 idle 名单），不会误跳。
+                    if (wp == this.villProbeLastWp[vi]) {
+                        this.villProbeRetry[vi] += DECIDE_EVERY;
+                    } else {
+                        this.villProbeLastWp[vi] = wp;
+                        this.villProbeRetry[vi] = 0;
+                    }
+                    if ((slots[o + 0] & 0xFFFF) == wp || this.villProbeRetry[vi] > 400) {
                         ++this.villProbeCursor[vi];
                         wp = spiralWaypoint(myTc,
                             (this.villProbeCursor[vi] + vi * 11) % PROBE_MAX, PROBE_RINGS);
+                        this.villProbeLastWp[vi] = wp;
+                        this.villProbeRetry[vi] = 0;
                     }
                     if ((slots[o + 2] & 0xFFFF) != wp) {
                         slots[o + 1] = slots[o + 0];
@@ -1175,24 +1273,29 @@ public final class RuleBasedAi implements PlayerAi {
                 if (pv >= 0 && this.repairUntil[pv] <= game.tickCount) {
                     int o = pv << 3;
                     int wp = spiralWaypoint(myTc,
-                        (this.villProbeCursor[pv] + pv * 11) % SPIRAL_MAX, SCOUT_RINGS);
-                    int cur = slots[o + 2] & 0xFFFF;
-                    if (cur == wp && (slots[o + 0] & 0xFFFF) == wp) {
-                        ++this.villProbeCursor[pv];
-                        wp = spiralWaypoint(myTc,
-                            (this.villProbeCursor[pv] + pv * 11) % SPIRAL_MAX, SCOUT_RINGS);
-                    } else if (cur == wp && game.tickCount - this.villProbeTick[pv] > 800) {
-                        ++this.villProbeCursor[pv];
-                        this.villProbeTick[pv] = game.tickCount;
-                        wp = spiralWaypoint(myTc,
-                            (this.villProbeCursor[pv] + pv * 11) % SPIRAL_MAX, SCOUT_RINGS);
+                        (this.villPullCursor[pv] + pv * 11) % SPIRAL_MAX, SCOUT_RINGS);
+                    // 独立游标/重发检测（同 idle 探针的不可达跳过；此块与 idle 探针
+                    // 可能先后作用于同一村民，共用游标会 6/16 环两套路标互相踩）。
+                    if (wp == this.villPullLastWp[pv]) {
+                        this.villPullRetry[pv] += DECIDE_EVERY;
+                    } else {
+                        this.villPullLastWp[pv] = wp;
+                        this.villPullRetry[pv] = 0;
                     }
+                    if ((slots[o + 0] & 0xFFFF) == wp || this.villPullRetry[pv] > 400) {
+                        ++this.villPullCursor[pv];
+                        wp = spiralWaypoint(myTc,
+                            (this.villPullCursor[pv] + pv * 11) % SPIRAL_MAX, SCOUT_RINGS);
+                        this.villPullLastWp[pv] = wp;
+                        this.villPullRetry[pv] = 0;
+                    }
+                    int cur = slots[o + 2] & 0xFFFF;
                     if (cur != wp) {
                         slots[o + 1] = slots[o + 0];
                         slots[o + 2] = (short) wp;
                         slots[o + 7] = 0;
                         slots[o + 3] = (short) (slots[o + 3] & 0xFF);
-                        this.villProbeTick[pv] = game.tickCount;
+                        this.villPullTick[pv] = game.tickCount;
                         System.out.println("[ai] probe-pull villager " + pv + " -> "
                             + (wp >>> 8) + "," + (wp & 0xFF) + " t=" + game.tickCount);
                     }
@@ -1325,9 +1428,18 @@ public final class RuleBasedAi implements PlayerAi {
                     // 塔被拆能第一时间原地补（原 30/8/18 在金石枯竭的消耗战里永远不够）。
                     // v55 试过塔环 ≤2 座即停补（囤石给产能）：3/10 回滚——补塔买的
                     // 时间本身就是等到非战窗口的前提，停补=立刻崩。
+                    // 围城逃生门：塔补不起（金/石差一口气）时允许战中重建兵营——
+                    // TC 旁 255HP 海绵最坏被拆，好过军事断绝被无限磨（T=150
+                    // seed 1002 实锤：G=5 永远差 1 金补塔，兵营锁死 mil=0 磨到 8.9k 败）。
+                    // 不设兵数门：mil=1 时威胁期既不训练（无兵营）也派不出侦察
+                    // （mil<3），敌 TC 永远找不到=全机器锁死（seed 1006 phase35
+                    // 实测金 3909/石 2025/木 170 烂库僵 6.9M tick）。
                     if (towerN < tdist.length && hdr[5] >= 22 && hdr[6] >= 6 && hdr[7] >= 16) {
                         need = 12;
                         anchor = corridorAnchor(myTc, enemyTc, enemyDir, tdist[towerN], towerN);
+                    } else if (barracksDone == 0 && !hasUC(recs, hdr[4], 10)
+                            && hdr[5] >= 30 && hdr[7] >= 15) {
+                        need = 10;
                     } else if (expert && houseN + ucCount(recs, hdr[4], 11) < 4
                             && hdr[3] < 25 && hdr[5] >= 10) {
                         // v36 围城期补房（第五批）：人口帽被敌磨掉=金囤着变不成兵
@@ -1430,10 +1542,18 @@ public final class RuleBasedAi implements PlayerAi {
             }
             // 军事生产：各建筑并行排队 ≤2（产兵扣款在产出时，排多不亏只占人口名额）。
             // 投石机 20 金/台，金 <40 时让位给剑士/弓兵（队列不清，产出时 canAfford 卡）。
+            // 金收入已死（无金工+无可采金）时封建门按裸成本放行——家底花光好过锁死
+            // （T=150 seed 1002 实锤：G=5、兵营还在、木 240，却因 G≥25 门训不出兵，
+            // 塔也差 1 金补不起，mil=0 被磨到 21M 僵局）。
+            boolean goldIncomeDead = goldW == 0
+                && findResource(game, myTc, 2, game.tickCount) < 0;
+            boolean woodIncomeDead = woodW == 0
+                && findResource(game, myTc, 1, game.tickCount) < 0;
             if (popRoom && barracksDone > 0 && vills >= 3) {
                 int meleeType = feudal ? 3 : 2;
                 if (canTrain(hdr, meleeType) && queueLen(recs, barracksSlot) < 2
-                        && hdr[5] >= 15 && (feudal || hdr[6] >= 25)
+                        && hdr[5] >= (woodIncomeDead ? 5 : 15)
+                        && (feudal || hdr[6] >= (goldIncomeDead ? 5 : 25))
                         && game.canAfford(0, 0, meleeType)) {
                     game.queueUnitTraining(0, meleeType);
                 }
@@ -1847,17 +1967,18 @@ public final class RuleBasedAi implements PlayerAi {
         return x << 8 | y;
     }
 
-    /** 当前侦察目标路点（scout0 用）：有首波来向且射线未扫完 → 射线法；否则螺旋。 */
+    /** 当前侦察目标路点（scout0 用）：资源侦察态只走螺旋（射线是朝敌 TC 方向找
+     * TC 的，资源盲区开图不需要）；否则有首波来向且射线未扫完 → 射线法，兜底螺旋。 */
     private int scoutTarget(int myTc) {
-        if (this.waveOrigin >= 0 && this.rayCursor < RAY_LEN) {
+        if (!this.resScoutOn && this.waveOrigin >= 0 && this.rayCursor < RAY_LEN) {
             return rayWaypoint(myTc, this.waveOrigin, this.rayCursor);
         }
         return spiralWaypoint(myTc, this.scoutCur[0] % SPIRAL_MAX, SCOUT_RINGS);
     }
 
-    /** 推进侦察路点（scout0：射线优先，扫完自动落回螺旋）。 */
+    /** 推进侦察路点（scout0：射线优先，扫完自动落回螺旋；资源侦察态只推螺旋）。 */
     private void scoutAdvance() {
-        if (this.waveOrigin >= 0 && this.rayCursor < RAY_LEN) {
+        if (!this.resScoutOn && this.waveOrigin >= 0 && this.rayCursor < RAY_LEN) {
             ++this.rayCursor;
         } else {
             ++this.scoutCur[0];

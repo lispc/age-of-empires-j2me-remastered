@@ -25,6 +25,8 @@
 #                   -x 逗号分隔的跳过种子表(叠加在 tools/ailoop-skip.txt 之上);
 #                        跳过表=已知退化图(如 1004:无可达金矿+敌TC被围死,必 STALL
 #                        白烧超时),被跳过的种子不占局数、不进 CSV
+#                   -T N 覆盖敌方 AI 进攻阈值(-Daoe.aiAttackThreshold,阈值矩阵
+#                        批测用;省略=难度默认 Easy50/Medium60/Expert100)
 #   PHASE_STEP=N(默认 7)|off:第 i 局传 -Daoe.devPhase=(i-1)*N——进关相位 pin
 #                        (tickCount 不随任务重置,菜单导航墙钟漂移会让同种子局
 #                        走向不同;pin 后同种子同相位必同结果,A/B 逐对对比)。
@@ -47,9 +49,9 @@ SELFTEST=0
 [ "${1:-}" = "--selftest" ] && SELFTEST=1
 
 # ---- 参数 ----
-N=10; DIFF=1; AI=""; SEED0=1000; TIMEOUT=300; KEEP=0; BFS=0; SNAP=0; SKIPX=""; FOGOFF=0
+N=10; DIFF=1; AI=""; SEED0=1000; TIMEOUT=300; KEEP=0; BFS=0; SNAP=0; SKIPX=""; FOGOFF=0; ATKTHR=""
 usage() { sed -n '2,40p' "$0"; exit "${1:-1}"; }
-[ $SELFTEST = 0 ] && while getopts "n:d:a:s:t:kbS:x:fh" opt; do
+[ $SELFTEST = 0 ] && while getopts "n:d:a:s:t:kbS:x:fT:h" opt; do
     case $opt in
         n) N=$OPTARG ;; d) DIFF=$OPTARG ;; a) AI=$OPTARG ;;
         s) SEED0=$OPTARG ;; t) TIMEOUT=$OPTARG ;; k) KEEP=1 ;;
@@ -57,6 +59,7 @@ usage() { sed -n '2,40p' "$0"; exit "${1:-1}"; }
         f) FOGOFF=1 ;;
         S) SNAP=$OPTARG ;;
         x) SKIPX=$OPTARG ;;
+        T) ATKTHR=$OPTARG ;;
         *) usage ;;
     esac
 done
@@ -174,6 +177,9 @@ while [ $i -le "$N" ]; do
     [ "$FOGOFF" = 1 ] && FOG_ARG="-Daoe.aiFog=0"
     # 消融诊断：AOE_AIFOG=res = 资源全图+敌情诚实（覆盖 -f）
     [ -n "${AOE_AIFOG:-}" ] && FOG_ARG="-Daoe.aiFog=$AOE_AIFOG"
+    # 阈值矩阵：-T N 覆盖敌方 AI 进攻阈值（c.java 测试钩子）
+    THR_ARG=""
+    [ -n "$ATKTHR" ] && THR_ARG="-Daoe.aiAttackThreshold=$ATKTHR"
     PHASE_ARG=""
     if [ "${PHASE_STEP:-7}" != "off" ]; then
         PHASE_ARG="-Daoe.devPhase=$(( (i - 1) * ${PHASE_STEP:-7} ))"
@@ -181,7 +187,7 @@ while [ $i -le "$N" ]; do
     t0=$SECONDS
     "$JAVA" -Dapple.awt.UIElement=true -Daoe.headless=1 "-Daoe.dev=random:$DIFF" -Daoe.turbo=1 -Daoe.noRender=1 \
         -Daoe.mute=1 -Daoe.debug=1 -Daoe.exitOnResult=1 "-D$SEED_PROP=$seed" \
-        ${AI_ARG:+"$AI_ARG"} ${BFS_ARG:+"$BFS_ARG"} ${SNAP_ARG:+"$SNAP_ARG"} ${FOG_ARG:+"$FOG_ARG"} ${PHASE_ARG:+"$PHASE_ARG"} \
+        ${AI_ARG:+"$AI_ARG"} ${BFS_ARG:+"$BFS_ARG"} ${SNAP_ARG:+"$SNAP_ARG"} ${FOG_ARG:+"$FOG_ARG"} ${THR_ARG:+"$THR_ARG"} ${PHASE_ARG:+"$PHASE_ARG"} \
         -Daoe.saveDir="$gdir/saves" -Daoe.rmsDir="$gdir/rms" \
         -Duser.home="$gdir/userhome" \
         -cp "$CP" aoe.Main > "$log" 2>&1 &

@@ -4575,6 +4575,13 @@ implements CommandListener {
                 this.var_boolean_l = true;
             }
         }
+        // 测试钩子：-Daoe.aiAttackThreshold=N 覆盖敌方 AI 进攻阈值（放在全部难度
+        // 分支之后=最终权）。仅供批测扫阈值矩阵/玩家 AI 鲁棒性验证用；run.sh 不传
+        // 此属性，正常游玩各难度口径不受影响。
+        String atkOverride = System.getProperty("aoe.aiAttackThreshold");
+        if (atkOverride != null && !atkOverride.isEmpty()) {
+            this.aiAttackThreshold = Integer.parseInt(atkOverride.trim());
+        }
         if (this.aiEnabled) {
             this.aiBuildPhase = 0;
             this.pickAiBuildTarget();
