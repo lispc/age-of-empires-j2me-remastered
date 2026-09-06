@@ -28,6 +28,8 @@ public final class CampaignAi implements PlayerAi {
     private int zeroUnitTicks;          // 僵尸局投降计时（0 单位且无产能路径）
     private int m4InvPos = -1;          // #4 露营侦测：入侵者格（swarmcamp 变体）
     private int m4InvCampTicks;         // 入侵者同格持续时长
+    private final int[] m4CampedUntil = new int[4096]; // #4 资源格蹲守拉黑（campmark，滚动窗）
+    private final int[] m4RepairUntil = new int[26];   // #4 修理工标记（repair 变体）
     // #2 经济关看门狗状态（卡死村民强制重派）
     private final int[] gqStuckPos = new int[26];
     private final int[] gqStuckTgt = new int[26];
@@ -591,6 +593,9 @@ public final class CampaignAi implements PlayerAi {
                 if (etc >= 0 && this.distToSegment(x, y, etc >>> 8, etc & 0xFF, mtc >>> 8, mtc & 0xFF) <= 25) {
                     continue; // 走廊 5 格内（d2≤25）不采
                 }
+                if (C4_CAMPMARK && this.m4CampedUntil[x + (y << 6)] > game.tickCount) {
+                    continue; // 蹲守滚动窗（campmark，10 格+1500t 滞后）
+                }
                 boolean camped = false;
                 for (int j = 0; j < eu; ++j) {
                     int ep = es[j << 3] & 0xFFFF;
@@ -946,6 +951,10 @@ public final class CampaignAi implements PlayerAi {
     private static final boolean C4_TOWER1ST = C4V.contains("tower1st"); // v25 0/20 证伪:采矿场晚于塔=金/石断供
     private static final boolean C4_SWARMCAMP = C4V.contains("swarmcamp"); // 露营 raider 围歼(2026-09-06 分流诊断)
     private static final boolean C4_TOWER3 = C4V.contains("tower3");       // 塔3 罩矿线(老配方 v16 时代证伪,当前配方重测)
+    private static final boolean C4_CAMPMARK = C4V.contains("campmark");   // 蹲守标记滚动窗(2026-09-06 证伪:波过即重标记全图,竞速反复中断+多种类回退翻负)
+    private static final boolean C4_INTERCEPT = !C4V.contains("nointercept"); // 攻击态敌派兵拦截——v40 默认采用(9/20→18/20)
+    private static final boolean C4_REPAIR = C4V.contains("repair");       // 修塔/修TC(RuleBasedAi v44 移植;2026-09-06 证伪:9/19+1僵 无增益)
+    private static final boolean C4_EARLYQUOTA = !C4V.contains("noearlyquota"); // 兵营前配额 2木1石——v40 默认采用(与 intercept 合计 9/20→19/20)
 
     /** #4（res114：胜 = 升城堡时代（tf[14]=1）→ 放置大学（tf[14]=0，c.java:7427
      *  放置清可建标记）→ 50t → 胜。败 = 通用规则（TC 毁/全灭）。
@@ -1094,6 +1103,37 @@ public final class CampaignAi implements PlayerAi {
             this.m0Target = invader;
             AiKit.orderMilitary(game, invader, false);
         }
+        // campmark（C4V，2026-09-06 分流：churn 源头修复）：敌军事 10 格内的
+        // 资源格拉黑 1500t（滚动窗，敌不走不解、走后留窗防振荡）。原
+        // nearestSafeResourceOffCorridor 的瞬时判定是 8 格 < 逃命 9 格且无滞后
+        // ——敌在 8-9 格间逼近：村民被吓跑、派工却仍选同一格=往返 churn
+        // （game9 单局 flee=186 次，收入崩，封建 15/15/15 永远攒不齐）。
+        // 10>9 保证派入格不秒逃。每决策 26 敌 × 21×21 窗 ≈ 11k 次迭代，可忽略。
+        if (C4_CAMPMARK) {
+            for (int j = 0; j < eu; ++j) {
+                if ((es[(j << 3) + 3] & 0xFF) < 2) {
+                    continue;
+                }
+                int ep = es[j << 3] & 0xFFFF;
+                int exx = ep >>> 8, eyy = ep & 0xFF;
+                for (int dy = -10; dy <= 10; ++dy) {
+                    int cy2 = eyy + dy;
+                    if (cy2 < 0 || cy2 >= 64) {
+                        continue;
+                    }
+                    for (int dx = -10; dx <= 10; ++dx) {
+                        int cx2 = exx + dx;
+                        if (cx2 < 0 || cx2 >= 64 || dx * dx + dy * dy > 100) {
+                            continue;
+                        }
+                        int idx = cx2 + (cy2 << 6);
+                        if ((game.mapTiles[idx] & 0x300) == 0x300) {
+                            this.m4CampedUntil[idx] = game.tickCount + 1500;
+                        }
+                    }
+                }
+            }
+        }
         // 村民逃命：敌兵贴身 9 格（TC 保卫战里的入侵者，或路过采集点的散兵）→
         // 撤到 TC 背敌侧。v1 只在 TC 被围时逃，远征矿工被路过敌军白砍（game1
         // 尸检：(36,48) 采石村民被割）。
@@ -1110,8 +1150,8 @@ public final class CampaignAi implements PlayerAi {
         // 塔背侧不可走才站桩赌塔先清场。
         for (int i = 0; i < units; ++i) {
             int o = i << 3;
-            if ((slots[o + 3] & 0xFF) >= 2) {
-                continue;
+            if ((slots[o + 3] & 0xFF) >= 2 || this.m4RepairUntil[i] > game.tickCount) {
+                continue;                        // 军事单位/修理工（repair 变体）不参与逃命
             }
             if (swarm) {
                 continue; // v26: 围攻期间村民不逃——逃=经济永停必死
@@ -1163,6 +1203,125 @@ public final class CampaignAi implements PlayerAi {
                 slots[o + 7] = 0;
                 slots[o + 3] = (short) (slots[o + 3] & 0xFF);
                 ++this.fleeCount; // 逃命遥测：进 500t 摘要行（收入崩盘的早期信号）
+            }
+        }
+        // intercept（C4V）：TC 12 格外的**攻击态**敌（正在打矿线/外塔）→ 派最近
+        // ≤2 个军事单位去换。v29 证伪的是"村民追**移动** raider"（慢速差 1 格=
+        // 追逐僵局）——这里派的是兵，且只打攻击态=已接敌不会风筝的目标；
+        // swarmcamp 的教训是不派村民（村民 1 换 1 亏，长枪换才赚）。已攻击态的
+        // 我方兵不动（retask 风暴禁律：目标相同不重发）。
+        if (C4_INTERCEPT && !swarm) {
+            int raider = -1, raiderD2 = Integer.MAX_VALUE;
+            for (int j = 0; j < eu; ++j) {
+                if ((es[(j << 3) + 3] & 0xFF) < 2 || (es[(j << 3) + 7] & 0xF) != 1) {
+                    continue;
+                }
+                int ep = es[j << 3] & 0xFFFF;
+                int ddx = (ep >>> 8) - tx, ddy = (ep & 0xFF) - ty;
+                int d2 = ddx * ddx + ddy * ddy;
+                if (d2 > 144 && d2 < raiderD2) {
+                    raiderD2 = d2;
+                    raider = ep;
+                }
+            }
+            if (raider >= 0) {
+                int sent = 0;
+                for (int i = 0; i < units && sent < 2; ++i) {
+                    int o = i << 3;
+                    if ((slots[o + 3] & 0xFF) < 2 || (slots[o + 7] & 0xF) == 1) {
+                        continue;
+                    }
+                    if ((slots[o + 2] & 0xFFFF) != raider) {
+                        slots[o + 1] = slots[o + 0];
+                        slots[o + 2] = (short) raider;
+                        slots[o + 7] = 0;
+                        slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+                    }
+                    ++sent;
+                }
+            }
+        }
+        // repair（C4V，RuleBasedAi v44/v46 移植）：最残的完工塔/TC（HP<245）派
+        // ≤2 个满血村民修理——走到即自动 action 4（c.java:7026 不查 UC 位），
+        // ~0.5 HP/t/人，免费。1 修理工 ≈ 抵消 1 剑士磨塔：8k 大波下塔/TC 多活
+        // 500-1000t = 竞速链落地大学的时间。修理工豁免逃命（标记在逃命块前）；
+        // HP<200 退役（挨一刀就放，钉在塔环被集火=送）。
+        if (C4_REPAIR) {
+            for (int i = 0; i < units; ++i) {
+                if (this.m4RepairUntil[i] > game.tickCount
+                        && (slots[(i << 3) + 4] & 0xFF) < 200) {
+                    this.m4RepairUntil[i] = 0;
+                }
+            }
+            int repTile = -1, repHp = 245;
+            for (int i = 0; i < bc; ++i) {
+                int o = i << 2;
+                int bt = recs[o + 3] & 0xFF;
+                if ((recs[o + 2] & 0x40000000) != 0) {
+                    continue;
+                }
+                if (bt != 9 && bt != 12) {
+                    continue;                    // TC 与哨塔
+                }
+                int hp = recs[o + 2] & 0xFF;
+                if (hp < repHp) {
+                    repHp = hp;
+                    repTile = ((recs[o] >> 8) & 0x3F) << 8 | (recs[o] & 0x3F);
+                }
+            }
+            if (repTile < 0) {
+                java.util.Arrays.fill(this.m4RepairUntil, 0);   // 无受损建筑：全员解禁
+            } else {
+                int repairers = 0;
+                for (int i = 0; i < units; ++i) {
+                    int o = i << 3;
+                    if ((slots[o + 3] & 0xFF) >= 2) {
+                        continue;
+                    }
+                    if (this.m4RepairUntil[i] > game.tickCount) {
+                        // 已标记：在修这栋（action 4）不动——写 slot[2] 会清修理态；
+                        // 走路/修别栋 → 重指向最残栋
+                        ++repairers;
+                        if (!((slots[o + 7] & 0xF) == 4 && (slots[o + 5] & 0xFFFF) == repTile)
+                                && (slots[o + 2] & 0xFFFF) != repTile) {
+                            slots[o + 1] = slots[o + 0];
+                            slots[o + 2] = (short) repTile;
+                            slots[o + 7] = 0;
+                            slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+                        }
+                    }
+                }
+                for (int pick = 0; pick < 2 && repairers < 2; ++pick) {
+                    int bestI = -1, bestD2 = Integer.MAX_VALUE;
+                    for (int i = 0; i < units; ++i) {
+                        int o = i << 3;
+                        if ((slots[o + 3] & 0xFF) >= 2 || this.m4RepairUntil[i] > game.tickCount
+                                || (slots[o + 4] & 0xFF) < 220) {
+                            continue;
+                        }
+                        if ((slots[o + 7] & 0xF) == 2 || (slots[o + 7] & 0xF) == 3) {
+                            continue;            // 采集一趟中不抽（等它交存回来）
+                        }
+                        int up = slots[o] & 0xFFFF;
+                        int ddx = (up >>> 8) - (repTile >>> 8), ddy = (up & 0xFF) - (repTile & 0xFF);
+                        int d2 = ddx * ddx + ddy * ddy;
+                        if (d2 > 196 || d2 >= bestD2) {
+                            continue;
+                        }
+                        bestD2 = d2;
+                        bestI = i;
+                    }
+                    if (bestI < 0) {
+                        break;
+                    }
+                    int o = bestI << 3;
+                    this.m4RepairUntil[bestI] = game.tickCount + 600;
+                    ++repairers;
+                    slots[o + 1] = slots[o + 0];
+                    slots[o + 2] = (short) repTile;
+                    slots[o + 7] = 0;
+                    slots[o + 3] = (short) (slots[o + 3] & 0xFF);
+                }
             }
         }
         if (invader >= 0) {
@@ -1337,7 +1496,12 @@ public final class CampaignAi implements PlayerAi {
         //    兵营前 3木1石（攒兵营料）；兵营后 1木1金2石（石是链上瓶颈 ≈100）。
         //    v9/v14 三段制实验（按塔进度分段）实测不优回滚（见建造链注释迭代史）。
         //    配额阻尼收敛（+1 缓冲，一次决策最多换 1 人，RuleBasedAi 震荡环教训）。
-        int[] quota = barracksDone > 0 ? new int[]{0, 1, 1, 2} : new int[]{0, 3, 0, 1};
+        //    earlyquota 变体（2026-09-06）：兵营前 2木1石——原 3木1石要凑满 4 村民
+        //    才轮到采石工，塔 1 的 16S 被迫等 4 号村民（game9 塔实际 2696t 落地）；
+        //    2木1石让 3 号村民就上石，塔 1 提前 ~300-400t，对早死相位（首波
+        //    ~2.9k 前）是唯一来得及的防御。
+        int[] quota = barracksDone > 0 ? new int[]{0, 1, 1, 2}
+            : (C4_EARLYQUOTA ? new int[]{0, 2, 0, 1} : new int[]{0, 3, 0, 1});
         int[] have = new int[4];
         for (int i = 0; i < units; ++i) {
             int o = i << 3;
@@ -1383,6 +1547,19 @@ public final class CampaignAi implements PlayerAi {
                 break; // 配额满
             }
             int tile = this.nearestSafeResourceOffCorridor(game, pos, kind, es, eu, -1, -1);
+            if (tile < 0) {
+                // campmark：该种类全被蹲守 → 试其余缺口种类（收入继续，别 idle
+                // 等死；石器断了先保木/金流水，蹲守窗过或露营者被清再回岗）。
+                for (int k = 1; k <= 3 && tile < 0; ++k) {
+                    if (k == kind || quota[k] - have[k] <= 0) {
+                        continue;
+                    }
+                    tile = this.nearestSafeResourceOffCorridor(game, pos, k, es, eu, -1, -1);
+                    if (tile >= 0) {
+                        kind = k;
+                    }
+                }
+            }
             if (tile < 0) {
                 break;
             }
