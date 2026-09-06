@@ -7,6 +7,44 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
+### 第 45 夜: 三连任务——僵尸局出口修复 / 石贫分支判死 / RuleBasedAi 反串 player 1(2026-09-06/07,主会话+sub-agent×2)
+
+- **任务 2·僵尸局出口（commit 4e9ea62）**: Medium 1006 型双方僵尸（村民全灭+
+  木=0+塔在场）空转 45 万 tick 不终局——原投降门的收入死断推导只看
+  findResource 可达性，图上有木没人采判"收入未死"。修复 = `villDead`
+  （vills==0 && 木<5 && hdr[66]==0）OR 进三系收入死断，500t 窗不变。
+  证据：1006 phase14 复现对 45 万 tick 空转 → t=3958 concede；Medium 8/10+
+  Easy 10/10 零误投；CampaignAi 门无同类洞（直查存量不经 findResource）。
+  教训：登记批测病理时连同 devPhase 一起记（v62/v64 早于 pin，原相位不可考，
+  靠 15 相位扫描重定位）。
+- **任务 1·石贫图独立策略分支（commit 890088c，判死）**: 信号层+策略层双重
+  证伪。**43 夜"零塔石贫图"定性被修正**：1002/1009 型图开局 100 石够建 3 塔，
+  末态 towers=0/S=0 是围城的果不是因；静态石贫无区分力（败种 1009 近距石
+  29 格最富照败，胜种 1003 near=4 照胜），战中 latch 全晚于波 1 launch。
+  V1 早闪击/V2 死战 9/20（1015 胜翻负），V3 塔链重排 10/20 无翻转。
+  机制新知：**敌防御模式 87.5% 反扑不需要阈值**（闪击兵近敌 TC 6 格即引波，
+  e55=56 即发，比自然波早 ~400t）——Expert 波 1 前主动出击/换家入别再试清单。
+  败因测绘新基线：分野在我方波 1 后产能链（胜者 9/10 ≤3.4k 开射箭场，败者
+  8/10 全程无），赤字资源逐图不同无单一解。旋钮族 aoe.expStonePoor 全留
+  （默认零行为差，两带 20 局 [ai]/[result] 零差异实证）。
+- **任务 3·RuleBasedAi 反串 player 1（commit 9147e43）**: `-Daoe.enemyAi`
+  帧首 hook（c.java，同 playerAi 契约，(int) 构造优先；gameMode==0 抑制
+  tickAi，战役/教学忽略）。side 参数化 ~70 处；side 1 强制全图（player 1 无
+  自有雾层）、永不打印 [result]。**引擎不对称发现**（side 1 适配根因）：
+  研究完成效果只在 tickBuildings i==0 分支生效（techFlags 全局单份=player 0
+  科技态，player 1 研究=静默清零重复扣款 3.2M tick 烧钱）→ side 1 科技模块
+  整段禁用；出兵形态键 playerUnitHeaders[0][0]（跟随 player 0 时代）→
+  meleeType 同键；Easy player 1 起始 50/15/15 → boot 石工补丁。验证：
+  默认路径 regress 三连+replaycheck 一致+基线逐种子同结果；enemyAi vs
+  空转玩家 DESPERATE 总攻 LOSS@25552；自对弈 Medium 5 局 4:1（side 0 优=
+  科技/起始资源不对称预期内）。详见 ai/README「EnemyAi」节。
+- **事故/协作记录**: 任务 3 sub-agent 两次 2h 超时（验证批太贪），主会话审
+  diff + 用其留存批测日志验收收尾。教训：给 sub-agent 的批测验证要写死
+  预算上限（"各 1-2 组够用"这次写了但仍超时——长跑批应显式要求
+  run_in_background 或分批回报）。环境：本机 Linux 无 /opt/homebrew JDK17，
+  sub-agent 用 /tmp/jdk17（Temurin）+ 命令行 -Dorg.gradle.java.home 绕过，
+  仓库配置未动。
+
 ### 第44夜: 引擎幽灵队列修复坐实保留+emgprod/HC 证伪——Expert 全图维持 10/20(2026-09-07)
 
 - **做了什么**: 分析 sub-agent 五提案（P1 围城应急生产/P2 HorseCollar/P3 幽灵
