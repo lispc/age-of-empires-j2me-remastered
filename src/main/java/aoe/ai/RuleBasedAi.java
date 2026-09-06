@@ -201,6 +201,16 @@ public final class RuleBasedAi implements PlayerAi {
     // v41 默认采用：全图 Expert 两带 4/20→8/20（2026-09-06，aoe.expMangonel=0 回退）
     private static final boolean EXP_MANGONEL =
         System.getProperty("aoe.expMangonel", "1").equals("1");
+    // Expert 围城交存线重建：矿场/伐木场被拆后威胁分支原样只许补塔——石配额
+    // 挂 miningN>0，矿场一没采石断供→塔永远补不起→螺旋败（败局尸检：S=2/
+    // towers=0/W=0 三连签名）
+    private static final boolean EXP_CAMPREBUILD =
+        System.getProperty("aoe.expCampRebuild", "0").equals("1");
+    // Expert 木瓶颈双闸：Bow Saw 30→15（单伐木工 +50% 出木）+ t8 排队 1→2。
+    // 败局经济学：G 反而在囤（78-157），W=0 是唯一卡点——村民替代（5W）/
+    // 铁匠铺（25W）/补塔（22W）全部饿死在木上。
+    private static final boolean EXP_ECO_KILL =
+        System.getProperty("aoe.expEcoKill", "0").equals("1");
     // 螺旋侦察路点参数（函数 spiralWaypoint/spiralCount 在文件底部；静态方法无前置
     // 声明顺序问题，但字段初始化器引用这些常量必须文本序在前——JLS 8.3.3）。
     private static final int SCOUT_RINGS = 16;      // 螺旋半径 3,5,…,33（全图覆盖）
@@ -1417,7 +1427,8 @@ public final class RuleBasedAi implements PlayerAi {
                 // （v38 败局 5/6 木=0 卡死一切，金/石反囤），单木工 +50% 收入=续命。
                 // W≥30 门槛防与战中补塔(22 木)抢木料（v43 降到 15 实测 3/10 回滚——
                 // 木紧的局连 15 的窗口都踩不中，反而扰动 build 链）。
-                if (lumberSlot >= 0 && hdr[5] >= 30 && game.canAfford(0, 2, 1)
+                if (lumberSlot >= 0 && hdr[5] >= (expert && EXP_ECO_KILL ? 15 : 30)
+                        && game.canAfford(0, 2, 1)
                         && game.tryResearch(0, lumberSlot, 1)) {
                     System.out.println("[ai] research BowSaw t=" + game.tickCount);
                 }
@@ -1470,6 +1481,27 @@ public final class RuleBasedAi implements PlayerAi {
                     } else if (barracksDone == 0 && !hasUC(recs, hdr[4], 10)
                             && hdr[5] >= 30 && hdr[7] >= 15) {
                         need = 10;
+                    } else if (expert && EXP_CAMPREBUILD
+                            && ((miningN == 0 && !hasUC(recs, hdr[4], 1))
+                                || (lumberN == 0 && !hasUC(recs, hdr[4], 0)))
+                            && hdr[5] >= 15) {
+                        // EXP_CAMPREBUILD：交存线重建（矿场→采金/采石、伐木场→木）。
+                        // 石配额挂 miningN>0、木/石交存挂营地——营地被拆=收入线
+                        // 永久断供（败局尸检：S=2、towers=0、W=0 三连签名）。
+                        // 原地重建（15 木，放下自动成型，敌索敌优先打塔）。
+                        if (miningN == 0) {
+                            need = 1;
+                            anchor = findResource(game, myTc, hdr[7] < 20 ? 3 : 2, game.tickCount);
+                            if (anchor < 0) {
+                                anchor = findResource(game, myTc, hdr[7] < 20 ? 2 : 3, game.tickCount);
+                            }
+                        } else {
+                            need = 0;
+                            anchor = findResource(game, myTc, 1, game.tickCount);
+                        }
+                        if (anchor < 0) {
+                            need = -1;
+                        }
                     } else if (expert && houseN + ucCount(recs, hdr[4], 11) < 4
                             && hdr[3] < 25 && hdr[5] >= 10) {
                         // v36 围城期补房（第五批）：人口帽被敌磨掉=金囤着变不成兵
@@ -1607,7 +1639,7 @@ public final class RuleBasedAi implements PlayerAi {
                     game.queueUnitTraining(0, 4);
                 }
                 if (smithDone > 0 && smithSlot >= 0 && canTrain(hdr, 8)
-                        && queueLen(recs, smithSlot) < 1
+                        && queueLen(recs, smithSlot) < (expert && EXP_ECO_KILL ? 2 : 1)
                         && hdr[5] >= (EXP_MANGONEL ? 25 : 40) && hdr[6] >= (EXP_MANGONEL ? 25 : 40)
                         && game.canAfford(0, 0, 8)) {
                     game.queueUnitTraining(0, 8);    // 投石机产自铁匠铺（case 8 → 建筑 6）

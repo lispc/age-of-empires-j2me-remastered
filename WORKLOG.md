@@ -7,6 +7,20 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
+### 第 42 夜续: Expert 全图第二轮补测——campRebuild 零触发/ecoKill 净负,8/20 定档(2026-09-06)
+
+- **campRebuild 零触发**（交存线重建,威胁分支允许重建矿场/伐木场）：与基线
+  逐 tick 一致——**矿场其实没被拆**。真螺旋 = 村民 3 号阵亡 → W=0 补不起
+  4 号（5 木）→ 采石工永缺（配额 1木2金1石恰好填满 4 人）→ 塔 0 → 崩。
+- **ecoKill 净负 7/20**（Bow Saw 30→15 + t8 排队 1→2）：seed 1006 胜翻负
+  ——Bow Saw 提前扰动脆弱开局。木瓶颈是真的,但"更早研 Bow Saw"不是解。
+- **残局解剖（下阶段入口,已入 README）**：败局末态 G 囤积（78-157）而 W=0、
+  mil=0、towers 0-1——4 村民硬上限 vs ×8 永久围城,木是唯一卡点,加伐木工
+  （配额禁区）与省军费（v19/v20 旧证伪）全撞墙。全图 40% 已高于旧口径
+  "规则式天花板 20-33%";再往上指向 B.5 的逐种子 build-order 离线搜索。
+- 旋钮保留（默认关）：aoe.expCampRebuild / aoe.expEcoKill / aoe.expTurtle /
+  aoe.expWtfirst。regress PASS + replaycheck 一致 ✓。commit：本条目对应。
+
 ### 第 42 夜: Expert 全图挂 4/20→8/20——EXP_MANGONEL 转正,turtle/wtfirst 证伪(2026-09-06)
 
 - **重点切换**（用户指令）：随机图困难（Expert,×8 采集+train-1+免费滴）,
