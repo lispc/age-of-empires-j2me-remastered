@@ -94,6 +94,7 @@ public final class RuleBasedAi implements PlayerAi {
     private int lastStanceOrder = -100000;
     private int lastLog;
     private boolean attackMode;
+    private boolean attackSpRush;                    // 本次进攻由 SPRUSH 发起（V2 死战/短冷却用）
     private boolean attackMuster = true;             // 进攻两阶段：true=集结中 false=已开打
     private int musterStart;                         // 集结超时起点
     private int musterTile = -1;                     // 集结点（敌 TC 朝我 7 格）
@@ -217,6 +218,23 @@ public final class RuleBasedAi implements PlayerAi {
     // （效果=hdr[56] 增量，c.java 磨坊完工/HC 研究 6233/6343 两级各 +50%）。
     private static final boolean EXP_HORSECOLLAR =
         System.getProperty("aoe.expHorsecollar", "0").equals("1");
+    // ===== aoe.expStonePoor 石贫检测 + 替代策略分支（2026-09-06 第 45 夜探索）=====
+    // 契约同 aiK.*：未设置/=0 → 逐字节当前行为（无检测、无遥测、无分支）。
+    // report = 只打检测遥测（[ai] STONEPOOR 行），零行为差——分级/误判率取数用。
+    // 1 = 检测 + V1 早闪击分支（Expert 门内）。检测语义见 stoneScan()。
+    // 2 = V2 = V1 + 死战回撤（spRush 进攻的撤退阀 4→1、回撤冷却 1500→400）+
+    // 触发兵力 5→6——V1 实测：5 民兵接敌掉 1 人即 RETREAT，闪击 256t 自爆。
+    // 3 = V3 = 仅塔链优先重排（无闪击）：早期判贫图上 smith/射箭场让位到塔 3
+    // 之后——起始 100 石是全部石料，smith 先建=偷走塔 3 的最后一份石
+    // （1014 实证：smith@628 先于塔 3，波 1 时 m55=73 vs 1015 三塔 110=胜）。
+    private static final String SP_PROP = System.getProperty("aoe.expStonePoor", "0").trim();
+    private static final boolean SP_REPORT = SP_PROP.equals("report");
+    private static final int SP_MODE = SP_REPORT ? 0 : Integer.parseInt(SP_PROP);
+    private static final boolean SP_ON = SP_REPORT || SP_MODE != 0;
+    // 近距石界（Chebyshev 格）：界内零可采石 = 塔链长期不可行（补塔/塔 4-5/smith
+    // 都靠石收入）。aoe.spNear 覆盖便于 report 模式免重编译扫阈值。
+    private static final int SP_NEAR =
+        Integer.parseInt(System.getProperty("aoe.spNear", "14").trim());
     // ===== aiK build-order 旋钮（2026-09-06 逐种子离线搜索，B.5）=====
     // 契约：属性 aoe.aiK.<name> 未设置时默认值=改动前行为（逐字节一致，已用
     // 1000-1019 全 19 种子日志 diff 验证）。每个旋钮登记：名字/含义/默认值。
@@ -330,6 +348,14 @@ public final class RuleBasedAi implements PlayerAi {
     private int stallTicks;                         // 僵尸局投降计时（无军事+无产能+木经济死）
     private int evisB;                              // 可见敌建筑数（日志用）
     private boolean bootLogged;
+    // 石贫检测态（SP_ON 时才维护）：stonePoor 单向 latch（一旦判贫不翻回，防分支
+    // 抖动）；未 latch 时每决策重扫（石会采竭——c.java:7393 采竭清资源位自然跌出
+    // 统计）。stoneLastScan=上次扫描 tick（report 周期打点用）。
+    // stonePoorTick=latch 时刻：V1 分支只认早期 latch（≤600t=波 1 窗口前判定才
+    // 谈得上"主动出击"；战中 latch 是围城症状不是地图属性，v25 发波即冲已证伪）。
+    private boolean stonePoor;
+    private int stonePoorTick = -1;
+    private int stoneLastScan = -100000;
 
     @Override
     public void tick(c game) {
@@ -521,6 +547,10 @@ public final class RuleBasedAi implements PlayerAi {
         this.resEnemyTc = enemyTc;
         this.resMyTc = myTc;
         this.resRelocateOn = game.aiGatherMultiplier >= 1024;   // v45：仅 Expert 开走廊过滤
+        // 石贫检测（旋钮门内；默认关=零开销零行为差）
+        if (SP_ON && myTc >= 0) {
+            this.stoneScan(game, myTc, enemyTc);
+        }
         if (!this.bootLogged) {
             this.bootLogged = true;
             System.out.println("[ai] RuleBasedAi fogHonest=" + FOG_HONEST);
@@ -861,6 +891,7 @@ public final class RuleBasedAi implements PlayerAi {
         // 进攻中遇到小股反扑不回家（塔顶着），大股才撤（敌防御模式 87.5% 反扑我 TC 的应对）
         if (this.attackMode && threat && invaderN > RAIDERS_IGNORE) {
             this.attackMode = false;
+            this.attackSpRush = false;
             this.attackCooldownUntil = game.tickCount + 800;
             System.out.println("[ai] attack ABORTED, " + invaderN + " raiders home t=" + game.tickCount);
         }
@@ -912,11 +943,22 @@ public final class RuleBasedAi implements PlayerAi {
                 && game.tickCount + 1500 < waveTick
                 && milVal >= enemyMilVal
                 && game.tickCount >= this.attackCooldownUntil;
+            // 石贫乏闪击 SPRUSH（V1，aoe.expStonePoor=1）：早期判贫（latch ≤600t）
+            // 的石贫图塔链无后继（无石收入补塔/扩塔），塔防吸收 all-in 的胜线物理
+            // 上打折——趁敌军事积累期（波 1 阈值未过）把开局部队压到敌基地杀村民
+            // 断收入，把 e55 压回阈值下=波永不成立。不设军值门：敌积累期军值≈0-30，
+            // 门槛只会空转窗口。不集结（同 TIMERUSH）。波若照常发，现有 ABORTED/
+            // DEFEND 链自动退化为标准塔防（闪击只是前置赌注，不破坏退路）。
+            boolean spRush = SP_MODE >= 1 && SP_MODE <= 2 && expert && this.stonePoor
+                && this.stonePoorTick >= 0 && this.stonePoorTick <= 600
+                && enemyTc >= 0 && milCount >= (SP_MODE >= 2 ? 6 : 5)
+                && game.tickCount + 1500 < waveTick;
             if (!this.attackMode && !threat && game.tickCount >= this.attackCooldownUntil
                     && enemyTc >= 0 && (goCrushed || overwhelm || desperate || goldStarve || woodStarve
-                        || timeRush)) {
+                        || timeRush || spRush)) {
                 this.attackMode = true;
-                this.attackMuster = !timeRush;               // 闪击不集结：抢的就是窗口
+                this.attackMuster = !(timeRush || spRush);     // 闪击不集结：抢的就是窗口
+                this.attackSpRush = spRush;
                 this.musterStart = game.tickCount;
                 this.musterTile = AiKit.stanceTile(enemyTc, myTc, 7); // 敌 TC 朝我 7 格（警戒圈 6 格外沿）
                 this.lastAttackOrder = -100000;
@@ -927,7 +969,8 @@ public final class RuleBasedAi implements PlayerAi {
                     + (crushed ? " CRUSHED" : "") + (overwhelm ? " OVERWHELM" : "")
                     + (desperate ? " DESPERATE" : "") + (closeRush ? " CLOSERUSH" : "")
                     + (goldStarve ? " GOLDSTARVE" : "") + (woodStarve ? " WOODSTARVE" : "")
-                    + (timeRush ? " TIMERUSH(wave@" + waveTick + ")" : "") + " t=" + game.tickCount);
+                    + (timeRush ? " TIMERUSH(wave@" + waveTick + ")" : "")
+                    + (spRush ? " SPRUSH(sp@" + this.stonePoorTick + ")" : "") + " t=" + game.tickCount);
             }
             // 猎寻（诚实模式兜底）：敌 TC 始终未找到且进入僵持期（15k 后）→ 全军
             // 沿侦察路点（有首波来向走射线，否则螺旋）扫荡开图；TC 入侦察记忆后
@@ -943,9 +986,14 @@ public final class RuleBasedAi implements PlayerAi {
                 System.out.println("[ai] ATTACK HUNT (enemy TC unknown) mil=" + milCount
                     + " t=" + game.tickCount);
             }
-            if (this.attackMode && milCount <= RETREAT_LEFT) {
+            if (this.attackMode && milCount <= (this.attackSpRush && SP_MODE >= 2 ? 1 : RETREAT_LEFT)) {
                 this.attackMode = false;
-                this.attackCooldownUntil = game.tickCount + 1500;
+                // V2 spRush 死战回撤：撤退阀 4→1（V1 实测 5 民兵接敌掉 1 人即撤=
+                // 闪击 256t 自爆）+ 冷却 1500→400（快速重组二波冲，原冷却直接
+                // 关上 t<1700 的重冲窗口）
+                this.attackCooldownUntil = game.tickCount
+                    + (this.attackSpRush && SP_MODE >= 2 ? 400 : 1500);
+                this.attackSpRush = false;
                 game.selectUnits(0, -1);
                 game.orderMove(0, tcx, tcy);
                 game.clearSelection();
@@ -1026,6 +1074,7 @@ public final class RuleBasedAi implements PlayerAi {
                 } else if (game.tickCount - this.attackBestTick > 1500) {
                     // 进攻停滞（敌塔群/重建兵挡住）：撤回重整，攒下一波
                     this.attackMode = false;
+                    this.attackSpRush = false;
                     this.attackCooldownUntil = game.tickCount + 2000;
                     game.selectUnits(0, -1);
                     game.orderMove(0, tcx, tcy);
@@ -1618,6 +1667,12 @@ public final class RuleBasedAi implements PlayerAi {
                 int need = -1, anchor = myTc;
                 int[] tdist = expert ? TOWER_DIST_EXPERT : TOWER_DIST;
                 int tcap = Math.min(K_TOWER_CAP, tdist.length);   // aiK 塔数量上限
+                // V3 石贫塔链优先（aoe.expStonePoor=3）：早期判贫图上 smith/射箭场
+                // 让位到塔 3 之后（起始 100 石是全部石料，smith 先建=偷走塔 3 的
+                // 最后一份石）。塔 1-3 分支恒在 smith 前，deferred 只是解除资源竞争。
+                boolean spReSeq = SP_MODE == 3 && expert && this.stonePoor
+                    && this.stonePoorTick >= 0 && this.stonePoorTick <= 600
+                    && towerN + ucCount(recs, hdr[4], 12) < 3;
                 if (threat) {
                     // 交战中只补塔（敌 12 格内）：seed 1019 兵临城下连放 4 座铁匠铺全被
                     // 秒拆白烧 100 木 80 石；塔例外——战中补塔=战力，且敌军索敌优先打塔，
@@ -1719,11 +1774,11 @@ public final class RuleBasedAi implements PlayerAi {
                     // 我方矿场(hdr[10]) 10 格内有金格被蹲才触发，锚点强制距矿场1 ≥8 格。
                     need = 1;
                     anchor = this.findSecondGold(game, myTc, hdr[10], game.tickCount);
-                } else if (expert && EXP_MANGONEL && feudal && smithDone == 0
+                } else if (expert && EXP_MANGONEL && feudal && smithDone == 0 && !spReSeq
                         && !hasUC(recs, hdr[4], 6) && hdr[5] >= K_SMITH_W && hdr[7] >= K_SMITH_S) {
                     need = 6;            // EXP_MANGONEL：铁匠铺提到射箭场前（t8 是波 1 的
                                          // 杀伤率倍增器；门槛 25/15≈成本+缓冲）
-                } else if (expert && feudal && archeryDone == 0 && !hasUC(recs, hdr[4], 7)
+                } else if (expert && feudal && archeryDone == 0 && !hasUC(recs, hdr[4], 7) && !spReSeq
                         && hdr[5] >= 30 && hdr[7] >= 12) {
                     // v42 Expert：射箭场提到铁匠铺前。败局复盘（v41）：7/7 败局 smith 未建
                     // ——石被战中补塔(16S/次)持续抽干，S 恒 5-17 够不到 smith 的 S≥25 门槛，
@@ -1732,12 +1787,12 @@ public final class RuleBasedAi implements PlayerAi {
                     // v56：门槛 35/15→30/12——v47 败局的石恒在 11-14 振荡，差 1-2 点
                     // 永远够不到 15；成本只要 25W/10S，边际 5W/2S 的保险换成解锁产能。
                     need = 7;
-                } else if (expert && feudal && smithDone == 0 && !hasUC(recs, hdr[4], 6)
+                } else if (expert && feudal && smithDone == 0 && !hasUC(recs, hdr[4], 6) && !spReSeq
                         && hdr[5] >= K_SMITH2_W && hdr[7] >= K_SMITH2_S) {
                     need = 6;                                    // v56 Expert：smith 石门槛 25→22（成本 20S，
-                } else if (feudal && smithDone == 0 && !hasUC(recs, hdr[4], 6) && hdr[5] >= 35 && hdr[7] >= 25) {  // 边际 2S）；Medium 走下一条共享分支不变
+                } else if (feudal && smithDone == 0 && !hasUC(recs, hdr[4], 6) && !spReSeq && hdr[5] >= 35 && hdr[7] >= 25) {  // 边际 2S）；Medium 走下一条共享分支不变
                     need = 6;                                    // 铁匠铺：攻防升级 + 投石机（产 t8 的建筑）
-                } else if (feudal && archeryDone == 0 && !hasUC(recs, hdr[4], 7) && hdr[5] >= 35 && hdr[7] >= 15) {
+                } else if (feudal && archeryDone == 0 && !hasUC(recs, hdr[4], 7) && !spReSeq && hdr[5] >= 35 && hdr[7] >= 15) {
                     need = 7;                                    // 射箭场：弓兵反制敌投石机
                 } else if (towerN < tcap && !hasUC(recs, hdr[4], 12)
                         && hdr[5] >= K_TOWER_W && hdr[6] >= K_TOWER_G && hdr[7] >= K_TOWER_S) {
@@ -2398,6 +2453,73 @@ public final class RuleBasedAi implements PlayerAi {
             }
         }
         return best;
+    }
+
+    /** 石贫检测（aoe.expStonePoor）：扫可采石格（kind3 + 可站邻格 + 未拉黑/蹲守 +
+     *  敌 TC 已知时不在其 RES_ENEMY_SAFE 危险圈），诚实模式限已探索格——与
+     *  findResource 同一信息口径，两侧一致。判定：我 TC Chebyshev SP_NEAR 格内
+     *  零可采石 → stonePoor 单向 latch（塔链的补塔/塔 4-5/smith 全靠石收入，
+     *  近距无石 = 塔链长期不可行）。诚实模式加覆盖率门：SP_NEAR 盒内已探索格
+     *  <40% 时本决策不判（开局迷雾不足，判了全是假阳性；覆盖不够 = 维持原状）。
+     *  report 模式每 500t 打一行遥测（首扫 + 变化 + 周期），零行为差。 */
+    private void stoneScan(c game, int myTc, int enemyTc) {
+        int mx = myTc >>> 8, my = myTc & 0xFF;
+        int ex = enemyTc >= 0 ? enemyTc >>> 8 : 0, ey = enemyTc >= 0 ? enemyTc & 0xFF : 0;
+        int nearest = Integer.MAX_VALUE, nearN = 0, total = 0, boxN = 0, explored = 0;
+        for (int ty = 0; ty < 64; ++ty) {
+            for (int tx = 0; tx < 64; ++tx) {
+                int idx = tx + (ty << 6);
+                int raw = game.mapTiles[idx];
+                int d = Math.max(Math.abs(tx - mx), Math.abs(ty - my));
+                if (FOG_HONEST && !FOG_RES_OMNI && d <= SP_NEAR) {
+                    ++boxN;
+                    if (raw >= 0) {
+                        ++explored;
+                    }
+                }
+                if (FOG_HONEST && !FOG_RES_OMNI && raw < 0) {
+                    continue;                        // 未探索格的石不可知
+                }
+                int t = raw & 0xFFF;
+                if ((t & 0x300) != 0x300 || (t & 3) != 3) {
+                    continue;
+                }
+                if (!hasWalkableNeighbor(game, tx, ty)
+                        || this.resBlacklistUntil[idx] > game.tickCount
+                        || this.resCampedUntil[idx] > game.tickCount) {
+                    continue;
+                }
+                if (enemyTc >= 0 && Math.max(Math.abs(tx - ex), Math.abs(ty - ey)) < RES_ENEMY_SAFE) {
+                    continue;
+                }
+                ++total;
+                if (d < nearest) {
+                    nearest = d;
+                }
+                if (d <= SP_NEAR) {
+                    ++nearN;
+                }
+            }
+        }
+        boolean canJudge = !FOG_HONEST || FOG_RES_OMNI || explored * 5 >= boxN * 2;
+        boolean poorNow = canJudge && nearN == 0;
+        boolean flipped = poorNow && !this.stonePoor;
+        if (flipped) {
+            this.stonePoor = true;
+            this.stonePoorTick = game.tickCount;
+        }
+        if (SP_REPORT && (flipped || game.tickCount - this.stoneLastScan >= 500
+                || this.stoneLastScan < 0)) {
+            this.stoneLastScan = game.tickCount;
+            System.out.println("[ai] STONEPOOR scan near=" + nearN + "/" + SP_NEAR
+                + " nearest=" + (nearest == Integer.MAX_VALUE ? -1 : nearest)
+                + " total=" + total + " poor=" + this.stonePoor
+                + (canJudge ? "" : " (coverage " + explored + "/" + boxN + ", deferred)")
+                + " t=" + game.tickCount);
+        } else if (flipped) {
+            System.out.println("[ai] STONEPOOR on (no stone within " + SP_NEAR
+                + ") t=" + game.tickCount);
+        }
     }
 
     /** 建筑在训队列长度（rec[+2] 位 16..23；研究中的 0x10000 也算 1）。 */
