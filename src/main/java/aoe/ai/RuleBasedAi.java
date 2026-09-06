@@ -717,12 +717,22 @@ public final class RuleBasedAi implements PlayerAi {
             // 兵营永不可建 = 木/石同理（20W/10S，无金）。二者合一即产能永不可
             // 恢复，村民无力拆敌 TC，引擎判负式够不着 → 按契约认输（僵尸局
             // 实测空转 21M/10M tick：seed 1000 木=5 金=708 烂在库里）。
-            boolean woodIncomeDead = woodW == 0
-                && findResource(game, myTc, 1, game.tickCount) < 0;
-            boolean goldIncomeDead = goldW == 0
-                && findResource(game, myTc, 2, game.tickCount) < 0;
-            boolean stoneIncomeDead = stoneW == 0
-                && findResource(game, myTc, 3, game.tickCount) < 0;
+            // 村民死锁补洞（2026-09-06，1006 型僵尸）：村民全灭 + 存量木 <5
+            // （房屋训练村民 5W，买不起）+ 无在训村民（hdr[66]=0）= 劳动力永不
+            // 可恢复——findResource 找得到可采木也再无人去采，原推导把这种局判成
+            // "收入未死"（woodW==0 但有可采格 → woodIncomeDead=false →
+            // canReachUnit 恒真），投降门永远差一口气（Medium seed 1006 两批连续
+            // 空转到墙钟 STALL 实锤：村民 0、木 0、塔在场，敌磨不动塔）。死锁即
+            // 视同三系收入全死（没人采 = 没有收入）。保守边界：木 ≥5 可立刻补员
+            // 不投；有在训村民不投（含产出时卡 canAfford 的队列——宁可晚投一局
+            // 到墙钟，不可误投可翻盘局）。
+            boolean villDead = vills == 0 && hdr[5] < 5 && hdr[66] == 0;
+            boolean woodIncomeDead = villDead || (woodW == 0
+                && findResource(game, myTc, 1, game.tickCount) < 0);
+            boolean goldIncomeDead = villDead || (goldW == 0
+                && findResource(game, myTc, 2, game.tickCount) < 0);
+            boolean stoneIncomeDead = villDead || (stoneW == 0
+                && findResource(game, myTc, 3, game.tickCount) < 0);
             boolean canReachUnit = (!woodIncomeDead || hdr[5] >= 5)
                 && (!goldIncomeDead || hdr[6] >= 5);
             boolean canReachBarracks = !noMilBuilding
@@ -734,7 +744,8 @@ public final class RuleBasedAi implements PlayerAi {
             // 却会让投降门永远差一口气（seed 1006 T=150 实测 mil=1 val=8、
             // 兵营无、金 0 木 165 烂库、僵到超时）。
             if (this.stallTicks >= 500) {
-                System.out.println("[ai] concede: no military, no production path (income dead), t="
+                System.out.println("[ai] concede: no military, no production path ("
+                    + (villDead ? "villager deadlock" : "income dead") + "), t="
                     + game.tickCount);
                 System.out.println("[result] LOSS ticks=" + game.tickCount);
                 System.out.flush();
