@@ -4451,10 +4451,11 @@ implements CommandListener {
                     this.playerUnitHeaders[1][7] = 15;
                     this.aiGatherMultiplier = 512;
                     this.aiBuildInterval = 250;
-                    // 原版 50:AI 军队价值 2 分钟内到线即 75% 兵力 all-in 玩家基地
-                    // (Easy 训练间隔 20 tick≈1.6s/兵),实测新手 2 分钟被推平。
-                    // 移植平衡修正:Easy 提高首攻门槛,给玩家发育窗口;中/高难不变。
-                    this.aiAttackThreshold = 200;
+                    // 原版口径（2026-09-06 恢复）：AI 军队价值 50 即 75% 兵力
+                    // all-in 玩家基地（Easy 训练间隔 20 tick≈1.6s/兵，~2 分钟
+                    // 首攻）。曾改 200 给新手发育窗口（移植平衡实验），现按
+                    // 原版难度口径恢复，批测基线以 r70 后 ailoop 实测为准。
+                    this.aiAttackThreshold = 50;
                     this.aiTrainInterval = 20;
                     this.aiGuardRadiusSq = 49;
                     this.aiFreeResInterval = Integer.MAX_VALUE;
