@@ -305,6 +305,8 @@ public final class RuleBasedAi implements PlayerAi {
         this.EXM_DANCE = propInt(side, "aoe.exm.dance", 0);
         this.EXM_REPCAP = propInt(side, "aoe.exm.repcap", 2);
         this.EXM_HEAL = propInt(side, "aoe.exm.heal", 0);
+        this.SCOUT_RAY = propInt(side, "aoe.scoutRay", 0);
+        this.SCOUT_DBG = prop(side, "aoe.scoutDbg", "0").equals("1");
     }
     // Expert 全图攻坚旋钮（2026-09-06 第 41 夜，批测 A/B 用；验证后转默认）：
     // （2026-09-07 第 0 轮起全部改构造期按 side 解析的实例字段，见 prop() 注释）
@@ -420,6 +422,27 @@ public final class RuleBasedAi implements PlayerAi {
     private final int EXM_REPCAP;
     // 回血阈值（0=关：<100 撤 / >220 归）：1=撤 <130；2=归 >200；3=两者
     private final int EXM_HEAL;
+    // 侦察链修复/射线强化（0=关=现行为；1=仅卡死修复；2=卡死修复+射线强化）。
+    // arena 第 2 轮 candidate：遥测实锤接触来向 ~550t 已锚定但敌 TC 平均
+    // 16k-25k 才发现。诊断实锤根因链：
+    // ①"卡死 300t 跳路点"是死代码（scoutLastT 每决策无条件刷新门永假,且引擎
+    // BFS 重寻路使被卡单位在 2×2 内抖动、按位置判 stationary 也不可靠——
+    // seed 1006 SCOUTDBG 实测双侧侦察兵 parking 在不可达路点 5k+ tick 直到
+    // 15k HUNT 收编,与 40 夜村民探针活锁同族）;②射线一遍扫空即回退盲螺旋,
+    // 3×3 视野 vs 3 格步长+远端 ±19 锯齿的走廊漏扫无人补;③再锚定门
+    // invaderN≥2 战前不再触发。=1 只修①（同路点累计重发 >400t 跳路点,村民
+    // 探针同款口径,双侦察兵同吃）。=2 追加：射线扫完换相位重扫（rayCursor
+    // 不回卷,pass=rayCursor/RAY_LEN:每 pass 走廊外移 1 格+锯齿反相,上限
+    // RAY_PASSES=3 遍后落回现行为,scout1 恒走纯螺旋保底）+再锚定去 ≥2 门
+    // （射线扫完后任意新接触即重锚,500t 静默门不变）。
+    // 镜像批实测：=1 与 =2 同分 10.5/20（不采纳;修复把敌 TC 发现提前 ~19k tick、
+    // 对局提速 ~14%,但早 TC 触发为不对等局调校的攻击门,对称镜像局先攻撞塔环
+    // 负和,收益被抵消——判死登记 docs/research/selfplay-arena.md「别再试」）。
+    private final int SCOUT_RAY;
+    // 临时诊断旋钮（默认关）：每 500t 打 scout0 追踪行（pos/wp/tgt/rayCursor/
+    // waveOrigin/heal/action）。仅供 arena 批测调查,不作为 candidate 语义一部分。
+    private final boolean SCOUT_DBG;
+    private int scoutDbgT = -100000;                // scoutDbg 节流
     // 螺旋侦察路点参数（函数 spiralWaypoint/spiralCount 在文件底部；静态方法无前置
     // 声明顺序问题，但字段初始化器引用这些常量必须文本序在前——JLS 8.3.3）。
     private static final int SCOUT_RINGS = 16;      // 螺旋半径 3,5,…,33（全图覆盖）
@@ -427,6 +450,7 @@ public final class RuleBasedAi implements PlayerAi {
     private static final int SPIRAL_MAX = spiralCount(SCOUT_RINGS);
     private static final int PROBE_MAX = spiralCount(PROBE_RINGS);
     private static final int RAY_LEN = 16;          // 射线法路点数（步长 3 格，推进 6..51 格）
+    private static final int RAY_PASSES = 3;        // SCOUT_RAY：射线换相位重扫遍数上限
     private final boolean[] evis = new boolean[26]; // 本决策各敌单位槽可见性（已探索格上）
     private int enemyTcMem = -1;                    // 侦察记忆：敌 TC 格（见过即永久）
     private int enemyHint = -1;                     // 最近可见敌单位/建筑位置（驻防朝向降级用）
@@ -437,6 +461,8 @@ public final class RuleBasedAi implements PlayerAi {
     private int waveOrigin = -1;                    // 首波接触来向（最远可见敌兵格）
     private final int[] scoutLastP = {-1, -1};      // 侦察兵卡死检测
     private final int[] scoutLastT = new int[2];
+    private final int[] scoutLastWp = {-1, -1};     // SCOUT_RAY：同路点重发检测
+    private final int[] scoutRetry = new int[2];    // SCOUT_RAY：同路点累计重发时长
     private final int[] villProbeCursor = new int[26]; // 村民探路游标（无可派资源时开图）
     private final int[] villProbeTick = new int[26];   // 探路命令发出时刻
     private final int[] villProbeLastWp = new int[26]; // 探针连续重发检测（不可达路点跳过）
@@ -797,7 +823,8 @@ public final class RuleBasedAi implements PlayerAi {
             // 射线再扫——人类玩家看敌军从屏幕哪边进来就往哪边找，同理。
             if (this.fogHonest && this.enemyTcMem < 0 && farTile >= 0
                     && game.tickCount - this.lastContactTick > 500
-                    && (this.waveOrigin < 0 || (this.rayCursor >= RAY_LEN && invaderN >= 2))) {
+                    && (this.waveOrigin < 0 || (this.rayCursor >= RAY_LEN
+                            && (invaderN >= 2 || this.SCOUT_RAY == 2)))) {
                 this.waveOrigin = farTile;
                 this.rayCursor = 0;
                 System.out.println("[ai] CONTACT dir " + (farTile >>> 8) + "," + (farTile & 0xFF)
@@ -845,6 +872,30 @@ public final class RuleBasedAi implements PlayerAi {
             this.scoutIds[0] = firstT5 >= 0 ? firstT5 : firstMil;
             if (milCount >= 6) {
                 this.scoutIds[1] = firstT5 >= 0 ? firstMil : secondMil;
+            }
+        }
+        // 临时诊断（-Daoe.scoutDbg=1，按侧）：侦察选拔与追踪——定位"射线锚定后
+        // 不推进"的根因（第 2 轮 scoutRay 空转调查用，不进转正路径）。
+        if (this.SCOUT_DBG && game.tickCount - this.scoutDbgT >= 500) {
+            this.scoutDbgT = game.tickCount;
+            int si = this.scoutIds[0];
+            if (si >= 0) {
+                int o = si << 3;
+                int pos = slots[o + 0] & 0xFFFF;
+                int wp = scoutTarget(myTc);
+                System.out.println("[ai] SCOUTDBG side=" + this.side + " t=" + game.tickCount
+                    + " si=" + si + " ty=" + (slots[o + 3] & 0xFF)
+                    + " pos=" + (pos >>> 8) + "," + (pos & 0xFF)
+                    + " wp=" + (wp >>> 8) + "," + (wp & 0xFF)
+                    + " tgt=" + ((slots[o + 2] & 0xFFFF) >>> 8) + "," + (slots[o + 2] & 0xFF)
+                    + " ray=" + this.rayCursor + " wo=" + this.waveOrigin
+                    + " heal=" + (this.healUntil[si] > game.tickCount)
+                    + " hunt=" + this.huntingM[si]
+                    + " act=" + (slots[o + 7] & 0xF));
+            } else {
+                System.out.println("[ai] SCOUTDBG side=" + this.side + " t=" + game.tickCount
+                    + " si=-1 (无侦察兵: threat=" + threat + " mil=" + milCount
+                    + " attack=" + this.attackMode + " etc=" + this.enemyTcMem + ")");
             }
         }
         // 僵尸局投降（批测契约，side 0 仅在 -Daoe.exitOnResult 下生效；CampaignAi
@@ -2130,8 +2181,10 @@ public final class RuleBasedAi implements PlayerAi {
 
         // ===== 侦察（诚实模式，敌 TC 未知时）：螺旋/射线（scout0）路点开图 =====
         // 命令放在本 tick 最后写——同 tick 内的驻防群令（STANCE 240t 一次）会被这里
-        // 覆盖回去。卡死 300t 未动 → 跳过该路点（凹形障碍死角兜底，与村民 STUCK 同
-        // 思路）。scout0 走射线（有首波来向时）+螺旋，scout1 只走螺旋（错开半圈）。
+        // 覆盖回去。注意：默认路径的"卡死 300t 跳路点"是死代码（scoutLastT 每决策
+        // 无条件刷新），不可达路点上侦察兵会 parking 到 HUNT 收编；真修复在
+        // SCOUT_RAY 旋钮门内（见字段注释）。scout0 走射线（有首波来向时）+螺旋，
+        // scout1 只走螺旋（错开半圈）。
         for (int s = 0; s < 2; ++s) {
             int si = this.scoutIds[s];
             if (si < 0 || this.healUntil[si] > game.tickCount || this.huntingM[si]) {
@@ -2142,8 +2195,23 @@ public final class RuleBasedAi implements PlayerAi {
             int wp = s == 0 ? scoutTarget(myTc)
                 : spiralWaypoint(myTc, this.scoutCur[1] % SPIRAL_MAX, SCOUT_RINGS);
             int dx = (pos >>> 8) - (wp >>> 8), dy = (pos & 0xFF) - (wp & 0xFF);
+            // SCOUT_RAY 卡死跳路点真修复：旧的"300t 未动跳路点"是死代码——
+            // scoutLastT 每决策无条件刷新,且引擎 BFS 重寻路使卡在不可达路点的
+            // 单位在 2×2 内抖动(pos 恒变,按位置判 stationary 也不可靠,seed 1006
+            // 双侧 scout 实测 parking 5k+ tick)。改按村民探针同款口径：同一路点
+            // 累计重发 >400t=走不到,跳路点。默认关=旧的（死的）语义逐字节不变。
+            if (this.SCOUT_RAY > 0) {
+                if (wp == this.scoutLastWp[s]) {
+                    this.scoutRetry[s] += DECIDE_EVERY;
+                } else {
+                    this.scoutLastWp[s] = wp;
+                    this.scoutRetry[s] = 0;
+                }
+            }
             if (dx * dx + dy * dy <= 2
-                    || (pos == this.scoutLastP[s] && game.tickCount - this.scoutLastT[s] > 300)) {
+                    || (this.SCOUT_RAY > 0 ? this.scoutRetry[s] > 400
+                        : (pos == this.scoutLastP[s]
+                            && game.tickCount - this.scoutLastT[s] > 300))) {
                 if (s == 0) {
                     scoutAdvance();
                 } else {
@@ -2151,6 +2219,10 @@ public final class RuleBasedAi implements PlayerAi {
                 }
                 wp = s == 0 ? scoutTarget(myTc)
                     : spiralWaypoint(myTc, this.scoutCur[1] % SPIRAL_MAX, SCOUT_RINGS);
+                if (this.SCOUT_RAY > 0) {
+                    this.scoutLastWp[s] = wp;
+                    this.scoutRetry[s] = 0;
+                }
             }
             this.scoutLastP[s] = pos;
             this.scoutLastT[s] = game.tickCount;
@@ -2409,11 +2481,21 @@ public final class RuleBasedAi implements PlayerAi {
     /** 射线侦察路点 k：from→to 方向延长线上 dist=6+3k 处，k%4 给横向锯齿，振幅
      *  3+k（远端 ±19 格——来向估计有噪声，远端放宽扫描带不至于擦着敌基走过去）。 */
     private static int rayWaypoint(int fromPacked, int toPacked, int k) {
+        return rayWaypoint(fromPacked, toPacked, k, 0);
+    }
+
+    /** 带 pass 的射线变体（SCOUT_RAY 多遍重扫）：pass 0 = 原行为逐字节；每 pass
+     *  整条走廊外移 1 格（dist+pass，补 3×3 视野在 3 格步长下的纵向漏缝）且奇数
+     *  pass 锯齿反相（补横向漏扫带）。 */
+    private static int rayWaypoint(int fromPacked, int toPacked, int k, int pass) {
         int fx = fromPacked >>> 8, fy = fromPacked & 0xFF;
         int dx = (toPacked >>> 8) - fx, dy = (toPacked & 0xFF) - fy;
         int m = Math.max(1, Math.max(Math.abs(dx), Math.abs(dy)));
-        int dist = 6 + 3 * k;
+        int dist = 6 + 3 * k + pass;
         int zig = (k % 4 == 1 ? 1 : (k % 4 == 3 ? -1 : 0)) * (3 + k);
+        if ((pass & 1) == 1) {
+            zig = -zig;
+        }
         int x = fx + (dx * dist - dy * zig) / m;
         int y = fy + (dy * dist + dx * zig) / m;
         x = Math.max(1, Math.min(62, x));
@@ -2422,17 +2504,27 @@ public final class RuleBasedAi implements PlayerAi {
     }
 
     /** 当前侦察目标路点（scout0 用）：资源侦察态只走螺旋（射线是朝敌 TC 方向找
-     * TC 的，资源盲区开图不需要）；否则有首波来向且射线未扫完 → 射线法，兜底螺旋。 */
+     * TC 的，资源盲区开图不需要）；否则有首波来向且射线未扫完 → 射线法，兜底螺旋。
+     * SCOUT_RAY 开时射线不回卷：rayCursor 单调递增，pass=rayCursor/RAY_LEN 换相位
+     * 重扫至多 RAY_PASSES 遍，扫尽才落回螺旋。 */
     private int scoutTarget(int myTc) {
         if (!this.resScoutOn && this.waveOrigin >= 0 && this.rayCursor < RAY_LEN) {
             return rayWaypoint(myTc, this.waveOrigin, this.rayCursor);
         }
+        if (this.SCOUT_RAY == 2 && !this.resScoutOn && this.waveOrigin >= 0
+                && this.rayCursor < RAY_LEN * RAY_PASSES) {
+            return rayWaypoint(myTc, this.waveOrigin,
+                this.rayCursor % RAY_LEN, this.rayCursor / RAY_LEN);
+        }
         return spiralWaypoint(myTc, this.scoutCur[0] % SPIRAL_MAX, SCOUT_RINGS);
     }
 
-    /** 推进侦察路点（scout0：射线优先，扫完自动落回螺旋；资源侦察态只推螺旋）。 */
+    /** 推进侦察路点（scout0：射线优先，扫完自动落回螺旋；资源侦察态只推螺旋）。
+     *  rayCursor 永不回卷（SCOUT_RAY 的 pass 由除法派生；默认路径 rayCursor ≥
+     *  RAY_LEN 后此分支不再命中，语义同旧）。 */
     private void scoutAdvance() {
-        if (!this.resScoutOn && this.waveOrigin >= 0 && this.rayCursor < RAY_LEN) {
+        if (!this.resScoutOn && this.waveOrigin >= 0
+                && this.rayCursor < (this.SCOUT_RAY == 2 ? RAY_LEN * RAY_PASSES : RAY_LEN)) {
             ++this.rayCursor;
         } else {
             ++this.scoutCur[0];
