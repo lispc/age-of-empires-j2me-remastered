@@ -7,6 +7,25 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
+### 第 46 夜: ailoop -e + enemyAi 等效难度标定 + fair 对称化旋钮(2026-09-07,sub-agent)
+
+- **A·标定（commit 457286a）**: ailoop.sh 加 `-e` 透传 enemyAi。标定矩阵
+  （尺子=side 0 诚实 RB，同形状 -n 10 -s 1000 -b）：enemyAi 吃 Easy/Medium/
+  Expert 参数 → side 0 胜 8/10、8/10、1/10，对照引擎基线 8/10、8/10、1/10——
+  **等效难度 ≈ 同名引擎难度**（side 1 无科技生效+民兵帽约束抵消了策略优势；
+  Medium 基线批间噪声大按合并带口径，不确定度已入 README）。
+- **B·对称化（同 commit）**: c.java 三旋钮默认关零行为差（重跑逐种子 ticks
+  一致实证）——`fairStart`（敌起始资源拉平 200/100/100）、`fairGather`（P1
+  交存不吃乘数）、`enemyDrip=N`（显式补回被 tickAi 抑制停用的免费资源滴，
+  用户拍板默认废弃）。对称自对弈（Medium+fair）side 0 胜 7/10：**科技生效
+  净值 > 全图信息净值**（n=10 95%CI±28pp，统计上不显著）。对称化两力反向：
+  fairStart 扶敌开局、fairGather 削敌中盘，ticks 均值 16159→23718。
+- **事故（sub-agent 自踩自报）**: 批测运行期间并行编译导致 build/classes 被
+  重写、game7-9 ClassNotFoundException 假 STALL——2026-09-04 八批空转同族。
+  教训升级：**批测期间连编译都不能并行**。
+- regress 三连 PASS + replaycheck 一致。批测用量 5/8 预算内；增量落盘
+  /tmp/calib-notes.md 机制防超时丢结论，本轮未触发超时。
+
 ### 第 45 夜: 三连任务——僵尸局出口修复 / 石贫分支判死 / RuleBasedAi 反串 player 1(2026-09-06/07,主会话+sub-agent×2)
 
 - **任务 2·僵尸局出口（commit 4e9ea62）**: Medium 1006 型双方僵尸（村民全灭+
