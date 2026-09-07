@@ -7,6 +7,29 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
+### 第 48 夜: 自对弈竞技场立项 + 第 0 轮基建(2026-09-07,主会话+sub-agent)
+
+- **立项（commit 704a2b9）**: 用户拍板启动自对弈研究项目（长期 goal），
+  规格/评估协议/联赛表固化在 `docs/research/selfplay-arena.md`。**第 0 条
+  铁律（用户拍板）：默认游戏行为永远不变，一切研究改动=可选分支**；敌 AI
+  默认永远是引擎 tickAi（e85c00d 已记录"enemyAi 仅可选实验开关"拍板）。
+  评估协议核心：镜像配对消 side 偏差 + ≥14/20 采纳门槛 + 引擎锚防双生
+  过拟合 + 联赛制 + DRAW 规则（50k tick）。
+- **第 0 轮基建（commit dfe4d1a）**: ① arena 主开关（隐含 fairStart/
+  fairGather、帧首 AI 调用序 tickCount&1 交替、DRAW 规则）；② RuleBasedAi
+  全部 ~40 个自消费旋钮改构造期按侧解析（`aoe.<name>.p0/.p1` 覆盖）——
+  镜像配对"同 JVM 两侧不同配置"的前提；③ **side-1 私有迷雾**
+  exploredBitmap（摘下全图挂，e55= 遥测归零实证）；④ side-1 arena
+  concede + DRAW；⑤ ailoop `-m` 镜像模式（-m -=纯镜像基线）。
+- **公平性基线（核心产出）**: G0 vs G0 镜像 20 局 side0 得分 16/20=80%
+  ——**side 偏差基线 +30pp**（候选源：引擎 tickUnits 恒 player 0 先行动、
+  渲染期雾泄漏不对称，待查；镜像配对协议正是为消它而设）。
+- **验证**: regress 三连 PASS + replaycheck 一致 + 无 enemyAi 基线 5 局与
+  47 夜逐种子逐字节一致 + selftest PASS。终局三路径实证（z=98/concede
+  side=1/DRAW 自然+缩短双验证）。批测 9/10 预算内，增量落盘机制生效。
+- **下一轮（第 1 轮）入口**: 假设储备池按序取——探图速率（双侧诚实后的
+  真正胜负手）；side 偏差来源调查也值得一轮（影响一切镜像测量的噪声底）。
+
 ### 第 47 夜: 科技对称化落地——enemyTechFlags 平行数组，side 1 研究/升时代真生效(2026-09-07,sub-agent)
 
 - **做了什么**: 用户拍板做真对称化（否掉 boost 旋钮捷径，理由=长期 AI 研究
