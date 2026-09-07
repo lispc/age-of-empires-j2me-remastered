@@ -7,6 +7,34 @@
 
 ## 日志（新在上；只追加，不改旧条目）
 
+### 第 47 夜: 科技对称化落地——enemyTechFlags 平行数组，side 1 研究/升时代真生效(2026-09-07,sub-agent)
+
+- **做了什么**: 用户拍板做真对称化（否掉 boost 旋钮捷径，理由=长期 AI 研究
+  价值）。平行数组方案：player 0 的 103 处 techFlags 使用点一律不动，新增
+  enemyTechFlags（res#127 独立拷贝）+ hdr[1][0] 作 player 1 时代；tickBuildings
+  i==1 研究完成分支 applyEnemyResearchEffects 镜像全部模拟效果跳 UI；
+  tryResearch 按 player 分派；spawnAgeKey 形态键（引擎敌 AI 仍键 P0 时代=
+  原作语义）；convertUnitTypeForPlayer per-player 变体；塔贴图 tier owner
+  感知。SaveState VERSION 4→5（enemyTechFlags 入快照，旧档保持初值）。
+  RuleBasedAi side 1 科技模块解禁。commit 4bcdab1。
+- **M0 摸底推翻了一个 brief 假设**（sub-agent 读码实证，裁决认可）：
+  「hdr[1][0] 恒 0 ⇒ 形态键改 [i][0] 默认路径不变」不成立——HEAD 上
+  convertUnitType 全局迁移双方队列与形态键 hdr[0][0] 配套，直接改键会让
+  引擎敌兵停在民兵且队列计数变负。→ spawnAgeKey 分派，默认路径逐字节
+  不变由逐种子对照实锤。另：c.java:7100 塔 tier 实为渲染贴图索引（非护甲
+  表），owner 感知化对模拟零影响。
+- **标定矩阵（对称化前→后）**: Easy 8/10→6/10、Medium 8/10→0/10、Expert
+  1/10→0/10——side 1 科技生效后等效难度显著超越同名引擎档。Medium 悬崖
+  机制：50/50/50 开局兵营一成即封建（~200t），科技链在首波窗口前全落地。
+  平衡出口现成：fairStart/fairGather 旋钮或 side 1 科技节奏延迟——属平衡
+  拍板非缺陷。
+- **验证**: regress 三连 PASS + replaycheck 一致 + 无 enemyAi 基线 5 局与
+  HEAD 逐种子逐字节一致；v5 档 devBoot 双跑对拍逐字节一致、v4 旧档可读。
+  **bootcheck.sh 本机预存挂**（HEAD stash 对照同症，SIGPIPE exit=141=
+  stopat 后 headless JVM 自杀的载体问题，与改动无关）——后续把 run_boot
+  载体换 DevHarness 或给 Main 加 keep-alive。
+- 批测 6/8 预算内，增量落盘 /tmp/techsym-notes.md 机制生效，本轮无超时。
+
 ### 第 46 夜: ailoop -e + enemyAi 等效难度标定 + fair 对称化旋钮(2026-09-07,sub-agent)
 
 - **A·标定（commit 457286a）**: ailoop.sh 加 `-e` 透传 enemyAi。标定矩阵
