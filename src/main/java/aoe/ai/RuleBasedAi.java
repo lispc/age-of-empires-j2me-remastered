@@ -295,7 +295,7 @@ public final class RuleBasedAi implements PlayerAi {
         this.K_BARR_S = propInt(side, "aoe.aiK.barrS", 15);
         this.K_TOWER_W = propInt(side, "aoe.aiK.towerW", 22);
         this.K_TOWER_G = propInt(side, "aoe.aiK.towerG", 6);
-        this.K_TOWER_S = propInt(side, "aoe.aiK.towerS", 16);
+        this.K_TOWER_S = propInt(side, "aoe.aiK.towerS", 20);
         this.K_TOWER_CAP = propInt(side, "aoe.aiK.towerCap", 5);
         this.K_SMITH_W = propInt(side, "aoe.aiK.smithW", 25);
         this.K_SMITH_S = propInt(side, "aoe.aiK.smithS", 15);
@@ -412,8 +412,10 @@ public final class RuleBasedAi implements PlayerAi {
     // 兵营建筑门 W/S（默认 30/15；战中重建与平时建链共用）
     private final int K_BARR_W;
     private final int K_BARR_S;
-    // 塔门 W/G/S（默认 22/6/16）。塔 1/2 新建门 = 基础门 +6/+2/+4（默认 28/8/20，
-    // 随旋钮联动）；战中补塔/塔 3-5 链用基础门
+    // 塔门 W/G/S（默认 22/6/20——towerS 16→20 是自对弈第 10 轮（2026-09-07）
+    // 首个转正 candidate：爬山 14/20 + 独立复测 28/40 恰线 + 引擎锚 10/8/1
+    // vs G0 的 8/8/1 无回退且 Easy +2，联赛表 G1）。塔 1/2 新建门 = 基础门
+    // +6/+2/+4（默认 28/8/24，随旋钮联动）；战中补塔/塔 3-5 链用基础门
     private final int K_TOWER_W;
     private final int K_TOWER_G;
     private final int K_TOWER_S;
