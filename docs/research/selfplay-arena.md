@@ -20,6 +20,9 @@ tickAi；enemyAi、fair 旋钮、arena 模式全部是显式挂载才生效的�
 | 资源滴 | 无 | tickAi 抑制 + 不开 enemyDrip |
 | **迷雾** | **两侧都诚实**：side 0 用引擎迷雾层（mapTiles 0x8000）；side 1 用 AI 自维护的私有探索 bitmap（按自己单位/建筑每 tick 揭 3×3/半径 3/塔 6，镜像引擎语义） | side1 私有雾（第 0 轮已落地） |
 | 调用顺序 | 帧首两侧 AI 的调用序按 tickCount&1 交替（消固定先手） | c.java onPaint（第 0 轮已落地） |
+| 模拟段顺序 | tickUnits/tickAutoEngage/aimProjectiles/tickProjectiles/tickBuildings 的玩家处理序按 tickCount&1 交替（与帧首 AI 序同奇偶），中和"恒 P0 先行动"的占位竞争/先开火/先索敌 | `arenaSimAlt`（arena 隐含开，=0 回退；第 1 轮落地） |
+| 出生对称 | 原版 Easy/Medium（randomMapDifficulty<2）只给 P0 白送侦察骑兵（type 5）；arena 下给 P1 镜像位补一只 | `arenaSymSpawn`（arena 隐含开，=0 回退；第 1 轮落地） |
+| 遥测 | arena 下每 500t 打 `[arena] t=… s0[u/d/mv/r/exp] s1[…]` 对称指标行（side0 exp 排海：(tile&0xFFF)==768 从不置雾不计入） | c.java arenaTelemetry（第 1 轮落地） |
 | side 偏差控制 | **镜像配对**：同种子 candidate 在 side 0 / side 1 各赛一局，合并计胜率 | ailoop `-m`（第 0 轮已落地） |
 | 认输 | 竞技场模式下 side 1 的僵尸投降门开启（打 `[ai] concede side=1`；exitOnResult 批测路径再打 `[result] WIN`+exit=player 0 胜，非批测只打日志、终局仍走引擎） | 第 0 轮已落地 |
 | 和局 | tickCount > 50000 判和（≈当前对局均值 2.7 倍），`[result] DRAW` + exit（仅 arena+exitOnResult 批测路径；隐藏覆盖旋钮 `aoe.arenaDrawTick`，默认 50000 勿改） | 第 0 轮已落地 |
@@ -65,16 +68,30 @@ WORKLOG。
 - [x] side-1 arena concede + DRAW 规则
 - [x] 公平性确认批：对称竞技场的 side 0/1 胜率基线（镜像合并后应≈50%）
 
+第 1 轮（2026-09-07）追加：
+
+- [x] **side 偏差定位与中和**（见联赛表 G0 行注）：两个偏差源实证——
+  ① 出生不对称：原版 Easy/Medium 只给 P0 白送侦察骑兵（type 5），
+  遥测 t=0 s0 u=3/mv=9 vs s1 u=2/mv=4；② 模拟段恒 P0 先行动（tickUnits
+  占位先到先占/resolveAttack 先杀/tickAutoEngage 先索敌/投射物先落地）。
+  中和 = `arenaSymSpawn` + `arenaSimAlt`（均 arena 隐含开）。效果：
+  80% → 65%（仅 symSpawn）→ 55%/35%/50%（组合，三种子集各 n=10×2），
+  合并 60 局 side0 = 28/60 = **46.7%**（落入 [40%,60%] 噪声带，残差无系统
+  方向——seed 1010 同图同配置仅相位不同即翻转胜方）。
+- [x] 假设②（渲染期雾泄漏）证伪于批测语境：ailoop 批跑 noRender=1 整跳
+  renderWorld，该路径不存在（GUI 独有，且对双方 owner 都揭）。
+- [x] `[arena]` 500t 遥测（对称指标分叉时点判据）。
+
 ## 联赛表
 
 | 代 | 配置 | 镜像成绩 | 引擎锚 E/M/X | 日期 |
 |---|---|---|---|---|
-| G0 | 基线 RuleBasedAi（科技对称化后） | side0 得分 **16.0/20 = 80%**（-m -，10 种子×2，逐种子 7W-1L-2D；ticks 均 26649；DRAW@50001 自然触发 2 种子、concede side=1 自然触发 1 种子）。**side 偏差基线 = side0 +30pp**——n 有效=10（无 candidate 时同种子两局逐 tick 相同），95% CI 宽，但方向明确；后续 candidate 全靠镜像合并消此偏差 | 6/10、0/10、0/10（46/47 夜口径=对引擎敌 AI 的 side 0 胜率） | 2026-09-07 |
+| G0 | 基线 RuleBasedAi（科技对称化后） | **第 0 轮（中和前）**：side0 得分 16.0/20 = 80%（10 种子×2，逐种子 7W-1L-2D；ticks 均 26649）。**第 1 轮中和后（arenaSimAlt+arenaSymSpawn 隐含开）**：side0 = 11.0/20=55%（种子 1000+）、7.0/20=35%（1010+）、10.0/20=50%（1020+），合并 60 局 **28/60=46.7%**——side 偏差已中和进噪声带；后续 candidate 镜像测量直接受益（残差 ±15pp/10种子 级为图运噪声） | 6/10、0/10、0/10（46/47 夜口径=对引擎敌 AI 的 side 0 胜率） | 2026-09-07 |
 
-G0 side 偏差假装备查（未证实，供后续轮排查）：① 引擎 tickUnits/战斗结算恒
-player 0 先行动（每 tick 先手）；② noRender 下 side-1 移动单位是否经
-renderWorld 泄漏揭 side-0 雾；③ 其它未考证的引擎不对称。镜像配对协议正是
-为在统计上消除它而设——candidate 评估只看合并分（candidate@p0 + candidate@p1）。
+第 0 轮的 side 偏差假装备查已在第 1 轮闭环：① 坐实（模拟段恒 P0 先，
+arenaSimAlt 中和）；② 证伪（批测 noRender 无渲染路径）；③ 真凶补获=
+出生侦察兵不对称（arenaSymSpawn 中和）。镜像配对协议仍是 candidate 评估
+的统计底座（n 有效=10 的图运噪声靠它摊薄）。
 
 ### 别再试（判死登记）
 

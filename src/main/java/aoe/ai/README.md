@@ -634,14 +634,24 @@ res=195/100/100（开局 200/100/100），无 fair 同种子同相位为 res=45/
 旋钮默认关零行为差实证：加旋钮后重跑的 Medium 标定批与加旋钮前半批逐种子
 ticks 完全一致（七局同数），regress 三连 PASS + replaycheck 一致。
 
-### 自对弈竞技场（-Daoe.arena=1，2026-09-07 第 0 轮基建）
+### 自对弈竞技场（-Daoe.arena=1，2026-09-07 第 0 轮基建 + 第 1 轮 side 偏差中和）
 
 规格/评估协议/联赛表 = `docs/research/selfplay-arena.md`（唯一权威）。arena 主
 开关捆绑：fairStart+fairGather 隐含开启；帧首两侧 AI 调用序按 tickCount&1 交替
-（c.java onPaint）；side-1 私有迷雾诚实模式（见下）；side-1 arena concede；
-arena+exitOnResult 下 tickCount>50000 判 `[result] DRAW`+exit（隐藏覆盖
-`aoe.arenaDrawTick`，默认勿改）。默认关 = 零行为差（验证：regress 三连 +
+（c.java onPaint）；模拟段五循环玩家处理序同奇偶交替（`arenaSimAlt`，第 1 轮）；
+Easy/Medium side-1 镜像补出生侦察兵（`arenaSymSpawn`，第 1 轮——原版只白送
+P0，遥测实证 t=0 s0 u=3/mv=9 vs s1 u=2/mv=4，单独中和掉 side 偏差 ~15pp）；
+每 500t `[arena]` 对称指标遥测（side 偏差诊断用，分叉时点判据：接触前分叉=
+开局/地图级，接触后=交互级）；side-1 私有迷雾诚实模式（见下）；side-1 arena
+concede；arena+exitOnResult 下 tickCount>50000 判 `[result] DRAW`+exit（隐藏
+覆盖 `aoe.arenaDrawTick`，默认勿改）。默认关 = 零行为差（验证：regress 三连 +
 replaycheck + 无 enemyAi n5 基线逐种子 ticks 与 [ai]/[result] 流全一致）。
+
+**side 偏差账本（第 1 轮）**：G0 镜像基线 80%（+30pp）→ +arenaSymSpawn 65%
+→ +arenaSimAlt 55%/35%/50%（三 10-种子集），合并 60 局 46.7% 入噪声带。
+两个偏差源全在引擎原版代码里（出生侦察兵只送 P0；tick 内恒 P0 先行动），
+均在 arena 门内中和，默认路径逐字节不变。残差为图运/相位噪声（同图不同
+相位可翻胜方）。
 
 **旋钮按侧覆盖**：RuleBasedAi 全部自消费旋钮（aiK.*/exm.*/exp*/spNear/aiFog）
 从 static final 改为构造期按 side 解析的实例字段——先查 `aoe.<name>.p<side>`

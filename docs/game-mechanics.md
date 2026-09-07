@@ -19,6 +19,16 @@
   **`onPaint` 是真正的主循环体（paint-driven）**：`++tickCount` 后先推进游戏逻辑再渲染；
   世界模拟集中在 onPaint 的 default 分支（`c.java:1397-1426`：建造/移动/战斗/投射物/AI/任务脚本）。
   `tickCount` = 帧计数（`-Daoe.debug=1` 日志里的 `ar=` 标签就是它——日志字面量未随改名更新，每帧 +1）。
+- 【已验证】**tick 内玩家处理序恒 player 0 先**（2026-09-07 自对弈第 1 轮读码+
+  遥测定案）：tickUnits（移动占位先到先占/采集/近战 resolveAttack 即时击杀）、
+  tickAutoEngage（每玩家每 tick 恰 1 单位索敌）、aimProjectiles/tickProjectiles
+  （塔瞄准/投射物落地即 removeUnit）、tickBuildings（建造/研究/出兵完成）五个
+  循环全部 `for(i=0..1)` 固定 P0 先。对 AI 自对弈构成系统性先手（实测占 side
+  偏差 ~10pp）；arena 的 arenaSimAlt 旋钮按 tickCount&1 交替，默认路径不变。
+- 【已验证】**出生不对称：Easy/Medium（randomMapDifficulty<2）白送 P0 一只
+  侦察骑兵**（t() 的 `a(0,5,…)`，type 5 移速 1024 最快），P1 没有——开局
+  单位数 3v2、军值 9v4、探图速率三重倾斜（实测占 side 偏差 ~15pp）；
+  arena 的 arenaSymSpawn 旋钮给 P1 镜像补一只，默认路径不变。
 - 【已验证】**帧率与逻辑深度耦合**——"提帧率"不是改一个数字的事（2026-09-01 为
   "要不要上 30/60fps"做的考证）：
   - 帧 = 逻辑 tick = 渲染，三者同频。所有游戏常数以 tick 计：移速装填

@@ -2211,6 +2211,25 @@ implements CommandListener {
     private static final int ARENA_DRAW_TICK =
         Integer.parseInt(System.getProperty("aoe.arenaDrawTick", "50000"));
     private boolean arenaResultDone;
+    // ===== arena 第 1 轮：side 偏差诊断遥测 + 中和（均为 arena 隐含默认开）=====
+    // [arena] 遥测（仅 ARENA，挂在模拟段尾）：每 500 tick 打一行双方对称指标
+    // （单位数/死亡数/军值/资源/已探索格数）。判据：接触（有死亡）前指标分叉
+    // =地图/开局级不对称；接触后才分叉=交互顺序先手级。
+    // arenaSimAlt（arena 隐含开，=0 回退原序）：tickUnits/tickAutoEngage/
+    // aimProjectiles/tickProjectiles/tickBuildings 的玩家处理序按 tickCount&1
+    // 交替，中和"恒 player 0 先行动"的逐 tick 先手（与帧首 AI 调用序交替同
+    // 奇偶：奇 tick 两侧都是 side 1 先，偶 tick 都 side 0 先）。
+    // 第 1 轮实测：side 偏差 80% →（+symSpawn）65% →（+simAlt）55%/35%/50%
+    // 三种子集，合并 46.7%，残差无系统方向（见 docs/research/selfplay-arena.md）。
+    private static final boolean ARENA_SIM_ALT =
+        ARENA && !"0".equals(System.getProperty("aoe.arenaSimAlt"));
+    // arenaSymSpawn（arena 隐含开，=0 回退）：原版 t() 在
+    // randomMapDifficulty<2（Easy/Medium）只给 player 0 白送一只侦察骑兵
+    // （type 5，最快移速 1024），player 1 没有——开局单位数/军值/探图速率
+    // 三重不对称（第 1 轮遥测实证：t=0 s0 u=3/mv=9 vs s1 u=2/mv=4）。
+    // 开时给 player 1 镜像位置补一只。
+    private static final boolean ARENA_SYM_SPAWN =
+        ARENA && !"0".equals(System.getProperty("aoe.arenaSymSpawn"));
     // ===== enemyAi 对称化旋钮（移植新增，2026-09-06；全部默认关 = 零行为差）=====
     // -Daoe.fairStart=1：随机图任务装配后把敌方起始资源 hdr[1][5..7] 拉平为
     // player 0 的值（Easy 50/15/15、Medium 50/50/50、Expert 20/20/20 vs
@@ -2277,6 +2296,37 @@ implements CommandListener {
             System.out.println("[ai] enemy AI tick exception, disabled: " + t);
             t.printStackTrace();
         }
+    }
+
+    // arena 遥测打点（仅 ARENA；onPaint 模拟段尾调用，每 500 tick 一行）。
+    // u=单位数 d=死亡数(hdr[87]，removeUnit 唯一入口递增) mv=军值(hdr[55])
+    // r=木/金/石(hdr[5..7]) exp=已探索格数（排海：海格 (tile&0xFFF)==768
+    // 引擎 mapgen 从不置雾，不计入；side 0=引擎雾层 mapTiles 0x8000 未置位
+    // 计数；side 1=AI 私有 exploredBitmap 计数，无 hook 时 -1）。
+    private void arenaTelemetry() {
+        StringBuilder sb = new StringBuilder("[arena] t=").append(this.tickCount);
+        for (int i = 0; i < 2; ++i) {
+            int[] hdr = this.playerUnitHeaders[i];
+            sb.append(i == 0 ? " s0[" : " s1[");
+            sb.append("u=").append(hdr[2])
+                .append(" d=").append(hdr[87])
+                .append(" mv=").append(hdr[55])
+                .append(" r=").append(hdr[5]).append('/').append(hdr[6]).append('/').append(hdr[7]);
+            int exp;
+            if (i == 0) {
+                exp = 0;
+                for (int t = 0; t < 4096; ++t) {
+                    if (this.mapTiles[t] >= 0 && (this.mapTiles[t] & 0xFFF) != 768) {
+                        ++exp;
+                    }
+                }
+            } else {
+                exp = this.enemyAiHook != null ? this.enemyAiHook.arenaExploredCount(this) : -1;
+            }
+            sb.append(" exp=").append(exp).append(']');
+        }
+        System.out.println(sb);
+        System.out.flush();
     }
 
     /** 研究/升时代原语：与 y() case 2 完全同语义的核心三步（写建筑槽研究标志
@@ -2893,6 +2943,9 @@ implements CommandListener {
                         }
                         this.tickBuildings();
                         this.tickMissionScript();
+                        if (ARENA && this.tickCount % 500 == 0) {
+                            this.arenaTelemetry();
+                        }
                         if (this.ag <= 0) break;
                         if (this.var_java_lang_String_a != null) {
                             graphics.setColor(0);
@@ -4012,6 +4065,11 @@ implements CommandListener {
             this.a(1, 9, this.var_AgeOfEmpires_d_a.var_int_arr_a[2], this.var_AgeOfEmpires_d_a.var_int_arr_a[3], 255, false);
             this.a(1, 0, this.var_AgeOfEmpires_d_a.var_int_arr_a[2] + 1, this.var_AgeOfEmpires_d_a.var_int_arr_a[3] + 1, false);
             this.a(1, 0, this.var_AgeOfEmpires_d_a.var_int_arr_a[2] - 1, this.var_AgeOfEmpires_d_a.var_int_arr_a[3] + 1, false);
+            // arena 对称化（第 1 轮）：原版 difficulty<2 只给 P0 白送侦察骑兵
+            // （上行 if 块），ARENA_SYM_SPAWN 下给 P1 镜像位补一只。
+            if (ARENA_SYM_SPAWN && this.randomMapDifficulty < 2) {
+                this.a(1, 5, this.var_AgeOfEmpires_d_a.var_int_arr_a[2] + 1, this.var_AgeOfEmpires_d_a.var_int_arr_a[3], false);
+            }
         }
         if (this.missionResId != 0) {
             this.spawnMission(this.missionResId);
@@ -6295,7 +6353,9 @@ implements CommandListener {
     }
 
     final void tickBuildings() {
-        for (int i = 0; i < 2; ++i) {
+        // ARENA_SIM_ALT：玩家处理序按 tickCount&1 交替（默认原序 P0 先）。
+        for (int k = 0; k < 2; ++k) {
+            int i = ARENA_SIM_ALT ? k ^ (this.tickCount & 1) : k;
             int n = 0;
             int n2 = 0;
             while (n2 < this.playerUnitHeaders[i][4]) {
@@ -7727,7 +7787,9 @@ implements CommandListener {
 
     final void tickUnits() {
         int n = this.tickCount & 8;
-        for (int i = 0; i < 2; ++i) {
+        // ARENA_SIM_ALT：玩家处理序按 tickCount&1 交替（默认原序 P0 先）。
+        for (int k = 0; k < 2; ++k) {
+            int i = ARENA_SIM_ALT ? k ^ (this.tickCount & 1) : k;
             int n2 = 0;
             int n3 = 0;
             while (n3 < this.playerUnitHeaders[i][2]) {
@@ -8624,7 +8686,9 @@ implements CommandListener {
     }
 
     final void aimProjectiles() {
-        for (int i = 0; i < 2; ++i) {
+        // ARENA_SIM_ALT：玩家处理序按 tickCount&1 交替（默认原序 P0 先）。
+        for (int k = 0; k < 2; ++k) {
+            int i = ARENA_SIM_ALT ? k ^ (this.tickCount & 1) : k;
             int n = this.playerUnitHeaders[i][48];
             if (n == 0) continue;
             int n2 = this.tickCount % n << 2;
@@ -8681,7 +8745,9 @@ implements CommandListener {
     }
 
     final void tickProjectiles() {
-        for (int i = 0; i < 2; ++i) {
+        // ARENA_SIM_ALT：玩家处理序按 tickCount&1 交替（默认原序 P0 先）。
+        for (int k = 0; k < 2; ++k) {
+            int i = ARENA_SIM_ALT ? k ^ (this.tickCount & 1) : k;
             int n = 0;
             int n2 = this.playerUnitHeaders[i][48];
             int n3 = 0;
@@ -8739,7 +8805,9 @@ implements CommandListener {
     }
 
     final void tickAutoEngage() {
-        for (int i = 0; i < 2; ++i) {
+        // ARENA_SIM_ALT：玩家处理序按 tickCount&1 交替（默认原序 P0 先）。
+        for (int k = 0; k < 2; ++k) {
+            int i = ARENA_SIM_ALT ? k ^ (this.tickCount & 1) : k;
             boolean bl = false;
             int n = this.tickCount;
             int n2 = this.playerUnitHeaders[i][2];

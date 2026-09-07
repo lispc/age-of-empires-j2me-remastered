@@ -2467,6 +2467,23 @@ public final class RuleBasedAi implements PlayerAi {
         return this.side == 0 ? raw >= 0 : this.exploredBitmap[idx];
     }
 
+    /** arena 遥测（第 1 轮 side 偏差诊断，c.java arenaTelemetry 调用）：
+     *  side 1 返回私有 exploredBitmap 的已探索格数（排海，与 c.java 侧
+     *  s0 口径一致）；side 0 走引擎雾层由 c.java 直接统计，返回 -1。 */
+    @Override
+    public int arenaExploredCount(c game) {
+        if (this.side != 1 || !this.fogHonest) {
+            return -1;
+        }
+        int n = 0;
+        for (int i = 0; i < 4096; ++i) {
+            if (this.exploredBitmap[i] && (game.mapTiles[i] & 0xFFF) != 768) {
+                ++n;
+            }
+        }
+        return n;
+    }
+
     /** side-1 私有雾维护（每 tick 由 tick() 调用；仅 ARENA && side==1 且
      *  fogHonest 时）。镜像引擎语义：单位自身 3×3；完工建筑圆形半径 3、
      *  塔（type 12）半径 6（引擎 void_a(x,y,r) 只认完工建筑=0x40000000 门，

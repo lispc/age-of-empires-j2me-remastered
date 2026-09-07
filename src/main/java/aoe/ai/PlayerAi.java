@@ -22,4 +22,12 @@ import AgeOfEmpires.c;
  */
 public interface PlayerAi {
     void tick(c game);
+
+    /** arena 遥测（第 1 轮 side 偏差诊断，c.java arenaTelemetry 调用）：
+     *  返回该 AI 私有迷雾的已探索格数（排海：海格 (tile&0xFFF)==768 引擎
+     *  从不置雾，不计入，与 c.java 侧 s0 口径一致）；无私有迷雾（side 0
+     *  走引擎雾层，由 c.java 直接统计）返回 -1。默认 -1，非 arena 路径不调用。 */
+    default int arenaExploredCount(c game) {
+        return -1;
+    }
 }

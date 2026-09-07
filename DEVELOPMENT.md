@@ -98,7 +98,7 @@ LLM 玩家代理的宏层（sel/goto/train/build/gather/rally/sitrep 等 FIFO �
 | `aoe.fairStart=1` | enemyAi 对称化旋钮（默认关）：随机图任务装配后敌方起始资源 hdr[1][5..7] 拉平为 player 0 的值（200/100/100）；只挂 gameMode==0，战役/教学不碰 |
 | `aoe.fairGather=1` | enemyAi 对称化旋钮（默认关）：player 1 交存结算不吃 aiGatherMultiplier（按 256=1× 计，与 player 0 同口径） |
 | `aoe.enemyDrip=N` | enemyAi 对称化旋钮（默认 0=关）：enemyAiActive 时每 N tick 给 hdr[1][5..7] 各加 hdr[1][57]，复刻引擎 tickAi 免费资源滴语义（tickAi 被 enemyAi 抑制时滴也停用，此旋钮可补回） |
-| `aoe.arena=1` | 自对弈竞技场主开关（默认关=零行为差；规格 `docs/research/selfplay-arena.md`）：隐含 fairStart+fairGather；帧首 tickPlayerAi/tickEnemyAi 调用序按 tickCount&1 交替；arena+exitOnResult 下 tickCount>50000 判 `[result] DRAW`+exit（隐藏覆盖 `aoe.arenaDrawTick`，勿改默认）；RuleBasedAi 侧 side 1 解锁私有迷雾（AI 自维护 exploredBitmap）诚实模式 + arena concede（`[ai] concede side=1`→`[result] WIN`，仅 exitOnResult 退出） |
+| `aoe.arena=1` | 自对弈竞技场主开关（默认关=零行为差；规格 `docs/research/selfplay-arena.md`）：隐含 fairStart+fairGather；帧首 tickPlayerAi/tickEnemyAi 调用序按 tickCount&1 交替；模拟段五循环（tickUnits/tickAutoEngage/aimProjectiles/tickProjectiles/tickBuildings）玩家处理序同奇偶交替（`aoe.arenaSimAlt=0` 回退）；Easy/Medium 给 side 1 镜像补出生侦察兵（`aoe.arenaSymSpawn=0` 回退）；每 500t 打 `[arena]` 双侧对称指标遥测行；arena+exitOnResult 下 tickCount>50000 判 `[result] DRAW`+exit（隐藏覆盖 `aoe.arenaDrawTick`，勿改默认）；RuleBasedAi 侧 side 1 解锁私有迷雾（AI 自维护 exploredBitmap）诚实模式 + arena concede（`[ai] concede side=1`→`[result] WIN`，仅 exitOnResult 退出） |
 | `aoe.<AI旋钮>.p0/.p1` | RuleBasedAi 全部自消费旋钮（aiK.*/exm.*/exp*/spNear/aiFog）按侧覆盖：构造期先查 `.p<side>` 再回落 base 名；不设 .pN 时解析结果与旧 static 语义逐字节一致（镜像配对基建，ailoop `-m` 消费）。引擎侧旋钮（bfsPath 等）不支持按侧 |
 | `aoe.exitOnResult=1` | 终局（startMissionBriefing z==98）无条件打印 `[result] WIN|LOSS ticks=N` 后 System.exit(0)——批量脚本契约，格式勿改 |
 | `aoe.mapSeed=N` | 随机图种子覆盖（beginMissionLoad 装载点，N 拆 hi/lo 两字节；不设则逐字节不变） |
