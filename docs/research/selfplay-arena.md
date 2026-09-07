@@ -96,6 +96,26 @@ WORKLOG。
   renderWorld，该路径不存在（GUI 独有，且对双方 owner 都揭）。
 - [x] `[arena]` 500t 遥测（对称指标分叉时点判据）。
 
+第 7 轮（2026-09-07）追加：
+
+- [x] **旋钮空间自动爬山 harness**（`tools/arena-climb.py`，纯工具层/stdlib，
+  零游戏代码改动）：14 维基因型（aiK.milVills/meleeW/meleeG1/archW/
+  towerW/towerG/towerS/towerCap/smithW/smithS/t8w/t8g/bowsawW/exm.focusD2，
+  默认值=G0，步长表内置于脚本 GENES），适应度=ailoop 镜像批
+  （`ailoop.sh -m <gene>=<value> -n 10 -d 2 -k -b`，champion=当前基因型经
+  EXTRA_D 双侧 base 透传，candidate=单基因变异）的 candidate 合并胜场
+  （DRAW 计半，满分 20，镜像自对弈平局基准恒 10.0）。坐标下降：每基因
+  试 ±步长，>10.0 即采纳最高分者，一轮无改进或预算（默认 75min）耗尽
+  自停写 summary。状态（基因型/评估缓存/历史）持久化
+  `<workdir>/state.json`（默认 /tmp/arena-r7），缓存 key = (champion 基因型,
+  基因, 候选值, 种子集) 的 sha1——同种子同相位 pin 下同 key 结果确定，
+  杀掉重启自动续跑不重跑。用法：
+  `nohup python3 tools/arena-climb.py --minutes 85 > /tmp/arena-r7/climb.log 2>&1 &`
+  （冒烟：`--games 1 --max-evals 2 --workdir /tmp/arena-r7-smoke`；
+  单实例锁 climb.lock；收尾写 `<workdir>/summary.txt`）。
+  注意：n=20 镜像批噪声带 ±1.5-2 分，">10.0 即采纳"会采纳噪声——产出
+  基因型须按协议重新独立复测验收，不直接转正。
+
 ## 联赛表
 
 | 代 | 配置 | 镜像成绩 | 引擎锚 E/M/X | 日期 |
