@@ -443,6 +443,17 @@ hdr[55] 军值（威慑敌 all-in 判定），是唯一的免费战力。
    ABORTED / RETREAT 五处打 siege 行——我方投石机数 t8 / 敌完工塔
    etw=可见/全图真值 / 双方军容军值 / 敌塔军值 twval。镜像批 20/20 逐种子
    ticks 与基线逐字节一致=零行为差实锤。
+   `aoe.geoDbg`（默认 0，纯日志，第 9 轮交存几何测绘）：!=0 时三通道——
+   ①每决策 tick 跟踪村民携带态 trip（action==3 且高半字节!=0=背货回程），
+   close 分类打 carry 行：SEALED（>2400t 未卸货）/DETOUR（行程 >2×直线+4）/
+   ABORT（未到站被重派/逃命/死亡；用 trip 内最小 Chebyshev 判到站——close 时
+   pos 判会全误 ABORT，卸货后 8t 内已走开；st≤2 的短 ABORT 是 8t 采样混叠
+   伪影）；②每 500t geo 摘要：TC 围死度 tcb（Chebyshev≤2 环 24 格+正交 8 格
+   建筑数）/营地锚位/trip 累计计数/open trip 最大年龄；③营地落位瞬间 camp
+   行：锚点资源格↔落位格可走邻格 BFS 距离（bfs=-1=放下即不互通）。镜像批
+   20/20 逐种子 ticks 与基线逐字节一致=零行为差实锤。测绘结论（判死登记）：
+   营地落位不可达 0/40、TC 围死度胜负无分离、携带态病理胜方照样吸收——
+   几何层落位纪律天花板 11/20，未做 candidate。
    资源点用自扫 findResource（引擎 findNearbyResource 缓存双方共享，会把敌村民
    引到我方资源点互殴）；**findResource 有战区概念（v14）：距敌 TC <10 格的
    资源格不派工、不建营地**（无候选才回退不过滤）——v13 seed 2004 复盘：

@@ -325,6 +325,7 @@ public final class RuleBasedAi implements PlayerAi {
         this.SCOUT_DBG = prop(side, "aoe.scoutDbg", "0").equals("1");
         this.BATTLE_DBG = propInt(side, "aoe.battleDbg", 0);
         this.SIEGE_DBG = propInt(side, "aoe.siegeDbg", 0);
+        this.GEO_DBG = propInt(side, "aoe.geoDbg", 0);
     }
     // Expert 全图攻坚旋钮（2026-09-06 第 41 夜，批测 A/B 用；验证后转默认）：
     // （2026-09-07 第 0 轮起全部改构造期按 side 解析的实例字段，见 prop() 注释）
@@ -500,6 +501,28 @@ public final class RuleBasedAi implements PlayerAi {
     // !=0 时在 ATTACK enemy TC / STALLED / ABORTED / RETREAT 四处追加 siege 行：
     // 我方投石机（t8）数 / 敌可见完工塔数（+全图真值）/ 双方军容军值 / 敌塔军值。
     private final int SIEGE_DBG;
+    // 交存几何诊断旋钮（2026-09-07 第 9 轮测绘用，默认 0=关，纯日志零行为差）：
+    // !=0 时三通道——①每决策 tick 跟踪村民携带态 trip（action==3 且高半字节!=0 =
+    // 背货回程，c.java:7816 交存路径实锤）：起点≈资源格/目标=nearestDropOff 选的
+    // 交存格/累计行程（8t 采样曼哈顿和）/时长；close 时分类打 carry 行：
+    // SEALED（>2400t 未卸货=交存封喉，1008 v0 背石绕 TC 14k tick 型）/
+    // DETOUR（行程 >2×直线+4=绕行）/ABORT（未到站被重派/逃命/死亡）/ok 不打。
+    // ②每 500t geo 摘要行：TC 围死度 tcb（Chebyshev≤2 环 24 格中建筑格数 +
+    // 正交 8 格子集）/营地锚位/累计 trip 计数/open trip 数与最大年龄。
+    // ③矿场/伐木场落位瞬间打 camp 行：锚点资源格↔落位格的可走邻格 BFS 互通
+    // 距离（镜像引擎 bfsWalkable 语义：建筑/资源/海=墙，单位格瞬态放行）——
+    // bfs=-1 = 放下去就互通不了（1000 矿场封喉型），straight=直线参照。
+    private final int GEO_DBG;
+    private final int[] geoCarryK = new int[26];    // 槽位携带资源种（0=无 open trip）
+    private final int[] geoCarryT0 = new int[26];   // trip 起始 tick
+    private final int[] geoCarryS = new int[26];    // trip 起点（打包格）
+    private final int[] geoCarryTgt = new int[26];  // trip 目标交存格
+    private final int[] geoCarryL = new int[26];    // 上次采样格
+    private final int[] geoCarryTrav = new int[26]; // 累计行程（曼哈顿采样和）
+    private final int[] geoCarryMinD = new int[26]; // trip 内到目标的最小 Chebyshev
+                                                    // （卸货后 8t 内已走开，close 时
+                                                    //  的 pos 判到站会误判 ABORT）
+    private int geoTrips, geoDet, geoSeal, geoAbort; // 累计 trip 分类计数
     // 螺旋侦察路点参数（函数 spiralWaypoint/spiralCount 在文件底部；静态方法无前置
     // 声明顺序问题，但字段初始化器引用这些常量必须文本序在前——JLS 8.3.3）。
     private static final int SCOUT_RINGS = 16;      // 螺旋半径 3,5,…,33（全图覆盖）
@@ -508,6 +531,8 @@ public final class RuleBasedAi implements PlayerAi {
     private static final int PROBE_MAX = spiralCount(PROBE_RINGS);
     private static final int RAY_LEN = 16;          // 射线法路点数（步长 3 格，推进 6..51 格）
     private static final int RAY_PASSES = 3;        // SCOUT_RAY：射线换相位重扫遍数上限
+    private static final int[] GEO_DX = {1, 1, 0, -1, -1, -1, 0, 1};  // geoDbg BFS 8 连通
+    private static final int[] GEO_DY = {0, -1, -1, -1, 0, 1, 1, 1};  // （固定序保确定性）
     private final boolean[] evis = new boolean[26]; // 本决策各敌单位槽可见性（已探索格上）
     private int enemyTcMem = -1;                    // 侦察记忆：敌 TC 格（见过即永久）
     private int enemyHint = -1;                     // 最近可见敌单位/建筑位置（驻防朝向降级用）
@@ -662,6 +687,9 @@ public final class RuleBasedAi implements PlayerAi {
                 continue;
             }
             ++vills;
+            if (this.GEO_DBG != 0) {
+                this.geoTrackCarry(game, slots, i, o);
+            }
             int action = slots[o + 7] & 0xF;
             int kind = 0;
             if (action == 2 || action == 3) {
@@ -2186,6 +2214,16 @@ public final class RuleBasedAi implements PlayerAi {
                     int tx = spot >>> 8, ty = spot & 0xFF;
                     // findAiBuildSpot 找不到会原样返回锚点；只认空格
                     if (tx < 64 && ty < 64 && (game.mapTiles[tx + (ty << 6)] & 0xFFF) == 0) {
+                        if (this.GEO_DBG != 0 && (need == 0 || need == 1)) {
+                            // 营地落位几何（第 9 轮测绘）：锚点资源格 ↔ 落位格的
+                            // 可走邻格 BFS 互通距离（落位前快照，spot 即将成墙）。
+                            int gd = this.geoCampBfs(game, anchor, tx, ty);
+                            int asx = anchor >>> 8, asy = anchor & 0xFF;
+                            System.out.println(this.aiPfx + " geo camp type=" + need
+                                + " anchor=" + asx + "," + asy + " spot=" + tx + "," + ty
+                                + " st=" + (Math.abs(asx - tx) + Math.abs(asy - ty))
+                                + " bfs=" + gd + " t=" + game.tickCount);
+                        }
                         int rc = game.a(this.side, need, tx, ty, 0x40000000, true);
                         System.out.println(this.aiPfx + " build type=" + need + " at " + tx + "," + ty
                             + " rc=" + rc + " res=" + hdr[5] + "/" + hdr[6] + "/" + hdr[7]
@@ -2474,6 +2512,58 @@ public final class RuleBasedAi implements PlayerAi {
                     + ecomp[5] + "/" + ecomp[6] + "/" + ecomp[7] + "/" + ecomp[8] + "/" + ecomp[9]
                     + " elow=" + elow
                     + " ec=" + (en > 0 ? (ecx / en) + "," + (ecy / en) : "-"));
+            }
+            if (this.GEO_DBG != 0) {
+                // 交存几何摘要（第 9 轮）：槽位调和（死亡/整编槽被军兵复用时关闭
+                // 遗留 open trip 记 ABORT）+ TC 围死度 + 营地锚位 + trip 计数。
+                int open = 0, maxAge = 0;
+                for (int i = 0; i < 26; ++i) {
+                    if (this.geoCarryK[i] == 0) {
+                        continue;
+                    }
+                    if (i >= units || (slots[(i << 3) + 3] & 0xFF) >= 2) {
+                        this.geoCarryK[i] = 0;
+                        ++this.geoAbort;
+                        continue;
+                    }
+                    ++open;
+                    int age = game.tickCount - this.geoCarryT0[i];
+                    if (age > maxAge) {
+                        maxAge = age;
+                    }
+                }
+                int tcb24 = -1, tcb8 = -1;
+                if (myTc >= 0) {
+                    tcb24 = 0;
+                    tcb8 = 0;
+                    int gcx = myTc >>> 8, gcy = myTc & 0xFF;
+                    for (int dx = -2; dx <= 2; ++dx) {
+                        for (int dy = -2; dy <= 2; ++dy) {
+                            if (dx == 0 && dy == 0) {
+                                continue;
+                            }
+                            int nx = gcx + dx, ny = gcy + dy;
+                            if (((nx | ny) & 0xFFFFFFC0) != 0) {
+                                continue;
+                            }
+                            if ((game.mapTiles[nx + (ny << 6)] & 0x100) != 0) {
+                                ++tcb24;
+                                if (dx == 0 || dy == 0) {
+                                    ++tcb8;
+                                }
+                            }
+                        }
+                    }
+                }
+                System.out.println(this.aiPfx + " geo t=" + game.tickCount
+                    + " tcb=" + tcb24 + "," + tcb8
+                    + " tc=" + (myTc >= 0 ? (myTc >>> 8) + "," + (myTc & 0xFF) : "-")
+                    + " lc=" + (hdr[9] > 0 ? (hdr[9] >>> 8) + "," + (hdr[9] & 0xFF) : "-")
+                    + " mc=" + (hdr[10] > 0 ? (hdr[10] >>> 8) + "," + (hdr[10] & 0xFF) : "-")
+                    + "/" + (hdr[11] > 0 ? (hdr[11] >>> 8) + "," + (hdr[11] & 0xFF) : "-")
+                    + " trips=" + this.geoTrips + " det=" + this.geoDet
+                    + " seal=" + this.geoSeal + " abort=" + this.geoAbort
+                    + " open=" + open + " maxage=" + maxAge);
             }
         }
     }
@@ -3016,6 +3106,120 @@ public final class RuleBasedAi implements PlayerAi {
             }
         }
         return best;
+    }
+
+    /** geoDbg 通道①：村民携带态 trip 跟踪（纯日志零行为差）。carrying =
+     *  action==3 且高半字节!=0（c.java:7816：采集计时归零 → 目标改写为
+     *  nearestDropOff 交存格、action 置 3 带种类回程；到站交存清 0）。
+     *  每决策 tick（8t）采样：open 时累计曼哈顿行程；close 时分类打 carry 行。
+     *  起点的直线距离用曼哈顿（start↔交存格）；行程/直线 >2 +4 容差 = DETOUR。 */
+    private void geoTrackCarry(c game, short[] slots, int i, int o) {
+        int s7 = slots[o + 7];
+        boolean carrying = (s7 & 0xF) == 3 && (s7 & 0xF0) != 0;
+        int pos = slots[o + 0] & 0xFFFF;
+        if (carrying) {
+            if (this.geoCarryK[i] == 0) {
+                this.geoCarryK[i] = (s7 & 0xF0) >> 4;
+                this.geoCarryT0[i] = game.tickCount;
+                this.geoCarryS[i] = pos;
+                this.geoCarryTgt[i] = slots[o + 2] & 0xFFFF;
+                this.geoCarryL[i] = pos;
+                this.geoCarryTrav[i] = 0;
+                this.geoCarryMinD[i] = Integer.MAX_VALUE;
+            } else {
+                this.geoCarryTrav[i] += Math.abs((pos >>> 8) - (this.geoCarryL[i] >>> 8))
+                    + Math.abs((pos & 0xFF) - (this.geoCarryL[i] & 0xFF));
+                this.geoCarryL[i] = pos;
+            }
+            int md = Math.max(Math.abs((pos >>> 8) - (this.geoCarryTgt[i] >>> 8)),
+                Math.abs((pos & 0xFF) - (this.geoCarryTgt[i] & 0xFF)));
+            if (md < this.geoCarryMinD[i]) {
+                this.geoCarryMinD[i] = md;
+            }
+            return;
+        }
+        if (this.geoCarryK[i] == 0) {
+            return;
+        }
+        int k = this.geoCarryK[i];
+        this.geoCarryK[i] = 0;
+        ++this.geoTrips;
+        int ticks = game.tickCount - this.geoCarryT0[i];
+        int tx = this.geoCarryTgt[i] >>> 8, ty = this.geoCarryTgt[i] & 0xFF;
+        int straight = Math.abs((this.geoCarryS[i] >>> 8) - tx)
+            + Math.abs((this.geoCarryS[i] & 0xFF) - ty);
+        int trav = this.geoCarryTrav[i];
+        boolean arrived = this.geoCarryMinD[i] <= 1;
+        String cls;
+        if (ticks > ORBIT_STUCK_TICK) {
+            cls = "SEALED";     // 背着货 >2400t 无论到没到站都是封喉病理
+            ++this.geoSeal;
+        } else if (!arrived) {
+            cls = "ABORT";
+            ++this.geoAbort;
+        } else if (trav > 2 * straight + 4) {
+            cls = "DETOUR";
+            ++this.geoDet;
+        } else {
+            return;     // 健康 trip 不打行（噪声），只累计数
+        }
+        System.out.println(this.aiPfx + " carry v=" + i + " k=" + k + " " + cls
+            + " ticks=" + ticks + " trav=" + trav + " st=" + straight
+            + " from=" + (this.geoCarryS[i] >>> 8) + "," + (this.geoCarryS[i] & 0xFF)
+            + " to=" + tx + "," + ty + " t=" + game.tickCount);
+    }
+
+    /** geoDbg 通道③：营地落位可达性——锚点资源格（墙）的可走邻格 ↔ 落位格
+     *  （即将成墙）的可走邻格之间的 BFS 最短距离；不互通返回 -1。8 连通固定
+     *  方向序，walkable 口径同 hasWalkableNeighbor（(t&0x300)==0，单位格算墙
+     *  的保守口径——落位验证要的是建筑几何，瞬态人墙不该否决候选位）。 */
+    private int geoCampBfs(c game, int anchor, int sx, int sy) {
+        int[] dist = new int[4096];
+        java.util.Arrays.fill(dist, -1);
+        int[] queue = new int[4096];
+        int head = 0, tail = 0;
+        for (int d = 0; d < 8; ++d) {
+            int nx = sx + GEO_DX[d], ny = sy + GEO_DY[d];
+            if (((nx | ny) & 0xFFFFFFC0) != 0
+                    || (game.mapTiles[nx + (ny << 6)] & 0x300) != 0) {
+                continue;
+            }
+            dist[nx + (ny << 6)] = 0;
+            queue[tail++] = nx + (ny << 6);
+        }
+        if (tail == 0) {
+            return -1;      // 落位格四邻全墙——本身就不可进站
+        }
+        int ax = anchor >>> 8, ay = anchor & 0xFF;
+        while (head < tail) {
+            int t = queue[head++];
+            int nd = dist[t] + 1;
+            int tx = t & 0x3F, ty = t >>> 6;
+            for (int d = 0; d < 8; ++d) {
+                int nx = tx + GEO_DX[d], ny = ty + GEO_DY[d];
+                if (((nx | ny) & 0xFFFFFFC0) != 0) {
+                    continue;
+                }
+                int nt = nx + (ny << 6);
+                if (dist[nt] != -1 || (game.mapTiles[nt] & 0x300) != 0) {
+                    continue;
+                }
+                dist[nt] = nd;
+                queue[tail++] = nt;
+            }
+        }
+        int best = Integer.MAX_VALUE;
+        for (int d = 0; d < 8; ++d) {
+            int nx = ax + GEO_DX[d], ny = ay + GEO_DY[d];
+            if (((nx | ny) & 0xFFFFFFC0) != 0) {
+                continue;
+            }
+            int dd = dist[nx + (ny << 6)];
+            if (dd >= 0 && dd < best) {
+                best = dd;
+            }
+        }
+        return best == Integer.MAX_VALUE ? -1 : best;
     }
 
     /** 石贫检测（aoe.expStonePoor）：扫可采石格（kind3 + 可站邻格 + 未拉黑/蹲守 +
