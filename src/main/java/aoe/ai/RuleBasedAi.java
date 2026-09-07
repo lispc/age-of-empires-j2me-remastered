@@ -234,6 +234,10 @@ public final class RuleBasedAi implements PlayerAi {
     // fogTcOmni 消融档只挂在 fogHonest 门上。
     private final int side;
     private final int foe;
+    // [ai] 日志行首 side 短标记（2026-09-07 arena 第 3 轮日志卫生）：镜像批里
+    // ATTACK/CONTACT/SCOUT/DEFEND 等行的归属此前只能靠推断。纯诊断通道
+    // （regress/replaycheck 不查 [ai]），其余格式不变。
+    private final String aiPfx;
     private final boolean fogHonest;
     // ===== side-1 私有迷雾（仅 ARENA && side==1 生效，fogHonest 门内）=====
     // 镜像引擎揭雾语义：单位自身 3×3（revealFogAroundUnit 逐 tick）、完工建筑
@@ -251,6 +255,7 @@ public final class RuleBasedAi implements PlayerAi {
     public RuleBasedAi(int side) {
         this.side = side;
         this.foe = 1 - side;
+        this.aiPfx = "[ai] s" + side;
         // —— 迷雾旋钮（按侧解析；不设 .pN 时与原 static 解析逐字节一致）——
         this.aiFog = prop(side, "aoe.aiFog", "1");
         this.fogResOmni = "res".equals(this.aiFog);
@@ -436,8 +441,9 @@ public final class RuleBasedAi implements PlayerAi {
     // RAY_PASSES=3 遍后落回现行为,scout1 恒走纯螺旋保底）+再锚定去 ≥2 门
     // （射线扫完后任意新接触即重锚,500t 静默门不变）。
     // 镜像批实测：=1 与 =2 同分 10.5/20（不采纳;修复把敌 TC 发现提前 ~19k tick、
-    // 对局提速 ~14%,但早 TC 触发为不对等局调校的攻击门,对称镜像局先攻撞塔环
-    // 负和,收益被抵消——判死登记 docs/research/selfplay-arena.md「别再试」）。
+    // 对局提速 ~14%,但胜率不动——第 3 轮归因修正：原"先攻撞塔环负和"被证伪
+    // （先攻在对称局实测正和,真先攻 8/10）,scoutRay 中性=纯提速+双方同受益;
+    // 判死登记 docs/research/selfplay-arena.md「别再试」）。
     private final int SCOUT_RAY;
     // 临时诊断旋钮（默认关）：每 500t 打 scout0 追踪行（pos/wp/tgt/rayCursor/
     // waveOrigin/heal/action）。仅供 arena 批测调查,不作为 candidate 语义一部分。
@@ -565,7 +571,7 @@ public final class RuleBasedAi implements PlayerAi {
                     if (idleN < 26) {
                         idleVill[idleN++] = i;
                     }
-                    System.out.println("[ai] villager " + i + " STUCK at " + (pos >>> 8) + ","
+                    System.out.println(this.aiPfx + " villager " + i + " STUCK at " + (pos >>> 8) + ","
                         + (pos & 0xFF) + " blacklisted, t=" + game.tickCount);
                     continue;
                 }
@@ -629,7 +635,7 @@ public final class RuleBasedAi implements PlayerAi {
                     this.attackBestD2 = Integer.MAX_VALUE;
                     this.attackBestTick = game.tickCount;
                 }
-                System.out.println("[ai] SCOUT enemy TC found at " + (erecs[o + 0] >>> 8) + ","
+                System.out.println(this.aiPfx + " SCOUT enemy TC found at " + (erecs[o + 0] >>> 8) + ","
                     + (erecs[o + 0] & 0xFF) + " t=" + game.tickCount);
             }
             if (bt >= 12 && bt <= 15 && (erecs[o + 2] & 0x40000000) == 0) {
@@ -691,7 +697,7 @@ public final class RuleBasedAi implements PlayerAi {
         }
         if (!this.bootLogged) {
             this.bootLogged = true;
-            System.out.println("[ai] RuleBasedAi side=" + this.side + " fogHonest=" + this.fogHonest
+            System.out.println(this.aiPfx + " RuleBasedAi side=" + this.side + " fogHonest=" + this.fogHonest
                 + (this.side != 0 ? (this.fogHonest ? " (private fog: exploredBitmap)"
                     : " (forced omni: player 1 无自有雾层)") : ""));
         }
@@ -827,7 +833,7 @@ public final class RuleBasedAi implements PlayerAi {
                             && (invaderN >= 2 || this.SCOUT_RAY == 2)))) {
                 this.waveOrigin = farTile;
                 this.rayCursor = 0;
-                System.out.println("[ai] CONTACT dir " + (farTile >>> 8) + "," + (farTile & 0xFF)
+                System.out.println(this.aiPfx + " CONTACT dir " + (farTile >>> 8) + "," + (farTile & 0xFF)
                     + " t=" + game.tickCount);
             }
             this.lastContactTick = game.tickCount;
@@ -846,7 +852,7 @@ public final class RuleBasedAi implements PlayerAi {
         if (this.resScoutOn != resScout) {
             this.resScoutOn = resScout;
             if (resScout) {
-                System.out.println("[ai] RES-SCOUT on (resource blind spot) t=" + game.tickCount);
+                System.out.println(this.aiPfx + " RES-SCOUT on (resource blind spot) t=" + game.tickCount);
             }
         }
         if (this.fogHonest && !fogTcOmni && (this.enemyTcMem < 0 || resScout) && myTc >= 0 && !this.attackMode
@@ -883,7 +889,7 @@ public final class RuleBasedAi implements PlayerAi {
                 int o = si << 3;
                 int pos = slots[o + 0] & 0xFFFF;
                 int wp = scoutTarget(myTc);
-                System.out.println("[ai] SCOUTDBG side=" + this.side + " t=" + game.tickCount
+                System.out.println(this.aiPfx + " SCOUTDBG side=" + this.side + " t=" + game.tickCount
                     + " si=" + si + " ty=" + (slots[o + 3] & 0xFF)
                     + " pos=" + (pos >>> 8) + "," + (pos & 0xFF)
                     + " wp=" + (wp >>> 8) + "," + (wp & 0xFF)
@@ -893,7 +899,7 @@ public final class RuleBasedAi implements PlayerAi {
                     + " hunt=" + this.huntingM[si]
                     + " act=" + (slots[o + 7] & 0xF));
             } else {
-                System.out.println("[ai] SCOUTDBG side=" + this.side + " t=" + game.tickCount
+                System.out.println(this.aiPfx + " SCOUTDBG side=" + this.side + " t=" + game.tickCount
                     + " si=-1 (无侦察兵: threat=" + threat + " mil=" + milCount
                     + " attack=" + this.attackMode + " etc=" + this.enemyTcMem + ")");
             }
@@ -949,7 +955,7 @@ public final class RuleBasedAi implements PlayerAi {
             // 兵营无、金 0 木 165 烂库、僵到超时）。
             if (this.stallTicks >= 500) {
                 if (this.side == 0) {
-                    System.out.println("[ai] concede: no military, no production path ("
+                    System.out.println(this.aiPfx + " concede: no military, no production path ("
                         + (villDead ? "villager deadlock" : "income dead") + "), t="
                         + game.tickCount);
                     System.out.println("[result] LOSS ticks=" + game.tickCount);
@@ -959,7 +965,7 @@ public final class RuleBasedAi implements PlayerAi {
                     // arena side-1 认输：打日志；exitOnResult 批测路径再打
                     // [result] WIN（side 1 认输 = player 0 胜）并退出。
                     this.conceded = true;
-                    System.out.println("[ai] concede side=1: no military, no production path ("
+                    System.out.println(this.aiPfx + " concede side=1: no military, no production path ("
                         + (villDead ? "villager deadlock" : "income dead") + "), t="
                         + game.tickCount);
                     if (System.getProperty("aoe.exitOnResult") != null) {
@@ -1068,7 +1074,7 @@ public final class RuleBasedAi implements PlayerAi {
                 // mil=N 注记：残局全军尽没后本行每 48t 照打（指令自然空转），
                 // 不带 mil 会把 mil=0 的假 focus 行当真实防御指挥误读（game3
                 // 2758-2998 尸检教训）
-                System.out.println("[ai] DEFEND invader " + invaderN + " at " + (defendTile >>> 8) + ","
+                System.out.println(this.aiPfx + " DEFEND invader " + invaderN + " at " + (defendTile >>> 8) + ","
                     + (defendTile & 0xFF) + (defendAnchor != myTc ? " (tower)" : "")
                     + " mil=" + milCount
                     + (focusTile >= 0 ? " focus " + (focusTile >>> 8) + "," + (focusTile & 0xFF)
@@ -1081,7 +1087,7 @@ public final class RuleBasedAi implements PlayerAi {
             this.attackMode = false;
             this.attackSpRush = false;
             this.attackCooldownUntil = game.tickCount + 800;
-            System.out.println("[ai] attack ABORTED, " + invaderN + " raiders home t=" + game.tickCount);
+            System.out.println(this.aiPfx + " attack ABORTED, " + invaderN + " raiders home t=" + game.tickCount);
         }
         // 2) 反击/总攻判定：敌主力被歼（从峰值跌到 1/3）/ 碾压 / 僵持兜底。
         //    v1 教训（M1 报告）：没碾平敌主力就逼近敌基 = 替对面开 87.5% 反扑开关。
@@ -1151,7 +1157,7 @@ public final class RuleBasedAi implements PlayerAi {
                 this.musterTile = AiKit.stanceTile(enemyTc, myTc, 7); // 敌 TC 朝我 7 格（警戒圈 6 格外沿）
                 this.lastAttackOrder = -100000;
                 this.attackBestD2 = Integer.MAX_VALUE;
-                System.out.println("[ai] ATTACK enemy TC " + (enemyTc >>> 8) + "," + (enemyTc & 0xFF)
+                System.out.println(this.aiPfx + " ATTACK enemy TC " + (enemyTc >>> 8) + "," + (enemyTc & 0xFF)
                     + " mil=" + milCount + "(val " + milVal + ") vs enemy " + enemyMilCount
                     + "(val " + enemyMilVal + ", peak " + this.enemyMilPeak + ")"
                     + (crushed ? " CRUSHED" : "") + (overwhelm ? " OVERWHELM" : "")
@@ -1171,7 +1177,7 @@ public final class RuleBasedAi implements PlayerAi {
                 this.lastAttackOrder = -100000;
                 this.attackBestD2 = Integer.MAX_VALUE;
                 this.attackBestTick = game.tickCount;
-                System.out.println("[ai] ATTACK HUNT (enemy TC unknown) mil=" + milCount
+                System.out.println(this.aiPfx + " ATTACK HUNT (enemy TC unknown) mil=" + milCount
                     + " t=" + game.tickCount);
             }
             if (this.attackMode && milCount <= (this.attackSpRush && SP_MODE >= 2 ? 1 : RETREAT_LEFT)) {
@@ -1185,7 +1191,7 @@ public final class RuleBasedAi implements PlayerAi {
                 game.selectUnits(this.side, -1);
                 game.orderMove(this.side, tcx, tcy);
                 game.clearSelection();
-                System.out.println("[ai] RETREAT, mil left " + milCount + " t=" + game.tickCount);
+                System.out.println(this.aiPfx + " RETREAT, mil left " + milCount + " t=" + game.tickCount);
             }
             // v14 集结阶段：全军先压到敌 TC 7 格外集合，到齐（或超时 700 tick）再一起上。
             // 解决兵种移速差（冲车/投石机 256 vs 剑士 1024）导致的添油式送死——
@@ -1210,7 +1216,7 @@ public final class RuleBasedAi implements PlayerAi {
                     this.lastAttackOrder = -100000;
                     this.attackBestD2 = Integer.MAX_VALUE;
                     this.attackBestTick = game.tickCount;
-                    System.out.println("[ai] MUSTER done, " + arrived + "/" + milCount
+                    System.out.println(this.aiPfx + " MUSTER done, " + arrived + "/" + milCount
                         + " assault t=" + game.tickCount);
                 } else if (game.tickCount - this.lastAttackOrder >= ATTACK_REISSUE) {
                     this.lastAttackOrder = game.tickCount;
@@ -1267,7 +1273,7 @@ public final class RuleBasedAi implements PlayerAi {
                     game.selectUnits(this.side, -1);
                     game.orderMove(this.side, tcx, tcy);
                     game.clearSelection();
-                    System.out.println("[ai] attack STALLED bestD2=" + this.attackBestD2
+                    System.out.println(this.aiPfx + " attack STALLED bestD2=" + this.attackBestD2
                         + ", regroup t=" + game.tickCount);
                 }
             }
@@ -1322,7 +1328,7 @@ public final class RuleBasedAi implements PlayerAi {
                     slots[baitO + 7] = 0;
                     slots[baitO + 3] = (short) (slots[baitO + 3] & 0xFF);
                     this.lastBaitTick = game.tickCount;
-                    System.out.println("[ai] BAIT sent (val " + baitVal + ") toward enemy TC, t="
+                    System.out.println(this.aiPfx + " BAIT sent (val " + baitVal + ") toward enemy TC, t="
                         + game.tickCount);
                 }
             }
@@ -1647,7 +1653,7 @@ public final class RuleBasedAi implements PlayerAi {
                     } else {
                         ++stoneW;
                     }
-                    System.out.println("[ai] assign villager " + idleVill[k] + " -> kind" + kind
+                    System.out.println(this.aiPfx + " assign villager " + idleVill[k] + " -> kind" + kind
                         + " " + (r >>> 8) + "," + (r & 0xFF));
                 } else if (r < 0 && this.fogHonest && myTc >= 0) {
                     // 已探索区内无该种资源（诚实模式）：派去近环探路开图（单位视野 3×3
@@ -1680,7 +1686,7 @@ public final class RuleBasedAi implements PlayerAi {
                         slots[o + 7] = 0;
                         slots[o + 3] = (short) (slots[o + 3] & 0xFF);
                         this.villProbeTick[vi] = game.tickCount;
-                        System.out.println("[ai] probe villager " + vi + " -> "
+                        System.out.println(this.aiPfx + " probe villager " + vi + " -> "
                             + (wp >>> 8) + "," + (wp & 0xFF) + " t=" + game.tickCount);
                     }
                 }
@@ -1725,7 +1731,7 @@ public final class RuleBasedAi implements PlayerAi {
                         slots[o + 7] = 0;
                         slots[o + 3] = (short) (slots[o + 3] & 0xFF);
                         this.villPullTick[pv] = game.tickCount;
-                        System.out.println("[ai] probe-pull villager " + pv + " -> "
+                        System.out.println(this.aiPfx + " probe-pull villager " + pv + " -> "
                             + (wp >>> 8) + "," + (wp & 0xFF) + " t=" + game.tickCount);
                     }
                 }
@@ -1773,7 +1779,7 @@ public final class RuleBasedAi implements PlayerAi {
                             slots[o + 2] = (short) r;
                             slots[o + 7] = 0;
                             slots[o + 3] = (short) (slots[o + 3] & 0xFF);
-                            System.out.println("[ai] rebalance villager " + i + " kind" + overKind
+                            System.out.println(this.aiPfx + " rebalance villager " + i + " kind" + overKind
                                 + "->kind" + wantKind + " t=" + game.tickCount);
                         }
                         break;
@@ -1795,7 +1801,7 @@ public final class RuleBasedAi implements PlayerAi {
             String sideTag = this.side == 1 ? " side=1" : "";
             if (!feudal && barracksDone > 0 && tcSlot >= 0 && game.canAfford(this.side, 2, 21)) {
                 if (game.tryResearch(this.side, tcSlot, 21)) {
-                    System.out.println("[ai] research FEUDAL t=" + game.tickCount + sideTag);
+                    System.out.println(this.aiPfx + " research FEUDAL t=" + game.tickCount + sideTag);
                 }
             }
             if (feudal) {
@@ -1804,24 +1810,24 @@ public final class RuleBasedAi implements PlayerAi {
                 // 全在 ~2.3-2.9k 首波窗口，Forging(+1 攻) 换不了塔的生存。
                 if (EXP_WTFIRST && towerSlot >= 0 && game.canAfford(this.side, 2, 13)
                         && game.tryResearch(this.side, towerSlot, 13)) {
-                    System.out.println("[ai] research WatchTower(wtfirst) t=" + game.tickCount + sideTag);
+                    System.out.println(this.aiPfx + " research WatchTower(wtfirst) t=" + game.tickCount + sideTag);
                 }
                 if (smithSlot >= 0 && game.canAfford(this.side, 2, 4) && game.tryResearch(this.side, smithSlot, 4)) {
-                    System.out.println("[ai] research Forging t=" + game.tickCount + sideTag);
+                    System.out.println(this.aiPfx + " research Forging t=" + game.tickCount + sideTag);
                 }
                 if (!EXP_WTFIRST && towerSlot >= 0 && game.canAfford(this.side, 2, 13) && game.tryResearch(this.side, towerSlot, 13)) {
-                    System.out.println("[ai] research WatchTower t=" + game.tickCount + sideTag);
+                    System.out.println(this.aiPfx + " research WatchTower t=" + game.tickCount + sideTag);
                 }
                 if (miningSlot >= 0 && game.tickCount >= K_GM_TICK
                         && game.canAfford(this.side, 2, 5) && game.tryResearch(this.side, miningSlot, 5)) {
-                    System.out.println("[ai] research GoldMining t=" + game.tickCount + sideTag);
+                    System.out.println(this.aiPfx + " research GoldMining t=" + game.tickCount + sideTag);
                 }
                 if (miningSlot >= 0 && towerN < K_SM_TOWER_UNDER && game.canAfford(this.side, 2, 9)
                         && game.tryResearch(this.side, miningSlot, 9)) {
-                    System.out.println("[ai] research StoneMining t=" + game.tickCount + sideTag);
+                    System.out.println(this.aiPfx + " research StoneMining t=" + game.tickCount + sideTag);
                 }
                 if (lumberSlot >= 0 && game.canAfford(this.side, 2, 3) && game.tryResearch(this.side, lumberSlot, 3)) {
-                    System.out.println("[ai] research DoubleBitAxe t=" + game.tickCount + sideTag);
+                    System.out.println(this.aiPfx + " research DoubleBitAxe t=" + game.tickCount + sideTag);
                 }
                 // v40 Bow Saw（木产量 10→15，第五批）：围城期木桶是唯一硬约束
                 // （v38 败局 5/6 木=0 卡死一切，金/石反囤），单木工 +50% 收入=续命。
@@ -1830,16 +1836,16 @@ public final class RuleBasedAi implements PlayerAi {
                 if (lumberSlot >= 0 && hdr[5] >= (expert && EXP_ECO_KILL ? 15 : K_BOWSAW_W)
                         && game.canAfford(this.side, 2, 1)
                         && game.tryResearch(this.side, lumberSlot, 1)) {
-                    System.out.println("[ai] research BowSaw t=" + game.tickCount + sideTag);
+                    System.out.println(this.aiPfx + " research BowSaw t=" + game.tickCount + sideTag);
                 }
                 // Horse Collar（磨坊 tech 6，10W/5G）：训练速度第二级 +50%——
                 // 波 2/3 消耗战补兵/CRUSHED 后重建成军提速（64t→28.3t/剑士）。
                 if (EXP_HORSECOLLAR && millSlot >= 0 && game.canAfford(this.side, 2, 6)
                         && game.tryResearch(this.side, millSlot, 6)) {
-                    System.out.println("[ai] research HorseCollar t=" + game.tickCount + sideTag);
+                    System.out.println(this.aiPfx + " research HorseCollar t=" + game.tickCount + sideTag);
                 }
                 if (smithSlot >= 0 && hdr[6] >= 25 && game.canAfford(this.side, 2, 8) && game.tryResearch(this.side, smithSlot, 8)) {
-                    System.out.println("[ai] research ScaleMail t=" + game.tickCount + sideTag);
+                    System.out.println(this.aiPfx + " research ScaleMail t=" + game.tickCount + sideTag);
                 }
                 // 城堡时代（磨坊+铁匠≥2）：再 +1 攻/甲 + Guard Tower，富余才升。
                 // v23 试过 Expert 放宽到 30/25/25 + 磨坊提到射箭场前：2/9 不升反降
@@ -1847,18 +1853,18 @@ public final class RuleBasedAi implements PlayerAi {
                 if (hdr[0] == 1 && millN > 0 && smithDone > 0 && tcSlot >= 0
                         && hdr[5] >= 40 && hdr[6] >= 40 && hdr[7] >= 40
                         && game.tryResearch(this.side, tcSlot, 22)) {
-                    System.out.println("[ai] research CASTLE t=" + game.tickCount + sideTag);
+                    System.out.println(this.aiPfx + " research CASTLE t=" + game.tickCount + sideTag);
                 }
             }
             if (hdr[0] >= 2) {
                 if (smithSlot >= 0 && game.canAfford(this.side, 2, 7) && game.tryResearch(this.side, smithSlot, 7)) {
-                    System.out.println("[ai] research IronCasting t=" + game.tickCount + sideTag);
+                    System.out.println(this.aiPfx + " research IronCasting t=" + game.tickCount + sideTag);
                 }
                 if (smithSlot >= 0 && game.canAfford(this.side, 2, 2) && game.tryResearch(this.side, smithSlot, 2)) {
-                    System.out.println("[ai] research ChainMail t=" + game.tickCount + sideTag);
+                    System.out.println(this.aiPfx + " research ChainMail t=" + game.tickCount + sideTag);
                 }
                 if (towerSlot >= 0 && game.canAfford(this.side, 2, 17) && game.tryResearch(this.side, towerSlot, 17)) {
-                    System.out.println("[ai] research GuardTower t=" + game.tickCount + sideTag);
+                    System.out.println(this.aiPfx + " research GuardTower t=" + game.tickCount + sideTag);
                 }
             }
             // 建筑（一次一座，自动成型；找位失败/被占下个决策再试）
@@ -2015,7 +2021,7 @@ public final class RuleBasedAi implements PlayerAi {
                     // findAiBuildSpot 找不到会原样返回锚点；只认空格
                     if (tx < 64 && ty < 64 && (game.mapTiles[tx + (ty << 6)] & 0xFFF) == 0) {
                         int rc = game.a(this.side, need, tx, ty, 0x40000000, true);
-                        System.out.println("[ai] build type=" + need + " at " + tx + "," + ty
+                        System.out.println(this.aiPfx + " build type=" + need + " at " + tx + "," + ty
                             + " rc=" + rc + " res=" + hdr[5] + "/" + hdr[6] + "/" + hdr[7]
                             + " t=" + game.tickCount);
                     }
@@ -2237,7 +2243,7 @@ public final class RuleBasedAi implements PlayerAi {
         // ===== 摘要日志 =====
         if (game.tickCount - this.lastLog >= LOG_EVERY) {
             this.lastLog = game.tickCount;
-            System.out.println("[ai] t=" + game.tickCount + " res=" + hdr[5] + "/" + hdr[6] + "/" + hdr[7]
+            System.out.println(this.aiPfx + " t=" + game.tickCount + " res=" + hdr[5] + "/" + hdr[6] + "/" + hdr[7]
                 + " pop=" + hdr[2] + "+" + hdr[49] + "/" + hdr[3]
                 + " vills=" + vills + "(w" + woodW + " g" + goldW + " s" + stoneW + ")"
                 + " mil=" + milCount + "(val " + milVal + ")"
@@ -2302,7 +2308,7 @@ public final class RuleBasedAi implements PlayerAi {
         if (!this.waveInFlight && dispatched >= 4) {
             this.waveInFlight = true;
             this.waveLaunchTick = game.tickCount;
-            System.out.println("[ai] WAVE launched n=" + dispatched
+            System.out.println(this.aiPfx + " WAVE launched n=" + dispatched
                 + " e55=" + ehdr[55] + " m55=" + hdr[55]
                 + (this.waveEta > 0 ? " predictedEta=" + this.waveEta
                     + " err=" + (game.tickCount - this.waveEta) : " (no prediction)")
@@ -2311,7 +2317,7 @@ public final class RuleBasedAi implements PlayerAi {
             this.waveInFlight = false;
             this.waveSampN = 0;      // 窗内混入波次折损骤降，重置斜率拟合
             this.waveEta = -1;
-            System.out.println("[ai] WAVE cleared, e55=" + ehdr[55]
+            System.out.println(this.aiPfx + " WAVE cleared, e55=" + ehdr[55]
                 + " span=" + (game.tickCount - this.waveLaunchTick) + " t=" + game.tickCount);
         }
         if (this.waveInFlight) {
@@ -2827,13 +2833,13 @@ public final class RuleBasedAi implements PlayerAi {
         if (SP_REPORT && (flipped || game.tickCount - this.stoneLastScan >= 500
                 || this.stoneLastScan < 0)) {
             this.stoneLastScan = game.tickCount;
-            System.out.println("[ai] STONEPOOR scan near=" + nearN + "/" + SP_NEAR
+            System.out.println(this.aiPfx + " STONEPOOR scan near=" + nearN + "/" + SP_NEAR
                 + " nearest=" + (nearest == Integer.MAX_VALUE ? -1 : nearest)
                 + " total=" + total + " poor=" + this.stonePoor
                 + (canJudge ? "" : " (coverage " + explored + "/" + boxN + ", deferred)")
                 + " t=" + game.tickCount);
         } else if (flipped) {
-            System.out.println("[ai] STONEPOOR on (no stone within " + SP_NEAR
+            System.out.println(this.aiPfx + " STONEPOOR on (no stone within " + SP_NEAR
                 + ") t=" + game.tickCount);
         }
     }

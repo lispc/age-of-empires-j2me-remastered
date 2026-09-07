@@ -364,8 +364,8 @@ hdr[55] 军值（威慑敌 all-in 判定），是唯一的免费战力。
    =1 仅卡死修复（同路点累计重发 >400t 跳路点，村民探针同款口径）；
    =2 追加射线多遍换相位重扫+再锚定去 invaderN≥2 门。arena 镜像批实测
    =1/=2 均 10.5/20 不采纳（修复把敌 TC 发现提前 ~19k tick、对局提速 ~14%，
-   但早 TC 触发的攻击门在对称局先攻撞塔环负和——判死登记见
-   docs/research/selfplay-arena.md）。诊断旋钮 `aoe.scoutDbg=1`（按侧）每 500t
+   胜率不动——第 3 轮归因修正：原"先攻撞塔环负和"证伪，先攻在对称局实测
+   正和，scoutRay 中性=纯提速+双方同受益，详见 selfplay-arena.md 别再试）。诊断旋钮 `aoe.scoutDbg=1`（按侧）每 500t
    打 scout0 追踪行（pos/wp/tgt/rayCursor/heal/hunt/action）。
    敌 TC 未知时塔位降级为绕 TC 塔环（有来向则环序朝来向旋转），僵持 15k 后
    全军 HUNT 扫荡开图（路点不可达 1500t 无进展跳过）。
@@ -478,7 +478,8 @@ AOE_AIFOG=tc  tools/ailoop.sh -n 10 -d 3 -a aoe.ai.RuleBasedAi -s 1000 -t 240 -k
 （2026-09-04 事故，见迭代笔记）。判别：成功构建尾行是 configuration-cache 提示，
 失败是 "1 actionable task: 1 executed"。
 
-日志：`[ai]` 前缀（assign/rebalance/probe/build/research/DEFEND/ATTACK（带触发原因
+日志：`[ai] s<side>` 前缀（2026-09-07 第 3 轮起行首带 s0/s1 侧标；
+assign/rebalance/probe/build/research/DEFEND/ATTACK（带触发原因
 CRUSHED/OVERWHELM/DESPERATE/CLOSERUSH/GOLDSTARVE）/HUNT/CONTACT/SCOUT/
 RETREAT/ABORTED/STALLED/BAIT/STUCK + 每 500 tick 态势摘要；诚实模式摘要含
 enemyVis/eb/etc=敌TC坐标或?）；诊断配合 FIFO `aistate`（`tools/aoectl aistate`）。
@@ -700,7 +701,16 @@ DRAW；summary 增 candidate 合并胜场（DRAW 计半）+ 逐侧拆分 + side0
 "发现后 ~300-500t 终结"）。但 candidate `aoe.scoutRay`（=1 侦察卡死死代码
 修复/=2 追加射线多遍+再锚定放宽，见上 0b 节）镜像批 **=1 与 =2 同分
 10.5/20**（基线 10.0/20）不采纳：修复把敌 TC 发现从 16-25k 提前到 ~5-7k、
-对局提速 ~14%，但提前找到的敌 TC 触发为不对等局调校的攻击门，对称镜像局
-先攻撞塔环负和，探图收益被抵消。判死全文+复测前提（攻击门对称化重调）见
-docs/research/selfplay-arena.md「别再试」。
+对局提速 ~14%，但胜率不动。第 3 轮（s0/s1 日志卫生后实测）修正归因：
+先攻在对称镜像局**不负和**（真先攻 8/10=80% 胜，军值攻击前后 500t 几乎
+不掉），scoutRay 中性=纯提速+双方同受益；唯一负和触发器是 TIMERUSH
+（两批 0/4）。判死全文见 docs/research/selfplay-arena.md「别再试」。
+
+**第 3 轮（2026-09-07，攻击触发门对称局重校假设，归因证伪提前收官）**：
+先落地日志卫生——RuleBasedAi 全部 41 处 `[ai]` 日志加行首 `s0`/`s1` 侧标
+（纯文本变化，regress 三连+replaycheck+无 enemyAi 基线 5 局逐种子一致+G0
+镜像复跑 20 局 ticks 逐字节一致实证零行为差）。诊断：G0 批先攻方胜率 60%
+（8/10 种子双侧同刻 HUNT@15k=无先攻方可言）、scoutRay=1 复测批 65%、
+真先攻（领先>500t 非 HUNT）8/10——第 2 轮"先攻撞塔环负和"归因证伪，
+储备池第 6 项（攻击门对称化重校）闭环判死，未做 candidate。
 
