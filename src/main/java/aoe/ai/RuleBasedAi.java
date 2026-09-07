@@ -323,6 +323,7 @@ public final class RuleBasedAi implements PlayerAi {
         this.EXM_HEAL = propInt(side, "aoe.exm.heal", 0);
         this.SCOUT_RAY = propInt(side, "aoe.scoutRay", 0);
         this.SCOUT_DBG = prop(side, "aoe.scoutDbg", "0").equals("1");
+        this.BATTLE_DBG = propInt(side, "aoe.battleDbg", 0);
     }
     // Expert 全图攻坚旋钮（2026-09-06 第 41 夜，批测 A/B 用；验证后转默认）：
     // （2026-09-07 第 0 轮起全部改构造期按 side 解析的实例字段，见 prop() 注释）
@@ -490,6 +491,10 @@ public final class RuleBasedAi implements PlayerAi {
     // waveOrigin/heal/action）。仅供 arena 批测调查,不作为 candidate 语义一部分。
     private final boolean SCOUT_DBG;
     private int scoutDbgT = -100000;                // scoutDbg 节流
+    // 会战诊断旋钮（2026-09-07 第 6 轮标定用，默认 0=关，纯日志零行为差）：
+    // =1 时每 500t 在摘要行后追加一行 btl：本侧兵种构成（t2..t9 计数）/残血数/
+    // 攻击态数/军事质心 + 可见敌同口径（evis 过滤，诚实模式不越界）。
+    private final int BATTLE_DBG;
     // 螺旋侦察路点参数（函数 spiralWaypoint/spiralCount 在文件底部；静态方法无前置
     // 声明顺序问题，但字段初始化器引用这些常量必须文本序在前——JLS 8.3.3）。
     private static final int SCOUT_RINGS = 16;      // 螺旋半径 3,5,…,33（全图覆盖）
@@ -2397,6 +2402,53 @@ public final class RuleBasedAi implements PlayerAi {
                 + (expert ? " dodges=" + this.dodgeCount + " hunts=" + this.huntCount
                     + " repairs=" + this.repairCount : "")
                 + " mode=" + (threat ? "DEFEND" : this.attackMode ? "ATTACK" : "eco"));
+            if (this.BATTLE_DBG != 0) {
+                // 会战测绘（第 6 轮）：本侧构成按类型计数 + 残血(hp<100) +
+                // 攻击态(action==1) + 军事质心；敌侧同口径但只数 evis 可见者。
+                int[] comp = new int[10], ecomp = new int[10];
+                int low = 0, act1 = 0, elow = 0, cx = 0, cy = 0, ecx = 0, ecy = 0, en = 0;
+                for (int i = 0; i < units; ++i) {
+                    int o = i << 3;
+                    int type = slots[o + 3] & 0xFF;
+                    if (type < 2) {
+                        continue;
+                    }
+                    ++comp[type];
+                    int p = slots[o + 0] & 0xFFFF;
+                    cx += p >>> 8;
+                    cy += p & 0xFF;
+                    if ((slots[o + 4] & 0xFF) < 100) {
+                        ++low;
+                    }
+                    if ((slots[o + 7] & 0xF) == 1) {
+                        ++act1;
+                    }
+                }
+                for (int i = 0; i < eunits; ++i) {
+                    int o = i << 3;
+                    int type = eslots[o + 3] & 0xFF;
+                    if (type < 2 || !this.evis[i]) {
+                        continue;
+                    }
+                    ++ecomp[type];
+                    ++en;
+                    int p = eslots[o + 0] & 0xFFFF;
+                    ecx += p >>> 8;
+                    ecy += p & 0xFF;
+                    if ((eslots[o + 4] & 0xFF) < 100) {
+                        ++elow;
+                    }
+                }
+                System.out.println(this.aiPfx + " btl t=" + game.tickCount
+                    + " comp=" + comp[2] + "/" + comp[3] + "/" + comp[4] + "/" + comp[5]
+                    + "/" + comp[6] + "/" + comp[7] + "/" + comp[8] + "/" + comp[9]
+                    + " low=" + low + " act1=" + act1
+                    + " c=" + (milCount > 0 ? (cx / milCount) + "," + (cy / milCount) : "-")
+                    + " e=" + en + ":" + ecomp[2] + "/" + ecomp[3] + "/" + ecomp[4] + "/"
+                    + ecomp[5] + "/" + ecomp[6] + "/" + ecomp[7] + "/" + ecomp[8] + "/" + ecomp[9]
+                    + " elow=" + elow
+                    + " ec=" + (en > 0 ? (ecx / en) + "," + (ecy / en) : "-"));
+            }
         }
     }
 
