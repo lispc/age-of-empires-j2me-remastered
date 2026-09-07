@@ -268,6 +268,7 @@ public final class RuleBasedAi implements PlayerAi {
         this.EXP_CAMPREBUILD = prop(side, "aoe.expCampRebuild", "0").equals("1");
         this.EXP_ECO_KILL = prop(side, "aoe.expEcoKill", "0").equals("1");
         this.EXP_HORSECOLLAR = prop(side, "aoe.expHorsecollar", "0").equals("1");
+        this.PROBE_STRIDE = propInt(side, "aoe.probeStride", 0);
         // —— 石贫检测 ——
         this.SP_PROP = prop(side, "aoe.expStonePoor", "0").trim();
         this.SP_REPORT = this.SP_PROP.equals("report");
@@ -335,6 +336,15 @@ public final class RuleBasedAi implements PlayerAi {
     // 后重建成军的关键提速。unit-stats.md 旧注"木产量[50]+5"是数据表误注
     // （效果=hdr[56] 增量，c.java 磨坊完工/HC 研究 6233/6343 两级各 +50%）。
     private final boolean EXP_HORSECOLLAR;
+    // ===== aoe.probeStride 资源盲区专职探员跳环（2026-09-07 自对弈第 4 轮）=====
+    // 默认 0=关=逐字节现行为。镜像局败因测绘：5/10 种子败因=单资源盲区产能锁死
+    // ——专职探员螺旋从 r=3 逐点外推，发现半径 R 的代价 ∝ R² 个路点（每点 ~100t
+    // 行走），r=15 金矿要 ~13k tick（seed 1007 s1 金距 TC ~12 格 15.8k 才发现、
+    // 全程 mil 冻结 val 47 实锤）。≥1 = 专职探员游标按 ×N 步进采样螺旋（同覆盖
+    // 域、time-to-radius ÷N），并解锁石盲区抽探员（默认只认木/金盲区——seed 1010
+    // s1 石恒 10、塔卡 2 座、马厩永缺军容帽 10 实锤）。只动专职探员，闲村民
+    // 近环（PROBE_RINGS=6）探针语义不变。=1 时路点序列与原等价（仅石触发生效）。
+    private final int PROBE_STRIDE;
     // ===== aoe.expStonePoor 石贫检测 + 替代策略分支（2026-09-06 第 45 夜探索）=====
     // 契约同 aiK.*：未设置/=0 → 逐字节当前行为（无检测、无遥测、无分支）。
     // report = 只打检测遥测（[ai] STONEPOOR 行），零行为差——分级/误判率取数用。
@@ -1697,7 +1707,9 @@ public final class RuleBasedAi implements PlayerAi {
             // v63：Expert 不抽工——波 1 前的经济是以 tick 计的，少 1 个村民 400t 的
             // 代价比晚发现资源更大（Easy/Medium 保留：那里有经济冗余，v62 Easy
             // 5/10→7/10 实锤收益）。
-            if (needDiscovery && !threat && !expert) {
+            boolean pullStone = this.PROBE_STRIDE > 0 && stoneTarget > 0 && miningN > 0
+                && findResource(game, myTc, 3, game.tickCount) < 0;
+            if ((needDiscovery || pullStone) && !threat && !expert) {
                 int pv = -1;
                 for (int i = 0; i < units; ++i) {
                     if ((slots[(i << 3) + 3] & 0xFF) < 2) {
@@ -1707,8 +1719,7 @@ public final class RuleBasedAi implements PlayerAi {
                 }
                 if (pv >= 0 && this.repairUntil[pv] <= game.tickCount) {
                     int o = pv << 3;
-                    int wp = spiralWaypoint(myTc,
-                        (this.villPullCursor[pv] + pv * 11) % SPIRAL_MAX, SCOUT_RINGS);
+                    int wp = this.pullWaypoint(myTc, pv);
                     // 独立游标/重发检测（同 idle 探针的不可达跳过；此块与 idle 探针
                     // 可能先后作用于同一村民，共用游标会 6/16 环两套路标互相踩）。
                     if (wp == this.villPullLastWp[pv]) {
@@ -1719,8 +1730,7 @@ public final class RuleBasedAi implements PlayerAi {
                     }
                     if ((slots[o + 0] & 0xFFFF) == wp || this.villPullRetry[pv] > 400) {
                         ++this.villPullCursor[pv];
-                        wp = spiralWaypoint(myTc,
-                            (this.villPullCursor[pv] + pv * 11) % SPIRAL_MAX, SCOUT_RINGS);
+                        wp = this.pullWaypoint(myTc, pv);
                         this.villPullLastWp[pv] = wp;
                         this.villPullRetry[pv] = 0;
                     }
@@ -2454,6 +2464,16 @@ public final class RuleBasedAi implements PlayerAi {
             n += (8 * (3 + 2 * rr) + 2) / 3;
         }
         return n;
+    }
+
+    /** 专职探员（probe-pull）路点：PROBE_STRIDE≤1 时与原序列逐字节等价；
+     *  >1 时游标 ×N 步进采样螺旋（覆盖域不变，抵达半径 R 的路点数 ÷N）。 */
+    private int pullWaypoint(int myTc, int pv) {
+        int cursor = this.villPullCursor[pv];
+        int w = this.PROBE_STRIDE > 1
+            ? (cursor * this.PROBE_STRIDE + pv * 11) % SPIRAL_MAX
+            : (cursor + pv * 11) % SPIRAL_MAX;
+        return spiralWaypoint(myTc, w, SCOUT_RINGS);
     }
 
     /** 第 w 个螺旋路点（打包 tx<<8|ty）：环半径 r=3+2rr，环内 cnt=ceil(8r/3) 个
