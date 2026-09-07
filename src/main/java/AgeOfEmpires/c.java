@@ -2193,6 +2193,19 @@ implements CommandListener {
     private boolean enemyAiDisabled;
     private boolean enemyAiActive;
     private boolean enemyAiModeLogged;
+    // ===== enemyAi 对称化旋钮（移植新增，2026-09-06；全部默认关 = 零行为差）=====
+    // -Daoe.fairStart=1：随机图任务装配后把敌方起始资源 hdr[1][5..7] 拉平为
+    // player 0 的值（Easy 50/15/15、Medium 50/50/50、Expert 20/20/20 vs
+    // player 0 恒 200/100/100 的不对称抹平）。只挂 gameMode==0 分支，
+    // 战役/教学不受影响（注入点 setupMissionEnv 难度 switch 之后）。
+    private static final boolean FAIR_START = "1".equals(System.getProperty("aoe.fairStart"));
+    // -Daoe.fairGather=1：player 1 交存结算不吃 aiGatherMultiplier（按 256=1×
+    // 计，与 player 0 同口径）。只影响 onUnitArrived 交存结算的 n==1 分支。
+    private static final boolean FAIR_GATHER = "1".equals(System.getProperty("aoe.fairGather"));
+    // -Daoe.enemyDrip=N（默认 0=关）：enemyAiActive 时每 N tick 给 hdr[1][5..7]
+    // 各加 hdr[1][57]——复刻引擎 tickAi 免费资源滴语义（aiFreeResTimer 段，
+    // 随 tickAi 抑制而停用）。确定性：只按 tickCount 节流，无墙钟。
+    private static final int ENEMY_DRIP = Integer.parseInt(System.getProperty("aoe.enemyDrip", "0"));
 
     private void tickEnemyAi() {
         if (this.gameMode != 0) {
@@ -2225,6 +2238,14 @@ implements CommandListener {
             }
         }
         this.enemyAiActive = true;
+        // enemyDrip 免费资源滴（默认关）：tickCount 每过 N 滴一次，量同引擎
+        // tickAi 的 aiFreeResTimer 段（hdr[1][57] 一次入三系）。
+        if (ENEMY_DRIP > 0 && this.tickCount % ENEMY_DRIP == 0) {
+            int[] ehdr = this.playerUnitHeaders[1];
+            ehdr[5] = ehdr[5] + ehdr[57];
+            ehdr[6] = ehdr[6] + ehdr[57];
+            ehdr[7] = ehdr[7] + ehdr[57];
+        }
         try {
             this.enemyAiHook.tick(this);
         } catch (Throwable t) {
@@ -4553,6 +4574,13 @@ implements CommandListener {
                     this.aiFreeResInterval = 1000;
                 }
             }
+        }
+        // fairStart 旋钮（默认关）：随机图敌方起始资源拉平为 player 0 的值。
+        // 只挂 gameMode==0，战役/教学的 hdr[1] 由任务脚本装配，不受影响。
+        if (FAIR_START && this.gameMode == 0) {
+            this.playerUnitHeaders[1][5] = this.playerUnitHeaders[0][5];
+            this.playerUnitHeaders[1][6] = this.playerUnitHeaders[0][6];
+            this.playerUnitHeaders[1][7] = this.playerUnitHeaders[0][7];
         }
         n2 = 128;
         this.missionResId = 0;
@@ -7555,7 +7583,8 @@ implements CommandListener {
                         n5 = 0;
                         this.playerUnitSlots[n][n2 + 7] = 0;
                         int n11 = 256;
-                        if (n == 1) {
+                        // fairGather 旋钮（默认关）：开时 player 1 交存也按 1× 计。
+                        if (n == 1 && !FAIR_GATHER) {
                             n11 = this.aiGatherMultiplier;
                         }
                         int[] nArray = this.playerUnitHeaders[n];

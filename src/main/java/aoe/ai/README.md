@@ -545,3 +545,37 @@ JVM 共存安全。
 aiGatherMultiplier/aiAttackThreshold 难度旋钮语义（值按"敌方难度"解读，对
 side-1 实例是自身加成）。
 
+### 标定矩阵（2026-09-07，ailoop `-e` 透传，尺子 = side 0 诚实模式 RB）
+
+形状统一：`-n 10 -d N -a aoe.ai.RuleBasedAi -e aoe.ai.RuleBasedAi -s 1000 -t 240 -k -b`
+（side 0 诚实模式，side 1 强制全图）。对照 = 同形状无 `-e` 历史基线。
+
+| 敌方参数 | side 0 胜（enemyAi 反串） | side 0 胜（引擎敌 AI 基线） | 等效判定 |
+|---|---|---|---|
+| Easy（×2，50/15/15，T=50） | **8/10** | 8/10 | ≈ 引擎 Easy |
+| Medium（×3.07，50/50/50，T=60） | **8/10** | 8/10（另一批 4/10，合并 12/20） | ≈ 引擎 Medium |
+| Expert（×8，20/20/20，T=100） | **1/10** | 1/10（四批合并 5/40） | ≈ 引擎 Expert |
+
+结论：enemyAi(RuleBasedAi) 吃满各档引擎参数（采集乘数/起始资源/攻击阈值）后，
+等效难度 ≈ 同名引擎难度。不确定度：每档单批 n=10，Medium 基线批间噪声大
+（8/10 vs 4/10），按合并带口径判定；Expert 1/10 落在 5/40 合并带内。
+
+### 对称化旋钮（全部默认关 = 零行为差，c.java 注释段自带语义）
+
+| 旋钮 | 语义 | 注入点 |
+|---|---|---|
+| `-Daoe.fairStart=1` | 随机图敌方起始资源 hdr[1][5..7] 拉平为 player 0 的 200/100/100 | setupMissionEnv 难度 switch 后（仅 gameMode==0） |
+| `-Daoe.fairGather=1` | player 1 交存结算不吃 aiGatherMultiplier（按 256=1× 计） | onUnitArrived 交存 case 256 的 n==1 分支 |
+| `-Daoe.enemyDrip=N` | enemyAiActive 时每 N tick 给 hdr[1][5..7] 各加 hdr[1][57]（复刻 tickAi 免费资源滴；tickCount 节流，无墙钟） | tickEnemyAi 帧首 hook |
+
+**对称自对弈（Medium 参数 + fairStart + fairGather，同形状 10 局）**：
+side 0 胜 **7/10**（无僵持；对照 = 无 fair 的 Medium 标定批 8/10）。ticks 均
+23718 vs 无 fair 批 16159——fairStart 扶敌开局（50/50/50→200/100/100）+
+fairGather 削敌中盘（×3.07→×1），两力反向净值 ≈ 中和，胜率变化在批间噪声内。
+残差不对称 = side 0 科技生效 vs side 1 全图信息（side 0 背着诚实雾仍赢七成，
+即「科技生效」净值 > 「全图信息」净值；n=10 单批 70% 的 95% CI ≈ ±28pp，
+与 50% 对称点统计上不显著）。旋钮生效实证：fair 批 game3 日志 side 1 首建筑后
+res=195/100/100（开局 200/100/100），无 fair 同种子同相位为 res=45/50/50。
+旋钮默认关零行为差实证：加旋钮后重跑的 Medium 标定批与加旋钮前半批逐种子
+ticks 完全一致（七局同数），regress 三连 PASS + replaycheck 一致。
+

@@ -27,6 +27,8 @@
 #                        白烧超时),被跳过的种子不占局数、不进 CSV
 #                   -T N 覆盖敌方 AI 进攻阈值(-Daoe.aiAttackThreshold,阈值矩阵
 #                        批测用;省略=难度默认 Easy50/Medium60/Expert100)
+#                   -e <AI类名> 敌 AI 反串(-Daoe.enemyAi=<类名>,抑制引擎 tickAi,
+#                        见 aoe/ai/README.md「EnemyAi」节;省略=引擎原版敌 AI)
 #   PHASE_STEP=N(默认 7)|off:第 i 局传 -Daoe.devPhase=(i-1)*N——进关相位 pin
 #                        (tickCount 不随任务重置,菜单导航墙钟漂移会让同种子局
 #                        走向不同;pin 后同种子同相位必同结果,A/B 逐对对比)。
@@ -49,11 +51,11 @@ SELFTEST=0
 [ "${1:-}" = "--selftest" ] && SELFTEST=1
 
 # ---- 参数 ----
-N=10; DIFF=1; AI=""; SEED0=1000; TIMEOUT=300; KEEP=0; BFS=0; SNAP=0; SKIPX=""; FOGOFF=0; ATKTHR=""
-usage() { sed -n '2,40p' "$0"; exit "${1:-1}"; }
-[ $SELFTEST = 0 ] && while getopts "n:d:a:s:t:kbS:x:fT:h" opt; do
+N=10; DIFF=1; AI=""; EAI=""; SEED0=1000; TIMEOUT=300; KEEP=0; BFS=0; SNAP=0; SKIPX=""; FOGOFF=0; ATKTHR=""
+usage() { sed -n '2,42p' "$0"; exit "${1:-1}"; }
+[ $SELFTEST = 0 ] && while getopts "n:d:a:e:s:t:kbS:x:fT:h" opt; do
     case $opt in
-        n) N=$OPTARG ;; d) DIFF=$OPTARG ;; a) AI=$OPTARG ;;
+        n) N=$OPTARG ;; d) DIFF=$OPTARG ;; a) AI=$OPTARG ;; e) EAI=$OPTARG ;;
         s) SEED0=$OPTARG ;; t) TIMEOUT=$OPTARG ;; k) KEEP=1 ;;
         b) BFS=1 ;;
         f) FOGOFF=1 ;;
@@ -155,7 +157,7 @@ echo "game,seed,result,ticks,wallsec" > "$CSV"
 PID=""
 trap '[ -n "$PID" ] && kill "$PID" 2>/dev/null; true' EXIT
 
-echo "rundir: $RUNDIR  (n=$N diff=$DIFF ai=${AI:-无} seed=$SEED0+ timeout=${TIMEOUT}s)"
+echo "rundir: $RUNDIR  (n=$N diff=$DIFF ai=${AI:-无} enemyAi=${EAI:-引擎原版} seed=$SEED0+ timeout=${TIMEOUT}s)"
 printf '%-5s %-6s %-7s %-8s %s\n' game seed result ticks wallsec
 i=1
 seed=$SEED0
@@ -169,6 +171,8 @@ while [ $i -le "$N" ]; do
     log="$gdir/game.log"
     AI_ARG=""
     [ -n "$AI" ] && AI_ARG="-Daoe.playerAi=$AI"
+    EAI_ARG=""
+    [ -n "$EAI" ] && EAI_ARG="-Daoe.enemyAi=$EAI"
     BFS_ARG=""
     [ "$BFS" = 1 ] && BFS_ARG="-Daoe.bfsPath=1"
     SNAP_ARG=""
@@ -193,7 +197,7 @@ while [ $i -le "$N" ]; do
     t0=$SECONDS
     "$JAVA" -Dapple.awt.UIElement=true -Daoe.headless=1 "-Daoe.dev=random:$DIFF" -Daoe.turbo=1 -Daoe.noRender=1 \
         -Daoe.mute=1 -Daoe.debug=1 -Daoe.exitOnResult=1 "-D$SEED_PROP=$seed" \
-        ${AI_ARG:+"$AI_ARG"} ${BFS_ARG:+"$BFS_ARG"} ${SNAP_ARG:+"$SNAP_ARG"} ${FOG_ARG:+"$FOG_ARG"} ${THR_ARG:+"$THR_ARG"} ${EXTRA_ARG:+$EXTRA_ARG} ${PHASE_ARG:+"$PHASE_ARG"} \
+        ${AI_ARG:+"$AI_ARG"} ${EAI_ARG:+"$EAI_ARG"} ${BFS_ARG:+"$BFS_ARG"} ${SNAP_ARG:+"$SNAP_ARG"} ${FOG_ARG:+"$FOG_ARG"} ${THR_ARG:+"$THR_ARG"} ${EXTRA_ARG:+$EXTRA_ARG} ${PHASE_ARG:+"$PHASE_ARG"} \
         -Daoe.saveDir="$gdir/saves" -Daoe.rmsDir="$gdir/rms" \
         -Duser.home="$gdir/userhome" \
         -cp "$CP" aoe.Main > "$log" 2>&1 &
