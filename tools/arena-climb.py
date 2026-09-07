@@ -7,8 +7,9 @@
   candidate = 当前基因型改一个基因（ailoop -m <gene>=<value> 按侧覆盖）。
   镜像批同种子 candidate 在 p0/p1 各一局，-Daoe.arena=1 自动带。
 
-搜索 = 坐标下降：每轮对每个基因试 ±步长，得分 > 10.0（镜像自对弈平局基准）
-即采纳最高分的值；一轮无改进或预算耗尽自停，写 summary。
+搜索 = 坐标下降：每轮对每个基因试 ±步长，得分 ≥ 11.5（镜像自对弈平局基准
+10.0 + 噪声边际 1.5，第 7 轮实证 >10.0 会采纳噪声点且复测全军覆没）才采纳
+最高分的值；一轮无改进或预算耗尽自停，写 summary。
 
 确定性：同种子同相位 pin（ailoop PHASE_STEP 默认 7）下同一评估命令结果确定，
 评估结果按 (基因型, 基因, 候选值) 缓存进 state.json，杀掉重启自动续跑
@@ -54,6 +55,11 @@ GENES = [
 GENE_NAMES = [g[0] for g in GENES]
 
 EVEN_SCORE = 10.0        # 镜像自对弈平局基准（candidate==champion 时恒 10.0/20）
+# 采纳边际（2026-09-07 第 7 轮定稿）：n=20 镜像批噪声带 ±1.5-2 分，>10.0 即
+# 采纳会把噪声当改进——首轮实证：meleeW 15→20(10.5) 与 towerG 6→9(11.0) 两个
+# 采纳点独立复测（双侧 EXTRA_D 分批，合计 40 局）candidate 仅 21.0/40=52.5%
+# <28/40 采纳线，全是噪声。边际提到 +1.5（≥11.5 才采纳）；产出仍须协议复测。
+ADOPT_SCORE = 11.5
 EVAL_TIMEOUT = 1500      # 单次 ailoop 批的墙钟超时（秒；历史批 2-4 分钟，6 倍余量）
 JDK17 = "/tmp/jdk17/bin"
 
@@ -230,7 +236,7 @@ def main():
             improved = False
             for name, _d, _step, _lo, _hi in GENES:
                 cur = st["genotype"][name]
-                best_val, best_score, best_res = None, EVEN_SCORE, None
+                best_val, best_score, best_res = None, ADOPT_SCORE, None
                 for value in candidates_for(name, cur):
                     if time.time() - t_start > budget:
                         stop = True
