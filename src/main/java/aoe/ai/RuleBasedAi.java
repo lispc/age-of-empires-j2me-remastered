@@ -129,6 +129,14 @@ public final class RuleBasedAi implements PlayerAi {
     // 村民卡死检测（行军中 300 tick 没挪窝 → 目标拉黑 3000 tick 重派）
     private final int[] villLastPos = new int[26];
     private final int[] villLastTick = new int[26];
+    // 组合档（probeStride=5）轨道卡死检测：BFS 归队/扇形振荡下 pos 在 2×2 内
+    // 恒变，上面按位置不变的检测永远够不着（1008 v1 绕 14k tick 实锤）。改按
+    // 时长+距离门：同一资源目标盯了 ORBIT_STUCK_TICK 仍距离 >3 格 = 永不可达的
+    // 袋形格 → 拉黑 3000t + 立即重派（零和：轨道上的村民产出本来就是 0）。
+    // 合法长途行军会到格（~30t/格），2400t 连 3 格内都进不了只在振荡时成立。
+    private final int[] villOrbitTgt = new int[26];
+    private final int[] villOrbitSince = new int[26];
+    private static final int ORBIT_STUCK_TICK = 2400;
     private final int[] resBlacklistUntil = new int[4096];
     private boolean noWoodRes;
     private boolean noGoldRes;
@@ -269,6 +277,8 @@ public final class RuleBasedAi implements PlayerAi {
         this.EXP_ECO_KILL = prop(side, "aoe.expEcoKill", "0").equals("1");
         this.EXP_HORSECOLLAR = prop(side, "aoe.expHorsecollar", "0").equals("1");
         this.PROBE_STRIDE = propInt(side, "aoe.probeStride", 0);
+        this.RES_DBG = propInt(side, "aoe.resDbg", 0);
+        this.NO_TIMERUSH = propInt(side, "aoe.noTimeRush", 0) != 0;
         // —— 石贫检测 ——
         this.SP_PROP = prop(side, "aoe.expStonePoor", "0").trim();
         this.SP_REPORT = this.SP_PROP.equals("report");
@@ -344,7 +354,28 @@ public final class RuleBasedAi implements PlayerAi {
     // 域、time-to-radius ÷N），并解锁石盲区抽探员（默认只认木/金盲区——seed 1010
     // s1 石恒 10、塔卡 2 座、马厩永缺军容帽 10 实锤）。只动专职探员，闲村民
     // 近环（PROBE_RINGS=6）探针语义不变。=1 时路点序列与原等价（仅石触发生效）。
+    // =5 组合档（2026-09-07 自对弈第 5 轮）：发现半与 =4 逐字节相同（螺旋 ×4
+    // 步进+石盲区抽探员），叠加消费侧闸门=村民轨道卡死检测（实现见态势扫描段
+    // ORBIT_STUCK_TICK）。第 5 轮标定否决了"细流格"假设（resDbg 全图真值：镜像
+    // 图资源格几乎全 ≥15 趟，seed 1000 金簇 24-27,41-45 全 31 趟）——1008 型
+    // "W=0 自伤"的真因是村民被 BFS 归队/扇形振荡困在 2×2 轨道上（pos 恒变，
+    // 按位置不变的 STUCK 检测永远够不着，v1 绕 (53,37) 采 56,41 共 14k tick
+    // 零产出实锤），不是配额漂移也不是细流。
     private final int PROBE_STRIDE;
+    private static final int RES_MIN_TRIPS = 4;      // resDbg 直方图分档用
+    // ===== aoe.resDbg 资源/村民状态诊断（第 5 轮标定用，默认 0=关）=====
+    // =N（N≠2）：tickCount 首次 ≥N 时 dump 一次全图资源格趟数直方图+resmap
+    // 全图（透雾读真值——雾只是 0x8000 位，低 12 位保留本体）。=2：每 500t
+    // 打一行逐村民 vtrace（pos/tgt/action/kind）。纯日志零行为差。
+    private final int RES_DBG;
+    private boolean resDbgDone;
+    // ===== aoe.noTimeRush 对称局关 TIMERUSH（第 3 轮微候选，第 5 轮实测）=====
+    // 默认 0=逐字节现行为。TIMERUSH 曾是两批合计 0/4 的唯一负和攻击触发器
+    // （seed 1001 型：6 民兵 val 47→24 撞完被 CRUSHED 反杀）；=1 关闭该触发器
+    // （其余 CRUSHED/OVERWHELM/GOLDSTARVE 等不动——第 3 轮实测真先攻 80% 胜）。
+    // 第 5 轮镜像批实测 10.0/20 = 与 G0 基线完全打平（快败变慢败，无翻转）——
+    // TIMERUSH 负和证据止步于"拖长败局"，登记别再试。
+    private final boolean NO_TIMERUSH;
     // ===== aoe.expStonePoor 石贫检测 + 替代策略分支（2026-09-06 第 45 夜探索）=====
     // 契约同 aiK.*：未设置/=0 → 逐字节当前行为（无检测、无遥测、无分支）。
     // report = 只打检测遥测（[ai] STONEPOOR 行），零行为差——分级/误判率取数用。
@@ -520,6 +551,70 @@ public final class RuleBasedAi implements PlayerAi {
             return;
         }
         this.nextDecide = game.tickCount + DECIDE_EVERY;
+        if (this.RES_DBG == 2 && game.tickCount % 500 < DECIDE_EVERY) {
+            // 逐村民状态流（诊断档）：pos/tgt/action/任务字——还原"在岗零产出"病理。
+            short[] dsl = game.playerUnitSlots[this.side];
+            int du = Math.min(game.playerUnitHeaders[this.side][2], 26);
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < du; ++i) {
+                int o = i << 3;
+                if ((dsl[o + 3] & 0xFF) >= 2) {
+                    continue;
+                }
+                int p = dsl[o + 0] & 0xFFFF, g = dsl[o + 2] & 0xFFFF;
+                sb.append(" v").append(i).append('=').append(p >>> 8).append(',').append(p & 0xFF)
+                    .append('>').append(g >>> 8).append(',').append(g & 0xFF)
+                    .append('a').append(dsl[o + 7] & 0xF).append("k").append((dsl[o + 7] & 0xF0) >> 4);
+            }
+            System.out.println(this.aiPfx + " vtrace t=" + game.tickCount + sb);
+        }
+        if (this.RES_DBG > 0 && !this.resDbgDone && game.tickCount >= this.RES_DBG && this.RES_DBG != 2) {
+            this.resDbgDone = true;
+            // 资源格趟数直方图 + 全图 dump（诊断档透雾读真值——雾只是 0x8000 位，
+            // 低 12 位保留本体，c.java:6875 注释实锤；纯日志零行为差）。
+            // resmap 编码：'.'=可走 '~'=海(768) 'X'=虚空/废墟 'B'=建筑 'u'=单位
+            // 'w'/'g'/'s'=木/金/石（随后 hex 趟数 0-F 钳 15）。
+            int[] thin = new int[4], rich = new int[4];
+            for (int idx = 0; idx < 4096; ++idx) {
+                int t = game.mapTiles[idx] & 0xFFF;
+                if ((t & 0x300) != 0x300 || (t & 3) == 0) {
+                    continue;
+                }
+                if (((t & 0x7C) >> 2) < RES_MIN_TRIPS) {
+                    ++thin[t & 3];
+                } else {
+                    ++rich[t & 3];
+                }
+            }
+            System.out.println(this.aiPfx + " resdbg t=" + game.tickCount
+                + " thin(<" + RES_MIN_TRIPS + ") W/G/S=" + thin[1] + "/" + thin[2] + "/" + thin[3]
+                + " rich W/G/S=" + rich[1] + "/" + rich[2] + "/" + rich[3]);
+            for (int y = 0; y < 64; ++y) {
+                StringBuilder row = new StringBuilder(128);
+                for (int x = 0; x < 64; ++x) {
+                    int raw = game.mapTiles[x + (y << 6)] & 0xFFFF;
+                    int t = raw & 0xFFF;
+                    char ch;
+                    if ((raw & 0x300) == 0x300 && (t & 3) != 0) {
+                        ch = (t & 3) == 1 ? 'w' : ((t & 3) == 2 ? 'g' : 's');
+                        row.append(ch).append(Integer.toHexString(Math.min(15, (t & 0x7C) >> 2)));
+                    } else if ((raw & 0x200) != 0) {
+                        row.append("u ");
+                    } else if ((raw & 0x100) != 0) {
+                        row.append("B ");
+                    } else if (t == 768) {
+                        row.append("~ ");
+                    } else if (t == 0 || t == 0x1604) {
+                        row.append("X ");
+                    } else if ((t & 0x300) == 0) {
+                        row.append(". ");
+                    } else {
+                        row.append("? ");
+                    }
+                }
+                System.out.println(this.aiPfx + " resmap " + y + " " + row);
+            }
+        }
         // 模拟只在 onPaint default 分支跑（screenState 2/4/5/7/9..14 暂停），AI 同步休眠。
         // 例外：ss==2 是弹窗态——headless 无人按键时信息弹窗（升时代 z=62/新建筑 z=70）
         // 会永久冻结模拟（tickCount 照走但世界停摆，seed 1010 实测冻 27 万 tick=STALL）。
@@ -585,6 +680,36 @@ public final class RuleBasedAi implements PlayerAi {
                         + (pos & 0xFF) + " blacklisted, t=" + game.tickCount);
                     continue;
                 }
+                // 组合档（probeStride=5）轨道卡死：pos 恒变骗过上面的位置检测。
+                // 同一资源目标连续行军 2400t 仍 >3 格 = 永不可达袋形格 → 拉黑+立即重派。
+                // 只认资源格目标；时钟只计"连续以该资源格为行军目标"——离开该状态
+                // （交存回程/采集/到格/逃命）即清零，否则正常矿工累计行军超阈值会
+                // 误炸（批 1 事故：1001p0 健康矿工被连环拉黑 9 格经济雪崩）。
+                // 零和：轨道上产出=0。
+                if (this.PROBE_STRIDE == 5
+                        && (game.mapTiles[(tgt >>> 8) + ((tgt & 0xFF) << 6)] & 0x300) == 0x300) {
+                    if (tgt != this.villOrbitTgt[i]) {
+                        this.villOrbitTgt[i] = tgt;
+                        this.villOrbitSince[i] = game.tickCount;
+                    } else if (game.tickCount - this.villOrbitSince[i] > ORBIT_STUCK_TICK) {
+                        int dx = (pos >>> 8) - (tgt >>> 8), dy = (pos & 0xFF) - (tgt & 0xFF);
+                        if (dx * dx + dy * dy > 9) {
+                            this.resBlacklistUntil[(tgt >>> 8) + ((tgt & 0xFF) << 6)]
+                                = game.tickCount + 3000;
+                            this.villOrbitTgt[i] = -1;
+                            if (idleN < 26) {
+                                idleVill[idleN++] = i;
+                            }
+                            System.out.println(this.aiPfx + " villager " + i + " ORBIT-STUCK tgt "
+                                + (tgt >>> 8) + "," + (tgt & 0xFF) + " blacklisted, t=" + game.tickCount);
+                            continue;
+                        }
+                    }
+                } else {
+                    this.villOrbitTgt[i] = -1;   // 离开"朝资源格行军"状态即清零
+                }
+            } else {
+                this.villOrbitTgt[i] = -1;
             }
             this.villLastPos[i] = pos;
             this.villLastTick[i] = game.tickCount;
@@ -1143,7 +1268,7 @@ public final class RuleBasedAi implements PlayerAi {
             // 到位且波尚远，开局部队全部砸向敌基地杀村民断收入（其大波经济永不
             // 成立），其防御模式反扑的小股军事喂我方塔。窗口随阈值连续缩放：
             // T=50 时 2.1k 内 TC 很难探到+波已在途=天然不触发，T≥150 窗口打开。
-            boolean timeRush = this.fogHonest && enemyTc >= 0 && milCount >= 5
+            boolean timeRush = !this.NO_TIMERUSH && this.fogHonest && enemyTc >= 0 && milCount >= 5
                 && game.tickCount + 1500 < waveTick
                 && milVal >= enemyMilVal
                 && game.tickCount >= this.attackCooldownUntil;
@@ -2467,11 +2592,13 @@ public final class RuleBasedAi implements PlayerAi {
     }
 
     /** 专职探员（probe-pull）路点：PROBE_STRIDE≤1 时与原序列逐字节等价；
-     *  >1 时游标 ×N 步进采样螺旋（覆盖域不变，抵达半径 R 的路点数 ÷N）。 */
+     *  >1 时游标 ×N 步进采样螺旋（覆盖域不变，抵达半径 R 的路点数 ÷N）。
+     *  =5 组合档的发现半与 =4 逐字节相同（消费侧闸不影响路点序列）。 */
     private int pullWaypoint(int myTc, int pv) {
+        int stride = this.PROBE_STRIDE == 5 ? 4 : this.PROBE_STRIDE;
         int cursor = this.villPullCursor[pv];
-        int w = this.PROBE_STRIDE > 1
-            ? (cursor * this.PROBE_STRIDE + pv * 11) % SPIRAL_MAX
+        int w = stride > 1
+            ? (cursor * stride + pv * 11) % SPIRAL_MAX
             : (cursor + pv * 11) % SPIRAL_MAX;
         return spiralWaypoint(myTc, w, SCOUT_RINGS);
     }
