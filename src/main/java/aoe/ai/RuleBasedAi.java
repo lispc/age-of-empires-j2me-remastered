@@ -324,6 +324,7 @@ public final class RuleBasedAi implements PlayerAi {
         this.SCOUT_RAY = propInt(side, "aoe.scoutRay", 0);
         this.SCOUT_DBG = prop(side, "aoe.scoutDbg", "0").equals("1");
         this.BATTLE_DBG = propInt(side, "aoe.battleDbg", 0);
+        this.SIEGE_DBG = propInt(side, "aoe.siegeDbg", 0);
     }
     // Expert 全图攻坚旋钮（2026-09-06 第 41 夜，批测 A/B 用；验证后转默认）：
     // （2026-09-07 第 0 轮起全部改构造期按 side 解析的实例字段，见 prop() 注释）
@@ -495,6 +496,10 @@ public final class RuleBasedAi implements PlayerAi {
     // =1 时每 500t 在摘要行后追加一行 btl：本侧兵种构成（t2..t9 计数）/残血数/
     // 攻击态数/军事质心 + 可见敌同口径（evis 过滤，诚实模式不越界）。
     private final int BATTLE_DBG;
+    // 攻城时机诊断旋钮（2026-09-07 第 8 轮测绘用，默认 0=关，纯日志零行为差）：
+    // !=0 时在 ATTACK enemy TC / STALLED / ABORTED / RETREAT 四处追加 siege 行：
+    // 我方投石机（t8）数 / 敌可见完工塔数（+全图真值）/ 双方军容军值 / 敌塔军值。
+    private final int SIEGE_DBG;
     // 螺旋侦察路点参数（函数 spiralWaypoint/spiralCount 在文件底部；静态方法无前置
     // 声明顺序问题，但字段初始化器引用这些常量必须文本序在前——JLS 8.3.3）。
     private static final int SCOUT_RINGS = 16;      // 螺旋半径 3,5,…,33（全图覆盖）
@@ -640,7 +645,7 @@ public final class RuleBasedAi implements PlayerAi {
 
         // ===== 态势扫描 =====
         short[] slots = game.playerUnitSlots[this.side];
-        int vills = 0, milCount = 0, milVal = 0;
+        int vills = 0, milCount = 0, milVal = 0, milT8 = 0;
         int woodW = 0, goldW = 0, stoneW = 0;
         int[] idleVill = new int[26];
         int idleN = 0;
@@ -651,6 +656,9 @@ public final class RuleBasedAi implements PlayerAi {
             if (type >= 2) {
                 ++milCount;
                 milVal += hdr[13 + type] + hdr[23 + type];
+                if (type == 8) {
+                    ++milT8;                 // siegeDbg：投石机计数
+                }
                 continue;
             }
             ++vills;
@@ -753,11 +761,15 @@ public final class RuleBasedAi implements PlayerAi {
         // 敌塔计入"防御军值"（v3：seed 1010 总攻 val 142 vs 72 仍败——没算敌 5 座塔的
         // 火力；塔完工加 hdr[55] 的值 = 塔甲 hdr[45] + 塔攻 hdr[46]）
         int[] erecs = game.buildingTable[this.foe];
-        int enemyTowerVal = 0;
+        int enemyTowerVal = 0, enemyTowersVis = 0, enemyTowersAll = 0;
+        boolean tcFoundInHunt = false;       // siegeDbg：本决策 HUNT 中首见敌 TC
         this.evisB = 0;
         for (int i = 0; i < ehdr[4]; ++i) {
             int o = i << 2;
             int bt = erecs[o + 3] & 0xFF;
+            if (bt >= 12 && bt <= 15 && (erecs[o + 2] & 0x40000000) == 0) {
+                ++enemyTowersAll;            // siegeDbg：全图真值完工塔（不过雾）
+            }
             if (this.fogHonest
                     && !this.isExplored(game,
                         (erecs[o + 0] >>> 8) + ((erecs[o + 0] & 0xFF) << 6),
@@ -774,13 +786,19 @@ public final class RuleBasedAi implements PlayerAi {
                     // 不重置则大军距新 TC 较远时 1500t 无进展误触停滞撤军
                     this.attackBestD2 = Integer.MAX_VALUE;
                     this.attackBestTick = game.tickCount;
+                    tcFoundInHunt = true;    // siegeDbg：HUNT→总攻转换快照（循环后打）
                 }
                 System.out.println(this.aiPfx + " SCOUT enemy TC found at " + (erecs[o + 0] >>> 8) + ","
                     + (erecs[o + 0] & 0xFF) + " t=" + game.tickCount);
             }
             if (bt >= 12 && bt <= 15 && (erecs[o + 2] & 0x40000000) == 0) {
                 enemyTowerVal += this.fogHonest ? hdr[45] + hdr[46] : ehdr[45] + ehdr[46];
+                ++enemyTowersVis;
             }
+        }
+        if (tcFoundInHunt) {
+            siegeLog(game, "TCFOUND", milT8, milCount, milVal, enemyMilCount, enemyMilVal,
+                enemyTowersVis, enemyTowersAll, enemyTowerVal);
         }
         int enemyDefVal = enemyMilVal + enemyTowerVal;
         // 建筑扫描
@@ -1228,6 +1246,8 @@ public final class RuleBasedAi implements PlayerAi {
             this.attackSpRush = false;
             this.attackCooldownUntil = game.tickCount + 800;
             System.out.println(this.aiPfx + " attack ABORTED, " + invaderN + " raiders home t=" + game.tickCount);
+            siegeLog(game, "ABORTED", milT8, milCount, milVal, enemyMilCount, enemyMilVal,
+                enemyTowersVis, enemyTowersAll, enemyTowerVal);
         }
         // 2) 反击/总攻判定：敌主力被歼（从峰值跌到 1/3）/ 碾压 / 僵持兜底。
         //    v1 教训（M1 报告）：没碾平敌主力就逼近敌基 = 替对面开 87.5% 反扑开关。
@@ -1305,6 +1325,8 @@ public final class RuleBasedAi implements PlayerAi {
                     + (goldStarve ? " GOLDSTARVE" : "") + (woodStarve ? " WOODSTARVE" : "")
                     + (timeRush ? " TIMERUSH(wave@" + waveTick + ")" : "")
                     + (spRush ? " SPRUSH(sp@" + this.stonePoorTick + ")" : "") + " t=" + game.tickCount);
+                siegeLog(game, "ATTACK", milT8, milCount, milVal, enemyMilCount, enemyMilVal,
+                    enemyTowersVis, enemyTowersAll, enemyTowerVal);
             }
             // 猎寻（诚实模式兜底）：敌 TC 始终未找到且进入僵持期（15k 后）→ 全军
             // 沿侦察路点（有首波来向走射线，否则螺旋）扫荡开图；TC 入侦察记忆后
@@ -1332,6 +1354,8 @@ public final class RuleBasedAi implements PlayerAi {
                 game.orderMove(this.side, tcx, tcy);
                 game.clearSelection();
                 System.out.println(this.aiPfx + " RETREAT, mil left " + milCount + " t=" + game.tickCount);
+                siegeLog(game, "RETREAT", milT8, milCount, milVal, enemyMilCount, enemyMilVal,
+                    enemyTowersVis, enemyTowersAll, enemyTowerVal);
             }
             // v14 集结阶段：全军先压到敌 TC 7 格外集合，到齐（或超时 700 tick）再一起上。
             // 解决兵种移速差（冲车/投石机 256 vs 剑士 1024）导致的添油式送死——
@@ -1415,6 +1439,8 @@ public final class RuleBasedAi implements PlayerAi {
                     game.clearSelection();
                     System.out.println(this.aiPfx + " attack STALLED bestD2=" + this.attackBestD2
                         + ", regroup t=" + game.tickCount);
+                    siegeLog(game, "STALLED", milT8, milCount, milVal, enemyMilCount, enemyMilVal,
+                        enemyTowersVis, enemyTowersAll, enemyTowerVal);
                 }
             }
             // 3) 平时驻防：全军集结在 TC 朝敌方向（塔火力圈内，新兵自动归队）；
@@ -2641,6 +2667,22 @@ public final class RuleBasedAi implements PlayerAi {
             n += (8 * (3 + 2 * rr) + 2) / 3;
         }
         return n;
+    }
+
+    // siegeDbg 打点（第 8 轮攻城时机测绘）：ATTACK enemy TC/STALLED/ABORTED/RETREAT
+    // 四处共用。t8=我方投石机数；etw=敌可见完工塔（etwAll=全图真值，不过雾——
+    // 候选门只能用可见口径，真值仅供诊断对照）。
+    private void siegeLog(c game, String evt, int milT8, int milCount, int milVal,
+            int enemyMilCount, int enemyMilVal, int enemyTowersVis, int enemyTowersAll,
+            int enemyTowerVal) {
+        if (this.SIEGE_DBG == 0) {
+            return;
+        }
+        System.out.println(this.aiPfx + " siege " + evt + " t8=" + milT8
+            + " etw=" + enemyTowersVis + "/" + enemyTowersAll
+            + " mil=" + milCount + "(val " + milVal + ")"
+            + " enemil=" + enemyMilCount + "(val " + enemyMilVal + ")"
+            + " twval=" + enemyTowerVal + " t=" + game.tickCount);
     }
 
     /** 专职探员（probe-pull）路点：PROBE_STRIDE≤1 时与原序列逐字节等价；
