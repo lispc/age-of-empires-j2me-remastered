@@ -2200,15 +2200,30 @@ implements CommandListener {
     private boolean enemyAiDisabled;
     private boolean enemyAiActive;
     private boolean enemyAiModeLogged;
+    // ===== 自对弈竞技场主开关（2026-09-07，第 0 轮基建；默认关 = 零行为差）=====
+    // -Daoe.arena=1 捆绑：fairStart/fairGather 隐含开启；帧首 tickPlayerAi/
+    // tickEnemyAi 调用序按 tickCount&1 交替（消固定先手）；arena+exitOnResult
+    // 下 tickCount > ARENA_DRAW_TICK 判和（[result] DRAW + exit）。RuleBasedAi
+    // 侧的 arena 逻辑（side-1 私有雾/concede）读同一属性，见该类注释。
+    private static final boolean ARENA = "1".equals(System.getProperty("aoe.arena"));
+    // -Daoe.arenaDrawTick=N（隐藏覆盖旋钮，默认 50000 ≈ 对局均值 2.7 倍）：仅调
+    // 批测试用，别把临时值提交进默认。
+    private static final int ARENA_DRAW_TICK =
+        Integer.parseInt(System.getProperty("aoe.arenaDrawTick", "50000"));
+    private boolean arenaResultDone;
     // ===== enemyAi 对称化旋钮（移植新增，2026-09-06；全部默认关 = 零行为差）=====
     // -Daoe.fairStart=1：随机图任务装配后把敌方起始资源 hdr[1][5..7] 拉平为
     // player 0 的值（Easy 50/15/15、Medium 50/50/50、Expert 20/20/20 vs
     // player 0 恒 200/100/100 的不对称抹平）。只挂 gameMode==0 分支，
     // 战役/教学不受影响（注入点 setupMissionEnv 难度 switch 之后）。
-    private static final boolean FAIR_START = "1".equals(System.getProperty("aoe.fairStart"));
+    // arena=1 隐含开启（竞技场规格：双方起始资源拉平）。
+    private static final boolean FAIR_START =
+        ARENA || "1".equals(System.getProperty("aoe.fairStart"));
     // -Daoe.fairGather=1：player 1 交存结算不吃 aiGatherMultiplier（按 256=1×
     // 计，与 player 0 同口径）。只影响 onUnitArrived 交存结算的 n==1 分支。
-    private static final boolean FAIR_GATHER = "1".equals(System.getProperty("aoe.fairGather"));
+    // arena=1 隐含开启（竞技场规格：双方采集 ×1 无作弊）。
+    private static final boolean FAIR_GATHER =
+        ARENA || "1".equals(System.getProperty("aoe.fairGather"));
     // -Daoe.enemyDrip=N（默认 0=关）：enemyAiActive 时每 N tick 给 hdr[1][5..7]
     // 各加 hdr[1][57]——复刻引擎 tickAi 免费资源滴语义（aiFreeResTimer 段，
     // 随 tickAi 抑制而停用）。确定性：只按 tickCount 节流，无墙钟。
@@ -2716,11 +2731,31 @@ implements CommandListener {
     public final void onPaint(Graphics graphics) {
         ++this.tickCount;
         this.devFrameHousekeeping();
-        if (PLAYER_AI_CLASS != null) {
-            this.tickPlayerAi();
+        // arena=1（第 0 轮基建）：帧首两侧 AI 调用序按 tickCount&1 交替，消固定
+        // 先手的系统性优势；默认（非 arena）保持 player 先、enemy 后不变。
+        if (ARENA && (this.tickCount & 1) != 0) {
+            if (ENEMY_AI_CLASS != null) {
+                this.tickEnemyAi();
+            }
+            if (PLAYER_AI_CLASS != null) {
+                this.tickPlayerAi();
+            }
+        } else {
+            if (PLAYER_AI_CLASS != null) {
+                this.tickPlayerAi();
+            }
+            if (ENEMY_AI_CLASS != null) {
+                this.tickEnemyAi();
+            }
         }
-        if (ENEMY_AI_CLASS != null) {
-            this.tickEnemyAi();
+        // arena 和局规则（仅批测路径：arena + exitOnResult）：tickCount 超阈判和。
+        // 只按 tickCount，挂在帧首定点；screenState==12（结算屏）不再补枪。
+        if (ARENA && !this.arenaResultDone && this.tickCount > ARENA_DRAW_TICK
+                && System.getProperty("aoe.exitOnResult") != null && this.screenState != 12) {
+            this.arenaResultDone = true;
+            System.out.println("[result] DRAW ticks=" + this.tickCount);
+            System.out.flush();
+            System.exit(0);
         }
         if (this.var_boolean_j) {
             if (Runtime.getRuntime().freeMemory() < 50000L) {

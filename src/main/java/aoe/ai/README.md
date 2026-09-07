@@ -510,12 +510,14 @@ tick 异常打 `[ai]` 并禁用，不影响游戏；装载优先取 `(int side)`
 **side 参数化**：无参构造 = side 0（现状）；`RuleBasedAi(1)` = 反串。原 player-0
 硬编码统一走 `this.side/this.foe`（hdr/slots/buildingTable 下标 + selectUnits/
 orderMove/queueUnitTraining/tryResearch/canAfford/a 首参，共 ~70 处替换）。
-side 1 强制全图（fogHonest=false）：引擎迷雾是 player-0 单层（mapTiles 0x8000
-只被 player 0 单位揭开），player 1 没有自有雾层可诚实——侦察/探针/敌 TC 记忆
-模块全挂在 fogHonest 门上自然旁路。side 1 永不打印 `[result]`/System.exit
-（那是 player-0 视角批测契约，僵尸投降门整个跳过；敌方胜负由引擎 z=98 结算
-代打）。静态可变状态：无（全部 static 均为 final 常量/属性旋钮），两实例同
-JVM 共存安全。
+side 1 默认强制全图（fogHonest=false）：引擎迷雾是 player-0 单层（mapTiles
+0x8000 只被 player 0 单位揭开），player 1 没有自有雾层可诚实——侦察/探针/
+敌 TC 记忆模块全挂在 fogHonest 门上自然旁路；**arena 模式（下节）下 side 1
+用私有 exploredBitmap 解锁诚实模式**。side 1 非 arena 永不打印
+`[result]`/System.exit（那是 player-0 视角批测契约，僵尸投降门整个跳过；敌方
+胜负由引擎 z=98 结算代打）；arena 下投降门开启（concede side=1 → exitOnResult
+时 `[result] WIN`+exit）。静态可变状态：无（2026-09-07 第 0 轮起旋钮也全部
+改为构造期按侧解析的实例字段），两实例同 JVM 共存安全。
 
 **引擎不对称发现（side 1 适配的根因，都实读 c.java 验证）**：
 - ~~**研究完成效果只在 tickBuildings 的 i==0 分支生效**~~ **【2026-09-07 已对称化，
@@ -631,4 +633,44 @@ fairGather 削敌中盘（×3.07→×1），两力反向净值 ≈ 中和，胜�
 res=195/100/100（开局 200/100/100），无 fair 同种子同相位为 res=45/50/50。
 旋钮默认关零行为差实证：加旋钮后重跑的 Medium 标定批与加旋钮前半批逐种子
 ticks 完全一致（七局同数），regress 三连 PASS + replaycheck 一致。
+
+### 自对弈竞技场（-Daoe.arena=1，2026-09-07 第 0 轮基建）
+
+规格/评估协议/联赛表 = `docs/research/selfplay-arena.md`（唯一权威）。arena 主
+开关捆绑：fairStart+fairGather 隐含开启；帧首两侧 AI 调用序按 tickCount&1 交替
+（c.java onPaint）；side-1 私有迷雾诚实模式（见下）；side-1 arena concede；
+arena+exitOnResult 下 tickCount>50000 判 `[result] DRAW`+exit（隐藏覆盖
+`aoe.arenaDrawTick`，默认勿改）。默认关 = 零行为差（验证：regress 三连 +
+replaycheck + 无 enemyAi n5 基线逐种子 ticks 与 [ai]/[result] 流全一致）。
+
+**旋钮按侧覆盖**：RuleBasedAi 全部自消费旋钮（aiK.*/exm.*/exp*/spNear/aiFog）
+从 static final 改为构造期按 side 解析的实例字段——先查 `aoe.<name>.p<side>`
+再回落 base 名，不设 .pN 时与旧语义逐字节一致（批测日志 diff 实证：base 名=
+默认值零差异；`.p1=report` 纯遥测只让 side-1 实例打 STONEPOOR 行，side 0 的
+[ai] 流不动）。引擎侧旋钮（bfsPath 等）不按侧。ailoop `-m name=value` 消费
+此机制做镜像配对。
+
+**side-1 私有迷雾**：引擎雾层是 player-0 单层（mapTiles 0x8000），side 1 在
+arena 下改用 AI 实例自维护的 `exploredBitmap`（boolean[4096]）：每 tick 按
+自己单位 3×3 + 完工建筑圆形半径 3（塔 6）揭格，镜像引擎
+revealFogAroundUnit/void_a 语义（引擎建筑揭雾是 Bresenham 圆且逐 tick 轮流扫
+一座，这里用欧氏圆逼近且每 tick 全扫——探索永久累积，差异仅完工首 tick 的
+时序粒度）。全部迷雾读点（敌单位 evis/敌建筑可见性/敌 TC 记忆/findResource/
+findSecondGold/stoneScan）统一走 `isExplored()` helper：side 0 查 mapTiles
+（一字未改），side 1 查 bitmap。**已知限制**：bitmap 是实例瞬态不进存档
+（enemyTcMem 等 AI 记忆同例），读档后从空重建；批测一局一 JVM 无读档路径。
+冒烟实证（arenaDrawTick=3000 缩短局）：side=1 boot 行
+`fogHonest=true (private fog: exploredBitmap)`；全图遥测 `e55=` 行从 5→0；
+两侧探针行 t=0 起交错。
+
+**终局规则**：side-1 僵尸投降门在 arena 下开启（同一套收入死断/村民死锁推导），
+触发打 `[ai] concede side=1: ...`；exitOnResult 批测路径再打
+`[result] WIN ticks=N`（side 1 认输 = player 0 胜）+ exit，非批测只打日志
+不 exit（终局仍走引擎 z=98）。DRAW 挂在 onPaint 帧首，只按 tickCount。
+
+**镜像批工具**：`tools/ailoop.sh -m name=value`（candidate 旋钮，`-m -`=无
+candidate 纯镜像基线）——每种子跑两局（candidate 在 p0/p1 各一，同相位
+pin），自动带 arena=1、双侧默认 RuleBasedAi；CSV 加 cand 列、result 支持
+DRAW；summary 增 candidate 合并胜场（DRAW 计半）+ 逐侧拆分 + side0 得分
+（side 偏差，对称镜像应≈50%）。--selftest 覆盖 DRAW/镜像统计。
 

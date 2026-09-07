@@ -34,9 +34,12 @@ import AgeOfEmpires.c;
  * playerUnitHeaders/playerUnitSlots/buildingTable 下标与写原语首参都是
  * player 号，原 player-0 硬编码统一走 this.side/this.foe。迷雾是 player-0
  * 单层（mapTiles 0x8000 只被 player 0 单位揭开），player 1 没有自有雾层 →
- * side 1 强制全图（fogHonest=false），侦察/探针/敌 TC 记忆模块全挂在
- * fogHonest 门上自然旁路。[result]/System.exit 是 player-0 视角的批测契约，
- * side 1 的僵尸投降门整个跳过（引擎 z=98 结算会替 player 0 打 [result]）。
+ * 默认 side 1 强制全图（fogHonest=false），侦察/探针/敌 TC 记忆模块全挂在
+ * fogHonest 门上自然旁路；**arena 模式（-Daoe.arena=1）下 side 1 解锁诚实
+ * 模式**——改用 AI 自维护的私有 exploredBitmap（按自己单位 3×3 + 建筑半径
+ * 3/塔 6 揭格，镜像引擎语义；字段注释有已知限制）。[result]/System.exit
+ * 是 player-0 视角的批测契约，side 1 的僵尸投降门非 arena 跳过，arena 下
+ * 开启（concede side=1 → [result] WIN，仅 exitOnResult 批测路径退出）。
  *
  * 关键机制依据（docs/game-mechanics.md / docs/unit-stats.md / 源码复核）：
  * - 塔(12)完工注册 projectileTable 成为射击建筑；塔攻 = hdr[46]<<4/甲
@@ -194,19 +197,52 @@ public final class RuleBasedAi implements PlayerAi {
     // 诚实模式下禁读 hdr[1] 全部字段（军值/资源/人口/TC 位=人类看不到的统计）；
     // 敌单位/建筑只认已探索格上的；敌 TC 位置改侦察记忆（见过一次即永久，TC 不动）。
     // 默认开；-Daoe.aiFog=0 回退全图（对照/调试用），回退路径与 v56 逐字节一致。
-    private static final String AI_FOG = System.getProperty("aoe.aiFog", "1");
+    // ===== 旋钮按侧解析（2026-09-07 自对弈竞技场第 0 轮）=====
+    // 全部 AI 旋钮从 static final（同 JVM 两侧只能同值）改为构造期按 side 解析
+    // 的实例字段：先查 aoe.<name>.p<side>，未设回落 base 名——镜像配对靠它
+    // （同一 JVM 内 candidate 与 champion 各居一侧）。不设 .p0/.p1 时解析结果
+    // 与原 static 语义逐字节一致（默认值/回落链不变）。
+    private static String prop(int side, String name, String def) {
+        String v = System.getProperty(name + ".p" + side);
+        return v != null ? v : System.getProperty(name, def);
+    }
+
+    private static int propInt(int side, String name, int d) {
+        String v = System.getProperty(name + ".p" + side);
+        if (v == null) {
+            v = System.getProperty(name);
+        }
+        return v == null ? d : Integer.parseInt(v.trim());
+    }
+
+    // -Daoe.arena=1：自对弈竞技场主开关（规格 docs/research/selfplay-arena.md）。
+    // 本类消费点：① side 1 解锁迷雾诚实模式（fogHonest；私有 exploredBitmap 替代
+    // 引擎的 player-0 单层雾，见下「side-1 私有迷雾」）；② side-1 僵尸投降门
+    // 开启（[ai] concede side=1）。c.java 侧另有帧首调用序交替/DRAW/fair 隐含。
+    private static final boolean ARENA = "1".equals(System.getProperty("aoe.arena"));
+    private final String aiFog;
     // 消融档（仅诊断用）：=res → 资源全图（findResource 不过滤迷雾），敌情仍诚实。
     // 用于量化"资源位置信息"vs"敌情信息"各占多少胜率。
-    private static final boolean FOG_RES_OMNI = "res".equals(AI_FOG);
+    private final boolean fogResOmni;
     // =tc → 敌 TC 坐标全图（塔走廊/攻击目标直接可用），其余仍诚实。
-    private static final boolean FOG_TC_OMNI = "tc".equals(AI_FOG);
+    private final boolean fogTcOmni;
     // ===== side 参数化（2026-09-07，-Daoe.enemyAi 反串 player 1）=====
     // 无参构造 = side 0（现状）；带参 side=1 = enemyAi 反串敌方。c.java 装载点
-    // 优先取 (int) 构造。side 1 强制全图（player 1 无自有雾层，见类注释）；
-    // FOG_RES_OMNI/FOG_TC_OMNI 消融档只挂在 fogHonest 门上，side 1 下天然无效。
+    // 优先取 (int) 构造。引擎迷雾是 player-0 单层（mapTiles 0x8000 只被 player 0
+    // 单位揭开）——非 arena 下 side 1 强制全图（fogHonest=false），arena 下
+    // side 1 用私有 exploredBitmap 同样走诚实模式（见下）。fogResOmni/
+    // fogTcOmni 消融档只挂在 fogHonest 门上。
     private final int side;
     private final int foe;
     private final boolean fogHonest;
+    // ===== side-1 私有迷雾（仅 ARENA && side==1 生效，fogHonest 门内）=====
+    // 镜像引擎揭雾语义：单位自身 3×3（revealFogAroundUnit 逐 tick）、完工建筑
+    // 半径 3/塔 6（引擎 void_a(x,y,r) 是 Bresenham 圆且逐 tick 轮流扫一座，这里
+    // 用欧氏圆逼近且每 tick 扫全部——探索永久累积，差异只有完工后首 tick 的
+    // 时序粒度）。每 tick 维护而非每决策：最快兵种 ~3.75 tick/格，8t 决策间隔
+    // 会在 3×3 窗口间留穿孔。AI 实例瞬态不进存档（enemyTcMem 等记忆同例）——
+    // 读档后从空重建，已知限制；批测一局一 JVM 无读档路径。
+    private final boolean[] exploredBitmap = new boolean[4096];
 
     public RuleBasedAi() {
         this(0);
@@ -215,35 +251,83 @@ public final class RuleBasedAi implements PlayerAi {
     public RuleBasedAi(int side) {
         this.side = side;
         this.foe = 1 - side;
-        this.fogHonest = side == 0 && !"0".equals(AI_FOG);
+        // —— 迷雾旋钮（按侧解析；不设 .pN 时与原 static 解析逐字节一致）——
+        this.aiFog = prop(side, "aoe.aiFog", "1");
+        this.fogResOmni = "res".equals(this.aiFog);
+        this.fogTcOmni = "tc".equals(this.aiFog);
+        this.fogHonest = !"0".equals(this.aiFog) && (side == 0 || ARENA);
+        // —— exp* 攻坚/探索旋钮 ——
+        this.EXP_WTFIRST = prop(side, "aoe.expWtfirst", "0").equals("1");
+        this.EXP_TURTLE = prop(side, "aoe.expTurtle", "0").equals("1");
+        this.EXP_MANGONEL = prop(side, "aoe.expMangonel", "1").equals("1");
+        this.EXP_CAMPREBUILD = prop(side, "aoe.expCampRebuild", "0").equals("1");
+        this.EXP_ECO_KILL = prop(side, "aoe.expEcoKill", "0").equals("1");
+        this.EXP_HORSECOLLAR = prop(side, "aoe.expHorsecollar", "0").equals("1");
+        // —— 石贫检测 ——
+        this.SP_PROP = prop(side, "aoe.expStonePoor", "0").trim();
+        this.SP_REPORT = this.SP_PROP.equals("report");
+        this.SP_MODE = this.SP_REPORT ? 0 : Integer.parseInt(this.SP_PROP);
+        this.SP_ON = this.SP_REPORT || this.SP_MODE != 0;
+        this.SP_NEAR = Integer.parseInt(prop(side, "aoe.spNear", "14").trim());
+        // —— aiK build-order 旋钮 ——
+        this.K_MIL_VILLS = propInt(side, "aoe.aiK.milVills", 3);
+        this.K_MELEE_W = propInt(side, "aoe.aiK.meleeW", 15);
+        this.K_MELEE_G1 = propInt(side, "aoe.aiK.meleeG1", 25);
+        this.K_MELEE_G2 = propInt(side, "aoe.aiK.meleeG2", 15);
+        this.K_ARCH_W = propInt(side, "aoe.aiK.archW", 25);
+        this.K_BARR_W = propInt(side, "aoe.aiK.barrW", 30);
+        this.K_BARR_S = propInt(side, "aoe.aiK.barrS", 15);
+        this.K_TOWER_W = propInt(side, "aoe.aiK.towerW", 22);
+        this.K_TOWER_G = propInt(side, "aoe.aiK.towerG", 6);
+        this.K_TOWER_S = propInt(side, "aoe.aiK.towerS", 16);
+        this.K_TOWER_CAP = propInt(side, "aoe.aiK.towerCap", 5);
+        this.K_SMITH_W = propInt(side, "aoe.aiK.smithW", 25);
+        this.K_SMITH_S = propInt(side, "aoe.aiK.smithS", 15);
+        this.K_SMITH2_W = propInt(side, "aoe.aiK.smith2W", 30);
+        this.K_SMITH2_S = propInt(side, "aoe.aiK.smith2S", 22);
+        this.K_T8_W = propInt(side, "aoe.aiK.t8w", 25);
+        this.K_T8_G = propInt(side, "aoe.aiK.t8g", 25);
+        this.K_T8_Q = propInt(side, "aoe.aiK.t8q", 1);
+        this.K_BOWSAW_W = propInt(side, "aoe.aiK.bowsawW", 30);
+        this.K_GM_TICK = propInt(side, "aoe.aiK.gmTick", 0);
+        this.K_SM_TOWER_UNDER = propInt(side, "aoe.aiK.smTowerUnder", 5);
+        this.K_Q_BOOT_W = propInt(side, "aoe.aiK.qBootW", 2);
+        this.K_Q_BOOT_G = propInt(side, "aoe.aiK.qBootG", 1);
+        this.K_Q_FEUD_W = propInt(side, "aoe.aiK.qFeudW", 1);
+        this.K_Q_FEUD_G = propInt(side, "aoe.aiK.qFeudG", 2);
+        this.K_Q_FEUD_S = propInt(side, "aoe.aiK.qFeudS", 1);
+        this.K_Q_WAR_G = propInt(side, "aoe.aiK.qWarG", 3);
+        this.K_Q_TOWER_FULL = propInt(side, "aoe.aiK.qTowerFull", 5);
+        // —— exm 战斗微操旋钮 ——
+        this.EXM_FOCUS = propInt(side, "aoe.exm.focus", 1);
+        this.EXM_EMGPROD = propInt(side, "aoe.exm.emgprod", 0);
+        this.EXM_FOCUS_D2 = propInt(side, "aoe.exm.focusD2", 64);
+        this.EXM_DANCE = propInt(side, "aoe.exm.dance", 0);
+        this.EXM_REPCAP = propInt(side, "aoe.exm.repcap", 2);
+        this.EXM_HEAL = propInt(side, "aoe.exm.heal", 0);
     }
     // Expert 全图攻坚旋钮（2026-09-06 第 41 夜，批测 A/B 用；验证后转默认）：
-    private static final boolean EXP_WTFIRST =
-        System.getProperty("aoe.expWtfirst", "0").equals("1");
+    // （2026-09-07 第 0 轮起全部改构造期按 side 解析的实例字段，见 prop() 注释）
+    private final boolean EXP_WTFIRST;
     // 敌军 ≥2× 我军时全军收进 TC 塔火重叠区（保反杀部队，塔吃伤害）
-    private static final boolean EXP_TURTLE =
-        System.getProperty("aoe.expTurtle", "0").equals("1");
+    private final boolean EXP_TURTLE;
     // Expert 下铁匠铺前置（射箭场之前）+ t8 门槛 40/40→25/25——首波窗口的
     // 塔后投石机是集团近战的毁灭性反制（224 溅射/发 vs 塔 1.9/t）。
     // v41 默认采用：全图 Expert 两带 4/20→8/20（2026-09-06，aoe.expMangonel=0 回退）
-    private static final boolean EXP_MANGONEL =
-        System.getProperty("aoe.expMangonel", "1").equals("1");
+    private final boolean EXP_MANGONEL;
     // Expert 围城交存线重建：矿场/伐木场被拆后威胁分支原样只许补塔——石配额
     // 挂 miningN>0，矿场一没采石断供→塔永远补不起→螺旋败（败局尸检：S=2/
     // towers=0/W=0 三连签名）
-    private static final boolean EXP_CAMPREBUILD =
-        System.getProperty("aoe.expCampRebuild", "0").equals("1");
+    private final boolean EXP_CAMPREBUILD;
     // Expert 木瓶颈双闸：Bow Saw 30→15（单伐木工 +50% 出木）+ t8 排队 1→2。
     // 败局经济学：G 反而在囤（78-157），W=0 是唯一卡点——村民替代（5W）/
     // 铁匠铺（25W）/补塔（22W）全部饿死在木上。
-    private static final boolean EXP_ECO_KILL =
-        System.getProperty("aoe.expEcoKill", "0").equals("1");
+    private final boolean EXP_ECO_KILL;
     // Horse Collar（磨坊 tech 6，10W/5G）：hdr[56] 训练速度再 +50%（磨坊完工已
     // +50%：1024→1536→2304，剑士 64t→28.3t/个）——波 2/3 消耗战补兵与 CRUSHED
     // 后重建成军的关键提速。unit-stats.md 旧注"木产量[50]+5"是数据表误注
     // （效果=hdr[56] 增量，c.java 磨坊完工/HC 研究 6233/6343 两级各 +50%）。
-    private static final boolean EXP_HORSECOLLAR =
-        System.getProperty("aoe.expHorsecollar", "0").equals("1");
+    private final boolean EXP_HORSECOLLAR;
     // ===== aoe.expStonePoor 石贫检测 + 替代策略分支（2026-09-06 第 45 夜探索）=====
     // 契约同 aiK.*：未设置/=0 → 逐字节当前行为（无检测、无遥测、无分支）。
     // report = 只打检测遥测（[ai] STONEPOOR 行），零行为差——分级/误判率取数用。
@@ -253,96 +337,89 @@ public final class RuleBasedAi implements PlayerAi {
     // 3 = V3 = 仅塔链优先重排（无闪击）：早期判贫图上 smith/射箭场让位到塔 3
     // 之后——起始 100 石是全部石料，smith 先建=偷走塔 3 的最后一份石
     // （1014 实证：smith@628 先于塔 3，波 1 时 m55=73 vs 1015 三塔 110=胜）。
-    private static final String SP_PROP = System.getProperty("aoe.expStonePoor", "0").trim();
-    private static final boolean SP_REPORT = SP_PROP.equals("report");
-    private static final int SP_MODE = SP_REPORT ? 0 : Integer.parseInt(SP_PROP);
-    private static final boolean SP_ON = SP_REPORT || SP_MODE != 0;
+    private final String SP_PROP;
+    private final boolean SP_REPORT;
+    private final int SP_MODE;
+    private final boolean SP_ON;
     // 近距石界（Chebyshev 格）：界内零可采石 = 塔链长期不可行（补塔/塔 4-5/smith
     // 都靠石收入）。aoe.spNear 覆盖便于 report 模式免重编译扫阈值。
-    private static final int SP_NEAR =
-        Integer.parseInt(System.getProperty("aoe.spNear", "14").trim());
+    private final int SP_NEAR;
     // ===== aiK build-order 旋钮（2026-09-06 逐种子离线搜索，B.5）=====
     // 契约：属性 aoe.aiK.<name> 未设置时默认值=改动前行为（逐字节一致，已用
     // 1000-1019 全 19 种子日志 diff 验证）。每个旋钮登记：名字/含义/默认值。
     // 历史禁区（配额类）只为逐种子特解保留——转正默认必须过 Step3 全局验收。
-    private static int k(String n, int d) {
-        String v = System.getProperty("aoe.aiK." + n);
-        return v == null ? d : Integer.parseInt(v.trim());
-    }
+    // （2026-09-07 第 0 轮起改构造期按 side 解析的实例字段，见 prop() 注释）
     // 军事生产总门：vills 下限（默认 3）——调低=军事更早起步，调高=经济先行
-    private static final int K_MIL_VILLS = k("milVills", 3);
+    private final int K_MIL_VILLS;
     // 近战木门（兵营 1/2 共用，默认 15）
-    private static final int K_MELEE_W = k("meleeW", 15);
+    private final int K_MELEE_W;
     // 近战金门：兵营 1 封建前（默认 25）/兵营 2 封建后（默认 15）
-    private static final int K_MELEE_G1 = k("meleeG1", 25);
-    private static final int K_MELEE_G2 = k("meleeG2", 15);
+    private final int K_MELEE_G1;
+    private final int K_MELEE_G2;
     // 弓兵木门（默认 25）
-    private static final int K_ARCH_W = k("archW", 25);
+    private final int K_ARCH_W;
     // 兵营建筑门 W/S（默认 30/15；战中重建与平时建链共用）
-    private static final int K_BARR_W = k("barrW", 30);
-    private static final int K_BARR_S = k("barrS", 15);
+    private final int K_BARR_W;
+    private final int K_BARR_S;
     // 塔门 W/G/S（默认 22/6/16）。塔 1/2 新建门 = 基础门 +6/+2/+4（默认 28/8/20，
     // 随旋钮联动）；战中补塔/塔 3-5 链用基础门
-    private static final int K_TOWER_W = k("towerW", 22);
-    private static final int K_TOWER_G = k("towerG", 6);
-    private static final int K_TOWER_S = k("towerS", 16);
+    private final int K_TOWER_W;
+    private final int K_TOWER_G;
+    private final int K_TOWER_S;
     // 塔数量上限（默认 5=TOWER_DIST[_EXPER] 表长；>5 时复用表末距离）
-    private static final int K_TOWER_CAP = k("towerCap", 5);
+    private final int K_TOWER_CAP;
     // 铁匠铺门（EXP_MANGONEL 前置支默认 25/15；射箭场后备支默认 30/22）
-    private static final int K_SMITH_W = k("smithW", 25);
-    private static final int K_SMITH_S = k("smithS", 15);
-    private static final int K_SMITH2_W = k("smith2W", 30);
-    private static final int K_SMITH2_S = k("smith2S", 22);
+    private final int K_SMITH_W;
+    private final int K_SMITH_S;
+    private final int K_SMITH2_W;
+    private final int K_SMITH2_S;
     // t8 生产门 W/G（默认 25/25）与排队上限（默认 1=现行为；expEcoKill 捆绑里的
     // 排队 2 未做过归因分解，此旋钮单独验证）
-    private static final int K_T8_W = k("t8w", 25);
-    private static final int K_T8_G = k("t8g", 25);
-    private static final int K_T8_Q = k("t8q", 1);
+    private final int K_T8_W;
+    private final int K_T8_G;
+    private final int K_T8_Q;
     // Bow Saw 研究木门（默认 30）
-    private static final int K_BOWSAW_W = k("bowsawW", 30);
+    private final int K_BOWSAW_W;
     // GoldMining 最早研究 tick（默认 0=封建立即可研；StoneMining 走 smTowerUnder）
-    private static final int K_GM_TICK = k("gmTick", 0);
+    private final int K_GM_TICK;
     // StoneMining 研究的塔数上限门（默认 5；=0 可整体关掉 StoneMining 研究省费用）
-    private static final int K_SM_TOWER_UNDER = k("smTowerUnder", 5);
+    private final int K_SM_TOWER_UNDER;
     // 村民配额（历史禁区）：boot 木/金（默认 2/1）、封建 木/金/石（默认 1/2/1）、
     // 开战金配额（默认 3；石 1 时为 qWarG-1=2）、配额"塔满"界（默认 5）
-    private static final int K_Q_BOOT_W = k("qBootW", 2);
-    private static final int K_Q_BOOT_G = k("qBootG", 1);
-    private static final int K_Q_FEUD_W = k("qFeudW", 1);
-    private static final int K_Q_FEUD_G = k("qFeudG", 2);
-    private static final int K_Q_FEUD_S = k("qFeudS", 1);
-    private static final int K_Q_WAR_G = k("qWarG", 3);
-    private static final int K_Q_TOWER_FULL = k("qTowerFull", 5);
+    private final int K_Q_BOOT_W;
+    private final int K_Q_BOOT_G;
+    private final int K_Q_FEUD_W;
+    private final int K_Q_FEUD_G;
+    private final int K_Q_FEUD_S;
+    private final int K_Q_WAR_G;
+    private final int K_Q_TOWER_FULL;
     // ===== exm 战斗微操旋钮（2026-09-03，波 1 防御期承伤结构/杀伤率搜索）=====
     // 契约同 aiK.*：属性 aoe.exm.<name> 未设置时默认值=改动前行为（逐字节一致）。
-    private static int exm(String n, int d) {
-        String v = System.getProperty("aoe.exm." + n);
-        return v == null ? d : Integer.parseInt(v.trim());
-    }
+    // （2026-09-07 第 0 轮起改构造期按 side 解析的实例字段，见 prop() 注释）
     // 防御集火（1=开,v41 默认）：DEFEND 期未接敌军事单位显式指向同一目标格——可见
     // 敌军中 HP 最低者、平手取最近。先杀掉的敌人不再输出，1:N 时净承伤下降（战役
     // #6 v8 已验证的 doctrine，RuleBasedAi 从未试过）。retask 禁律：目标格未变不重写
     // slot[2]（防装填清零）；攻击态单位不重定向（打断=装填清零，且它已在输出）。
     // 两带 10/20（基线 8/20,8 存量胜全保,样本外 1020+ 带 +1）;aoe.exm.focus=0 回退。
-    private static final int EXM_FOCUS = exm("focus", 1);
+    private final int EXM_FOCUS;
     // 围城期裸成本应急生产（0=关）：threat（DEFEND 激活）或任一完工塔 HP<220
     // 时军事门按裸成本放行——剑士 W 15→5、t8 25/25→20/20。败局经济学：G 全程
     // 囤积 31→129 而部队恒顶帽 5-6 无补充——卡点是 W≥15 缓冲门认不出"半死
     // 收入"（现有放行只认 woodW==0+无可采木）。排队不付款语义使放行的资源
     // 风险≈0（扣款在产出时，产出失败才退款路径不存在→放行只会多试不会囤积）。
-    private static final int EXM_EMGPROD = exm("emgprod", 0);
+    private final int EXM_EMGPROD;
     // 集火候选距离门（距防御锚点格²）。**64=8 格是几何最优**：恰覆盖紧凑塔环
     // 3/5/7/9/11 主力段;36=6 格候选进出半径导致目标抖动（丢 1012/1013）,
     // 100=10 格追出圈=v2 冲锋教训重演。不要调成可变参数。
-    private static final int EXM_FOCUS_D2 = exm("focusD2", 64);
+    private final int EXM_FOCUS_D2;
     // 闪避上限自适应（0=关，恒 milCount/2）：1=被围（敌≥2×我）时全员闪避；
     // 2=被围时只 1 人闪避（保输出，赌塔火杀得回来）
-    private static final int EXM_DANCE = exm("dance", 0);
+    private final int EXM_DANCE;
     // 修塔人数上限（默认 2=v44/v46 现行为）。塔 255HP、1 修理工≈抵 1 剑士磨塔，
     // 围城期修理容量直接=塔的存活时间。
-    private static final int EXM_REPCAP = exm("repcap", 2);
+    private final int EXM_REPCAP;
     // 回血阈值（0=关：<100 撤 / >220 归）：1=撤 <130；2=归 >200；3=两者
-    private static final int EXM_HEAL = exm("heal", 0);
+    private final int EXM_HEAL;
     // 螺旋侦察路点参数（函数 spiralWaypoint/spiralCount 在文件底部；静态方法无前置
     // 声明顺序问题，但字段初始化器引用这些常量必须文本序在前——JLS 8.3.3）。
     private static final int SCOUT_RINGS = 16;      // 螺旋半径 3,5,…,33（全图覆盖）
@@ -372,6 +449,7 @@ public final class RuleBasedAi implements PlayerAi {
     private final int[] villPullTick = new int[26];
     private boolean resScoutOn;                     // 资源侦察态（敌 TC 已知+木/金盲区时保持 1 侦察兵）
     private int stallTicks;                         // 僵尸局投降计时（无军事+无产能+木经济死）
+    private boolean conceded;                       // arena side-1 认输一次性 latch（防重打日志）
     private int evisB;                              // 可见敌建筑数（日志用）
     private boolean bootLogged;
     // 石贫检测态（SP_ON 时才维护）：stonePoor 单向 latch（一旦判贫不翻回，防分支
@@ -391,6 +469,11 @@ public final class RuleBasedAi implements PlayerAi {
             this.nextDecide = 0;
         }
         this.prevTick = game.tickCount;
+        // side-1 私有雾维护（arena 门内）：每 tick 揭——最快兵种 ~3.75 tick/格，
+        // 8t 决策间隔会在 3×3 窗口间留穿孔；镜像引擎逐 tick 揭雾语义。
+        if (this.side == 1 && this.fogHonest) {
+            this.revealPrivateFog(game);
+        }
         if (game.tickCount < this.nextDecide) {
             return;
         }
@@ -478,7 +561,8 @@ public final class RuleBasedAi implements PlayerAi {
             // 诚实模式：只认已探索格上的敌单位（与渲染/小地图可见性一致）；
             // 军值按我方同兵种数值估（敌科技不可见），不读 ehdr 攻/甲字段。
             boolean vis = !this.fogHonest
-                || (game.mapTiles[(t >>> 8) + ((t & 0xFF) << 6)] & 0x8000) == 0;
+                || this.isExplored(game, (t >>> 8) + ((t & 0xFF) << 6),
+                    game.mapTiles[(t >>> 8) + ((t & 0xFF) << 6)]);
             this.evis[i] = vis;
             if (!vis) {
                 continue;
@@ -503,7 +587,9 @@ public final class RuleBasedAi implements PlayerAi {
             int o = i << 2;
             int bt = erecs[o + 3] & 0xFF;
             if (this.fogHonest
-                    && (game.mapTiles[(erecs[o + 0] >>> 8) + ((erecs[o + 0] & 0xFF) << 6)] & 0x8000) != 0) {
+                    && !this.isExplored(game,
+                        (erecs[o + 0] >>> 8) + ((erecs[o + 0] & 0xFF) << 6),
+                        game.mapTiles[(erecs[o + 0] >>> 8) + ((erecs[o + 0] & 0xFF) << 6)])) {
                 continue;                            // 迷雾中的敌建筑不可见
             }
             ++this.evisB;
@@ -565,7 +651,7 @@ public final class RuleBasedAi implements PlayerAi {
         int myTc = hdr[8];
         // 诚实模式：敌 TC 位置只认侦察记忆（hdr[1][8] 禁读）；找不到时下游全部走
         // 降级姿态（塔环/驻防朝 hint/禁攻击，见各分支注释）。
-        int enemyTc = this.fogHonest && !FOG_TC_OMNI ? this.enemyTcMem : ehdr[8];
+        int enemyTc = this.fogHonest && !fogTcOmni ? this.enemyTcMem : ehdr[8];
         // 敌 TC 未知但已有首波接触来向：塔位/驻防朝向先朝来向摆（诚实信息——敌军
         // 从屏幕哪边进来玩家看得见）。v58 前未知敌方向只能摆罗盘塔环，seed 1006 型
         // 图塔落在背敌侧=村民暴露被屠。
@@ -580,7 +666,8 @@ public final class RuleBasedAi implements PlayerAi {
         if (!this.bootLogged) {
             this.bootLogged = true;
             System.out.println("[ai] RuleBasedAi side=" + this.side + " fogHonest=" + this.fogHonest
-                + (this.side != 0 ? " (forced omni: player 1 无自有雾层)" : ""));
+                + (this.side != 0 ? (this.fogHonest ? " (private fog: exploredBitmap)"
+                    : " (forced omni: player 1 无自有雾层)") : ""));
         }
         // 波次预测器（v24）：只读+打点，行为不变。诚实模式禁用（ehdr[55] 禁读）。
         if (!this.fogHonest) {
@@ -735,7 +822,7 @@ public final class RuleBasedAi implements PlayerAi {
                 System.out.println("[ai] RES-SCOUT on (resource blind spot) t=" + game.tickCount);
             }
         }
-        if (this.fogHonest && !FOG_TC_OMNI && (this.enemyTcMem < 0 || resScout) && myTc >= 0 && !this.attackMode
+        if (this.fogHonest && !fogTcOmni && (this.enemyTcMem < 0 || resScout) && myTc >= 0 && !this.attackMode
                 && (!threat || milCount >= 3)) {
             int firstMil = -1, secondMil = -1, firstT5 = -1;
             for (int i = 0; i < units; ++i) {
@@ -760,14 +847,21 @@ public final class RuleBasedAi implements PlayerAi {
                 this.scoutIds[1] = firstT5 >= 0 ? firstMil : secondMil;
             }
         }
-        // 僵尸局投降（批测契约，-Daoe.exitOnResult 才生效；CampaignAi 同款）：
-        // 无军事单位、无兵营系建筑（含在建）、木经济死（存量<5+无木工+无可采木）
-        // ——一切兵种成本含木、军事建筑 20 木起，产能永不可恢复，村民又无力拆
-        // 敌 TC；引擎判负式（TC 毁 / 0单位+0建筑）够不着 → 实测空转 21M tick。
-        // 持续 500t 按契约认输省批测 240s/局；真实游玩无 exitOnResult 只打日志。
-        // side==1（enemyAi 反串）整个跳过——[result]/System.exit 是 player-0 视角
-        // 契约，敌方认输由人类玩家自己的胜利结算（z=98）表达。
-        if (this.side == 0 && System.getProperty("aoe.exitOnResult") != null && myTc >= 0) {
+        // 僵尸局投降（批测契约，side 0 仅在 -Daoe.exitOnResult 下生效；CampaignAi
+        // 同款）：无军事单位、无兵营系建筑（含在建）、木经济死（存量<5+无木工+
+        // 无可采木）——一切兵种成本含木、军事建筑 20 木起，产能永不可恢复，村民
+        // 又无力拆敌 TC；引擎判负式（TC 毁 / 0单位+0建筑）够不着 → 实测空转
+        // 21M tick。持续 500t 按契约认输省批测 240s/局；真实游玩无 exitOnResult
+        // 只打日志。
+        // side==1（enemyAi 反串）：非 arena 整个跳过——[result]/System.exit 是
+        // player-0 视角契约，敌方认输由人类玩家自己的胜利结算（z=98）表达。
+        // arena 下（第 0 轮基建）side-1 投降门解锁：触发时打 [ai] concede side=1
+        // + [result] WIN ticks=N（side 1 认输 = player 0 胜）并 exit（仅
+        // exitOnResult；否则只打日志不 exit，终局结算仍走引擎）。
+        boolean concedeWatch = this.side == 0
+            ? System.getProperty("aoe.exitOnResult") != null && myTc >= 0
+            : ARENA && myTc >= 0;
+        if (concedeWatch) {
             boolean noMilBuilding = barracksDone == 0 && archeryDone == 0 && stableDone == 0
                 && siegeDone == 0 && !hasUC(recs, hdr[4], 10) && !hasUC(recs, hdr[4], 7)
                 && !hasUC(recs, hdr[4], 8) && !hasUC(recs, hdr[4], 2);
@@ -803,12 +897,26 @@ public final class RuleBasedAi implements PlayerAi {
             // 却会让投降门永远差一口气（seed 1006 T=150 实测 mil=1 val=8、
             // 兵营无、金 0 木 165 烂库、僵到超时）。
             if (this.stallTicks >= 500) {
-                System.out.println("[ai] concede: no military, no production path ("
-                    + (villDead ? "villager deadlock" : "income dead") + "), t="
-                    + game.tickCount);
-                System.out.println("[result] LOSS ticks=" + game.tickCount);
-                System.out.flush();
-                System.exit(0);
+                if (this.side == 0) {
+                    System.out.println("[ai] concede: no military, no production path ("
+                        + (villDead ? "villager deadlock" : "income dead") + "), t="
+                        + game.tickCount);
+                    System.out.println("[result] LOSS ticks=" + game.tickCount);
+                    System.out.flush();
+                    System.exit(0);
+                } else if (!this.conceded) {
+                    // arena side-1 认输：打日志；exitOnResult 批测路径再打
+                    // [result] WIN（side 1 认输 = player 0 胜）并退出。
+                    this.conceded = true;
+                    System.out.println("[ai] concede side=1: no military, no production path ("
+                        + (villDead ? "villager deadlock" : "income dead") + "), t="
+                        + game.tickCount);
+                    if (System.getProperty("aoe.exitOnResult") != null) {
+                        System.out.println("[result] WIN ticks=" + game.tickCount);
+                        System.out.flush();
+                        System.exit(0);
+                    }
+                }
             }
         } else {
             this.stallTicks = 0;
@@ -2351,6 +2459,58 @@ public final class RuleBasedAi implements PlayerAi {
         return -1;
     }
 
+    /** 迷雾读点统一入口（fogHonest 门内的全部"已探索？"查询都走这里）：
+     *  side 0 查引擎雾层（mapTiles 0x8000 位，raw>=0 即已探索——与改动前的
+     *  `raw < 0`/`& 0x8000` 判定逐位等价）；side 1（arena）查私有
+     *  exploredBitmap。side 0 路径一字不改的语义基础。 */
+    private boolean isExplored(c game, int idx, int raw) {
+        return this.side == 0 ? raw >= 0 : this.exploredBitmap[idx];
+    }
+
+    /** side-1 私有雾维护（每 tick 由 tick() 调用；仅 ARENA && side==1 且
+     *  fogHonest 时）。镜像引擎语义：单位自身 3×3；完工建筑圆形半径 3、
+     *  塔（type 12）半径 6（引擎 void_a(x,y,r) 只认完工建筑=0x40000000 门，
+     *  同）。探索永久累积。 */
+    private void revealPrivateFog(c game) {
+        int[] hdr = game.playerUnitHeaders[1];
+        short[] slots = game.playerUnitSlots[1];
+        int units = Math.min(hdr[2], 26);
+        for (int i = 0; i < units; ++i) {
+            int pos = slots[(i << 3) + 0] & 0xFFFF;
+            this.revealAround(pos >>> 8, pos & 0xFF, 1);
+        }
+        int[] recs = game.buildingTable[1];
+        int nb = Math.min(hdr[4], 22);
+        for (int i = 0; i < nb; ++i) {
+            int o = i << 2;
+            if ((recs[o + 2] & 0x40000000) != 0) {
+                continue;                            // 在建建筑不揭（引擎同）
+            }
+            int t = recs[o + 0];
+            int bt = recs[o + 3] & 0xFF;
+            this.revealAround(t >>> 8, t & 0xFF, bt == 12 ? 6 : 3);
+        }
+    }
+
+    /** 以 (cx,cy) 为中心的欧氏圆揭格（r=1 恰为 3×3=单位视野）。 */
+    private void revealAround(int cx, int cy, int r) {
+        int rr = r * r + 1;     // +1：让 (r,1)/(1,r) 这类边缘格进圆（逼近引擎
+                                // Bresenham 圆的覆盖面；r=1 时 2 含角格=3×3）
+        for (int dy = -r; dy <= r; ++dy) {
+            int y = cy + dy;
+            if (y < 0 || y >= 64) {
+                continue;
+            }
+            for (int dx = -r; dx <= r; ++dx) {
+                int x = cx + dx;
+                if (x < 0 || x >= 64 || dx * dx + dy * dy > rr) {
+                    continue;
+                }
+                this.exploredBitmap[x + (y << 6)] = true;
+            }
+        }
+    }
+
     /** 距敌 TC 切比雪夫 < 此格数的资源格视为敌境，不派村民（v14：seed 2004 复盘——
      *  最近金矿恰在敌 TC 3 格处，矿工走进敌基被守军追杀→逃命→重派死循环，金收入
      *  归零，采矿场原地被拆 6 次白烧 90 木）。过滤后无候选则回退不过滤（防死锁）。 */
@@ -2390,7 +2550,7 @@ public final class RuleBasedAi implements PlayerAi {
             for (int tx = 0; tx < 64; ++tx) {
                 int idx = tx + (ty << 6);
                 int raw = game.mapTiles[idx];
-                if (this.fogHonest && !FOG_RES_OMNI && raw < 0) {
+                if (this.fogHonest && !this.fogResOmni && !this.isExplored(game, idx, raw)) {
                     continue;                        // 未探索格的资源不可知
                 }
                 int t = raw & 0xFFF;
@@ -2473,7 +2633,7 @@ public final class RuleBasedAi implements PlayerAi {
             for (int tx = 0; tx < 64; ++tx) {
                 int idx = tx + (ty << 6);
                 int raw = game.mapTiles[idx];
-                if (this.fogHonest && !FOG_RES_OMNI && raw < 0) {
+                if (this.fogHonest && !this.fogResOmni && !this.isExplored(game, idx, raw)) {
                     continue;                        // 未探索格的资源不可知
                 }
                 int t = raw & 0xFFF;
@@ -2518,13 +2678,13 @@ public final class RuleBasedAi implements PlayerAi {
                 int idx = tx + (ty << 6);
                 int raw = game.mapTiles[idx];
                 int d = Math.max(Math.abs(tx - mx), Math.abs(ty - my));
-                if (this.fogHonest && !FOG_RES_OMNI && d <= SP_NEAR) {
+                if (this.fogHonest && !this.fogResOmni && d <= SP_NEAR) {
                     ++boxN;
-                    if (raw >= 0) {
+                    if (this.isExplored(game, idx, raw)) {
                         ++explored;
                     }
                 }
-                if (this.fogHonest && !FOG_RES_OMNI && raw < 0) {
+                if (this.fogHonest && !this.fogResOmni && !this.isExplored(game, idx, raw)) {
                     continue;                        // 未探索格的石不可知
                 }
                 int t = raw & 0xFFF;
@@ -2548,7 +2708,7 @@ public final class RuleBasedAi implements PlayerAi {
                 }
             }
         }
-        boolean canJudge = !this.fogHonest || FOG_RES_OMNI || explored * 5 >= boxN * 2;
+        boolean canJudge = !this.fogHonest || fogResOmni || explored * 5 >= boxN * 2;
         boolean poorNow = canJudge && nearN == 0;
         boolean flipped = poorNow && !this.stonePoor;
         if (flipped) {

@@ -98,6 +98,8 @@ LLM 玩家代理的宏层（sel/goto/train/build/gather/rally/sitrep 等 FIFO �
 | `aoe.fairStart=1` | enemyAi 对称化旋钮（默认关）：随机图任务装配后敌方起始资源 hdr[1][5..7] 拉平为 player 0 的值（200/100/100）；只挂 gameMode==0，战役/教学不碰 |
 | `aoe.fairGather=1` | enemyAi 对称化旋钮（默认关）：player 1 交存结算不吃 aiGatherMultiplier（按 256=1× 计，与 player 0 同口径） |
 | `aoe.enemyDrip=N` | enemyAi 对称化旋钮（默认 0=关）：enemyAiActive 时每 N tick 给 hdr[1][5..7] 各加 hdr[1][57]，复刻引擎 tickAi 免费资源滴语义（tickAi 被 enemyAi 抑制时滴也停用，此旋钮可补回） |
+| `aoe.arena=1` | 自对弈竞技场主开关（默认关=零行为差；规格 `docs/research/selfplay-arena.md`）：隐含 fairStart+fairGather；帧首 tickPlayerAi/tickEnemyAi 调用序按 tickCount&1 交替；arena+exitOnResult 下 tickCount>50000 判 `[result] DRAW`+exit（隐藏覆盖 `aoe.arenaDrawTick`，勿改默认）；RuleBasedAi 侧 side 1 解锁私有迷雾（AI 自维护 exploredBitmap）诚实模式 + arena concede（`[ai] concede side=1`→`[result] WIN`，仅 exitOnResult 退出） |
+| `aoe.<AI旋钮>.p0/.p1` | RuleBasedAi 全部自消费旋钮（aiK.*/exm.*/exp*/spNear/aiFog）按侧覆盖：构造期先查 `.p<side>` 再回落 base 名；不设 .pN 时解析结果与旧 static 语义逐字节一致（镜像配对基建，ailoop `-m` 消费）。引擎侧旋钮（bfsPath 等）不支持按侧 |
 | `aoe.exitOnResult=1` | 终局（startMissionBriefing z==98）无条件打印 `[result] WIN|LOSS ticks=N` 后 System.exit(0)——批量脚本契约，格式勿改 |
 | `aoe.mapSeed=N` | 随机图种子覆盖（beginMissionLoad 装载点，N 拆 hi/lo 两字节；不设则逐字节不变） |
 | `aoe.devPhase=N` | 进关相位 pin（N≥0）：菜单(4)→主视图(6)边首帧把 tickCount 拨到 N。战役地图本就恒定（res 103-109 种子字节非零），批测方差的真来源是菜单导航墙钟漂移造成的进关相位（敌 AI tickCount%10 选兵等）；同 N 必同结果，camloop/ailoop 均默认逐局 (i-1)*7（PHASE_STEP=off 关）。**坑**：AI 节流器若按绝对 tickCount 记 nextDecide，拨钟后恒冻结——CampaignAi/RuleBasedAi 已加回溯检测，新 AI 注意 |
@@ -182,11 +184,15 @@ trace（回放锚）· `[mouse]/[mouseA]/[pick]/[band]` 鼠标链路 · `[trace]
 
 ### 玩家 AI 批量对局
 
-`tools/ailoop.sh -n N -d 难度 -a <AI类名> [-e <敌AI类名>] -s 起始种子 -t 超时 -k -b [-S N] [-x 种子表]`：批量 headless
+`tools/ailoop.sh -n N -d 难度 -a <AI类名> [-e <敌AI类名>] -s 起始种子 -t 超时 -k -b [-S N] [-x 种子表] [-m name=value]`：批量 headless
 turbo 随机图对局 + 胜率统计（`-b` = 透传 `-Daoe.bfsPath=1`；`-e` = 透传 `-Daoe.enemyAi`，
 敌 AI 反串 player 1 取代引擎 tickAi，见 ai/README「EnemyAi」节；`-k` 留每局日志；
 `-S N` = 透传 `-Daoe.snapshotEvery=N` 周期快照，滚动 8 份，败局尸检用；
-`-x` = 追加跳过种子，叠加在 `tools/ailoop-skip.txt` 退化种子表上，被跳种子不占局数）。
+`-x` = 追加跳过种子，叠加在 `tools/ailoop-skip.txt` 退化种子表上，被跳种子不占局数；
+`-m name=value` = 镜像配对模式：每种子两局（candidate 旋钮 `-Daoe.<name>.p0/.p1`
+按侧分配），自动带 `-Daoe.arena=1`、双侧默认都挂 RuleBasedAi（免 -a），CSV 加
+cand 列、result 支持 DRAW，summary 增 candidate 合并胜场（DRAW 计半）+ 逐侧拆分
++ side0 得分（side 偏差）；`-m -` = 无 candidate 的纯镜像基线）。
 现实现：`aoe.ai.RuleBasedAi`（规则式，架构与决策依据见 `src/main/java/aoe/ai/README.md`）。
 AI 日志统一 `[ai]` 前缀（assign/build/research/ATTACK/DEFEND/… + 每 500 tick 态势摘要）。
 **注意**：菜单导航耗 tick 是墙钟依赖的，同一种子跨跑 tick 相位不同，单局胜负有

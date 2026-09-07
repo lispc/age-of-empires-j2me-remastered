@@ -18,11 +18,12 @@ tickAi；enemyAi、fair 旋钮、arena 模式全部是显式挂载才生效的�
 | 起始资源 | 双方拉平 200/100/100 | `fairStart`（arena 隐含） |
 | 采集乘数 | 双方 ×1（无作弊） | `fairGather`（arena 隐含） |
 | 资源滴 | 无 | tickAi 抑制 + 不开 enemyDrip |
-| **迷雾** | **两侧都诚实**：side 0 用引擎迷雾层（mapTiles 0x8000）；side 1 用 AI 自维护的私有探索 bitmap（按自己单位/建筑每决策揭 3×3，镜像引擎 revealFogAroundUnit 语义） | side1 私有雾（第 0 轮基建） |
-| 调用顺序 | 帧首两侧 AI 的调用序按 tickCount&1 交替（消固定先手） | 第 0 轮基建 |
-| side 偏差控制 | **镜像配对**：同种子 candidate 在 side 0 / side 1 各赛一局，合并计胜率 | ailoop `-m`（第 0 轮基建） |
-| 认输 | 竞技场模式下 side 1 的僵尸投降门开启（打 `[ai] concede side=1`，不打 [result]、不 exit；终局结算仍走引擎） | 第 0 轮基建 |
-| 和局 | tickCount > 50000 判和（≈当前对局均值 2.7 倍），`[result] DRAW` + exit（仅 arena+exitOnResult 批测路径） | 第 0 轮基建 |
+| **迷雾** | **两侧都诚实**：side 0 用引擎迷雾层（mapTiles 0x8000）；side 1 用 AI 自维护的私有探索 bitmap（按自己单位/建筑每 tick 揭 3×3/半径 3/塔 6，镜像引擎语义） | side1 私有雾（第 0 轮已落地） |
+| 调用顺序 | 帧首两侧 AI 的调用序按 tickCount&1 交替（消固定先手） | c.java onPaint（第 0 轮已落地） |
+| side 偏差控制 | **镜像配对**：同种子 candidate 在 side 0 / side 1 各赛一局，合并计胜率 | ailoop `-m`（第 0 轮已落地） |
+| 认输 | 竞技场模式下 side 1 的僵尸投降门开启（打 `[ai] concede side=1`；exitOnResult 批测路径再打 `[result] WIN`+exit=player 0 胜，非批测只打日志、终局仍走引擎） | 第 0 轮已落地 |
+| 和局 | tickCount > 50000 判和（≈当前对局均值 2.7 倍），`[result] DRAW` + exit（仅 arena+exitOnResult 批测路径；隐藏覆盖旋钮 `aoe.arenaDrawTick`，默认 50000 勿改） | 第 0 轮已落地 |
+| 旋钮按侧 | RuleBasedAi 全部自消费旋钮（aiK.*/exm.*/exp*/spNear/aiFog）支持 `aoe.<name>.p0/.p1` 按侧覆盖，不设则与 base 名/默认值逐字节一致 | 第 0 轮已落地 |
 
 ## 候选评估协议（防双生过拟合是命门）
 
@@ -55,20 +56,25 @@ WORKLOG。
 4. 攻城时机学（敌塔环密度 vs 己方投石机数的出击判据）
 5. 旋钮空间自动爬山（aiK/exm/exp 旋钮族=现成基因型，turbo 适应度便宜）
 
-## 基建清单（第 0 轮）
+## 基建清单（第 0 轮，2026-09-07 落地）
 
-- [ ] RuleBasedAi 旋钮按侧覆盖机制（静态 final → 构造期按 side 解析实例字段）
-- [ ] side-1 私有迷雾 bitmap + fogHonest 对 side 1 解锁
-- [ ] ailoop 镜像模式（`-m`：同种子双侧各一，candidate 旋钮按侧分配）
-- [ ] 帧首 AI 调用序按 tick 交替（arena 门内）
-- [ ] side-1 arena concede + DRAW 规则
-- [ ] 公平性确认批：对称竞技场的 side 0/1 胜率基线（镜像合并后应≈50%）
+- [x] RuleBasedAi 旋钮按侧覆盖机制（静态 final → 构造期按 side 解析实例字段）
+- [x] side-1 私有迷雾 bitmap + fogHonest 对 side 1 解锁
+- [x] ailoop 镜像模式（`-m`：同种子双侧各一，candidate 旋钮按侧分配）
+- [x] 帧首 AI 调用序按 tick 交替（arena 门内）
+- [x] side-1 arena concede + DRAW 规则
+- [x] 公平性确认批：对称竞技场的 side 0/1 胜率基线（镜像合并后应≈50%）
 
 ## 联赛表
 
 | 代 | 配置 | 镜像成绩 | 引擎锚 E/M/X | 日期 |
 |---|---|---|---|---|
-| G0 | 基线 RuleBasedAi（科技对称化后） | —（基建后定） | 6/10、0/10、0/10（46/47 夜口径=对引擎敌 AI 的 side 0 胜率） | 2026-09-07 |
+| G0 | 基线 RuleBasedAi（科技对称化后） | side0 得分 **16.0/20 = 80%**（-m -，10 种子×2，逐种子 7W-1L-2D；ticks 均 26649；DRAW@50001 自然触发 2 种子、concede side=1 自然触发 1 种子）。**side 偏差基线 = side0 +30pp**——n 有效=10（无 candidate 时同种子两局逐 tick 相同），95% CI 宽，但方向明确；后续 candidate 全靠镜像合并消此偏差 | 6/10、0/10、0/10（46/47 夜口径=对引擎敌 AI 的 side 0 胜率） | 2026-09-07 |
+
+G0 side 偏差假装备查（未证实，供后续轮排查）：① 引擎 tickUnits/战斗结算恒
+player 0 先行动（每 tick 先手）；② noRender 下 side-1 移动单位是否经
+renderWorld 泄漏揭 side-0 雾；③ 其它未考证的引擎不对称。镜像配对协议正是
+为在统计上消除它而设——candidate 评估只看合并分（candidate@p0 + candidate@p1）。
 
 ### 别再试（判死登记）
 
