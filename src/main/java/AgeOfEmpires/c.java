@@ -139,6 +139,13 @@ implements CommandListener {
     public boolean var_boolean_h;
     public boolean var_boolean_j;
     public byte[] techFlags;
+    // enemyTechFlags（2026-09-07 科技对称化）：player 1 的 techFlags 平行数组，
+    // 与 techFlags 同从 res#127 装载初值。player 0 的全部路径继续只读写
+    // techFlags（默认路径逐字节不变的语义基础）；player 1 的研究完成效果
+    // （tickBuildings i==1 分支）与 tryResearch(1,...) 读这边。player 1 的
+    // 时代 = playerUnitHeaders[1][0]（引擎从不给它 +1，enemyAi 升时代由
+    // tickBuildings i==1 研究完成块推进）。
+    public byte[] enemyTechFlags;
     // cameraPx/cursorTile/selectedTrainProduct：paint 线程写，dev 线程读
     // （state/sitrep/ctile/train）。
     public volatile int cameraPxX;
@@ -2264,7 +2271,8 @@ implements CommandListener {
      *  可用性校验镜像 openBuildingMenu（研究菜单门真正生效的地方——研究菜单
      *  var_boolean_g=false，boolean_k case 2 的 techFlags 过滤对研究菜单不生效，
      *  首批实现误把它当菜单门，导致升时代永远被拒，2026-09-02 玩家 AI 实测暴露）：
-     *  - techFlags[23+techId] != 0 = 该科技已研究（tickBuildings 研究完成时置位）→ 拒绝；
+     *  - techFlags[23+techId] != 0 = 该科技已研究（tickBuildings 研究完成时置位）→ 拒绝
+     *    （2026-09-07 对称化：player 1 读 enemyTechFlags 平行数组）；
      *  - 升时代（21/22/23）只在 TC(9)、techId == 21+当前时代，且前置建筑达标
      *    （封建：建成兵营≥1；城堡：磨坊+铁匠铺≥2；帝国：城堡≥1）；
      *  - 其余科技按 openBuildingMenu 的建筑类型→可研究科技+时代门槛表。
@@ -2297,11 +2305,14 @@ implements CommandListener {
                 return false;
             }
         } else {
-            if (techId < 0 || 23 + techId >= this.techFlags.length
-                    || this.techFlags[23 + techId] != 0) {
+            // 科技旗标按 player 分派（2026-09-07 科技对称化）：player 0 读全局
+            // techFlags（原语义不变），player 1 读 enemyTechFlags 平行数组。
+            byte[] tf = player == 1 ? this.enemyTechFlags : this.techFlags;
+            if (techId < 0 || 23 + techId >= tf.length
+                    || tf[23 + techId] != 0) {
                 return false;   // 已研究（或非法 id）
             }
-            if (!researchOfferedAt(btype, techId, age, this.techFlags)) {
+            if (!researchOfferedAt(btype, techId, age, tf)) {
                 return false;
             }
         }
@@ -4483,12 +4494,15 @@ implements CommandListener {
             this.scriptFrameCounters[3] = 0;
             this.costTable = null;
             this.techFlags = null;
+            this.enemyTechFlags = null;
             this.missionScript = null;
             this.dirTable = null;
             return false;
         }
         this.costTable = com.ulysseo.mad.c.byte_arr_a(122);
         this.techFlags = com.ulysseo.mad.c.byte_arr_a(127);
+        // player 1 的科技旗标平行数组：同一份 res#127 初值，独立拷贝
+        this.enemyTechFlags = com.ulysseo.mad.c.byte_arr_a(127);
         this.dirTable = com.ulysseo.mad.c.byte_arr_a(123);
         this.devCheckpointedThisMission = false;    // 新任务环境装载,允许一次 auto checkpoint
         this.aiStance = 0;
@@ -6376,14 +6390,28 @@ implements CommandListener {
                                                 this.techFlags[18] = 1;
                                                 this.techFlags[2] = 0;
                                                 this.techFlags[3] = 1;
-                                                this.convertUnitType(2, 3);
+                                                // enemyAi 局内（科技对称化）只转 player 0 自己的兵——
+                                                // convertUnitType 是全局的（连 side 1 一起转并迁移其
+                                                // 队列计数），会错转 side 1 在场民兵并与其
+                                                // spawn 形态键（hdr[1][0]）打架。默认路径
+                                                // （!enemyAiActive）走原全局调用，逐字节不变。
+                                                if (this.enemyAiActive) {
+                                                    this.convertUnitTypeForPlayer(0, 2, 3);
+                                                } else {
+                                                    this.convertUnitType(2, 3);
+                                                }
                                             } else if (this.playerUnitHeaders[0][0] == 2) {
                                                 this.techFlags[12] = 1;
                                                 this.techFlags[14] = 1;
                                                 this.techFlags[13] = 1;
                                                 this.techFlags[6] = this.techFlags[5];
                                                 this.techFlags[5] = 0;
-                                                this.convertUnitType(5, 6);
+                                                // 同上升封建：enemyAi 局内只转 player 0 的侦察→骑兵
+                                                if (this.enemyAiActive) {
+                                                    this.convertUnitTypeForPlayer(0, 5, 6);
+                                                } else {
+                                                    this.convertUnitType(5, 6);
+                                                }
                                             }
                                             this.var_boolean_l = true;
                                             this.startMissionBriefing(0, 62, this.playerUnitHeaders[0][0] - 1);
@@ -6552,6 +6580,12 @@ implements CommandListener {
                                         this.var_java_lang_String_a = a3.a(n3);
                                     }
                                     this.requestStateSwitch(8);
+                                } else {
+                                    // player 1 研究完成（2026-09-07 科技对称化）：镜像上方
+                                    // i==0 块的全部模拟效果，写 playerUnitHeaders[1] 与
+                                    // enemyTechFlags、推进 hdr[1][0] 时代；跳过全部 UI
+                                    // （简报/横幅/ag=20/requestStateSwitch 全是 player-0 专属）。
+                                    this.applyEnemyResearchEffects(this.buildingTable[i][n + 3] & 0xFF);
                                 }
                                 int[] nArray = this.buildingTable[i];
                                 int n18 = n + 2;
@@ -6577,7 +6611,7 @@ implements CommandListener {
                                         break;
                                     }
                                     case 10: {
-                                        if (this.playerUnitHeaders[0][0] == 0) {
+                                        if (this.playerUnitHeaders[this.spawnAgeKey(i)][0] == 0) {
                                             n3 = 2;
                                             break;
                                         }
@@ -6589,7 +6623,7 @@ implements CommandListener {
                                         break;
                                     }
                                     case 8: {
-                                        if (this.playerUnitHeaders[0][0] >= 2) {
+                                        if (this.playerUnitHeaders[this.spawnAgeKey(i)][0] >= 2) {
                                             n3 = 6;
                                             break;
                                         }
@@ -7096,10 +7130,17 @@ implements CommandListener {
         int n12 = this.playerUnitHeaders[n9][0];
         int n13 = n9;
         if (n11 >= 12) {
+            // 塔贴图 tier 索引（纯渲染，n6 只喂 drawTileSprite/血条几何，不进模拟态）。
+            // 2026-09-07 科技对称化：改按 owner 查表——player 1 用 enemyTechFlags。
+            // 行为变化（已裁决，见 README EnemyAi 节）：原实现双方塔皮都吃 player 0 的
+            // 塔科技（player 0 研 WatchTower 敌塔贴图也升级）；现在 player 1 塔皮只看
+            // 自己的研究，默认路径（无 side-1 研究，enemyTechFlags 恒为初值）下 P1 塔
+            // 恒 tier 0 贴图。塔的实际攻防程是 per-player 的 hdr[45/46/47]/[12]，不受影响。
+            byte[] towerTech = n9 == 1 ? this.enemyTechFlags : this.techFlags;
             n7 = 0;
-            n7 = 0 + this.techFlags[36];
-            n7 += this.techFlags[40];
-            n6 = this.var_byte_arr_h[((n11 & 0xFF) << 2) + (n7 += this.techFlags[43])] + 33;
+            n7 = 0 + towerTech[36];
+            n7 += towerTech[40];
+            n6 = this.var_byte_arr_h[((n11 & 0xFF) << 2) + (n7 += towerTech[43])] + 33;
         } else {
             n6 = this.var_byte_arr_h[((n11 & 0xFF) << 2) + n12] + 33;
         }
@@ -7323,6 +7364,212 @@ implements CommandListener {
             this.playerUnitHeaders[i][57 + n4] = 0;
             this.playerUnitHeaders[i][66 + n3] = this.playerUnitHeaders[i][66 + n4];
             this.playerUnitHeaders[i][66 + n4] = 0;
+        }
+    }
+
+    /** convertUnitType 的 per-player 变体（2026-09-07 科技对称化）。原版
+     *  convertUnitType 对双方一起转换并迁移双方队列计数——单升时代设计的全局
+     *  副作用（player 0 升时代时引擎敌 AI 的民兵/侦察跟着升）。对称化后
+     *  player 1 自己升时代只能转自己的兵；enemyAi 局内 player 0 升时代同理
+     *  只转自己的（tickBuildings case 9 按 enemyAiActive 分派）。 */
+    final void convertUnitTypeForPlayer(int player, int n, int n2) {
+        int n3 = n2 - 1;
+        int n4 = n - 1;
+        if (n3 < 0) {
+            n3 = 0;
+        }
+        if (n4 < 0) {
+            n4 = 0;
+        }
+        int n5 = 0;
+        int n6 = this.playerUnitHeaders[player][2];
+        for (int j = 0; j < n6; ++j) {
+            if ((this.playerUnitSlots[player][n5 + 3] & 0xFF) == n) {
+                short[] sArray = this.playerUnitSlots[player];
+                int n7 = n5 + 3;
+                sArray[n7] = (short)(sArray[n7] & 0xFF00);
+                short[] sArray2 = this.playerUnitSlots[player];
+                int n8 = n5 + 3;
+                sArray2[n8] = (short)(sArray2[n8] | n2);
+            }
+            n5 += 8;
+        }
+        this.playerUnitHeaders[player][57 + n3] = this.playerUnitHeaders[player][57 + n4];
+        this.playerUnitHeaders[player][57 + n4] = 0;
+        this.playerUnitHeaders[player][66 + n3] = this.playerUnitHeaders[player][66 + n4];
+        this.playerUnitHeaders[player][66 + n4] = 0;
+    }
+
+    /** 出兵形态键（2026-09-07 科技对称化）：民兵↔剑士、侦察↔骑兵的时代判定
+     *  读哪个玩家的 hdr[.][0]。player 0 恒键自己；player 1 在 enemyAi 接管时
+     *  键自己的时代（hdr[1][0] 由 tickBuildings i==1 研究完成块推进），否则保持
+     *  原作语义键 player 0 的时代——引擎敌 AI 本就没有时代概念，靠
+     *  convertUnitType 全局迁移 + 形态键 hdr[0][0] 搭 player 0 升时代的便车，
+     *  默认路径（无 enemyAi）逐字节不变靠的就是这个分派。消费点：
+     *  tickBuildings 产兵 case 10/8、tryTrainAiUnit、onThingDestroyed 队列折型。 */
+    private int spawnAgeKey(int player) {
+        return player == 1 && !this.enemyAiActive ? 0 : player;
+    }
+
+    /** player 1 研究完成效果（tickBuildings 研究进度满时的 i==1 分支，
+     *  2026-09-07 科技对称化）：逐 case 镜像 i==0 块的模拟效果——写
+     *  playerUnitHeaders[1]、置 enemyTechFlags 位、hdr[1][0] 升时代；
+     *  跳过全部 UI（startMissionBriefing/var_boolean_l/ag=20/字符串/
+     *  requestStateSwitch(8) 全是 player-0 专属）。两处有意的非镜像：
+     *  ① convertUnitType → convertUnitTypeForPlayer(1,...)（原版是全局的）；
+     *  ② 塔升级不写 playerUnitHeaders[0][12]（i==0 块连 hdr[1][12] 一起写的
+     *  搭便车 quirk 保留在原分支不动，这边不做反向搭车）。 */
+    private void applyEnemyResearchEffects(int btype) {
+        int n3 = -1;
+        int[] hdr = this.playerUnitHeaders[1];
+        switch (btype) {
+            case 9: {
+                hdr[0] = hdr[0] + 1;
+                if (hdr[0] == 1) {
+                    this.enemyTechFlags[15] = 1;
+                    this.enemyTechFlags[16] = 1;
+                    this.enemyTechFlags[17] = 1;
+                    this.enemyTechFlags[18] = 1;
+                    this.enemyTechFlags[2] = 0;
+                    this.enemyTechFlags[3] = 1;
+                    this.convertUnitTypeForPlayer(1, 2, 3);
+                } else if (hdr[0] == 2) {
+                    this.enemyTechFlags[12] = 1;
+                    this.enemyTechFlags[14] = 1;
+                    this.enemyTechFlags[13] = 1;
+                    this.enemyTechFlags[6] = this.enemyTechFlags[5];
+                    this.enemyTechFlags[5] = 0;
+                    this.convertUnitTypeForPlayer(1, 5, 6);
+                }
+                break;
+            }
+            case 0: {
+                if (this.enemyTechFlags[26] == 0) {
+                    n3 = 3;
+                    hdr[50] = hdr[50] + 5;
+                    break;
+                }
+                if (this.enemyTechFlags[24] != 0) break;
+                n3 = 1;
+                hdr[50] = hdr[50] + 5;
+                break;
+            }
+            case 1: {
+                if (this.enemyTechFlags[28] == 0) {
+                    n3 = 5;
+                    hdr[52] = hdr[52] + 3;
+                    break;
+                }
+                if (this.enemyTechFlags[32] == 0) {
+                    n3 = 9;
+                    hdr[51] = hdr[51] + 3;
+                    break;
+                }
+                if (this.enemyTechFlags[42] == 0) {
+                    n3 = 19;
+                    hdr[52] = hdr[52] + 3;
+                    break;
+                }
+                if (this.enemyTechFlags[41] != 0) break;
+                n3 = 18;
+                hdr[51] = hdr[51] + 3;
+                break;
+            }
+            case 5: {
+                n3 = 6;
+                hdr[56] = hdr[56] + (hdr[56] >> 1);
+                break;
+            }
+            case 6: {
+                if (this.enemyTechFlags[27] == 0) {
+                    n3 = 4;
+                    for (int j = 0; j < 9; ++j) {
+                        hdr[13 + j] = hdr[13 + j] + 1;
+                    }
+                } else if (this.enemyTechFlags[31] == 0) {
+                    n3 = 8;
+                    for (int j = 0; j < 9; ++j) {
+                        hdr[23 + j] = hdr[23 + j] + 1;
+                    }
+                } else if (this.enemyTechFlags[30] == 0) {
+                    n3 = 7;
+                    for (int j = 0; j < 9; ++j) {
+                        hdr[13 + j] = hdr[13 + j] + 1;
+                    }
+                } else if (this.enemyTechFlags[25] == 0) {
+                    n3 = 2;
+                    for (int j = 0; j < 9; ++j) {
+                        hdr[23 + j] = hdr[23 + j] + 1;
+                    }
+                } else if (this.enemyTechFlags[23] == 0) {
+                    n3 = 0;
+                    for (int j = 0; j < 9; ++j) {
+                        hdr[13 + j] = hdr[13 + j] + 1;
+                    }
+                } else {
+                    if (this.enemyTechFlags[38] != 0) break;
+                    n3 = 15;
+                    this.enemyTechFlags[8] = 1;
+                    for (int j = 0; j < 9; ++j) {
+                        hdr[23 + j] = hdr[23 + j] + 1;
+                    }
+                }
+                break;
+            }
+            case 4: {
+                if (this.enemyTechFlags[37] == 0) {
+                    n3 = 14;
+                    for (int j = 0; j < 13; ++j) {
+                        hdr[33 + j] = hdr[33 + j] + 1;
+                    }
+                    break;
+                }
+                if (this.enemyTechFlags[34] == 0) {
+                    n3 = 11;
+                    hdr[42] = hdr[42] + 1;
+                    hdr[45] = hdr[45] + 1;
+                    break;
+                }
+                if (this.enemyTechFlags[33] == 0) {
+                    n3 = 10;
+                    for (int j = 0; j < 13; ++j) {
+                        hdr[33 + j] = hdr[33 + j] + 1;
+                    }
+                    break;
+                }
+                if (this.enemyTechFlags[35] != 0) break;
+                n3 = 12;
+                hdr[42] = hdr[42] + 1;
+                hdr[45] = hdr[45] + 1;
+                break;
+            }
+            case 12: {
+                if (this.enemyTechFlags[36] == 0) {
+                    n3 = 13;
+                    hdr[47] = 0;
+                    hdr[46] = 2;
+                    hdr[45] = 15;
+                    hdr[12] = 25;
+                    break;
+                }
+                if (this.enemyTechFlags[40] == 0) {
+                    n3 = 17;
+                    hdr[47] = 3;
+                    hdr[46] = 3;
+                    hdr[45] = 20;
+                    hdr[12] = 36;
+                    break;
+                }
+                if (this.enemyTechFlags[43] != 0) break;
+                n3 = 20;
+                hdr[47] = 2;
+                hdr[46] = 4;
+                hdr[45] = 25;
+                hdr[12] = 36;
+            }
+        }
+        if (n3 >= 0) {
+            this.enemyTechFlags[23 + n3] = 1;
         }
     }
 
@@ -7836,17 +8083,18 @@ implements CommandListener {
         // 兵营/房屋带队被拆是常态）。排除两类非队列建筑：在建(0x40000000)的
         // byte2 是施工进度流出位；研究中(0x20000000)的 byte2 bit0 是研究标志
         // （tryResearch |= 0x10000），都不是排队数。类型→计数器映射照抄取消
-        // 路径与生产 switch（民兵/侦察按玩家 0 时代折型——原作单升时代设计）。
+        // 路径与生产 switch（民兵/侦察折型的时代键 = spawnAgeKey(n)：默认路径
+        // player 1 仍键 player 0 时代=原作单升时代设计；enemyAi 局内各键各的）。
         if ((this.buildingTable[n][n4 + 2] & 0x60000000) == 0) {
             int qN = this.buildingTable[n][n4 + 2] >>> 16 & 0xFF;
             if (qN > 0) {
                 int qT = 1;
                 if (n8 == 10) {
-                    qT = this.playerUnitHeaders[0][0] == 0 ? 2 : 3;
+                    qT = this.playerUnitHeaders[this.spawnAgeKey(n)][0] == 0 ? 2 : 3;
                 } else if (n8 == 7) {
                     qT = 4;
                 } else if (n8 == 8) {
-                    qT = this.playerUnitHeaders[0][0] >= 2 ? 6 : 5;
+                    qT = this.playerUnitHeaders[this.spawnAgeKey(n)][0] >= 2 ? 6 : 5;
                 } else if (n8 == 6) {
                     qT = 8;
                 } else if (n8 == 2) {
@@ -8939,7 +9187,9 @@ implements CommandListener {
         if (!this.canAfford(1, 0, n)) {
             return false;
         }
-        int n4 = this.playerUnitHeaders[0][0];
+        // 形态键：默认路径（引擎敌 AI）键 player 0 时代=原作语义；enemyAi 接管时
+        // 键 player 1 自己的时代 hdr[1][0]（科技对称化，spawnAgeKey 注释有全貌）。
+        int n4 = this.playerUnitHeaders[this.spawnAgeKey(1)][0];
         if (n4 != 0 && n == 2) {
             n = 3;
         }

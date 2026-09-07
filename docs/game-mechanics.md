@@ -207,6 +207,16 @@
   民兵自动升剑士 convertUnitType 2→3——民兵的 type2 计数会失真；castle 完成置
   techFlags[14]=1 解锁 University），**不是 techFlags[44]**。完成需 ~32t。
 - 建筑完工瞬间弹 aA=2 简报，会吞后续按键——「按键没反应」先查 aA。
+- **per-player 对称化（2026-09-07，【已验证】）**：原版研究完成效果只在
+  `tickBuildings` 的 i==0 分支生效、`techFlags` 是全局单份（=player 0 科技态）；
+  现有 `enemyTechFlags` 平行数组（同从 res#127 装载），i==1 研究完成走
+  `applyEnemyResearchEffects`（镜像全部模拟效果、跳过 UI），player 1 时代 =
+  `playerUnitHeaders[1][0]`。注意两处引擎 quirk：① `convertUnitType` 是**全局**
+  的（转双方在场单位+迁移双方队列计数），per-player 场合用
+  `convertUnitTypeForPlayer`；② player 0 研塔科技会连 `hdr[1][12]`（塔程）一起
+  写（双方塔程搭便车），该 quirk 保留未动。出兵形态键（民兵↔剑士等）=
+  `spawnAgeKey(p)`：引擎敌 AI 仍键 player 0 时代（原作语义），enemyAi 接管时
+  side 1 键自己的时代。细节与残留 quirk 见 `aoe/ai/README.md`「科技对称化」节。
 
 ## 迷雾与视野（2026-09-04 第六批考证，【已验证】）
 

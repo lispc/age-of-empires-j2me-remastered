@@ -23,6 +23,10 @@ import java.io.IOException;
  * 调参组）+ 采集目标缓存（var_short_a/b/c，findNearbyResource 的记忆格，
  * tickAi 村民重派/onUnitArrived 直接消费）+ 任务脚本事件日志（var_int_c/
  * var_int_arr_b 已用前缀，脚本条件 5"某槽位单位类型"的查询源）。
+ * v5（2026-09-07）：末尾新增 enemyTechFlags——科技对称化后 player 1 的
+ * 科技旗标平行数组（c.java 研究完成块 i==1 分支置位）。不持久化的话读档后
+ * 敌方已研科技/升时代静默回退（enemyAi 对局 F5/F9 断线）。旧档（v2-v4）无此段，
+ * 保持 setupMissionEnv 装载的 res#127 初值（=旧版行为：敌方无科技态）。
  * apply 前的"同任务重载"会跑 setupMissionEnv 把 AI 字段全部重置为
  * 初值（计时器归零、stance=0、建造相位回 0），而世界数组又原样覆写回来——
  * 结果 AI 的经济/军事时钟被静默清零，出兵波时刻漂移（m4 首战提前 650t、
@@ -33,7 +37,7 @@ import java.io.IOException;
  */
 public final class SaveState {
     static final int MAGIC = 0x414F4531;    // "AOE1"
-    static final int VERSION = 4;
+    static final int VERSION = 5;
 
     private SaveState() {
     }
@@ -128,6 +132,8 @@ public final class SaveState {
         for (int i = 0; i < eventCount * 3; ++i) {
             out.writeInt(g.var_int_arr_b[i]);
         }
+        // v5：player 1 科技旗标平行数组（科技对称化，见类注释）
+        writeBytes(out, g.enemyTechFlags);
         out.flush();
         return bos.toByteArray();
     }
@@ -229,6 +235,11 @@ public final class SaveState {
                 }
                 g.var_int_c = evtCount;
             }
+        }
+        if (version >= 5) {
+            // v5：player 1 科技旗标平行数组。旧档（v2-v4）没有此段——保持
+            // setupMissionEnv 装载的 res#127 初值（与旧版行为一致：敌方无科技态）。
+            readBytes(in, g.enemyTechFlags);
         }
         // 强制下一帧全量重画 + 小地图重新盖章（探索可能有变化）
         g.mapThumbStampRow = 0;

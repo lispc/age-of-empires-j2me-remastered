@@ -9,13 +9,15 @@
 
 反编译移植完成度很高：渲染管线（v3 设备分辨率持久帧缓冲）、键鼠双全（悬停高亮/
 单击选中/拖框选/右键群移）、宽视野（run.sh 默认 720x320 逻辑宽，原版 240 可退回）、
-快照存档 v3（F5/F9 + 自动 checkpoint + devBoot 直启；v3=techFlags 解锁位持久化，
-v2 旧档可读）、**确定性回放**（RNG 分流 +
+快照存档 v5（F5/F9 + 自动 checkpoint + devBoot 直启；v3=techFlags 解锁位持久化，
+v5=enemyTechFlags 敌方科技位；v2-v4 旧档可读）、**确定性回放**（RNG 分流 +
 tick 戳输入 trace + tools/replaycheck.sh 双跑对拍）、**卡死看门狗**（Timer 线程停跳
 自动打栈进日志）。**玩家 AI 层已就位**：规则式玩家 AI（`aoe.ai.RuleBasedAi`，
 `-Daoe.playerAi` 挂载）+ ailoop.sh 批量对局（`[result]` 终局信号）+ 主线 20+ 轮
 LLM 玩家代理的宏层（sel/goto/train/build/gather/rally/sitrep 等 FIFO 宏）与实证
 操作手册（`docs/agent-operations.md`，矛盾处以其 §10 代码级仲裁记录为准）。
+敌方可用 `-Daoe.enemyAi=aoe.ai.RuleBasedAi` 反串（科技对称化已落地：enemyTechFlags
+平行数组，side 1 研究/升时代真生效；语义见 `aoe/ai/README.md`「科技对称化」节）。
 反编译血统是 CFR，已采信 Vineflower 为对照 oracle（见「不变量与坑」）。
 
 ## 环境与构建

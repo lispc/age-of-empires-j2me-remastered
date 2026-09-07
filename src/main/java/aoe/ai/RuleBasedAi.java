@@ -1414,13 +1414,10 @@ public final class RuleBasedAi implements PlayerAi {
 
         // ===== 经济模块 =====
         if (myTc >= 0) {
-            // enemyAi 反串（side 1）：引擎研究完成效果只在 tickBuildings 的 i==0
-            // 分支生效（techFlags 全局单份=player 0 科技态，player 1 研究完成=
-            // 静默清零无效果），升时代 = 每 ~500t 重复扣款永不落地（Easy 实测
-            // S=5→14→2 循环烧钱 3.2M tick）——side 1 禁用整个科技模块，封建门
-            // 改用"兵营已建成"代替（原版敌 AI 本就无时代概念：出兵形态跟随
-            // player 0 时代，spawn morph 键在 playerUnitHeaders[0][0]）。
-            boolean feudal = hdr[0] >= 1 || this.side == 1 && barracksDone > 0;
+            // 科技对称化（2026-09-07）后 side 1 研究/升时代真生效（c.java
+            // tickBuildings i==1 分支 + enemyTechFlags + hdr[1][0] 时代），
+            // 封建判定两侧同口径：自己的 hdr[0]>=1。
+            boolean feudal = hdr[0] >= 1;
             // 村民配额（v3 起：金优先——军事单位全吃金，木头永远过剩；三败全是金=0
             // 僵尸队列饿死的）。boot 期 2木1金；封建后 1木2金，塔未满 5 座压 1 人采石；
             // 开战后（敌亮过 6+ 兵）且塔≥3 → 1木3金 全力暴兵。
@@ -1634,36 +1631,38 @@ public final class RuleBasedAi implements PlayerAi {
             // v6 教训（v5 退步实锤）：GoldMining/WatchTower 必须尽早就位——它们直接
             // 决定 3-8k 首波窗口的金收入与塔生存（v5 推迟到 8k，金价 4-11 饿死暴兵，
             // 三颗 v4 胜种全翻负）。科技不是军费黑洞，持续收入才是。
-            // side==1 整段禁用（引擎研究完成效果只对 player 0 生效，见 feudal 注释）。
-            if (this.side == 0 && !feudal && barracksDone > 0 && tcSlot >= 0 && game.canAfford(this.side, 2, 21)) {
+            // 2026-09-07 科技对称化：side 1 解禁（研究完成效果已 per-player 化，
+            // 形态键 spawnAgeKey 与队列记账同口径）；side 1 的日志带 side=1 后缀。
+            String sideTag = this.side == 1 ? " side=1" : "";
+            if (!feudal && barracksDone > 0 && tcSlot >= 0 && game.canAfford(this.side, 2, 21)) {
                 if (game.tryResearch(this.side, tcSlot, 21)) {
-                    System.out.println("[ai] research FEUDAL t=" + game.tickCount);
+                    System.out.println("[ai] research FEUDAL t=" + game.tickCount + sideTag);
                 }
             }
-            if (feudal && this.side == 0) {
+            if (feudal) {
                 // Watch Tower 先研（EXP_WTFIRST，仅 Expert）：10/5/10 换塔甲
                 // 10→15+索敌² 16→25，是首波窗口最便宜的战略倍增器——Expert 败局
                 // 全在 ~2.3-2.9k 首波窗口，Forging(+1 攻) 换不了塔的生存。
                 if (EXP_WTFIRST && towerSlot >= 0 && game.canAfford(this.side, 2, 13)
                         && game.tryResearch(this.side, towerSlot, 13)) {
-                    System.out.println("[ai] research WatchTower(wtfirst) t=" + game.tickCount);
+                    System.out.println("[ai] research WatchTower(wtfirst) t=" + game.tickCount + sideTag);
                 }
                 if (smithSlot >= 0 && game.canAfford(this.side, 2, 4) && game.tryResearch(this.side, smithSlot, 4)) {
-                    System.out.println("[ai] research Forging t=" + game.tickCount);
+                    System.out.println("[ai] research Forging t=" + game.tickCount + sideTag);
                 }
                 if (!EXP_WTFIRST && towerSlot >= 0 && game.canAfford(this.side, 2, 13) && game.tryResearch(this.side, towerSlot, 13)) {
-                    System.out.println("[ai] research WatchTower t=" + game.tickCount);
+                    System.out.println("[ai] research WatchTower t=" + game.tickCount + sideTag);
                 }
                 if (miningSlot >= 0 && game.tickCount >= K_GM_TICK
                         && game.canAfford(this.side, 2, 5) && game.tryResearch(this.side, miningSlot, 5)) {
-                    System.out.println("[ai] research GoldMining t=" + game.tickCount);
+                    System.out.println("[ai] research GoldMining t=" + game.tickCount + sideTag);
                 }
                 if (miningSlot >= 0 && towerN < K_SM_TOWER_UNDER && game.canAfford(this.side, 2, 9)
                         && game.tryResearch(this.side, miningSlot, 9)) {
-                    System.out.println("[ai] research StoneMining t=" + game.tickCount);
+                    System.out.println("[ai] research StoneMining t=" + game.tickCount + sideTag);
                 }
                 if (lumberSlot >= 0 && game.canAfford(this.side, 2, 3) && game.tryResearch(this.side, lumberSlot, 3)) {
-                    System.out.println("[ai] research DoubleBitAxe t=" + game.tickCount);
+                    System.out.println("[ai] research DoubleBitAxe t=" + game.tickCount + sideTag);
                 }
                 // v40 Bow Saw（木产量 10→15，第五批）：围城期木桶是唯一硬约束
                 // （v38 败局 5/6 木=0 卡死一切，金/石反囤），单木工 +50% 收入=续命。
@@ -1672,16 +1671,16 @@ public final class RuleBasedAi implements PlayerAi {
                 if (lumberSlot >= 0 && hdr[5] >= (expert && EXP_ECO_KILL ? 15 : K_BOWSAW_W)
                         && game.canAfford(this.side, 2, 1)
                         && game.tryResearch(this.side, lumberSlot, 1)) {
-                    System.out.println("[ai] research BowSaw t=" + game.tickCount);
+                    System.out.println("[ai] research BowSaw t=" + game.tickCount + sideTag);
                 }
                 // Horse Collar（磨坊 tech 6，10W/5G）：训练速度第二级 +50%——
                 // 波 2/3 消耗战补兵/CRUSHED 后重建成军提速（64t→28.3t/剑士）。
                 if (EXP_HORSECOLLAR && millSlot >= 0 && game.canAfford(this.side, 2, 6)
                         && game.tryResearch(this.side, millSlot, 6)) {
-                    System.out.println("[ai] research HorseCollar t=" + game.tickCount);
+                    System.out.println("[ai] research HorseCollar t=" + game.tickCount + sideTag);
                 }
                 if (smithSlot >= 0 && hdr[6] >= 25 && game.canAfford(this.side, 2, 8) && game.tryResearch(this.side, smithSlot, 8)) {
-                    System.out.println("[ai] research ScaleMail t=" + game.tickCount);
+                    System.out.println("[ai] research ScaleMail t=" + game.tickCount + sideTag);
                 }
                 // 城堡时代（磨坊+铁匠≥2）：再 +1 攻/甲 + Guard Tower，富余才升。
                 // v23 试过 Expert 放宽到 30/25/25 + 磨坊提到射箭场前：2/9 不升反降
@@ -1689,18 +1688,18 @@ public final class RuleBasedAi implements PlayerAi {
                 if (hdr[0] == 1 && millN > 0 && smithDone > 0 && tcSlot >= 0
                         && hdr[5] >= 40 && hdr[6] >= 40 && hdr[7] >= 40
                         && game.tryResearch(this.side, tcSlot, 22)) {
-                    System.out.println("[ai] research CASTLE t=" + game.tickCount);
+                    System.out.println("[ai] research CASTLE t=" + game.tickCount + sideTag);
                 }
             }
             if (hdr[0] >= 2) {
                 if (smithSlot >= 0 && game.canAfford(this.side, 2, 7) && game.tryResearch(this.side, smithSlot, 7)) {
-                    System.out.println("[ai] research IronCasting t=" + game.tickCount);
+                    System.out.println("[ai] research IronCasting t=" + game.tickCount + sideTag);
                 }
                 if (smithSlot >= 0 && game.canAfford(this.side, 2, 2) && game.tryResearch(this.side, smithSlot, 2)) {
-                    System.out.println("[ai] research ChainMail t=" + game.tickCount);
+                    System.out.println("[ai] research ChainMail t=" + game.tickCount + sideTag);
                 }
                 if (towerSlot >= 0 && game.canAfford(this.side, 2, 17) && game.tryResearch(this.side, towerSlot, 17)) {
-                    System.out.println("[ai] research GuardTower t=" + game.tickCount);
+                    System.out.println("[ai] research GuardTower t=" + game.tickCount + sideTag);
                 }
             }
             // 建筑（一次一座，自动成型；找位失败/被占下个决策再试）
@@ -1891,12 +1890,11 @@ public final class RuleBasedAi implements PlayerAi {
             }
             boolean emg = EXM_EMGPROD != 0 && siege;
             if (popRoom && barracksDone > 0 && vills >= K_MIL_VILLS) {
-                // 形态键 = player 0 的时代（引擎 spawn morph 键，tryTrainAiUnit/
-                // tickBuildings case 10 同口径；convertUnitType 在 player 0 升时代时
-                // 迁移双方队列计数）。side 0 时 playerUnitHeaders[0]==hdr，与原
-                // feudal?3:2 完全等价；side 1 若键自己的 feudal 会队产不一致
-                // （排 swordsman 产 militia，hdr[66+型] 记账错位）。
-                int meleeType = game.playerUnitHeaders[0][0] >= 1 ? 3 : 2;
+                // 形态键 = 自己的时代 hdr[0]（科技对称化后引擎 spawn 形态键
+                // spawnAgeKey(side)：enemyAi 局内 side 1 键 hdr[1][0]，与本键
+                // 同口径，队产一致；side 0 时 hdr==playerUnitHeaders[0]，与原
+                // feudal?3:2 完全等价）。
+                int meleeType = hdr[0] >= 1 ? 3 : 2;
                 if (canTrain(hdr, meleeType) && queueLen(recs, barracksSlot) < 2
                         && hdr[5] >= (woodIncomeDead ? 5 : emg ? 5 : K_MELEE_W)
                         && (feudal || hdr[6] >= (goldIncomeDead ? 5 : emg ? 5 : K_MELEE_G1))

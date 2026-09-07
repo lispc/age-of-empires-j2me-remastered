@@ -514,15 +514,15 @@ side 1 强制全图（fogHonest=false）：引擎迷雾是 player-0 单层（map
 JVM 共存安全。
 
 **引擎不对称发现（side 1 适配的根因，都实读 c.java 验证）**：
-- **研究完成效果只在 tickBuildings 的 i==0 分支生效**（techFlags 是全局单份
-  =player 0 科技态）：player 1 研究完成=静默清零无效果，升时代永不落地，
-  tryResearch 每 ~500t 重复扣款烧钱（Easy 实测 3.2M tick 空转）。→ side 1
-  **整个科技模块禁用**，封建门改用"兵营已建成"。
-- **出兵形态跟随 player 0 的时代**（tryTrainAiUnit 与 tickBuildings case 10/8
-  同键 `playerUnitHeaders[0][0]`：民兵↔剑士、侦察↔骑兵；convertUnitType 在
-  player 0 升时代时迁移双方队列计数）。→ meleeType 改键
-  `playerUnitHeaders[0][0]`（side 0 时与原 `feudal?3:2` 逐字节等价）——键自己
-  的 feudal 会排 swordsman 产 militia，hdr[66+型] 队列记账错位。
+- ~~**研究完成效果只在 tickBuildings 的 i==0 分支生效**~~ **【2026-09-07 已对称化，
+  见下「科技对称化」节】**：techFlags 曾是全局单份=player 0 科技态，player 1
+  研究完成静默清零、升时代永不落地。现有 `enemyTechFlags` 平行数组 +
+  tickBuildings i==1 平行效果块，side 1 科技模块已解禁。
+- **出兵形态键**（民兵↔剑士、侦察↔骑兵）= `spawnAgeKey(p)`：默认路径
+  player 1 仍键 player 0 时代（`playerUnitHeaders[0][0]`，原作语义，
+  convertUnitType 全局迁移双方队列计数与之配套——引擎敌 AI 搭便车，行为
+  逐字节不变）；enemyAi 接管时 side 1 键自己的时代 `hdr[1][0]`。RuleBasedAi
+  的 meleeType 同键自己的 hdr[0]，队产一致。
 - 弓箭手/投石机/冲车的 spawn（case 7/6/2）无时代门——side 1 不升时代也能出
   全兵种；塔完工注册（case 12）按 player 参数化，天然对称。
 - **起始资源不对称**：Easy 起 player 1 只有 50/15/15（player 0 恒 200/100/100）
@@ -539,26 +539,75 @@ JVM 共存安全。
   ailoop 5 局与改动前基线逐种子同结果、`[ai]`/`[result]` 流仅 boot 行格式
   差异（加 side= 前缀）。
 
-**已知限制**：side 1 无科技加成（攻防/采集/塔升级全是基值——研究效果引擎层面
-就是 player-0-only）；民兵帽 4 卡早期军值，进攻多靠 DESPERATE 兜底触发（对
+**已知限制**：民兵帽 4 卡早期军值，进攻多靠 DESPERATE 兜底触发（对
 空转玩家）或正常 CRUSHED/OVERWHELM（对真玩家）；自对弈时两侧共享
 aiGatherMultiplier/aiAttackThreshold 难度旋钮语义（值按"敌方难度"解读，对
 side-1 实例是自身加成）。
+
+### 科技对称化（2026-09-07，真对称化——非 boost 旋钮）
+
+player 1 的研究/升时代真正生效。架构 = **平行数组**：player 0 的全部
+techFlags 使用点一律不动（默认路径逐字节不变的语义基础）。
+
+- `enemyTechFlags`（c.java，与 techFlags 同从 res#127 装载初值）= player 1
+  的科技旗标；**player 1 的时代 = `playerUnitHeaders[1][0]`**（引擎从不给它
+  +1，现由研究完成块推进）。
+- **研究完成块 per-player 化**（tickBuildings）：i==1 走
+  `applyEnemyResearchEffects`——逐 case 镜像 i==0 的模拟效果（写
+  playerUnitHeaders[1]、置 enemyTechFlags 位、hdr[1][0] 升时代），跳过全部
+  UI（简报/横幅/requestStateSwitch 全是 player-0 专属）。
+- **convertUnitType 是全局的**（转双方在场单位 + 迁移双方 hdr[57+x]/[66+x]
+  队列计数）→ 新增 per-player 变体 `convertUnitTypeForPlayer`。side 1 升时代
+  只转自己的兵；**enemyAi 局内 player 0 升时代也改走 per-player(0)**（否则
+  会错转 side 1 在场民兵并把其队列计数迁走，与 side 1 自己的形态键打架）。
+  默认路径（!enemyAiActive）player 0 升时代仍走原全局调用，逐字节不变。
+- **tryResearch 前置检查按 player 分派**（techFlags vs enemyTechFlags）。
+- **塔升级 quirk 处置**：i==0 块研塔科技连 `hdr[1][12]`（塔程）一起写的
+  搭便车**保留不动**（默认路径行为底线；enemyAi 局内 player 0 研塔科技仍会
+  顶掉 side 1 自己的塔程——已知残留）；side-1 塔科技只写 hdr[1][45/46/47/12]，
+  不动 hdr[0]。
+- **塔贴图 tier（c.java `b(Graphics...)`）owner 感知**：P1 塔皮改看
+  enemyTechFlags——行为变化（已裁决）：原实现双方塔皮都吃 player 0 塔科技，
+  默认路径下 P1 塔现恒 tier 0 贴图。纯渲染索引（n6 只喂 drawTileSprite/血条
+  几何），不进模拟态，regress/replaycheck 不可见。
+- **残留 quirk（未动，注意）**：塔放置成本（`payCost(n,1,12+tier)`）仍键全局
+  techFlags——side 1 研塔科技后新塔仍按 player 0 的 tier 计价；战役脚本
+  条件 6/动作 9 保持绑 player 0 techFlags（enemyAi 只在 gameMode==0 生效）。
+- **SaveState v5**：enemyTechFlags 进快照（capture 末尾/apply version>=5 门），
+  旧档（v2-v4）可读=保持 res#127 初值（旧版行为）。
+
+**对称化验证（2026-09-07）**：regress 三连 PASS + replaycheck 一致 + devBoot
+双跑对拍一致（v5 档）；合成 v4 旧档加载正常（enemyTechFlags 落初值）。无
+enemyAi 基线（`-n 5 -d 2 -s 1000 -b`）与 HEAD 逐种子 ticks + `[ai]`/`[result]`
+流逐字节一致（1000=15960W/1001=2263L/1002=3821W/1003=7241W/1005=5012W）——
+引擎敌 AI 路径零扰动。功能：FIFO 局实证 side=1 FEUDAL t=1161 落地
+（age=1、在场民兵转剑士、后续 spawn 全剑士、GoldMining/WatchTower 等 5+ 科技
+落地）。⚠️ 本机（Linux）注意：tools/bootcheck.sh 因 stopat 后 headless JVM
+自杀（无窗口线程吊命，dev-mouse 是 daemon）在 echo state 吃 SIGPIPE exit=141
+——HEAD 同症，平台预存问题；对拍可用同一流程把载体从 aoe.Main 换成
+aoe.DevHarness（自带看门狗线程吊住 JVM）手工完成。
 
 ### 标定矩阵（2026-09-07，ailoop `-e` 透传，尺子 = side 0 诚实模式 RB）
 
 形状统一：`-n 10 -d N -a aoe.ai.RuleBasedAi -e aoe.ai.RuleBasedAi -s 1000 -t 240 -k -b`
 （side 0 诚实模式，side 1 强制全图）。对照 = 同形状无 `-e` 历史基线。
 
-| 敌方参数 | side 0 胜（enemyAi 反串） | side 0 胜（引擎敌 AI 基线） | 等效判定 |
-|---|---|---|---|
-| Easy（×2，50/15/15，T=50） | **8/10** | 8/10 | ≈ 引擎 Easy |
-| Medium（×3.07，50/50/50，T=60） | **8/10** | 8/10（另一批 4/10，合并 12/20） | ≈ 引擎 Medium |
-| Expert（×8，20/20/20，T=100） | **1/10** | 1/10（四批合并 5/40） | ≈ 引擎 Expert |
+**科技对称化前（第 46 夜，side 1 无科技）**：Easy 8/10、Medium 8/10（另一批 4/10，
+合并 12/20）、Expert 1/10——等效难度 ≈ 同名引擎难度。
 
-结论：enemyAi(RuleBasedAi) 吃满各档引擎参数（采集乘数/起始资源/攻击阈值）后，
-等效难度 ≈ 同名引擎难度。不确定度：每档单批 n=10，Medium 基线批间噪声大
-（8/10 vs 4/10），按合并带口径判定；Expert 1/10 落在 5/40 合并带内。
+**科技对称化后（本轮，side 1 科技真生效）**：
+
+| 敌方参数 | side 0 胜（对称化后） | side 0 胜（对称化前） | 解读 |
+|---|---|---|---|
+| Easy（×2，50/15/15，T=50） | **6/10** | 8/10 | 起始 50/15/15 攒 15 石慢，封建 ~1.1k 才落地，科技红利迟到 |
+| Medium（×3.07，50/50/50，T=60） | **0/10** | 8/10 | 50/50/50 开局兵营一成即刻封建（~200t），Forging/ScaleMail 全在首波窗口前落地——科技平价 + ×3.07 经济碾压 |
+| Expert（×8，20/20/20，T=100） | **0/10** | 1/10 | 原已贴地，科技补齐后 10 局中位 3436t 速败 |
+
+结论：side 1 科技是真实的强度维度——对称化把 enemyAi 从「同名引擎难度」抬到
+「显著难于同名引擎难度」（引擎敌 AI 永远无科技，本来就是它的隐性弱点）。
+Easy 降幅温和（-2/10），Medium 出现悬崖（-8/10）——50/50/50 开局让科技链
+在经济曲线上免费。零 `[ai] ... tick exception`；每局 side=1 研究落地 7-12 条。
+不确定度：每档单批 n=10；Medium 0/10 与 8/10 的差远超批间噪声（±1-2 局）。
 
 ### 对称化旋钮（全部默认关 = 零行为差，c.java 注释段自带语义）
 
