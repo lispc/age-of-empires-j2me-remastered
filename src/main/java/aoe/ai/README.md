@@ -492,6 +492,10 @@ enemyVis/eb/etc=敌TC坐标或?）；诊断配合 FIFO `aistate`（`tools/aoectl
 
 ## EnemyAi（反串 player 1，2026-09-07）
 
+**定位（用户拍板 2026-09-07）：默认敌方 AI 永远是原版引擎行为（tickAi
+生产脚本），增强版 AI 仅为可选实验开关**——不设 `-Daoe.enemyAi` 时游戏与
+原版逐字节一致，需要时（对局实验/标定/自对弈研究）显式挂载使用。
+
 `-Daoe.enemyAi=aoe.ai.RuleBasedAi` 让 RuleBasedAi 反串敌方（player 1），取代引擎
 原版敌 AI（tickAi 生产脚本），作为可选的强化对手。次要场景：同时挂
 `-Daoe.playerAi=aoe.ai.RuleBasedAi` 自对弈（平衡观察）。
