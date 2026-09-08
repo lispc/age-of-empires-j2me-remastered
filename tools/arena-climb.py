@@ -122,7 +122,9 @@ def run_eval(genotype, gene, value, games, seed0):
     if os.path.isdir(JDK17):
         env["PATH"] = JDK17 + ":" + env.get("PATH", "")
     cmd = ["tools/ailoop.sh", "-m", "%s=%d" % (gene, value),
-           "-n", str(games), "-d", "2", "-k", "-b"]
+           "-n", str(games), "-d", "2", "-s", str(seed0), "-k", "-b"]
+    # -s 必须透传（2026-09-08 修复：--seed0 曾只进 cache_key 不进命令，
+    # r12 拿 1020+ 的名义重跑 1000+ 带，同 key 结果逐字节相同才暴露）
     t0 = time.time()
     try:
         proc = subprocess.run(cmd, cwd=REPO, env=env, capture_output=True,
